@@ -109,13 +109,12 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'database',
   },
   '/ledger/detail-status': {
-    component: () =>
-      Promise.resolve({ default: () => <ComingSoonPage title='직책별 책무 현황' /> }),
+    component: () => import('@/domains/ledgermngt/pages/PositionResponsibilityStatusPage'),
     title: '직책별 책무 현황',
     icon: 'list_alt',
   },
   '/ledger/business-status': {
-    component: () => Promise.resolve({ default: () => <ComingSoonPage title='임원 현황' /> }),
+    component: () => import('@/domains/ledgermngt/pages/ExecutiveStatusPage'),
     title: '임원 현황',
     icon: 'business_center',
   },
@@ -132,7 +131,7 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'network_node',
   },
   '/ledger/structure-submission': {
-    component: () => Promise.resolve({ default: () => <ComingSoonPage title='책무구조도 제출' /> }),
+    component: () => import('@/domains/ledgermngt/pages/StructureSubmissionStatusPage'),
     title: '책무구조도 제출',
     icon: 'upload',
   },

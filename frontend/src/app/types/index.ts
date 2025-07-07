@@ -70,3 +70,24 @@ export interface PageableResponse<T> {
   numberOfElements: number;
   empty: boolean;
 }
+
+export interface PositionResponsibility {
+  id: number;
+  classification: '핵심' | '중요' | '일반';
+  positionId: string;
+  positionName: string;
+  ledgerOrder: string;
+  responsibilityOverview: string;
+  responsibilityStartDate: string;
+  lastModifiedDate: string;
+}
+
+export interface PositionResponsibilitySearchRequest {
+  ledgerOrder?: string;
+  positionName?: string;
+  searchTerm?: string;
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+}

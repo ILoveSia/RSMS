@@ -1,28 +1,28 @@
+import type { FileUploadProps } from '@/shared/components/ui/form/types';
 import {
-  CloudUpload as CloudUploadIcon,
-  Delete as DeleteIcon,
-  Description as DocumentIcon,
-  InsertDriveFile as FileIcon,
-  Image as ImageIcon,
-  PictureAsPdf as PdfIcon,
+    CloudUpload as CloudUploadIcon,
+    Delete as DeleteIcon,
+    Description as DocumentIcon,
+    InsertDriveFile as FileIcon,
+    Image as ImageIcon,
+    PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
 import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemSecondaryAction,
-  ListItemText,
-  Paper,
-  Typography,
-  useTheme,
+    Alert,
+    Box,
+    Button,
+    Chip,
+    IconButton,
+    LinearProgress,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    Paper,
+    Typography,
+    useTheme,
 } from '@mui/material';
 import React, { forwardRef, useCallback, useRef, useState } from 'react';
-import { FileUploadProps } from './types';
 
 /**
  * FileUpload 컴포넌트

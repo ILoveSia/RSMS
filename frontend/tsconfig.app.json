@@ -22,16 +22,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
 
-    /* MUI v7 TypeScript 지원 */
+    /* Path Alias */
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/pages/*": ["./src/pages/*"],
-      "@/services/*": ["./src/services/*"],
-      "@/config/*": ["./src/config/*"],
-      "@/theme/*": ["./src/theme/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/utils/*": ["./src/utils/*"]
+      "@/*": ["./src/*"]
     },
 
     /* Linting */

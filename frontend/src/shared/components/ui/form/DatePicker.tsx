@@ -1,20 +1,20 @@
+import type { DatePickerProps } from '@/shared/components/ui/form/types';
 import {
-  CalendarToday as CalendarIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
+    CalendarToday as CalendarIcon,
+    ChevronLeft as ChevronLeftIcon,
+    ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import {
-  Box,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Popover,
-  TextField,
-  Typography,
-  useTheme,
+    Box,
+    IconButton,
+    InputAdornment,
+    Paper,
+    Popover,
+    TextField,
+    Typography,
+    useTheme,
 } from '@mui/material';
 import React, { forwardRef, useState } from 'react';
-import { DatePickerProps } from './types';
 
 /**
  * DatePicker 컴포넌트

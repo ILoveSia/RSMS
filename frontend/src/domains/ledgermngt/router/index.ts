@@ -6,20 +6,15 @@ import type { DomainRoute } from '@/app/router/route-manager';
 import React from 'react';
 
 // Lazy loading을 위한 컴포넌트 import
-const MeetingStatusPage = React.lazy(() => import('@/domains/ledgermngt/pages/MeetingStatusPage'));
-const PositionStatusPage = React.lazy(
-  () => import('@/domains/ledgermngt/pages/PositionStatusPage')
-);
-const ResponsibilityDbStatusPage = React.lazy(
-  () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage')
-);
-const TestGrid = React.lazy(() => import('@/domains/ledgermngt/pages/TestGrid'));
-const NewComponentsTestPage = React.lazy(
-  () => import('@/domains/ledgermngt/pages/NewComponentsTestPage')
-);
-const PositionCardTestPage = React.lazy(
-  () => import('@/domains/ledgermngt/pages/PositionCardTestPage')
-);
+const MeetingStatusPage = React.lazy(() => import('../pages/MeetingStatusPage'));
+const PositionStatusPage = React.lazy(() => import('../pages/PositionStatusPage'));
+const ResponsibilityDbStatusPage = React.lazy(() => import('../pages/ResponsibilityDbStatusPage'));
+const PositionResponsibilityStatusPage = React.lazy(() => import('../pages/PositionResponsibilityStatusPage'));
+const TestGrid = React.lazy(() => import('../pages/TestGrid'));
+const NewComponentsTestPage = React.lazy(() => import('../pages/NewComponentsTestPage'));
+const PositionCardTestPage = React.lazy(() => import('../pages/PositionCardTestPage'));
+const StructureSubmissionStatusPage = React.lazy(() => import('../pages/StructureSubmissionStatusPage'));
+const ExecutiveStatusPage = React.lazy(() => import('../pages/ExecutiveStatusPage'));
 
 // 원장관리 도메인 라우트 정의 (백엔드 메뉴 URL과 일치)
 const ledgermngtRoutes: DomainRoute[] = [
@@ -61,26 +56,26 @@ const ledgermngtRoutes: DomainRoute[] = [
   },
   {
     path: '/ledger/detail-status',
-    element: TestGrid,
+    element: PositionResponsibilityStatusPage,
     meta: {
-      title: '직책별 적부 현황',
+      title: '직책별 책무 현황',
       requiresAuth: true,
       roles: ['USER', 'ADMIN'],
-      breadcrumb: ['책무구조도 원장 관리', '직책별 적부 현황'],
-      icon: 'Dashboard',
-      description: '직책별 적부 현황 테스트 그리드 페이지',
+      breadcrumb: ['책무구조도 원장 관리', '직책별 책무 현황'],
+      icon: 'list_alt',
+      description: '직책별 책무 현황 관리 페이지',
     },
   },
   {
     path: '/ledger/business-status',
-    element: TestGrid,
+    element: ExecutiveStatusPage,
     meta: {
       title: '임원 현황',
       requiresAuth: true,
       roles: ['USER', 'ADMIN'],
       breadcrumb: ['책무구조도 원장 관리', '임원 현황'],
       icon: 'Work',
-      description: '임원원 현황 관리 페이지',
+      description: '임원 현황 관리 페이지',
     },
   },
   {
@@ -109,7 +104,7 @@ const ledgermngtRoutes: DomainRoute[] = [
   },
   {
     path: '/ledger/structure-submission',
-    element: TestGrid,
+    element: StructureSubmissionStatusPage,
     meta: {
       title: '적부구조도 제출 관리',
       requiresAuth: true,

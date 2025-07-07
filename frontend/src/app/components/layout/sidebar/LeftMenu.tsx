@@ -145,28 +145,34 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   // Menu 데이터를 MenuItemProps로 변환하는 함수
   const convertMenuToMenuItem = (menu: Menu): MenuItemProps => {
     const handleMenuClick = () => {
-      console.log(`[LeftMenu] 메뉴 클릭: ${menu.menuName}, URL: ${menu.menuUrl}`);
+      console.log('=== 메뉴 클릭 디버깅 시작 ===');
+      console.log('메뉴 정보:', {
+        name: menu.menuName,
+        url: menu.menuUrl,
+        id: menu.id,
+        level: menu.menuLevel
+      });
 
       if (!menu.menuUrl) {
-        console.log(`[LeftMenu] 메뉴 URL이 없습니다: ${menu.menuName}`);
+        console.log('❌ 메뉴 URL이 없음:', menu.menuName);
         return;
       }
 
       // 페이지 정보 가져오기
       const pageInfo = PageComponentMapper.getPageInfo(menu.menuUrl);
-      console.log(`[LeftMenu] 페이지 정보:`, pageInfo);
+      console.log('페이지 정보:', pageInfo);
 
       if (!pageInfo) {
-        console.warn(`[LeftMenu] 등록되지 않은 메뉴 경로: ${menu.menuUrl}`);
+        console.warn('❌ 등록되지 않은 메뉴 경로:', menu.menuUrl);
         return;
       }
 
       // 페이지 컴포넌트 가져오기
       const PageComponent = PageComponentMapper.getComponent(menu.menuUrl);
-      console.log(`[LeftMenu] 페이지 컴포넌트:`, PageComponent);
+      console.log('페이지 컴포넌트:', PageComponent);
 
-      // 탭 추가
-      console.log(`[LeftMenu] 탭 추가 시도:`, {
+      // 탭 추가 시도
+      console.log('탭 추가 시도:', {
         title: pageInfo.title,
         path: menu.menuUrl,
         closable: true,
@@ -181,10 +187,11 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
           closable: true,
           icon: pageInfo.icon,
         });
-        console.log(`[LeftMenu] 탭 추가 성공`);
+        console.log('✅ 탭 추가 성공');
       } catch (error) {
-        console.error(`[LeftMenu] 탭 추가 실패:`, error);
+        console.error('❌ 탭 추가 실패:', error);
       }
+      console.log('=== 메뉴 클릭 디버깅 종료 ===');
     };
 
     return {
@@ -192,7 +199,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
       menuUrl: menu.menuUrl,
       onClick: menu.menuUrl ? handleMenuClick : undefined,
       children: menu.children
-        ?.sort((a, b) => a.sortOrder - b.sortOrder) // 하위 메뉴도 정렬
+        ?.sort((a, b) => a.sortOrder - b.sortOrder)
         .map(child => convertMenuToMenuItem(child)),
     };
   };
