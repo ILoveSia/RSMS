@@ -6,7 +6,7 @@ import { defineConfig } from 'vite';
 export default defineConfig(({ mode }) => {
   return {
     plugins: [
-      // 안정적인 react 플러그인을 사용합니다.
+      // 안정적인 react 플러그인을 사용합니다...
       react(),
     ],
 
