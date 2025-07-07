@@ -8,12 +8,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import type { DialogMode } from '@/shared/components/modal/BaseDialog';
+import { Dialog } from '@/shared/components/modal/Dialog';
 import { Button } from '@/shared/components/ui/button';
 import { ComboBox } from '@/shared/components/ui/form';
 import type { GridColDef } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
-import ResponsibilityDialog from '../components/ResponsibilityDialog';
 
 interface IPositionResponsibilityStatusPageProps {
   className?: string;
@@ -103,8 +102,8 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // 다이얼로그 상태
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<DialogMode>('view');
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedDetailData, setSelectedDetailData] = useState<PositionResponsibility | null>(null);
 
   // 오류 다이얼로그 상태
@@ -233,22 +232,13 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 상세보기 핸들러
   const handleViewDetail = (row: PositionResponsibility) => {
     setSelectedDetailData(row);
-    setDialogMode('view');
-    setDialogOpen(true);
+    setDetailDialogOpen(true);
   };
 
-  // 수정 저장 핸들러
-  const handleSave = async () => {
-    try {
-      // TODO: API 호출로 데이터 저장
-      console.log('저장된 데이터:', selectedDetailData);
-
-      // 목록 새로고침
-      await fetchData();
-    } catch (err) {
-      setErrorMessage('데이터 저장에 실패했습니다.');
-      setErrorDialogOpen(true);
-    }
+  // 수정 핸들러
+  const handleEditResponsibility = (row: PositionResponsibility) => {
+    setSelectedDetailData(row);
+    setEditDialogOpen(true);
   };
 
   // 엑셀 업로드 핸들러
@@ -434,14 +424,59 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         </Box>
 
         {/* 상세 정보 다이얼로그 */}
-        <ResponsibilityDialog
-          open={dialogOpen}
-          mode={dialogMode}
-          responsibility={selectedDetailData}
-          onClose={() => setDialogOpen(false)}
-          onSave={handleSave}
-          onModeChange={setDialogMode}
-        />
+        <Dialog
+          open={detailDialogOpen}
+          onClose={() => setDetailDialogOpen(false)}
+          title="책무 상세 정보"
+          maxWidth="md"
+          fullWidth
+        >
+          {selectedDetailData && (
+            <Box sx={{ p: 2 }}>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2">구분</Typography>
+                <Chip
+                  label={selectedDetailData.classification}
+                  size="small"
+                  color={
+                    selectedDetailData.classification === '핵심' ? 'error' :
+                    selectedDetailData.classification === '중요' ? 'warning' :
+                    selectedDetailData.classification === '일반' ? 'default' : 'default'
+                  }
+                />
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
+                <div>
+                  <Typography variant="subtitle2">직책 ID</Typography>
+                  <Typography>{selectedDetailData.positionId}</Typography>
+                </div>
+                <div>
+                  <Typography variant="subtitle2">직책명</Typography>
+                  <Typography>{selectedDetailData.positionName}</Typography>
+                </div>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2">책무 개요</Typography>
+                <Typography style={{ whiteSpace: 'pre-wrap' }}>
+                  {selectedDetailData.responsibilityOverview || '미작성'}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <div>
+                  <Typography variant="subtitle2">책무 시작일</Typography>
+                  <Typography>{selectedDetailData.responsibilityStartDate}</Typography>
+                </div>
+                <div>
+                  <Typography variant="subtitle2">최종 수정일</Typography>
+                  <Typography>{selectedDetailData.lastModifiedDate}</Typography>
+                </div>
+              </Box>
+            </Box>
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button onClick={() => setDetailDialogOpen(false)}>닫기</Button>
+          </Box>
+        </Dialog>
 
         {/* 에러 다이얼로그 */}
         <ErrorDialog
