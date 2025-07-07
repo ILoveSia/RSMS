@@ -1,26 +1,26 @@
 /**
  * 책무 등록/수정/조회 다이얼로그 컴포넌트
  */
-import React, { useState, useEffect } from 'react';
+import apiClient from '@/app/common/api/client';
+import { Dialog } from '@/shared/components/modal';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import {
+  Alert,
   Box,
   Button,
-  TextField,
-  Alert,
   CircularProgress,
+  IconButton,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
+  TextField,
   Typography,
 } from '@mui/material';
-import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
-import Dialog from '../../../app/components/Dialog';
-import apiClient from '../../../app/common/api/client';
+import React, { useEffect, useState } from 'react';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
 interface ApiSuccessResponse<T> {
@@ -45,7 +45,6 @@ export interface ResponsibilityDetail {
   relatedBasis: string;
 }
 
-
 export interface ResponsibilityDialogProps {
   open: boolean;
   mode: 'create' | 'edit' | 'view';
@@ -65,7 +64,12 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
 }) => {
   const [responsibilityContent, setResponsibilityContent] = useState('');
   const [details, setDetails] = useState<ResponsibilityDetail[]>([
-    { id: `temp-${Date.now()}`, responsibilityDetailContent: '', keyManagementTasks: '', relatedBasis: '' }
+    {
+      id: `temp-${Date.now()}`,
+      responsibilityDetailContent: '',
+      keyManagementTasks: '',
+      relatedBasis: '',
+    },
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,10 +87,17 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
         return '책무';
     }
   };
-  
+
   // 데이터 초기화 및 로드
   useEffect(() => {
-    console.log('[ResponsibilityDialog useEffect] open:', open, 'mode:', mode, 'responsibilityId:', responsibilityId);
+    console.log(
+      '[ResponsibilityDialog useEffect] open:',
+      open,
+      'mode:',
+      mode,
+      'responsibilityId:',
+      responsibilityId
+    );
     const fetchDetails = async (id: string) => {
       setLoading(true);
       setError(null);
@@ -105,22 +116,25 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
           details: DetailResponseType[];
         };
 
-        const response = await apiClient.get<ApiSuccessResponse<ResponseType>>(`/api/responsibilities/${id}`);
+        const response = await apiClient.get<ApiSuccessResponse<ResponseType>>(
+          `/api/responsibilities/${id}`
+        );
 
         if (response && response.data) {
           const fetchedData = response.data;
           setResponsibilityContent(fetchedData.responsibilityContent);
-          setDetails(fetchedData.details.map((d: DetailResponseType) => ({
-            id: String(d.id),
-            responsibilityDetailId: String(d.id),
-            responsibilityDetailContent: d.responsibilityDetailContent,
-            keyManagementTasks: d.keyManagementTasks,
-            relatedBasis: d.relatedBasis,
-          })));
+          setDetails(
+            fetchedData.details.map((d: DetailResponseType) => ({
+              id: String(d.id),
+              responsibilityDetailId: String(d.id),
+              responsibilityDetailContent: d.responsibilityDetailContent,
+              keyManagementTasks: d.keyManagementTasks,
+              relatedBasis: d.relatedBasis,
+            }))
+          );
         } else {
           throw new Error('데이터를 불러오는 데 실패했습니다.');
         }
-
       } catch (err) {
         const error = err as Error;
         setError(error.message || '상세 정보를 불러오는 중 오류가 발생했습니다.');
@@ -135,13 +149,28 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
       fetchDetails(responsibilityId.toString());
     } else if (open) {
       setResponsibilityContent('');
-      setDetails([{ id: `temp-${Date.now()}`, responsibilityDetailContent: '', keyManagementTasks: '', relatedBasis: '' }]);
+      setDetails([
+        {
+          id: `temp-${Date.now()}`,
+          responsibilityDetailContent: '',
+          keyManagementTasks: '',
+          relatedBasis: '',
+        },
+      ]);
     }
   }, [open, mode, responsibilityId]);
 
   // 상세 항목 추가
   const addDetail = () => {
-    setDetails(prev => [...prev, { id: `temp-${Date.now()}`, responsibilityDetailContent: '', keyManagementTasks: '', relatedBasis: '' }]);
+    setDetails(prev => [
+      ...prev,
+      {
+        id: `temp-${Date.now()}`,
+        responsibilityDetailContent: '',
+        keyManagementTasks: '',
+        relatedBasis: '',
+      },
+    ]);
   };
 
   // 상세 항목 제거
@@ -151,9 +180,9 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
 
   // 상세 항목 입력 변경
   const handleDetailChange = (id: string, field: keyof ResponsibilityDetail, value: string) => {
-    setDetails(prev => prev.map(d => d.id === id ? { ...d, [field]: value } : d));
+    setDetails(prev => prev.map(d => (d.id === id ? { ...d, [field]: value } : d)));
   };
-  
+
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     if (!responsibilityContent.trim()) {
@@ -180,7 +209,7 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
 
     setLoading(true);
     setError(null);
-    
+
     try {
       const payload = {
         responsibilityContent: responsibilityContent,
@@ -193,14 +222,17 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
 
       if (mode === 'create') {
         await apiClient.post('/api/responsibilities', payload);
-      } else if (mode === 'edit' && responsibilityId) { 
+      } else if (mode === 'edit' && responsibilityId) {
         await apiClient.put(`/api/responsibilities/${responsibilityId}`, payload);
       }
-      
-      if (onSave) {
-        onSave({ responsibilityId: responsibilityId?.toString() || undefined, responsibilityContent: responsibilityContent, details });
-      }
 
+      if (onSave) {
+        onSave({
+          responsibilityId: responsibilityId?.toString() || undefined,
+          responsibilityContent: responsibilityContent,
+          details,
+        });
+      }
     } catch (err) {
       const error = err as Error;
       setError(error.message || '저장 중 오류가 발생했습니다.');
@@ -221,53 +253,79 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
     if (mode === 'view') {
       return (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
-          <Button onClick={onClose} variant="outlined">닫기</Button>
-          <Button onClick={handleEditMode} variant="contained">수정</Button>
+          <Button onClick={onClose} variant='outlined'>
+            닫기
+          </Button>
+          <Button
+            onClick={handleEditMode}
+            variant='contained'
+            sx={{
+              backgroundColor: 'var(--bank-warning)',
+              '&:hover': { backgroundColor: 'var(--bank-warning-dark)' },
+            }}
+          >
+            수정
+          </Button>
         </Box>
       );
     }
     return (
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
-        <Button onClick={onClose} variant="outlined">취소</Button>
-        <Button onClick={handleSave} variant="contained">저장</Button>
+        <Button onClick={onClose} variant='outlined'>
+          취소
+        </Button>
+        <Button
+          onClick={handleSave}
+          variant='contained'
+          sx={{
+            backgroundColor: 'var(--bank-success)',
+            '&:hover': { backgroundColor: 'var(--bank-success-dark)' },
+          }}
+        >
+          저장
+        </Button>
       </Box>
     );
   };
-  
+
   const isViewMode = mode === 'view';
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={getDialogTitle()}
-      maxWidth="xl"
-      fullWidth
-    >
+    <Dialog open={open} onClose={onClose} title={getDialogTitle()} maxWidth='xl' fullWidth>
       <Box sx={{ p: 3 }}>
         {loading && <CircularProgress />}
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        
+        {error && (
+          <Alert severity='error' sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
         {/* 책무 섹션 */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>책무</Typography>
+          <Typography variant='h6' gutterBottom>
+            책무
+          </Typography>
           <TextField
-            label="필수기재"
+            label='필수기재'
             fullWidth
             value={responsibilityContent}
-            onChange={(e) => setResponsibilityContent(e.target.value)}
+            onChange={e => setResponsibilityContent(e.target.value)}
             InputProps={{ readOnly: isViewMode }}
             error={!!validationErrors.responsibilityContent}
             helperText={validationErrors.responsibilityContent}
           />
         </Box>
-        
+
         {/* 책무 상세등록 섹션 */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">책무 상세등록</Typography>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography variant='h6'>책무 상세등록</Typography>
             {!isViewMode && (
-              <Button startIcon={<AddIcon />} onClick={addDetail}>상세 항목 추가</Button>
+              <Button startIcon={<AddIcon />} onClick={addDetail}>
+                상세 항목 추가
+              </Button>
             )}
           </Box>
           <TableContainer component={Paper} sx={{ maxHeight: 440 }}>
@@ -277,55 +335,85 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
                   <TableCell sx={{ width: '30%' }}>책무 세부내용</TableCell>
                   <TableCell sx={{ width: '40%' }}>책무이행을 위한 주요 관리업무</TableCell>
                   <TableCell sx={{ width: '30%' }}>관련 근거</TableCell>
-                  {!isViewMode && <TableCell align="center">동작</TableCell>}
+                  {!isViewMode && <TableCell align='center'>동작</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
-                {details.map((detail) => (
+                {details.map(detail => (
                   <TableRow key={detail.id}>
                     <TableCell>
                       <TextField
-                        label="필수기재"
+                        label='필수기재'
                         multiline
                         minRows={3}
                         fullWidth
-                        variant="outlined"
+                        variant='outlined'
                         value={detail.responsibilityDetailContent}
-                        onChange={(e) => handleDetailChange(detail.id!, 'responsibilityDetailContent', e.target.value)}
+                        onChange={e =>
+                          handleDetailChange(
+                            detail.id!,
+                            'responsibilityDetailContent',
+                            e.target.value
+                          )
+                        }
                         InputProps={{ readOnly: isViewMode }}
-                        error={!!validationErrors[`detail_content_${details.findIndex(d => d.id === detail.id)}`]}
-                        helperText={validationErrors[`detail_content_${details.findIndex(d => d.id === detail.id)}`]}
+                        error={
+                          !!validationErrors[
+                            `detail_content_${details.findIndex(d => d.id === detail.id)}`
+                          ]
+                        }
+                        helperText={
+                          validationErrors[
+                            `detail_content_${details.findIndex(d => d.id === detail.id)}`
+                          ]
+                        }
                       />
                     </TableCell>
                     <TableCell>
                       <TextField
-                        label="필수기재"
+                        label='필수기재'
                         multiline
                         minRows={3}
                         fullWidth
-                        variant="outlined"
+                        variant='outlined'
                         value={detail.keyManagementTasks}
-                        onChange={(e) => handleDetailChange(detail.id!, 'keyManagementTasks', e.target.value)}
+                        onChange={e =>
+                          handleDetailChange(detail.id!, 'keyManagementTasks', e.target.value)
+                        }
                         InputProps={{ readOnly: isViewMode }}
-                        error={!!validationErrors[`detail_tasks_${details.findIndex(d => d.id === detail.id)}`]}
-                        helperText={validationErrors[`detail_tasks_${details.findIndex(d => d.id === detail.id)}`]}
+                        error={
+                          !!validationErrors[
+                            `detail_tasks_${details.findIndex(d => d.id === detail.id)}`
+                          ]
+                        }
+                        helperText={
+                          validationErrors[
+                            `detail_tasks_${details.findIndex(d => d.id === detail.id)}`
+                          ]
+                        }
                       />
                     </TableCell>
                     <TableCell>
                       <TextField
-                        label="필수기재"
+                        label='필수기재'
                         multiline
                         minRows={3}
                         fullWidth
-                        variant="outlined"
+                        variant='outlined'
                         value={detail.relatedBasis}
-                        onChange={(e) => handleDetailChange(detail.id!, 'relatedBasis', e.target.value)}
+                        onChange={e =>
+                          handleDetailChange(detail.id!, 'relatedBasis', e.target.value)
+                        }
                         InputProps={{ readOnly: isViewMode }}
                       />
                     </TableCell>
                     {!isViewMode && (
-                      <TableCell align="center">
-                        <IconButton onClick={() => removeDetail(detail.id!)} disabled={details.length <= 1} color="error">
+                      <TableCell align='center'>
+                        <IconButton
+                          onClick={() => removeDetail(detail.id!)}
+                          disabled={details.length <= 1}
+                          color='error'
+                        >
                           <RemoveIcon />
                         </IconButton>
                       </TableCell>
@@ -343,4 +431,4 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
   );
 };
 
-export default ResponsibilityDialog; 
+export default ResponsibilityDialog;

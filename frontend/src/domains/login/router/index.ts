@@ -1,14 +1,35 @@
-import type { TItcenRoute } from '@/app/types';
+import type { DomainRoute } from '@/app/router/route-manager';
 import React from 'react';
 
-import LoginPage from '@/domains/login/pages/LoginPage';
+// Lazy loading을 위한 컴포넌트 import
+const LoginPage = React.lazy(() => import('@/domains/login/pages/LoginPage'));
 
-const routes: TItcenRoute[] = [
-	{
-		path: 'login',
-		element: React.createElement(LoginPage),
-		name: 'login-page/LoginPage',
-	},
+// 로그인 도메인 라우트 정의
+const loginRoutes: DomainRoute[] = [
+  {
+    path: '/',
+    element: LoginPage,
+    meta: {
+      title: '로그인',
+      requiresAuth: false,
+      roles: [],
+      breadcrumb: ['로그인'],
+      icon: 'Login',
+      description: '시스템 로그인 페이지',
+    },
+  },
+  {
+    path: '/login',
+    element: LoginPage,
+    meta: {
+      title: '로그인',
+      requiresAuth: false,
+      roles: [],
+      breadcrumb: ['로그인'],
+      icon: 'Login',
+      description: '시스템 로그인 페이지',
+    },
+  },
 ];
 
-export default routes;
+export default loginRoutes;

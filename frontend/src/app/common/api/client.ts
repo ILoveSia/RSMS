@@ -1,12 +1,14 @@
 /**
- * 공통 API 클라이언트
+ * 통합 API 클라이언트
  * 모든 API 호출을 중앙에서 관리하고 공통 설정을 제공합니다.
- * 
+ *
  * 책임:
  * - API 기본 설정 관리
  * - 요청/응답 인터셉터 제공
  * - 에러 처리 표준화
  * - 인증 토큰 관리
+ *
+ * 기존 axios 기반 구현을 대체하는 통합 클라이언트입니다.
  */
 
 import { config, logger } from '@/app/config/environment';
@@ -41,7 +43,7 @@ export interface RequestOptions extends RequestInit {
 
 /**
  * API 클라이언트 클래스
- * 
+ *
  * SOLID 원칙 적용:
  * - Single Responsibility: API 통신만 담당
  * - Open/Closed: 인터셉터를 통한 확장 가능
@@ -109,7 +111,7 @@ class ApiClient {
    */
   private async handleResponse<T>(response: Response): Promise<T> {
     const contentType = response.headers.get('content-type');
-    
+
     let data: unknown;
     if (contentType && contentType.includes('application/json')) {
       data = await response.json();
@@ -123,7 +125,7 @@ class ApiClient {
         status: response.status,
         details: data,
       };
-      
+
       logger.error('API 요청 실패:', error);
       throw error;
     }
@@ -158,7 +160,7 @@ class ApiClient {
       code: 'UNKNOWN_ERROR',
       details: error,
     };
-    
+
     logger.error('API 알 수 없는 오류:', { endpoint, error });
     throw unknownError;
   }
@@ -181,7 +183,11 @@ class ApiClient {
       signal: controller.signal,
     };
 
-    logger.debug('API 요청 시작:', { method: options.method || 'GET', url, options: requestOptions });
+    logger.debug('API 요청 시작:', {
+      method: options.method || 'GET',
+      url,
+      options: requestOptions,
+    });
 
     try {
       const response = await fetch(url, requestOptions);
@@ -197,7 +203,10 @@ class ApiClient {
    * @param options - 요청 옵션
    * @returns 응답 데이터
    */
-  async get<T>(endpoint: string, options: Omit<RequestOptions, 'method' | 'body'> = {}): Promise<T> {
+  async get<T>(
+    endpoint: string,
+    options: Omit<RequestOptions, 'method' | 'body'> = {}
+  ): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET' });
   }
 
@@ -208,7 +217,11 @@ class ApiClient {
    * @param options - 요청 옵션
    * @returns 응답 데이터
    */
-  async post<T>(endpoint: string, data?: unknown, options: Omit<RequestOptions, 'method'> = {}): Promise<T> {
+  async post<T>(
+    endpoint: string,
+    data?: unknown,
+    options: Omit<RequestOptions, 'method'> = {}
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -223,7 +236,11 @@ class ApiClient {
    * @param options - 요청 옵션
    * @returns 응답 데이터
    */
-  async put<T>(endpoint: string, data?: unknown, options: Omit<RequestOptions, 'method'> = {}): Promise<T> {
+  async put<T>(
+    endpoint: string,
+    data?: unknown,
+    options: Omit<RequestOptions, 'method'> = {}
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -237,7 +254,10 @@ class ApiClient {
    * @param options - 요청 옵션
    * @returns 응답 데이터
    */
-  async delete<T>(endpoint: string, options: Omit<RequestOptions, 'method' | 'body'> = {}): Promise<T> {
+  async delete<T>(
+    endpoint: string,
+    options: Omit<RequestOptions, 'method' | 'body'> = {}
+  ): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
 
@@ -248,7 +268,11 @@ class ApiClient {
    * @param options - 요청 옵션
    * @returns 응답 데이터
    */
-  async patch<T>(endpoint: string, data?: unknown, options: Omit<RequestOptions, 'method'> = {}): Promise<T> {
+  async patch<T>(
+    endpoint: string,
+    data?: unknown,
+    options: Omit<RequestOptions, 'method'> = {}
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
@@ -259,4 +283,4 @@ class ApiClient {
 
 // 싱글톤 인스턴스 생성 및 내보내기
 export const apiClient = new ApiClient();
-export default apiClient; 
+export default apiClient;

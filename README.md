@@ -10,19 +10,25 @@
 - **Developer Experience**: Hot Reload, 자동화된 설정
 - **Production Ready**: Docker 지원, 확장 가능한 아키텍처
 - **Security**: Spring Security 기반 인증/인가 시스템
+- **Tab System**: 멀티 탭 지원으로 향상된 사용자 경험
+- **Excel Export**: 데이터 Excel 내보내기 지원
 
 ## 🛠 기술 스택
 
 ### Frontend
-- **React 18.2** - 최신 React 기능 활용
-- **TypeScript** - 타입 안정성
-- **Vite 6** - 빠른 개발 서버
-- **Material-UI v5** - 모던 UI 컴포넌트
-- **React Router v7** - 클라이언트 사이드 라우팅
-- **Redux Toolkit** - 상태 관리
-- **Axios** - HTTP 클라이언트
+
+- **React 18.2.0** - 최신 React 기능 활용
+- **TypeScript 5.8.3** - 타입 안정성
+- **Vite 5.0.12** - 빠른 개발 서버
+- **Material-UI v5.15.20** - 모던 UI 컴포넌트
+- **React Router v6.26.0** - 클라이언트 사이드 라우팅
+- **Redux Toolkit 2.8.2** - 상태 관리
+- **Axios 1.9.0** - HTTP 클라이언트
+- **MUI X DataGrid 7.7.1** - 데이터 그리드
+- **ExcelJS 4.4.0** - Excel 파일 처리
 
 ### Backend
+
 - **Spring Boot 3.5.0** - 최신 Spring 기능
 - **Java 21** - 최신 LTS 버전
 - **Spring Data JPA** - ORM
@@ -36,12 +42,16 @@
 ## 🚀 빠른 시작
 
 ### 1. 필수 요구사항
+
 - Node.js v22.16.0+ ✅
 - Java JDK 21+ ✅
 - PostgreSQL v17+ ✅
 - Redis ✅
+- Docker (선택사항) ✅
+- Git ✅
 
 ### 2. 설치 및 실행
+
 ```bash
 # 저장소 클론
 git clone <repository-url>
@@ -58,6 +68,7 @@ npm run dev
 ```
 
 ### 3. 접속
+
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8080/api
 - **Health Check**: http://localhost:8080/api/actuator/health
@@ -76,9 +87,12 @@ itcenSolution1/
 │   │   │   └── theme/          # MUI 테마
 │   │   ├── domains/            # 도메인별 모듈
 │   │   │   ├── cmplcheck/      # 컴플라이언스 체크
+│   │   │   ├── common/         # 공통 코드 관리
+│   │   │   ├── inquiry/        # 조회 및 현황 관리
 │   │   │   ├── ledgermngt/     # 원장 관리
 │   │   │   ├── login/          # 로그인
 │   │   │   ├── main/           # 메인 페이지
+│   │   │   ├── meeting/        # 회의 관리
 │   │   │   └── menu/           # 메뉴 관리
 │   │   └── shared/             # 공유 컴포넌트
 │   └── package.json
@@ -147,6 +161,7 @@ npm run setup:local     # 로컬 환경 전체 설정
 ## 🔧 환경 설정
 
 ### 데이터베이스 설정
+
 ```yaml
 # PostgreSQL
 Host: localhost
@@ -161,6 +176,7 @@ Port: 6379
 ```
 
 ### 환경 변수 (Frontend)
+
 ```bash
 VITE_APP_TITLE=ITCEN Solution
 VITE_API_BASE_URL=http://localhost:8080
@@ -168,6 +184,7 @@ VITE_LOG_LEVEL=debug
 ```
 
 ### 백엔드 프로파일
+
 - **local**: 로컬 개발환경 (기본값)
 - **docker**: Docker 환경
 - **prod**: 운영 환경
@@ -175,6 +192,7 @@ VITE_LOG_LEVEL=debug
 ## 🏗 아키텍처
 
 ### Frontend 아키텍처
+
 - **Domain-Driven Design**: 도메인별 모듈 구조
 - **Component-Based**: 재사용 가능한 컴포넌트 구조
 - **Type-Safe**: TypeScript로 타입 안정성 보장
@@ -182,6 +200,7 @@ VITE_LOG_LEVEL=debug
 - **State Management**: Redux Toolkit 기반 상태 관리
 
 ### Backend 아키텍처
+
 - **Layered Architecture**: Controller → Service → Repository
 - **Domain-Driven Design**: 도메인별 패키지 구조
 - **RESTful API**: 표준 REST API 설계
@@ -192,6 +211,7 @@ VITE_LOG_LEVEL=debug
 ## 📊 주요 기능
 
 ### 현재 구현된 기능
+
 - ✅ **인증/인가 시스템**: Spring Security 기반
 - ✅ **사용자 관리**: 사용자 등록, 수정, 조회
 - ✅ **메뉴 관리**: 동적 메뉴 시스템
@@ -202,15 +222,21 @@ VITE_LOG_LEVEL=debug
 - ✅ **책임 관리**: 업무 책임 관리
 - ✅ **공통 코드**: 시스템 공통 코드 관리
 - ✅ **컴플라이언스**: 검토 계획 관리
+- ✅ **조회 시스템**: 부서별 현황, 월별 현황, 검사 일정 조회
+- ✅ **멀티 탭 시스템**: 탭 기반 화면 관리 및 네비게이션
 - ✅ **반응형 UI/UX**: Material-UI 기반
 - ✅ **API 문서화**: Spring Boot Actuator
 - ✅ **전역 예외 처리**: 표준화된 에러 응답
 
 ### 기술적 특징
+
 - 🔄 **세션 기반 인증**: Redis를 통한 세션 관리
 - 🔄 **파일 업로드/다운로드**: Q&A 첨부파일 지원
 - 🔄 **데이터 그리드**: MUI X DataGrid 활용
-- 🔄 **Excel 내보내기**: XLSX 지원
+- 🔄 **Excel 내보내기**: ExcelJS 기반 XLSX 지원
+- 🔄 **멀티 탭 인터페이스**: 동적 탭 생성 및 관리
+- 🔄 **타입 안전성**: TypeScript 엄격 모드 적용
+- 🔄 **컴포넌트 재사용**: 공통 컴포넌트 라이브러리
 - 🔄 **모니터링**: Actuator 기반 헬스체크
 
 ## 🧪 테스트
@@ -231,6 +257,7 @@ npm run test
 ## 📚 API 문서
 
 ### 주요 엔드포인트
+
 - **Auth**: `/api/auth/**` - 인증/인가
 - **Users**: `/api/users/**` - 사용자 관리
 - **Menus**: `/api/menus/**` - 메뉴 관리
@@ -240,8 +267,10 @@ npm run test
 - **QnA**: `/api/qna/**` - Q&A 시스템
 - **Responsibilities**: `/api/responsibilities/**` - 책임 관리
 - **Common Codes**: `/api/common-codes/**` - 공통 코드
+- **Inquiry**: `/api/inquiry/**` - 조회 및 현황 관리
 
 ### 모니터링 엔드포인트
+
 - **Health**: `/api/actuator/health`
 - **Info**: `/api/actuator/info`
 - **Metrics**: `/api/actuator/metrics`
@@ -266,4 +295,28 @@ npm run test
 
 ---
 
-**Made with ❤️ by ITCEN Team** 
+## 📋 최신 업데이트 (2025.01)
+
+### 🆕 새로운 기능
+
+- **멀티 탭 시스템**: 동적 탭 생성 및 관리 기능 추가
+- **조회 시스템**: 부서별 현황, 월별 현황, 검사 일정 조회 기능
+- **Excel 내보내기**: ExcelJS 기반 데이터 내보내기 기능
+- **타입 안전성**: TypeScript 엄격 모드 적용으로 안정성 향상
+
+### 🔧 기술적 개선사항
+
+- **컴포넌트 렌더링**: 함수형 컴포넌트와 JSX 요소 유연한 렌더링
+- **에러 처리**: 탭 시스템 관련 에러 핸들링 개선
+- **타입 정의**: ComponentType과 ReactNode 유연한 타입 지원
+- **코드 품질**: 방어적 프로그래밍 패턴 적용
+
+### 🚀 성능 최적화
+
+- **탭 메모리 관리**: 효율적인 탭 생성 및 제거
+- **컴포넌트 재사용**: 공통 컴포넌트 라이브러리 확장
+- **번들 최적화**: Vite 5.0.12 기반 빠른 빌드
+
+---
+
+**Made with ❤️ by ITCEN Team**

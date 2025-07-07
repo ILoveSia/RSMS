@@ -1,80 +1,76 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, Select, MenuItem, FormControl } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import MainLayout from '../../../shared/components/layout/MainLayout';
-import PositionDialog from '../components/PositionDialog';
-import '../../../assets/scss/style.css';
-import apiClient from '../../../app/common/api/client';
-import type { ApiResponse } from '../../../app/types/common';
-import Confirm from '@/app/components/Confirm';
-import { deleteBulkPositions } from '../api/positionApi';
-import * as XLSX from 'xlsx';
+import { Confirm } from '@/shared/components/modal';
+import { Box, Button, FormControl, MenuItem, Select } from '@mui/material';
+import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
+import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import React, { useCallback, useEffect, useState } from 'react';
+import '../../../assets/scss/style.css';
+import { positionApi, type PositionStatusRow } from '../api/positionApi';
+import PositionDialog from '../components/PositionDialog';
 
 interface IPositionStatusPageProps {
   className?: string;
 }
 
-interface PositionStatusRow {
-  positionsId: number;
-  positionsNm: string;
-  writeDeptNm: string;
-  ownerDeptNms: string;
-  adminCount: number;
-}
-
 const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Element => {
+  // 기존 상태 관리 방식
   const [rows, setRows] = useState<PositionStatusRow[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filterDivision, setFilterDivision] = useState<string>('전체');
+
+  // 로컬 UI 상태
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<number[] | null>(null);
 
   const [positionDialogOpen, setPositionDialogOpen] = useState(false);
-  const [positionDialogMode, setPositionDialogMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [positionDialogMode, setPositionDialogMode] = useState<'create' | 'edit' | 'view'>(
+    'create'
+  );
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('');
 
+  // 직책 현황 조회
   const fetchPositionStatus = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get<ApiResponse<PositionStatusRow[]>>('/positions/status-list');
-      if (response && response.data) {
-        setRows(response.data);
+      const data = await positionApi.getStatusList();
+      setRows(data);
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        setError((err as { message: string }).message);
       } else {
-        setRows([]);
+        setError('직책 현황을 불러오는 중 오류가 발생했습니다.');
       }
-    } catch (err) {
-      setError('직책 현황 데이터를 불러오는 데 실패했습니다.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchPositionStatus();
-  }, [fetchPositionStatus]);
-
-  // 원장차수+진행상태 SelectBox 옵션
-  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<{ value: string; label: string }[]>([]);
-  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('');
-
-  useEffect(() => {
-    // 원장차수+진행상태 옵션 불러오기
-    import('../api/ledgerOrderApi').then(({ fetchLedgerOrderSelectList }) => {
-      fetchLedgerOrderSelectList().then(setLedgerOrderOptions);
-    });
+  // 원장차수 목록 조회
+  const fetchLedgerOrders = useCallback(async () => {
+    try {
+      const data = await positionApi.getLedgerOrderSelectList();
+      setLedgerOrderOptions(data);
+    } catch (err: unknown) {
+      console.error('원장차수 목록 조회 실패:', err);
+    }
   }, []);
 
-  const divisionOptions = [
-    { value: 'EXEC', label: '임원' },
-    { value: 'MANAGER', label: '관리자' },
-    { value: 'STAFF', label: '직원' }
-  ];
+  // 초기 데이터 로드
+  useEffect(() => {
+    fetchPositionStatus();
+    fetchLedgerOrders();
+  }, [fetchPositionStatus, fetchLedgerOrders]);
 
   const positionColumns: GridColDef[] = [
     {
@@ -82,10 +78,10 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
       headerName: '직책명',
       width: 200,
       flex: 1,
-      renderCell: (params) => (
+      renderCell: params => (
         <span
-          style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer' }}
-          onClick={(e) => {
+          style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={e => {
             e.stopPropagation();
             handleRowClick(params.row.positionsId);
           }}
@@ -98,7 +94,14 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
     },
     { field: 'ownerDeptNms', headerName: '소관부서', width: 300, flex: 2 },
     { field: 'writeDeptNm', headerName: '책무기술서 작성 부서', width: 200, flex: 2 },
-    { field: 'adminCount', headerName: '관리자 수', type: 'number', width: 120, align: 'center', headerAlign: 'center' }
+    {
+      field: 'adminCount',
+      headerName: '관리자 수',
+      type: 'number',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+    },
   ];
 
   const handleSearch = () => {
@@ -152,11 +155,16 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
     setLoading(true);
     setError(null);
     try {
-      await deleteBulkPositions(pendingDelete);
+      await positionApi.deleteBulk(pendingDelete);
       setSelectedIds([]); // 선택 초기화
       fetchPositionStatus(); // 목록 새로고침
     } catch (err: unknown) {
-      if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message?: string }).message === 'string') {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
         setError((err as { message: string }).message);
       } else {
         setError('삭제 중 오류가 발생했습니다.');
@@ -174,157 +182,221 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
     setPositionDialogOpen(true);
   };
 
-  // 엑셀 다운로드 핸들러
-  const handleExcelDownload = () => {
+  // 엑셀 다운로드 핸들러 (ExcelJS 사용)
+  const handleExcelDownload = async () => {
     if (!rows || rows.length === 0) {
       setError('엑셀로 내보낼 데이터가 없습니다.');
       return;
     }
-    // 컬럼명 매핑 (한글)
-    const headerMap: Record<string, string> = {
-      positionsId: '직책ID',
-      positionsNm: '직책명',
-      writeDeptNm: '책무기술서 작성 부서',
-      ownerDeptNms: '소관부서',
-      adminCount: '관리자 수',
-    };
-    // 데이터 변환
-    const excelData = rows.map(row => ({
-      [headerMap.positionsId]: row.positionsId,
-      [headerMap.positionsNm]: row.positionsNm,
-      [headerMap.writeDeptNm]: row.writeDeptNm,
-      [headerMap.ownerDeptNms]: row.ownerDeptNms,
-      [headerMap.adminCount]: row.adminCount,
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, '직책 현황');
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(blob, `직책_현황_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+    try {
+      // ExcelJS 워크북 생성
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('직책 현황');
+
+      // 헤더 설정
+      const headers = ['직책ID', '직책명', '책무기술서 작성 부서', '소관부서', '관리자 수'];
+      worksheet.addRow(headers);
+
+      // 헤더 스타일 설정
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFB0C4DE' }, // lightsteelblue
+      };
+
+      // 데이터 추가
+      rows.forEach(row => {
+        worksheet.addRow([
+          row.positionsId,
+          row.positionsNm,
+          row.writeDeptNm,
+          row.ownerDeptNms,
+          row.adminCount,
+        ]);
+      });
+
+      // 컬럼 너비 자동 조정
+      worksheet.columns.forEach(column => {
+        column.width = Math.max(column.width || 0, 15);
+      });
+
+      // 파일 생성 및 다운로드
+      const excelBuffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      saveAs(blob, `직책_현황_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (error) {
+      console.error('엑셀 다운로드 실패:', error);
+      setError('엑셀 다운로드 중 오류가 발생했습니다.');
+    }
   };
 
   return (
-    <MainLayout>
-      <div className="main-content">
-        <div className="responsibility-header">
-          <h1 className="responsibility-header__title">★ [200] 직책 현황</h1>
-        </div>
-        <div className="responsibility-divider"></div>
-        <div className="responsibility-section" style={{ marginTop: '20px' }}>
-          <div style={{ 
-            display: 'flex', 
-            gap: '8px', 
-            marginBottom: '16px', 
+    <div className='main-content'>
+      <div className='responsibility-header'>
+        <h1 className='responsibility-header__title'>★ [200] 직책 현황</h1>
+      </div>
+      <div className='responsibility-divider'></div>
+      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px',
             alignItems: 'center',
-            backgroundColor: '#f8f9fa',
-            border: '1px solid #e9ecef',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
             padding: '8px 16px',
-            borderRadius: '4px'
-          }}>
-            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>
-              원장차수
-            </span>
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <Select
-                value={selectedLedgerOrder}
-                onChange={(e) => setSelectedLedgerOrder(e.target.value)}
-                displayEmpty
-                sx={{ backgroundColor: 'white', fontSize: '0.85rem' }}
-              >
-                <MenuItem value="" sx={{ fontSize: '0.85rem' }}>전체</MenuItem>
-                {ledgerOrderOptions.map((option) => (
+            borderRadius: '4px',
+          }}
+        >
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>원장차수</span>
+          <FormControl size='small' sx={{ minWidth: 180 }}>
+            <Select
+              value={selectedLedgerOrder}
+              onChange={e => setSelectedLedgerOrder(e.target.value)}
+              displayEmpty
+              sx={{ backgroundColor: 'white', fontSize: '0.85rem' }}
+            >
+              <MenuItem value='' sx={{ fontSize: '0.85rem' }}>
+                전체
+              </MenuItem>
+              {ledgerOrderOptions.length > 0 ? (
+                ledgerOrderOptions.map(option => (
                   <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.85rem' }}>
                     {option.label}
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button 
-              variant="contained"
-              size="small"
-              onClick={handleSearch}
-              sx={{ 
-                backgroundColor: '#333',
-                color: 'white',
-                '&:hover': { backgroundColor: '#555' }
+                ))
+              ) : (
+                <MenuItem disabled sx={{ fontSize: '0.85rem' }}>
+                  데이터 로딩 중...
+                </MenuItem>
+              )}
+            </Select>
+          </FormControl>
+          <Button
+            variant='contained'
+            size='small'
+            onClick={handleSearch}
+            sx={{
+              backgroundColor: 'var(--bank-primary)',
+              color: 'white',
+              '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
+            }}
+          >
+            조회
+          </Button>
+          <Button
+            variant='contained'
+            size='small'
+            onClick={() => {
+              /* 차수생성 로직 미구현 */
+            }}
+            sx={{
+              backgroundColor: 'var(--bank-success)',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'var(--bank-success-dark)',
+              },
+            }}
+          >
+            차수생성
+          </Button>
+          <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            <Button
+              variant='contained'
+              size='small'
+              onClick={() => {
+                /* 확정 로직 미구현 */
               }}
-            >
-              조회
-            </Button>
-            <Button 
-              variant="contained"
-              size="small"
-              onClick={() => console.log('차수생성 버튼 클릭됨 - 로직 미구현')}
-              sx={{ 
-                backgroundColor: '#28a745',
+              sx={{
+                backgroundColor: 'var(--bank-success)',
                 color: 'white',
                 '&:hover': {
-                  backgroundColor: '#218838'
-                }
+                  backgroundColor: 'var(--bank-success-dark)',
+                },
               }}
             >
-              차수생성
+              확정
             </Button>
-            <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-              <Button 
-                variant="contained"
-                size="small"
-                onClick={() => console.log('확정 버튼 클릭됨 - 로직 미구현')}
-                sx={{ 
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: '#218838'
-                  }
-                }}
-              >
-                확정
-              </Button>
-              <Button 
-                variant="contained"
-                size="small"
-                onClick={() => console.log('확정취소 버튼 클릭됨 - 로직 미구현')}
-                sx={{ 
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: '#c82333'
-                  }
-                }}
-              >
-                확정취소
-              </Button>
-            </Box>
-          </div>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
-              <Button variant="contained" color="success" size="small" onClick={handleExcelDownload} sx={{ mr: 1 }}>엑셀 다운로드</Button>
-              <Button variant="contained" size="small" onClick={handleCreateClick} sx={{ mr: 1 }}>등록</Button>
-              <Button variant="contained" color="error" size="small" onClick={handleDelete}>삭제</Button>
-          </Box>
-          <Box sx={{ height: 'calc(100vh - 400px)', width: '100%' }}>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <DataGrid
-              rows={rows}
-              columns={positionColumns}
-              loading={loading}
-              getRowId={(row) => row.positionsId}
-              checkboxSelection
-              onRowSelectionModelChange={handleRowSelectionChange}
-              rowSelectionModel={selectedIds}
-              disableRowSelectionOnClick
-              sx={{
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: '#b0c4de !important',
-                  fontWeight: 'bold',
-                },
-                '& .MuiDataGrid-row': {
-                  cursor: 'pointer'
-                }
+            <Button
+              variant='contained'
+              size='small'
+              onClick={() => {
+                /* 확정취소 로직 미구현 */
               }}
-            />
+              sx={{
+                backgroundColor: 'var(--bank-error)',
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'var(--bank-error-dark)',
+                },
+              }}
+            >
+              확정취소
+            </Button>
           </Box>
         </div>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+          <Button
+            variant='contained'
+            color='success'
+            size='small'
+            onClick={handleExcelDownload}
+            sx={{ mr: 1 }}
+          >
+            엑셀 다운로드
+          </Button>
+          <Button
+            variant='contained'
+            size='small'
+            onClick={handleCreateClick}
+            sx={{
+              mr: 1,
+              backgroundColor: 'var(--bank-primary)',
+              '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
+            }}
+          >
+            등록
+          </Button>
+          <Button
+            variant='contained'
+            size='small'
+            onClick={handleDelete}
+            sx={{
+              backgroundColor: 'var(--bank-error)',
+              '&:hover': { backgroundColor: 'var(--bank-error-dark)' },
+            }}
+          >
+            삭제
+          </Button>
+        </Box>
+        <Box sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+          <DataGrid
+            rows={rows}
+            columns={positionColumns}
+            loading={loading}
+            getRowId={row => row.positionsId}
+            checkboxSelection
+            onRowSelectionModelChange={handleRowSelectionChange}
+            rowSelectionModel={selectedIds}
+            disableRowSelectionOnClick
+            sx={{
+              height: '100%',
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: 'var(--bank-bg-secondary) !important',
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-row': {
+                cursor: 'pointer',
+              },
+            }}
+          />
+        </Box>
       </div>
       <PositionDialog
         open={positionDialogOpen}
@@ -336,14 +408,17 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
       />
       <Confirm
         open={confirmOpen}
-        title="삭제 확인"
-        message="정말로 선택한 직책을 삭제하시겠습니까?"
-        confirmText="삭제"
-        cancelText="취소"
+        title='삭제 확인'
+        message='정말로 선택한 직책을 삭제하시겠습니까?'
+        confirmText='삭제'
+        cancelText='취소'
         onConfirm={handleConfirmDelete}
-        onCancel={() => { setConfirmOpen(false); setPendingDelete(null); }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setPendingDelete(null);
+        }}
       />
-    </MainLayout>
+    </div>
   );
 };
 

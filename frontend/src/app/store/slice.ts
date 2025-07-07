@@ -4,7 +4,7 @@
  */
 import { createSlice, createAsyncThunk, combineReducers } from '@reduxjs/toolkit';
 import type { PayloadAction, Draft } from '@reduxjs/toolkit';
-import ApiClient from '@/app/common/api';
+import apiClient from '@/app/common/api/client';
 import type { IRootState, ISliceObject } from '@/app/types/store';
 
 // 기본 상태 타입
@@ -29,7 +29,7 @@ export const createApiThunk = <RequestType = unknown, ResponseType = unknown>(
 	return createAsyncThunk<ResponseType, RequestType>(
 		name,
 		async (params: RequestType) => {
-			const response = await ApiClient.get<ResponseType>(url, { params });
+			const response = await apiClient.get<ResponseType>(url, { params });
 			return response.data;
 		}
 	);
@@ -87,22 +87,22 @@ export const createBaseSlice = <T = unknown>(
 export const setRootReducer = (reducers: Record<string, unknown>, storeName: string) => {
 	console.log('🔧 [setRootReducer] 입력된 reducers:', reducers);
 	console.log('🔧 [setRootReducer] storeName:', storeName);
-	
+
 	// 각 도메인의 action 객체를 실제 reducer로 변환
 	const processedReducers: Record<string, unknown> = {};
-	
+
 	Object.entries(reducers).forEach(([key, value]) => {
 		console.log(`🔧 [setRootReducer] 처리 중: ${key}`, value);
-		
+
 		if (value && typeof value === 'object') {
 			// action 객체를 reducer 객체로 변환
 			const domainReducers: Record<string, unknown> = {};
-			
+
 			Object.entries(value as Record<string, unknown>).forEach(([actionKey, actionValue]) => {
 				if (actionValue && typeof actionValue === 'object' && 'actionType' in actionValue) {
 					const actionObj = actionValue as { actionType: string; url?: string };
 					console.log(`🔧 [setRootReducer] ${key}.${actionKey} 처리:`, actionObj);
-					
+
 					// 간단한 reducer 생성
 					const slice = createSlice({
 						name: actionObj.actionType,
@@ -123,17 +123,17 @@ export const setRootReducer = (reducers: Record<string, unknown>, storeName: str
 							},
 						},
 					});
-					
+
 					domainReducers[actionKey] = slice.reducer;
 				}
 			});
-			
+
 			processedReducers[key] = combineReducers(domainReducers);
 		} else {
 			processedReducers[key] = value;
 		}
 	});
-	
+
 	console.log('🔧 [setRootReducer] 최종 processedReducers:', processedReducers);
 	return combineReducers(processedReducers);
 };
@@ -142,21 +142,21 @@ export const setRootReducer = (reducers: Record<string, unknown>, storeName: str
 export default class GenerateSlice {
 	private static instance: GenerateSlice;
 	public sliceList = {};
-	
+
 	public static getInstance(): GenerateSlice {
 		if (!this.instance) {
 			this.instance = new GenerateSlice();
 		}
 		return this.instance;
 	}
-	
+
 	// 간소화된 fetcher
 	private fetcher = async <RequestType = unknown, ResponseType = unknown>(url: string, param: object) => {
 		try {
-			const response = await ApiClient.get<ResponseType>(url, { params: param as RequestType });
+			const response = await apiClient.get<ResponseType>(url, { params: param as RequestType });
 			return response.data;
 		} catch (err: Error | unknown) {
-			ApiClient.handleError(err, this);
+			apiClient.handleError(err, this);
 			console.error('[Call API] ERROR : ', err);
 			throw err;
 		}
@@ -173,10 +173,10 @@ export default class GenerateSlice {
 	public generateSlice<RequestType, ResponseType>(key: string, stateTree: string, url?: string) {
 		let asyncThunk: unknown = null;
 		let slice = null;
-		
+
 		if (url) {
 			asyncThunk = this.generateAsyncThunk<RequestType, ResponseType>(url, key);
-			
+
 			slice = createSlice({
 				name: `reducer-${key}`,
 				initialState: {
@@ -206,7 +206,7 @@ export default class GenerateSlice {
 				},
 			});
 		}
-		
+
 		if (!Object.prototype.hasOwnProperty.call(this.sliceList, key)) {
 			this.sliceList = Object.assign(this.sliceList, {
 				[key]: {
@@ -218,25 +218,25 @@ export default class GenerateSlice {
 					actions: slice ? slice.actions : null,
 				},
 			});
-		}		
+		}
 	}
-	
+
 	public getReducer<RequestType, ResponseType>(key: string, stateTree: string, url?: string) {
 		const inst = GenerateSlice.getInstance();
-		
+
 		if (url) {
 			inst.generateSlice<RequestType, ResponseType>(key, stateTree, url);
 		}
-		
+
 		const selectSlice = (this.sliceList as ISliceObject)[key];
-		return selectSlice.reducer;	
+		return selectSlice.reducer;
 	}
-	
+
 	public getAsyncThunk<T = string>(key: T) {
 		if (!(this.sliceList as ISliceObject)[key as string]) {
 			console.error(`[ERROR] : Store에 (${key}) ActionType설정이 잘못 되었거나, State가 생성 되어 있지 않습니다.`);
 			return false;
 		}
 		return (this.sliceList as ISliceObject)[key as string].asyncThunk;
-	}	
-}     
+	}
+}

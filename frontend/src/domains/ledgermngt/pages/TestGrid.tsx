@@ -1,6 +1,7 @@
+import { Box, Button, Paper, Typography } from '@mui/material';
+import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import React, { useState } from 'react';
-import { Box, Button } from '@mui/material';
-import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 
 // 1. 테스트용 컬럼 정의
 const columns: GridColDef[] = [
@@ -29,40 +30,62 @@ const TestGrid = (): React.JSX.Element => {
       alert('삭제할 항목을 선택하세요.');
       return;
     }
-    console.log('삭제할 ID:', selectionModel);
-    const newRows = rows.filter((row) => !selectionModel.includes(row.id));
+
+    const newRows = rows.filter(row => !selectionModel.includes(row.id));
     setRows(newRows);
     // 선택 모델 초기화
-    setSelectionModel([]); 
+    setSelectionModel([]);
   };
 
   return (
-    <Box sx={{ p: 4, height: 500, width: '100%' }}>
-      <h1>DataGrid 테스트</h1>
-      <Button 
-        variant="contained" 
-        color="error" 
-        onClick={handleDelete}
-        disabled={selectionModel.length === 0}
-        sx={{ mb: 2 }}
-      >
-        선택 항목 삭제
-      </Button>
+    <Box sx={{ p: 3, width: '100%' }}>
+      <Paper sx={{ p: 3, width: '100%' }}>
+        <Typography variant='h4' gutterBottom>
+          DataGrid 테스트
+        </Typography>
 
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        checkboxSelection // 체크박스 활성화
+        <Button
+          variant='contained'
+          color='error'
+          onClick={handleDelete}
+          disabled={selectionModel.length === 0}
+          sx={{ mb: 3 }}
+        >
+          선택 항목 삭제 ({selectionModel.length})
+        </Button>
 
-        // 이 두 부분이 핵심입니다.
-        //rowSelectionModel={selectionModel}
-        onRowSelectionModelChange={(newSelectionModel) => {
-          setSelectionModel(newSelectionModel);
-        }}
-      />
-      <pre style={{ mt: 2, p: 1, border: '1px solid #ccc', background: '#f5f5f5' }}>
-        선택된 ID: {JSON.stringify(selectionModel)}
-      </pre>
+        {/* 가장 간단한 방법: autoHeight 사용 */}
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          checkboxSelection
+          autoHeight
+          onRowSelectionModelChange={newSelectionModel => {
+            setSelectionModel(newSelectionModel);
+          }}
+          initialState={{
+            pagination: {
+              paginationModel: { page: 0, pageSize: 10 },
+            },
+          }}
+          pageSizeOptions={[5, 10, 25]}
+          disableRowSelectionOnClick
+          sx={{
+            width: '100%',
+            border: 1,
+            borderColor: 'divider',
+            '& .MuiDataGrid-cell:hover': {
+              color: 'primary.main',
+            },
+          }}
+        />
+
+        <Box sx={{ mt: 2, p: 2, backgroundColor: 'grey.100', borderRadius: 1 }}>
+          <Typography variant='body2' color='text.secondary'>
+            선택된 ID: {JSON.stringify(selectionModel)}
+          </Typography>
+        </Box>
+      </Paper>
     </Box>
   );
 };

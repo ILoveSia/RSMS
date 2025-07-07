@@ -1,0 +1,241 @@
+/**
+ * 페이지 컴포넌트 매퍼 유틸리티
+ *
+ * 책임:
+ * - 메뉴 경로에 따른 페이지 컴포넌트 동적 로딩
+ * - 컴포넌트 lazy loading
+ * - 에러 처리
+ */
+import { Box, Typography } from '@mui/material';
+import React, { ComponentType, lazy } from 'react';
+
+// 페이지 컴포넌트 타입
+type PageComponent = ComponentType<any>;
+
+// 페이지 컴포넌트 매핑 타입
+type PageComponentMapping = {
+  [path: string]: {
+    component: () => Promise<{ default: PageComponent }>;
+    title: string;
+    icon?: string;
+  };
+};
+
+// 에러 페이지 컴포넌트
+const ErrorPage: React.FC<{ error?: string }> = ({ error }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      p: 3,
+    }}
+  >
+    <Typography variant='h6' color='error' gutterBottom>
+      페이지를 불러올 수 없습니다
+    </Typography>
+    <Typography variant='body2' color='text.secondary'>
+      {error || '알 수 없는 오류가 발생했습니다.'}
+    </Typography>
+  </Box>
+);
+
+// 준비 중 페이지 컴포넌트
+const ComingSoonPage: React.FC<{ title?: string }> = ({ title }) => (
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100%',
+      p: 3,
+    }}
+  >
+    <Typography variant='h5' gutterBottom>
+      🚧 준비 중입니다
+    </Typography>
+    <Typography variant='body1' color='text.secondary'>
+      {title ? `${title} 페이지를 준비 중입니다.` : '페이지를 준비 중입니다.'}
+    </Typography>
+    <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
+      빠른 시일 내에 서비스를 제공하겠습니다.
+    </Typography>
+  </Box>
+);
+
+// 페이지 컴포넌트 매핑 설정
+const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
+  // 메인 페이지
+  '/main': {
+    component: () => import('@/domains/main/pages/MainPage'),
+    title: '메인',
+    icon: 'home',
+  },
+
+  // 장부관리 - 기존 경로 (호환성 유지)
+  '/ledgermngt/meeting-status': {
+    component: () => import('@/domains/ledgermngt/pages/MeetingStatusPage'),
+    title: '회의체 현황',
+    icon: 'meeting_room',
+  },
+  '/ledgermngt/position-status': {
+    component: () => import('@/domains/ledgermngt/pages/PositionStatusPage'),
+    title: '직책 현황',
+    icon: 'person',
+  },
+  '/ledgermngt/responsibility-db-status': {
+    component: () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage'),
+    title: '책무DB 현황',
+    icon: 'database',
+  },
+
+  // 장부관리 - 새로운 경로 (데이터베이스와 일치)
+  '/ledger/company-status': {
+    component: () => import('@/domains/ledgermngt/pages/MeetingStatusPage'),
+    title: '회의체 현황',
+    icon: 'meeting_room',
+  },
+  '/ledger/position-status': {
+    component: () => import('@/domains/ledgermngt/pages/PositionStatusPage'),
+    title: '직책 현황',
+    icon: 'person',
+  },
+  '/ledger/db-status': {
+    component: () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage'),
+    title: '책무 DB현황',
+    icon: 'database',
+  },
+  '/ledger/detail-status': {
+    component: () =>
+      Promise.resolve({ default: () => <ComingSoonPage title='직책별 책무 현황' /> }),
+    title: '직책별 책무 현황',
+    icon: 'list_alt',
+  },
+  '/ledger/business-status': {
+    component: () => Promise.resolve({ default: () => <ComingSoonPage title='임원 현황' /> }),
+    title: '임원 현황',
+    icon: 'business_center',
+  },
+  '/ledger/business-detail-status': {
+    component: () =>
+      Promise.resolve({ default: () => <ComingSoonPage title='임원별 책무 현황' /> }),
+    title: '임원별 책무 현황',
+    icon: 'analytics',
+  },
+  '/ledger/internal-control': {
+    component: () =>
+      Promise.resolve({ default: () => <ComingSoonPage title='부서장 내부통제 항목 현황' /> }),
+    title: '부서장 내부통제 항목 현황',
+    icon: 'network_node',
+  },
+  '/ledger/structure-submission': {
+    component: () => Promise.resolve({ default: () => <ComingSoonPage title='책무구조도 제출' /> }),
+    title: '책무구조도 제출',
+    icon: 'upload',
+  },
+
+  // 조회
+  '/inquiry/dept-status': {
+    component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
+    title: '부서별 현황',
+    icon: 'business',
+  },
+  '/inquiry/monthly-status': {
+    component: () => import('@/domains/inquiry/pages/MonthlyStatusPage'),
+    title: '월별 현황',
+    icon: 'calendar_month',
+  },
+  '/inquiry/inspection-schedule': {
+    component: () => import('@/domains/inquiry/pages/InspectionSchedulePage'),
+    title: '점검일정',
+    icon: 'schedule',
+  },
+  '/inquiry/non-employee': {
+    component: () => import('@/domains/inquiry/pages/NonEmployeePage'),
+    title: '비정규직',
+    icon: 'person_outline',
+  },
+
+  // 점검계획
+  '/cmplcheck/review-plan': {
+    component: () => import('@/domains/cmplcheck/pages/ReviewPlanPage'),
+    title: '검토계획',
+    icon: 'task_alt',
+  },
+};
+
+/**
+ * 페이지 컴포넌트 매퍼 클래스
+ */
+export class PageComponentMapper {
+  /**
+   * 경로에 해당하는 페이지 컴포넌트를 lazy load로 반환
+   */
+  static getComponent(path: string): React.ComponentType<any> {
+    const mapping = PAGE_COMPONENT_MAPPING[path];
+
+    if (!mapping) {
+      console.warn(`[PageComponentMapper] 등록되지 않은 경로: ${path}`);
+      return () => <ErrorPage error={`등록되지 않은 페이지: ${path}`} />;
+    }
+
+    // lazy loading으로 컴포넌트 반환
+    return lazy(() =>
+      mapping.component().catch(error => {
+        console.error(`[PageComponentMapper] 컴포넌트 로딩 실패: ${path}`, error);
+        return {
+          default: () => <ErrorPage error={`컴포넌트 로딩 실패: ${path}`} />,
+        };
+      })
+    );
+  }
+
+  /**
+   * 경로에 해당하는 페이지 정보 반환
+   */
+  static getPageInfo(path: string): { title: string; icon?: string } | null {
+    const mapping = PAGE_COMPONENT_MAPPING[path];
+
+    if (!mapping) {
+      return null;
+    }
+
+    return {
+      title: mapping.title,
+      icon: mapping.icon,
+    };
+  }
+
+  /**
+   * 모든 등록된 경로 목록 반환
+   */
+  static getAllPaths(): string[] {
+    return Object.keys(PAGE_COMPONENT_MAPPING);
+  }
+
+  /**
+   * 경로가 등록되어 있는지 확인
+   */
+  static hasPath(path: string): boolean {
+    return path in PAGE_COMPONENT_MAPPING;
+  }
+
+  /**
+   * 새로운 페이지 매핑 추가 (동적 등록)
+   */
+  static addMapping(
+    path: string,
+    mapping: {
+      component: () => Promise<{ default: PageComponent }>;
+      title: string;
+      icon?: string;
+    }
+  ): void {
+    PAGE_COMPONENT_MAPPING[path] = mapping;
+  }
+}
+
+export default PageComponentMapper;

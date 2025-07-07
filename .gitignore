@@ -1,0 +1,85 @@
+# ITCEN Solution - Git Ignore 설정
+
+# 운영체제
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE 및 에디터
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.metadata
+.classpath
+.settings/
+
+# Cursor AI 설정 (선택적으로 공유)
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.cursorrules
+
+# 로그 파일
+*.log
+logs/
+log/
+
+# 임시 파일
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# 환경 변수
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 빌드 출력
+/build
+/dist
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 백업 파일
+*.bak
+*.backup
+
+# 테스트 관련
+coverage/
+.nyc_output/
+.coverage
+
+# Docker
+.docker/
+
+# Redis 임시 파일
+/redis-temp/*.rdb
+/redis-temp/*.aof
+
+# 개발 중 임시 파일들
+test_*.json
+fix_*.sql
+login*.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

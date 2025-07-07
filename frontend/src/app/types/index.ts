@@ -1,8 +1,22 @@
-export * from "./common";
-export * from "./router";
-export * from "./utils";
-export * from "./store";
-export * from "./components";
+export * from './common';
+export * from './components';
+export * from './router';
+export * from './store';
+export * from './utils';
+
+/**
+ * 애플리케이션 공통 타입 정의
+ */
+
+// 공통 API 응답 타입을 import (중복 제거)
+export type { ApiError, ApiResponse } from '@/app/common/api/client';
+
+/**
+ * 공통 컴포넌트 타입 정의
+ */
+export interface IComponent<T = unknown> {
+  (props: T): React.JSX.Element;
+}
 
 /**
  * 회의체 관련 타입 정의
@@ -55,10 +69,4 @@ export interface PageableResponse<T> {
   first: boolean;
   numberOfElements: number;
   empty: boolean;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
 }

@@ -1,47 +1,151 @@
-/**
- * 장부관리(ledgermngt) 도메인 라우터 설정
+﻿/**
+ * 원장관리 도메인 라우트 설정
+ * 새로운 라우트 관리 시스템 적용
  */
-import { lazy } from 'react';
+import type { DomainRoute } from '@/app/router/route-manager';
+import React from 'react';
 
-// Lazy loading으로 컴포넌트 로드
-const MeetingStatusPage = lazy(() => import('../pages/MeetingStatusPage'));
-const PositionStatusPage = lazy(() => import('../pages/PositionStatusPage'));
-const ResponsibilityDbStatusPage = lazy(() => import('../pages/ResponsibilityDbStatusPage'));
-const ResponsibilityDetailPage = lazy(() => import('../pages/ResponsibilityDetailPage'));
+// Lazy loading을 위한 컴포넌트 import
+const MeetingStatusPage = React.lazy(() => import('@/domains/ledgermngt/pages/MeetingStatusPage'));
+const PositionStatusPage = React.lazy(
+  () => import('@/domains/ledgermngt/pages/PositionStatusPage')
+);
+const ResponsibilityDbStatusPage = React.lazy(
+  () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage')
+);
+const TestGrid = React.lazy(() => import('@/domains/ledgermngt/pages/TestGrid'));
+const NewComponentsTestPage = React.lazy(
+  () => import('@/domains/ledgermngt/pages/NewComponentsTestPage')
+);
+const PositionCardTestPage = React.lazy(
+  () => import('@/domains/ledgermngt/pages/PositionCardTestPage')
+);
 
-export const ledgermngtRoutes = [
+// 원장관리 도메인 라우트 정의 (백엔드 메뉴 URL과 일치)
+const ledgermngtRoutes: DomainRoute[] = [
   {
-    path: '/meeting-status',
+    path: '/ledger/company-status',
     element: MeetingStatusPage,
     meta: {
-      title: '회의체 현황',
-      requiresAuth: true
-    }
+      title: '회의채 현황',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '회사별 현황'],
+      icon: 'Business',
+      description: '회사별 현황 관리 페이지',
+    },
   },
   {
-    path: '/position-status',
+    path: '/ledger/position-status',
     element: PositionStatusPage,
     meta: {
       title: '직책 현황',
-      requiresAuth: true
-    }
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '직책 현황'],
+      icon: 'Person',
+      description: '직책 현황 관리 페이지',
+    },
   },
   {
-    path: '/responsibility-status',
+    path: '/ledger/db-status',
     element: ResponsibilityDbStatusPage,
     meta: {
-      title: '책무DB 현황',
-      requiresAuth: true
-    }
+      title: '책무 DB현황',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '책무 DB현황'],
+      icon: 'Assignment',
+      description: '책무 데이터베이스 현황 관리 페이지',
+    },
   },
   {
-    path: '/responsibility-status/:id',
-    element: ResponsibilityDetailPage,
+    path: '/ledger/detail-status',
+    element: TestGrid,
     meta: {
-      title: '책무 상세',
-      requiresAuth: true
-    }
-  }
+      title: '직책별 적부 현황',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '직책별 적부 현황'],
+      icon: 'Dashboard',
+      description: '직책별 적부 현황 테스트 그리드 페이지',
+    },
+  },
+  {
+    path: '/ledger/business-status',
+    element: TestGrid,
+    meta: {
+      title: '임원 현황',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '임원 현황'],
+      icon: 'Work',
+      description: '임원원 현황 관리 페이지',
+    },
+  },
+  {
+    path: '/ledger/business-detail-status',
+    element: TestGrid,
+    meta: {
+      title: '임원별 책무 현황',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '임원별 책무 현황'],
+      icon: 'Analytics',
+      description: '임원별 책무 현황 관리 페이지',
+    },
+  },
+  {
+    path: '/ledger/internal-control',
+    element: TestGrid,
+    meta: {
+      title: '부서장 내부통제 항목',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '부서장 내부통제 항목'],
+      icon: 'Security',
+      description: '부서장 내부통제 항목 관리 페이지',
+    },
+  },
+  {
+    path: '/ledger/structure-submission',
+    element: TestGrid,
+    meta: {
+      title: '적부구조도 제출 관리',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '적부구조도 제출 관리'],
+      icon: 'Upload',
+      description: '적부구조도 제출 관리 페이지',
+    },
+  },
+  // 테스트 페이지들 (숨김 메뉴)
+  {
+    path: '/ledger/new-components-test',
+    element: NewComponentsTestPage,
+    meta: {
+      title: '새 컴포넌트 테스트',
+      requiresAuth: true,
+      roles: ['ADMIN'],
+      breadcrumb: ['적부구조 원장 관리', '새 컴포넌트 테스트'],
+      icon: 'Science',
+      description: '새로운 컴포넌트 테스트 페이지',
+      hidden: true,
+    },
+  },
+  {
+    path: '/ledger/position-card-test',
+    element: PositionCardTestPage,
+    meta: {
+      title: '직책 카드 테스트',
+      requiresAuth: true,
+      roles: ['ADMIN'],
+      breadcrumb: ['적부구조 원장 관리', '직책 카드 테스트'],
+      icon: 'Science',
+      description: '직책 카드 컴포넌트 테스트 페이지',
+      hidden: true,
+    },
+  },
 ];
 
-export default ledgermngtRoutes; 
+export default ledgermngtRoutes;

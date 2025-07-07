@@ -1,20 +1,35 @@
-import type { TItcenRoute } from '@/app/types';
+﻿import type { DomainRoute } from '@/app/router/route-manager';
 import React from 'react';
 
-import MainPage from '@/domains/main/pages/MainPage';
-import MeetingStatusPage from '@/domains/ledgermngt/pages/MeetingStatusPage';
+// Lazy loading을 위한 컴포넌트 import
+const MainLayout = React.lazy(() => import('@/shared/components/layout/MainLayout'));
 
-const routes: TItcenRoute[] = [
+// 메인 도메인 라우트 정의
+const mainRoutes: DomainRoute[] = [
   {
-    path: 'main',
-    element: React.createElement(MainPage),
-    name: 'main-page/MainPage',
+    path: '/',
+    element: MainLayout,
+    meta: {
+      title: '메인',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN', 'user', 'admin'],
+      breadcrumb: ['메인'],
+      icon: 'Dashboard',
+      description: '시스템 메인 대시보드',
+    },
   },
   {
-    path: 'meeting-status',
-    element: React.createElement(MeetingStatusPage),
-    name: 'meeting-status-page/MeetingStatusPage',
+    path: '/main',
+    element: MainLayout,
+    meta: {
+      title: '메인',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN', 'user', 'admin'],
+      breadcrumb: ['메인'],
+      icon: 'Dashboard',
+      description: '시스템 메인 대시보드',
+    },
   },
 ];
 
-export default routes; 
+export default mainRoutes;

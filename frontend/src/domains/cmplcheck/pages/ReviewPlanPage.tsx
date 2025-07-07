@@ -2,43 +2,42 @@
  * 검토계획 페이지 컴포넌트
  * 컴플라이언스 검토 계획 관리
  */
-import React, { useState } from 'react';
+import type { IComponent } from '@/app/types';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  FileDownload as DownloadIcon,
+  Edit as EditIcon,
+  Visibility as ViewIcon,
+} from '@mui/icons-material';
+import type { SelectChangeEvent } from '@mui/material';
 import {
   Box,
-  Typography,
-  Paper,
-  Grid,
+  Button,
   Card,
   CardContent,
-  Button,
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  TextField,
+  Typography,
 } from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as ViewIcon,
-  FileDownload as DownloadIcon,
-} from '@mui/icons-material';
-import type { IComponent } from '@/app/types';
-import MainLayout from '../../../shared/components/layout/MainLayout';
+import React, { useState } from 'react';
 
 interface IReviewPlanPageProps {
   // 빈 인터페이스 - 향후 props 추가 시 사용
@@ -67,7 +66,7 @@ const ReviewPlanPage: IComponent<IReviewPlanPageProps> = (): React.JSX.Element =
       startDate: '2024-01-15',
       endDate: '2024-02-15',
       progress: 65,
-      description: '개인정보보호법 개정사항에 따른 사내 규정 및 프로세스 검토'
+      description: '개인정보보호법 개정사항에 따른 사내 규정 및 프로세스 검토',
     },
     {
       id: '2',
@@ -78,7 +77,7 @@ const ReviewPlanPage: IComponent<IReviewPlanPageProps> = (): React.JSX.Element =
       startDate: '2024-02-01',
       endDate: '2024-03-01',
       progress: 0,
-      description: '표준 계약서 양식의 법적 리스크 검토 및 개정'
+      description: '표준 계약서 양식의 법적 리스크 검토 및 개정',
     },
     {
       id: '3',
@@ -89,7 +88,7 @@ const ReviewPlanPage: IComponent<IReviewPlanPageProps> = (): React.JSX.Element =
       startDate: '2023-12-01',
       endDate: '2024-01-10',
       progress: 100,
-      description: '내부통제시스템 운영 규정 전면 개정'
+      description: '내부통제시스템 운영 규정 전면 개정',
     },
     {
       id: '4',
@@ -100,7 +99,7 @@ const ReviewPlanPage: IComponent<IReviewPlanPageProps> = (): React.JSX.Element =
       startDate: '2023-11-15',
       endDate: '2024-01-15',
       progress: 30,
-      description: 'ESG 경영 실행을 위한 가이드라인 및 체크리스트 개발'
+      description: 'ESG 경영 실행을 위한 가이드라인 및 체크리스트 개발',
     },
     {
       id: '5',
@@ -111,8 +110,8 @@ const ReviewPlanPage: IComponent<IReviewPlanPageProps> = (): React.JSX.Element =
       startDate: '2024-01-20',
       endDate: '2024-03-20',
       progress: 45,
-      description: '공정거래법 준수를 위한 실무 매뉴얼 작성'
-    }
+      description: '공정거래법 준수를 위한 실무 매뉴얼 작성',
+    },
   ]);
 
   const [filterCategory, setFilterCategory] = useState<string>('전체');
@@ -125,21 +124,27 @@ const ReviewPlanPage: IComponent<IReviewPlanPageProps> = (): React.JSX.Element =
   const filteredPlans = reviewPlans.filter(plan => {
     const matchesCategory = filterCategory === '전체' || plan.category === filterCategory;
     const matchesStatus = filterStatus === '전체' || plan.status === filterStatus;
-    const matchesSearch = plan.title.toLowerCase().includes(searchText.toLowerCase()) ||
-                         plan.description.toLowerCase().includes(searchText.toLowerCase()) ||
-                         plan.reviewer.toLowerCase().includes(searchText.toLowerCase());
-    
+    const matchesSearch =
+      plan.title.toLowerCase().includes(searchText.toLowerCase()) ||
+      plan.description.toLowerCase().includes(searchText.toLowerCase()) ||
+      plan.reviewer.toLowerCase().includes(searchText.toLowerCase());
+
     return matchesCategory && matchesStatus && matchesSearch;
   });
 
   // 상태별 색상 매핑
   const getStatusColor = (status: string) => {
     switch (status) {
-      case '계획': return 'default';
-      case '진행중': return 'primary';
-      case '완료': return 'success';
-      case '지연': return 'error';
-      default: return 'default';
+      case '계획':
+        return 'default';
+      case '진행중':
+        return 'primary';
+      case '완료':
+        return 'success';
+      case '지연':
+        return 'error';
+      default:
+        return 'default';
     }
   };
 
@@ -166,262 +171,280 @@ const ReviewPlanPage: IComponent<IReviewPlanPageProps> = (): React.JSX.Element =
   };
 
   return (
-    <MainLayout>
-      <Box sx={{ p: 3, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-        {/* 헤더 */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" component="h1" sx={{ mb: 2, fontWeight: 'bold' }}>
-            검토계획 관리
-          </Typography>
-          
-          {/* 통계 카드 */}
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
-                    {reviewPlans.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    전체 계획
-                  </Typography>
-                </CardContent>
-              </Card>
+    <Box sx={{ p: 3, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+      {/* 헤더 */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant='h4' component='h1' sx={{ mb: 2, fontWeight: 'bold' }}>
+          검토계획 관리
+        </Typography>
+
+        {/* 통계 카드 */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant='h4' color='primary' sx={{ fontWeight: 'bold' }}>
+                  {reviewPlans.length}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  전체 계획
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant='h4' color='warning.main' sx={{ fontWeight: 'bold' }}>
+                  {reviewPlans.filter(p => p.status === '진행중').length}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  진행중
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant='h4' color='success.main' sx={{ fontWeight: 'bold' }}>
+                  {reviewPlans.filter(p => p.status === '완료').length}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  완료
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant='h4' color='error.main' sx={{ fontWeight: 'bold' }}>
+                  {reviewPlans.filter(p => p.status === '지연').length}
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  지연
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* 필터 및 검색 영역 */}
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Grid container spacing={2} alignItems='center'>
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth size='small'>
+                <InputLabel>분류</InputLabel>
+                <Select
+                  value={filterCategory}
+                  label='분류'
+                  onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
+                >
+                  <MenuItem value='전체'>전체</MenuItem>
+                  <MenuItem value='법령'>법령</MenuItem>
+                  <MenuItem value='내부규정'>내부규정</MenuItem>
+                  <MenuItem value='계약서'>계약서</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                    {reviewPlans.filter(p => p.status === '진행중').length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    진행중
-                  </Typography>
-                </CardContent>
-              </Card>
+
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth size='small'>
+                <InputLabel>상태</InputLabel>
+                <Select
+                  value={filterStatus}
+                  label='상태'
+                  onChange={(e: SelectChangeEvent) => setFilterStatus(e.target.value)}
+                >
+                  <MenuItem value='전체'>전체</MenuItem>
+                  <MenuItem value='계획'>계획</MenuItem>
+                  <MenuItem value='진행중'>진행중</MenuItem>
+                  <MenuItem value='완료'>완료</MenuItem>
+                  <MenuItem value='지연'>지연</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
-                    {reviewPlans.filter(p => p.status === '완료').length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    완료
-                  </Typography>
-                </CardContent>
-              </Card>
+
+            <Grid item xs={12} sm={6} md={4}>
+              <TextField
+                fullWidth
+                size='small'
+                label='검색'
+                placeholder='제목, 설명, 검토자 검색'
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+              />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="error.main" sx={{ fontWeight: 'bold' }}>
-                    {reviewPlans.filter(p => p.status === '지연').length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    지연
-                  </Typography>
-                </CardContent>
-              </Card>
+
+            <Grid item xs={12} sm={6} md={2}>
+              <Button
+                variant='contained'
+                startIcon={<AddIcon />}
+                fullWidth
+                sx={{
+                  height: '40px',
+                  backgroundColor: 'var(--bank-primary)',
+                  '&:hover': { backgroundColor: 'var(--bank-primary-dark)' }
+                }}
+              >
+                신규 등록
+              </Button>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={2}>
+              <Button
+                variant='outlined'
+                startIcon={<DownloadIcon />}
+                fullWidth
+                sx={{ height: '40px' }}
+              >
+                엑셀 다운로드
+              </Button>
             </Grid>
           </Grid>
-          
-          {/* 필터 및 검색 영역 */}
-          <Paper sx={{ p: 2, mb: 2 }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={6} md={2}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>분류</InputLabel>
-                  <Select
-                    value={filterCategory}
-                    label="분류"
-                    onChange={(e: SelectChangeEvent) => setFilterCategory(e.target.value)}
-                  >
-                    <MenuItem value="전체">전체</MenuItem>
-                    <MenuItem value="법령">법령</MenuItem>
-                    <MenuItem value="내부규정">내부규정</MenuItem>
-                    <MenuItem value="계약서">계약서</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={2}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>상태</InputLabel>
-                  <Select
-                    value={filterStatus}
-                    label="상태"
-                    onChange={(e: SelectChangeEvent) => setFilterStatus(e.target.value)}
-                  >
-                    <MenuItem value="전체">전체</MenuItem>
-                    <MenuItem value="계획">계획</MenuItem>
-                    <MenuItem value="진행중">진행중</MenuItem>
-                    <MenuItem value="완료">완료</MenuItem>
-                    <MenuItem value="지연">지연</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="검색"
-                  placeholder="제목, 설명, 검토자 검색"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                />
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={2}>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  fullWidth
-                  sx={{ height: '40px' }}
-                >
-                  신규 등록
-                </Button>
-              </Grid>
-              
-              <Grid item xs={12} sm={6} md={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={<DownloadIcon />}
-                  fullWidth
-                  sx={{ height: '40px' }}
-                >
-                  엑셀 다운로드
-                </Button>
-              </Grid>
-            </Grid>
-          </Paper>
-        </Box>
+        </Paper>
+      </Box>
 
-        {/* 검토계획 테이블 */}
-        <Paper>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>제목</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>분류</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>상태</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>검토자</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>시작일</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>완료예정일</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>진행률</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>액션</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredPlans.map((plan) => (
-                  <TableRow key={plan.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {plan.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {plan.description}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={plan.category}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={plan.status}
-                        size="small"
-                        color={getStatusColor(plan.status) as any}
-                        variant="filled"
-                      />
-                    </TableCell>
-                    <TableCell>{plan.reviewer}</TableCell>
-                    <TableCell>{plan.startDate}</TableCell>
-                    <TableCell>{plan.endDate}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      {/* 검토계획 테이블 */}
+      <Paper>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>제목</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>분류</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>상태</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>검토자</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>시작일</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>완료예정일</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>진행률</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>액션</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredPlans.map(plan => (
+                <TableRow key={plan.id} hover>
+                  <TableCell>
+                    <Box>
+                      <Typography variant='body2' sx={{ fontWeight: 'medium' }}>
+                        {plan.title}
+                      </Typography>
+                      <Typography variant='caption' color='text.secondary'>
+                        {plan.description}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip label={plan.category} size='small' variant='outlined' />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={plan.status}
+                      size='small'
+                      color={getStatusColor(plan.status) as any}
+                      variant='filled'
+                    />
+                  </TableCell>
+                  <TableCell>{plan.reviewer}</TableCell>
+                  <TableCell>{plan.startDate}</TableCell>
+                  <TableCell>{plan.endDate}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 60,
+                          height: 8,
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 4,
+                          overflow: 'hidden',
+                        }}
+                      >
                         <Box
                           sx={{
-                            width: 60,
-                            height: 8,
-                            backgroundColor: '#e0e0e0',
-                            borderRadius: 4,
-                            overflow: 'hidden'
+                            width: `${plan.progress}%`,
+                            height: '100%',
+                            backgroundColor: getProgressColor(plan.progress),
+                            transition: 'width 0.3s ease',
                           }}
-                        >
-                          <Box
-                            sx={{
-                              width: `${plan.progress}%`,
-                              height: '100%',
-                              backgroundColor: getProgressColor(plan.progress),
-                              transition: 'width 0.3s ease'
-                            }}
-                          />
-                        </Box>
-                        <Typography variant="caption">
-                          {plan.progress}%
-                        </Typography>
+                        />
                       </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <IconButton size="small" color="primary">
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" color="primary">
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => handleDelete(plan)}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      <Typography variant='caption'>{plan.progress}%</Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton
+                        size='small'
+                        sx={{
+                          color: 'var(--bank-primary)',
+                          '&:hover': { backgroundColor: 'var(--bank-primary-light)' }
+                        }}
+                      >
+                        <ViewIcon fontSize='small' />
+                      </IconButton>
+                      <IconButton
+                        size='small'
+                        sx={{
+                          color: 'var(--bank-warning)',
+                          '&:hover': { backgroundColor: 'var(--bank-warning-light)' }
+                        }}
+                      >
+                        <EditIcon fontSize='small' />
+                      </IconButton>
+                      <IconButton
+                        size='small'
+                        onClick={() => handleDelete(plan)}
+                        sx={{
+                          color: 'var(--bank-error)',
+                          '&:hover': { backgroundColor: 'var(--bank-error-light)' }
+                        }}
+                      >
+                        <DeleteIcon fontSize='small' />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          {/* 결과가 없을 때 */}
-          {filteredPlans.length === 0 && (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary">
-                조건에 맞는 검토계획이 없습니다.
-              </Typography>
-            </Box>
-          )}
-        </Paper>
-
-        {/* 삭제 확인 다이얼로그 */}
-        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-          <DialogTitle>검토계획 삭제</DialogTitle>
-          <DialogContent>
-            <Typography>
-              "{selectedPlan?.title}" 검토계획을 삭제하시겠습니까?
-              <br />
-              삭제된 데이터는 복구할 수 없습니다.
+        {/* 결과가 없을 때 */}
+        {filteredPlans.length === 0 && (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant='h6' color='text.secondary'>
+              조건에 맞는 검토계획이 없습니다.
             </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialogOpen(false)}>취소</Button>
-            <Button onClick={confirmDelete} color="error" variant="contained">
-              삭제
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-    </MainLayout>
+          </Box>
+        )}
+      </Paper>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>검토계획 삭제</DialogTitle>
+        <DialogContent>
+          <Typography>
+            "{selectedPlan?.title}" 검토계획을 삭제하시겠습니까?
+            <br />
+            삭제된 데이터는 복구할 수 없습니다.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>취소</Button>
+          <Button
+            onClick={confirmDelete}
+            variant='contained'
+            sx={{
+              backgroundColor: 'var(--bank-error)',
+              '&:hover': { backgroundColor: 'var(--bank-error-dark)' }
+            }}
+          >
+            삭제
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

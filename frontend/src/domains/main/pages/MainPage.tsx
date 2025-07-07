@@ -1,18 +1,22 @@
-import React from 'react';
-import { MainLayout } from '../../../shared/components/layout';
+import type { IComponent } from '@/app/types';
+import React, { useEffect } from 'react';
 import MainContent from '../components/MainContent';
-import type { IComponent } from '../../../app/types';
 
 interface IMainPageProps {
   className?: string;
 }
 
 const MainPage: IComponent<IMainPageProps> = ({ className = '' }): React.JSX.Element => {
-  return (
-    <MainLayout className={className}>
-      <MainContent />
-    </MainLayout>
-  );
+  useEffect(() => {
+    console.log('[MainPage] 컴포넌트가 마운트되었습니다.');
+    return () => {
+      console.log('[MainPage] 컴포넌트가 언마운트되었습니다.');
+    };
+  }, []);
+
+  console.log('[MainPage] 렌더링 중...', { className });
+
+  return <MainContent className={className} />;
 };
 
-export default MainPage; 
+export default MainPage;

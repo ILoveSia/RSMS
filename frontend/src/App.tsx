@@ -1,32 +1,47 @@
-/**
+﻿﻿/**
  * ITCEN Solution Frontend Application
- * 
- * React 19 + MUI v7 + TypeScript를 활용한 메인 애플리케이션 컴포넌트입니다.
+ *
+ * React 18 + MUI v5 + TypeScript를 활용한 메인 애플리케이션 컴포넌트입니다.
+ * 새로운 라우팅 시스템을 사용하여 도메인별 라우트를 자동으로 관리합니다.
  */
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import LoginPage from './domains/login/pages/LoginPage';
-import MainPage from './domains/main/pages/MainPage';
-import MeetingStatusPage from './domains/ledgermngt/pages/MeetingStatusPage';
-import PositionStatusPage from './domains/ledgermngt/pages/PositionStatusPage';
-import ReviewPlanPage from './domains/cmplcheck/pages/ReviewPlanPage';
+import routes from '@/app/router/routes';
+import { LoadingProvider } from '@/shared/components/ui/feedback/LoadingProvider';
+import { ToastProvider } from '@/shared/components/ui/feedback/ToastProvider';
+import { AuthProvider } from '@/shared/context/AuthContext';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { BrowserRouter, useRoutes } from 'react-router-dom';
 
-import ResponsibilityDbStatusPage from './domains/ledgermngt/pages/ResponsibilityDbStatusPage';
-import TestGrid from './domains/ledgermngt/pages/TestGrid';
+// 기본 테마 생성
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+  },
+});
+
+// useRoutes hook을 사용하여 라우트 객체를 기반으로 라우팅을 설정하는 컴포넌트
+const AppRoutes = () => {
+  // useRoutes는 routes 배열을 기반으로 적절한 엘리먼트 트리를 반환합니다.
+  // 이 hook은 BrowserRouter 컨텍스트 내에서 호출되어야 합니다.
+  const element = useRoutes(routes);
+  return element;
+};
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/main" element={<MainPage />} />
-        <Route path="/ledger/company-status" element={<MeetingStatusPage />} />
-        <Route path="/ledger/direct-status" element={<PositionStatusPage />} />
-        <Route path="/ledger/db-status" element={<ResponsibilityDbStatusPage />} />
-        <Route path="/ledger/detail-status" element={<TestGrid />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <LoadingProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </AuthProvider>
+        </ToastProvider>
+      </LoadingProvider>
+    </ThemeProvider>
   );
 }
 

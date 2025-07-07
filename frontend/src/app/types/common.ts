@@ -41,13 +41,8 @@ export interface CommonCodeCreateRequest {
   useYn?: string;
 }
 
-// API 응답 타입
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-  timestamp?: string;
-}
+// API 응답 타입은 공통 클라이언트에서 import
+// export interface ApiResponse<T> - 중복 제거됨
 
 // 공통코드 관련 상태 타입
 export interface CommonCodeState {
@@ -67,4 +62,4 @@ export interface CommonCodeState {
   loading: boolean;
   // 에러 메시지
   error: string | null;
-} 
+}

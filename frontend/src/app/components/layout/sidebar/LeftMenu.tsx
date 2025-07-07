@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useTabContext } from '@/shared/context/TabContext';
+import { PageComponentMapper } from '@/shared/utils/pageComponentMapper';
+import React, { useEffect, useState } from 'react';
+import '../../../../assets/scss/style.css';
 import { useRouter } from '../../../router';
 import { useReduxState } from '../../../store/use-store';
-import '../../../../assets/scss/style.css';
 
 interface Menu {
   id: number;
@@ -45,11 +47,15 @@ interface LeftMenuProps {
 const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const router = useRouter();
-  
+  const { addTab } = useTabContext();
+
+  // TabContext 디버깅
+  console.log('[LeftMenu] TabContext 상태:', { addTab: typeof addTab });
+
   // loginStore에서 사용자 데이터 가져오기
   const { data: loginData } = useReduxState<User>('loginStore/login');
   // menuStore에서 메뉴 데이터 가져오기
-  const { data: menuData } = useReduxState<{data: Menu[]}>('menuStore/accessibleMenus');
+  const { data: menuData } = useReduxState<{ data: Menu[] }>('menuStore/accessibleMenus');
   const [menuItems, setMenuItems] = useState<MenuItemProps[]>([]);
   const [isMenuLoaded, setIsMenuLoaded] = useState<boolean>(false);
 
@@ -58,31 +64,31 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     // console.log('🔄 [LeftMenu] 컴포넌트 마운트');
     // console.log('🔄 [LeftMenu] loginData:', loginData);
     // console.log('🔄 [LeftMenu] menuData:', menuData);
-    
+
     // localStorage에서 메뉴 복원 시도
     const savedMenus = localStorage.getItem('accessibleMenus');
     // console.log('🔍 [LeftMenu] localStorage 확인:', savedMenus ? ' 데이터 있음' : '데이터 없음');
-    
+
     if (savedMenus) {
       try {
         const parsedMenus = JSON.parse(savedMenus);
         // console.log('🔄 [LeftMenu] localStorage에서 메뉴 복원 시도:', parsedMenus.length, '개');
         // console.log('🔍 [LeftMenu] 파싱된 메뉴 원본 데이터:', parsedMenus);
-        
+
         if (Array.isArray(parsedMenus) && parsedMenus.length > 0) {
           const menuMap = new Map<number, Menu>();
           const rootMenus: Menu[] = [];
-          
+
           // 1단계: 모든 메뉴를 Map에 저장
           parsedMenus.forEach((menu: Menu) => {
             menuMap.set(menu.id, { ...menu, children: [] });
           });
           // console.log('🔍 [LeftMenu] menuMap 크기:', menuMap.size);
-          
+
           // 2단계: 부모-자식 관계 설정
           parsedMenus.forEach((menu: Menu) => {
             const menuItem = menuMap.get(menu.id)!;
-            
+
             if (menu.parentId && menuMap.has(menu.parentId)) {
               const parent = menuMap.get(menu.parentId)!;
               parent.children!.push(menuItem);
@@ -92,7 +98,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
           });
           // console.log('🔍 [LeftMenu] rootMenus 개수:', rootMenus.length);
           // console.log('🔍 [LeftMenu] rootMenus 데이터:', rootMenus);
-          
+
           // Menu 데이터를 MenuItemProps로 변환
           const convertedMenus = rootMenus
             .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -101,22 +107,22 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
               // console.log('🔍 [LeftMenu] 변환:', menu.menuName, '->', converted);
               return converted;
             });
-          
+
           // console.log('🔍 [LeftMenu] 최종 변환된 메뉴들:', convertedMenus);
           // console.log('🔍 [LeftMenu] setMenuItems 호출 전 - 현재 menuItems 길이:', menuItems.length);
-          
+
           setMenuItems(convertedMenus);
           setIsMenuLoaded(true);
-          
+
           // 상태 업데이트 확인을 위한 타이머
           setTimeout(() => {
             console.log('🔍 [LeftMenu] setMenuItems 호출 후 100ms - 상태 확인 필요');
           }, 100);
-          
+
           if (convertedMenus.length > 0) {
             setExpandedItems([convertedMenus[0].title]);
           }
-          
+
           // console.log('✅ [LeftMenu] localStorage에서 메뉴 복원 완료:', convertedMenus.length, '개 메뉴');
         } else {
           // console.log('⚠️ [LeftMenu] localStorage 메뉴 데이터가 비어있음');
@@ -126,27 +132,68 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         localStorage.removeItem('accessibleMenus'); // 잘못된 데이터 제거
       }
     } else {
-      console.log('⚠️ [LeftMenu] localStorage에 메뉴 데이터 없음');
+      // console.log('⚠️ [LeftMenu] localStorage에 메뉴 데이터 없음');
     }
   }, []);
 
   const toggleExpanded = (title: string) => {
-    setExpandedItems(prev => 
-      prev.includes(title) 
-        ? prev.filter(item => item !== title)
-        : [...prev, title]
+    setExpandedItems(prev =>
+      prev.includes(title) ? prev.filter(item => item !== title) : [...prev, title]
     );
   };
 
   // Menu 데이터를 MenuItemProps로 변환하는 함수
   const convertMenuToMenuItem = (menu: Menu): MenuItemProps => {
+    const handleMenuClick = () => {
+      console.log(`[LeftMenu] 메뉴 클릭: ${menu.menuName}, URL: ${menu.menuUrl}`);
+
+      if (!menu.menuUrl) {
+        console.log(`[LeftMenu] 메뉴 URL이 없습니다: ${menu.menuName}`);
+        return;
+      }
+
+      // 페이지 정보 가져오기
+      const pageInfo = PageComponentMapper.getPageInfo(menu.menuUrl);
+      console.log(`[LeftMenu] 페이지 정보:`, pageInfo);
+
+      if (!pageInfo) {
+        console.warn(`[LeftMenu] 등록되지 않은 메뉴 경로: ${menu.menuUrl}`);
+        return;
+      }
+
+      // 페이지 컴포넌트 가져오기
+      const PageComponent = PageComponentMapper.getComponent(menu.menuUrl);
+      console.log(`[LeftMenu] 페이지 컴포넌트:`, PageComponent);
+
+      // 탭 추가
+      console.log(`[LeftMenu] 탭 추가 시도:`, {
+        title: pageInfo.title,
+        path: menu.menuUrl,
+        closable: true,
+        icon: pageInfo.icon,
+      });
+
+      try {
+        addTab({
+          title: pageInfo.title,
+          path: menu.menuUrl,
+          component: <PageComponent />,
+          closable: true,
+          icon: pageInfo.icon,
+        });
+        console.log(`[LeftMenu] 탭 추가 성공`);
+      } catch (error) {
+        console.error(`[LeftMenu] 탭 추가 실패:`, error);
+      }
+    };
+
     return {
       title: menu.menuName,
       menuUrl: menu.menuUrl,
-      onClick: menu.menuUrl ? () => router.push(menu.menuUrl!) : undefined,
+      onClick: menu.menuUrl ? handleMenuClick : undefined,
       children: menu.children
         ?.sort((a, b) => a.sortOrder - b.sortOrder) // 하위 메뉴도 정렬
-        .map(child => convertMenuToMenuItem(child))
+        .map(child => convertMenuToMenuItem(child)),
     };
   };
 
@@ -158,22 +205,21 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     // console.log('🔄 [LeftMenu] menuData.data 타입:', typeof menuData?.data);
     // console.log('🔄 [LeftMenu] menuData.data 배열 여부:', Array.isArray(menuData?.data));
     // console.log('🔄 [LeftMenu] menuData.data 길이:', menuData?.data?.length);
-    
+
     if (menuData?.data && menuData.data.length > 0) {
-      
       // 계층형 구조 구성: 부모-자식 관계 설정
       const menuMap = new Map<number, Menu>();
       const rootMenus: Menu[] = [];
-      
+
       // 1단계: 모든 메뉴를 Map에 저장
       menuData.data.forEach((menu: Menu) => {
         menuMap.set(menu.id, { ...menu, children: [] });
       });
-      
+
       // 2단계: 부모-자식 관계 설정
       menuData.data.forEach((menu: Menu) => {
         const menuItem = menuMap.get(menu.id)!;
-        
+
         if (menu.parentId && menuMap.has(menu.parentId)) {
           // 부모가 있는 경우 부모의 children에 추가
           const parent = menuMap.get(menu.parentId)!;
@@ -183,30 +229,30 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
           rootMenus.push(menuItem);
         }
       });
-      
+
       // console.log('🔍 [LeftMenu] 최상위 메뉴 개수:', rootMenus.length);
       // console.log('🔍 [LeftMenu] 계층형 구조:', rootMenus);
-      
+
       // Menu 데이터를 MenuItemProps로 변환
       const convertedMenus = rootMenus
         .sort((a, b) => a.sortOrder - b.sortOrder) // 정렬 순서 적용
         .map(menu => convertMenuToMenuItem(menu));
-      
+
       setMenuItems(convertedMenus);
       setIsMenuLoaded(true);
-      
+
       // 첫 번째 메뉴를 기본으로 확장
       if (convertedMenus.length > 0) {
         setExpandedItems([convertedMenus[0].title]);
       }
-      
+
       // console.log('✅ [LeftMenu] 메뉴 아이템 변환 완료:', convertedMenus);
     } else {
       console.log('⚠️ [LeftMenu] menuStore에 메뉴 데이터가 없습니다.');
       console.log('🔍 [LeftMenu] menuData 상태:', {
         hasMenuData: !!menuData,
         hasMenuDataData: !!menuData?.data,
-        menuCount: menuData?.data?.length || 0
+        menuCount: menuData?.data?.length || 0,
       });
       // localStorage에서 복원한 메뉴가 있다면 유지, 없다면 빈 배열로 설정
       // isMenuLoaded가 true라면 이미 localStorage 복원이 완료된 상태
@@ -214,7 +260,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         console.log('🔍 [LeftMenu] 메뉴 로딩 전이므로 빈 배열로 설정하지 않음');
       } else if (menuItems.length === 0) {
         console.log('🔍 [LeftMenu] localStorage 메뉴도 없으므로 빈 배열로 설정');
-      setMenuItems([]);
+        setMenuItems([]);
       } else {
         console.log('🔍 [LeftMenu] localStorage에서 복원한 메뉴 유지:', menuItems.length, '개');
       }
@@ -232,41 +278,47 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
           onClick={() => {
             if (hasChildren) {
               toggleExpanded(item.title);
-            } else if (item.menuUrl) {
-              // 하위 메뉴가 없고 URL이 있는 경우 페이지 이동
-              router.push(item.menuUrl);
+            } else if (item.onClick) {
+              // 하위 메뉴가 없고 onClick이 있는 경우 실행 (탭 추가)
+              item.onClick();
             }
-            item.onClick?.();
           }}
         >
-          <div className="left-menu__item-icon">
-            <svg 
-              fill="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path d="M8 5v14l11-7z"/>
+          <div className='left-menu__item-icon'>
+            <svg fill='currentColor' viewBox='0 0 24 24'>
+              <path d='M8 5v14l11-7z' />
             </svg>
           </div>
-          
-          <span className="left-menu__item-text">{item.title}</span>
-          
+
+          <span className='left-menu__item-text'>{item.title}</span>
+
           {hasChildren && (
-            <div className="left-menu__item-expand">
+            <div className='left-menu__item-expand'>
               {isExpanded ? (
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <svg fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M19 9l-7 7-7-7'
+                  />
                 </svg>
               ) : (
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M9 5l7 7-7 7'
+                  />
                 </svg>
               )}
             </div>
           )}
         </div>
-        
+
         {hasChildren && isExpanded && (
-          <div className="left-menu__submenu">
+          <div className='left-menu__submenu'>
             {item.children?.map(child => renderMenuItem(child, depth + 1))}
           </div>
         )}
@@ -279,15 +331,18 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     hasLoginData: !!loginData,
     menuItemsLength: menuItems.length,
     isMenuLoaded: isMenuLoaded,
-    menuItems: menuItems
+    menuItems: menuItems,
   });
-  console.log('🔍 [LeftMenu] menuItems 상세:', menuItems.map(item => ({ title: item.title, menuUrl: item.menuUrl })));
+  console.log(
+    '🔍 [LeftMenu] menuItems 상세:',
+    menuItems.map(item => ({ title: item.title, menuUrl: item.menuUrl }))
+  );
 
   if (!loginData) {
     console.log('⚠️ [LeftMenu] 로그인 데이터 없음 - 로그인 필요 메시지 표시');
     return (
       <div className={`left-menu ${className}`}>
-        <div className="left-menu__empty">
+        <div className='left-menu__empty'>
           <p>로그인이 필요합니다.</p>
         </div>
       </div>
@@ -298,7 +353,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     console.log('⚠️ [LeftMenu] 메뉴 아이템 없음 - 접근 가능한 메뉴 없음 메시지 표시');
     return (
       <div className={`left-menu ${className}`}>
-        <div className="left-menu__empty">
+        <div className='left-menu__empty'>
           <p>접근 가능한 메뉴가 없습니다.</p>
         </div>
       </div>
@@ -309,7 +364,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     console.log('⚠️ [LeftMenu] 메뉴 로딩 중...');
     return (
       <div className={`left-menu ${className}`}>
-        <div className="left-menu__empty">
+        <div className='left-menu__empty'>
           <p>메뉴를 불러오는 중...</p>
         </div>
       </div>
@@ -320,11 +375,9 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
   return (
     <div className={`left-menu ${className}`}>
-      <div>
-        {menuItems.map(item => renderMenuItem(item))}
-      </div>
+      <div>{menuItems.map(item => renderMenuItem(item))}</div>
     </div>
   );
 };
 
-export default LeftMenu; 
+export default LeftMenu;

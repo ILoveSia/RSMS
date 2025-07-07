@@ -1,14 +1,15 @@
-import type { RequestMethod } from '@/app/store/request';
+// RequestMethod 타입 정의
+export type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 export interface IRootState<T = unknown> {
   value: T | null;
-  status: "Loading" | "Complete" | "Fail" | "";
+  status: 'Loading' | 'Complete' | 'Fail' | '';
 }
 
 export interface IActionObject {
   actionType: string;
   url?: string;
-  type?: "async" | "sync";
+  type?: 'async' | 'sync';
   useState?: boolean;
 }
 

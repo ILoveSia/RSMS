@@ -1,23 +1,23 @@
 /**
  * 회의체 등록/수정/조회 다이얼로그 컴포넌트
  */
-import React, { useState, useEffect } from 'react';
 import {
+  Alert,
   Box,
   Button,
-  TextField,
+  CircularProgress,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
-  Alert,
-  CircularProgress,
+  Select,
+  TextField,
 } from '@mui/material';
-import Dialog from '../../../app/components/Dialog';
-import { meetingBodyApi } from '../../../app/services/api';
-import type { MeetingBody } from '../../../app/types';
-import type { CommonCode } from '../../../app/types/common';
-import { useReduxState } from '../../../app/store/use-store';
+import React, { useEffect, useState } from 'react';
+import { useReduxState } from '@/app/store/use-store';
+import type { MeetingBody } from '@/app/types';
+import type { CommonCode } from '@/app/types/common';
+import { Dialog } from '@/shared/components/modal';
+import { meetingStatusApi } from '../api/meetingStatusApi';
 
 export interface MeetingBodyDialogProps {
   open: boolean;
@@ -44,8 +44,10 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
   onModeChange,
 }) => {
   // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<{data: CommonCode[]} | CommonCode[]>('codeStore/allCodes');
-  
+  const { data: allCodes, setData: setAllCodes } = useReduxState<
+    { data: CommonCode[] } | CommonCode[]
+  >('codeStore/allCodes');
+
   // 공통코드 배열 추출 함수
   const getCodesArray = (): CommonCode[] => {
     if (!allCodes) return [];
@@ -59,20 +61,20 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
     }
     return [];
   };
-  
+
   // 공통코드 헬퍼 함수
   const getMeetingBodyCodes = () => {
     const codes = getCodesArray();
-    return codes.filter(code => 
-      code.groupCode === 'MEETING_BODY' && code.useYn === 'Y'
-    ).sort((a, b) => a.sortOrder - b.sortOrder);
+    return codes
+      .filter(code => code.groupCode === 'MEETING_BODY' && code.useYn === 'Y')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
   };
 
   const getPeriodCodes = () => {
     const codes = getCodesArray();
-    return codes.filter(code => 
-      code.groupCode === 'PERIOD' && code.useYn === 'Y'
-    ).sort((a, b) => a.sortOrder - b.sortOrder);
+    return codes
+      .filter(code => code.groupCode === 'PERIOD' && code.useYn === 'Y')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
   };
 
   const [formData, setFormData] = useState<FormData>({
@@ -81,7 +83,7 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
     meetingPeriod: '',
     content: '',
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -104,11 +106,22 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
   useEffect(() => {
     const storedCommonCodes = localStorage.getItem('commonCodes');
     console.log('🔍 [MeetingBodyDialog] localStorage 공통코드 확인:', !!storedCommonCodes);
-    
-    if (storedCommonCodes && (!allCodes || (Array.isArray(allCodes) && allCodes.length === 0) || (typeof allCodes === 'object' && 'data' in allCodes && (!allCodes.data || allCodes.data.length === 0)))) {
+
+    if (
+      storedCommonCodes &&
+      (!allCodes ||
+        (Array.isArray(allCodes) && allCodes.length === 0) ||
+        (typeof allCodes === 'object' &&
+          'data' in allCodes &&
+          (!allCodes.data || allCodes.data.length === 0)))
+    ) {
       try {
         const parsedCodes = JSON.parse(storedCommonCodes);
-        console.log('✅ [MeetingBodyDialog] localStorage에서 공통코드 복원:', parsedCodes.length, '개');
+        console.log(
+          '✅ [MeetingBodyDialog] localStorage에서 공통코드 복원:',
+          parsedCodes.length,
+          '개'
+        );
         setAllCodes(parsedCodes);
       } catch (error) {
         console.error('❌ [MeetingBodyDialog] localStorage 공통코드 복원 실패:', error);
@@ -141,23 +154,27 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
   }, [open, mode, meetingBody]);
 
   // 입력값 변경 핸들러
-  const handleInputChange = (field: keyof FormData) => (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { value: string } }
-  ) => {
-    const value = event.target.value;
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-    
-    // 입력 시 해당 필드의 검증 에러 제거
-    if (validationErrors[field]) {
-      setValidationErrors(prev => ({
+  const handleInputChange =
+    (field: keyof FormData) =>
+    (
+      event:
+        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        | { target: { value: string } }
+    ) => {
+      const value = event.target.value;
+      setFormData(prev => ({
         ...prev,
-        [field]: '',
+        [field]: value,
       }));
-    }
-  };
+
+      // 입력 시 해당 필드의 검증 에러 제거
+      if (validationErrors[field]) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [field]: '',
+        }));
+      }
+    };
 
   // 폼 검증
   const validateForm = (): boolean => {
@@ -194,14 +211,14 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
       let savedMeetingBody: MeetingBody;
 
       if (mode === 'create') {
-        savedMeetingBody = await meetingBodyApi.create({
+        savedMeetingBody = await meetingStatusApi.create({
           gubun: formData.gubun,
           meetingName: formData.meetingName,
           meetingPeriod: formData.meetingPeriod,
           content: formData.content,
         });
       } else if (mode === 'edit' && meetingBody) {
-        savedMeetingBody = await meetingBodyApi.update(meetingBody.meetingBodyId, {
+        savedMeetingBody = await meetingStatusApi.update(meetingBody.meetingBodyId, {
           gubun: formData.gubun,
           meetingName: formData.meetingName,
           meetingPeriod: formData.meetingPeriod,
@@ -215,7 +232,8 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
       onClose();
     } catch (err: unknown) {
       console.error('회의체 저장 실패:', err);
-      const errorMessage = err instanceof Error ? err.message : '회의체 저장 중 오류가 발생했습니다.';
+      const errorMessage =
+        err instanceof Error ? err.message : '회의체 저장 중 오류가 발생했습니다.';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -234,24 +252,31 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
     if (mode === 'view') {
       return (
         <>
-        <Button onClick={onClose} variant="outlined">
-          닫기
-        </Button>
-          <Button onClick={handleEditMode} variant="contained" color="primary">
-            수정
+          <Button onClick={onClose} variant='outlined'>
+            닫기
           </Button>
+                  <Button
+          onClick={handleEditMode}
+          variant='contained'
+          sx={{
+            backgroundColor: 'var(--bank-warning)',
+            '&:hover': { backgroundColor: 'var(--bank-warning-dark)' }
+          }}
+        >
+          수정
+        </Button>
         </>
       );
     }
 
     return (
       <>
-        <Button onClick={onClose} variant="outlined" disabled={loading}>
+        <Button onClick={onClose} variant='outlined' disabled={loading}>
           취소
         </Button>
         <Button
           onClick={handleSave}
-          variant="contained"
+          variant='contained'
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : null}
         >
@@ -265,14 +290,14 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
     <Dialog
       open={open}
       title={getDialogTitle()}
-      maxWidth="md"
+      maxWidth='md'
       onClose={onClose}
       disableBackdropClick={loading}
       actions={renderActions()}
     >
       <Box sx={{ mt: 2 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity='error' sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
@@ -282,18 +307,33 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Box sx={{ flex: 1 }}>
               <FormControl fullWidth error={!!validationErrors.gubun}>
-                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>구분 *</InputLabel>
+                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>
+                  구분 *
+                </InputLabel>
                 <Select
                   value={formData.gubun}
-                  label="구분 *"
+                  label='구분 *'
                   onChange={handleInputChange('gubun')}
                   disabled={mode === 'view'}
-                  sx={mode === 'view' ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' } : {}}
+                  sx={
+                    mode === 'view'
+                      ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
+                      : {}
+                  }
                   inputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
                 >
-                  <MenuItem value="" sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}>선택하세요</MenuItem>
-                  {getMeetingBodyCodes().map((code) => (
-                    <MenuItem key={code.code} value={code.code} sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}>
+                  <MenuItem
+                    value=''
+                    sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
+                  >
+                    선택하세요
+                  </MenuItem>
+                  {getMeetingBodyCodes().map(code => (
+                    <MenuItem
+                      key={code.code}
+                      value={code.code}
+                      sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
+                    >
                       {code.codeName}
                     </MenuItem>
                   ))}
@@ -307,18 +347,28 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
             </Box>
             <Box sx={{ flex: 1 }}>
               <FormControl fullWidth error={!!validationErrors.meetingPeriod}>
-                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>개최주기</InputLabel>
+                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>
+                  개최주기
+                </InputLabel>
                 <Select
                   value={formData.meetingPeriod}
-                  label="개최주기"
+                  label='개최주기'
                   onChange={handleInputChange('meetingPeriod')}
                   disabled={mode === 'view'}
-                  sx={mode === 'view' ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' } : {}}
+                  sx={
+                    mode === 'view'
+                      ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
+                      : {}
+                  }
                   inputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
                 >
-                  <MenuItem value="">선택하세요</MenuItem>
-                  {getPeriodCodes().map((code) => (
-                    <MenuItem key={code.code} value={code.code} sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}>
+                  <MenuItem value=''>선택하세요</MenuItem>
+                  {getPeriodCodes().map(code => (
+                    <MenuItem
+                      key={code.code}
+                      value={code.code}
+                      sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
+                    >
                       {code.codeName}
                     </MenuItem>
                   ))}
@@ -335,13 +385,13 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
           {/* 두 번째 행: 회의체명 */}
           <TextField
             fullWidth
-            label="회의체명 *"
+            label='회의체명 *'
             value={formData.meetingName}
             onChange={handleInputChange('meetingName')}
             error={!!validationErrors.meetingName}
             helperText={validationErrors.meetingName}
             disabled={mode === 'view'}
-            placeholder="회의체명을 입력하세요"
+            placeholder='회의체명을 입력하세요'
             InputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
             InputLabelProps={mode === 'view' ? { style: { color: 'black', fontWeight: 700 } } : {}}
           />
@@ -349,7 +399,7 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
           {/* 세 번째 행: 주요 심의·의결사항 */}
           <TextField
             fullWidth
-            label="주요 심의·의결사항"
+            label='주요 심의·의결사항'
             value={formData.content}
             onChange={handleInputChange('content')}
             error={!!validationErrors.content}
@@ -357,7 +407,7 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
             disabled={mode === 'view'}
             multiline
             rows={4}
-            placeholder="주요 심의·의결사항을 입력하세요"
+            placeholder='주요 심의·의결사항을 입력하세요'
             InputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
             InputLabelProps={mode === 'view' ? { style: { color: 'black', fontWeight: 700 } } : {}}
           />
@@ -367,7 +417,7 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label="등록일시"
+                label='등록일시'
                 value={meetingBody.createdAt || ''}
                 disabled
                 InputProps={{ style: { color: 'black', fontWeight: 600 } }}
@@ -375,7 +425,7 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
               />
               <TextField
                 fullWidth
-                label="수정일시"
+                label='수정일시'
                 value={meetingBody.updatedAt || ''}
                 disabled
                 InputProps={{ style: { color: 'black', fontWeight: 600 } }}
@@ -389,4 +439,4 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
   );
 };
 
-export default MeetingBodyDialog; 
+export default MeetingBodyDialog;
