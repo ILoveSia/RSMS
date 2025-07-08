@@ -5,7 +5,11 @@ import apiClient from '@/app/common/api/client';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import type { EmployeeSearchResult } from '@/domains/common/components/search';
-import { EmployeeSearchPopup } from '@/domains/common/components/search';
+import {
+  DepartmentSearchPopup,
+  EmployeeSearchPopup,
+  type Department,
+} from '@/domains/common/components/search';
 import { MeetingBodySearchDialog } from '@/domains/meeting/components';
 import type { MeetingBodySearchResult } from '@/domains/meeting/components/MeetingBodySearchDialog';
 import { Dialog } from '@/shared/components/modal';
@@ -168,6 +172,10 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   const [employeeSearchOpen, setEmployeeSearchOpen] = useState(false);
   const [currentManagerId, setCurrentManagerId] = useState<string>('');
 
+  // 부서 검색 다이얼로그 상태
+  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+  const [currentOwnerDeptId, setCurrentOwnerDeptId] = useState<string>('');
+
   // 다이얼로그 제목 설정
   const getDialogTitle = () => {
     switch (mode) {
@@ -324,11 +332,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     }
   };
 
-  // 소관부서 변경
-  const handleOwnerDeptChange = (id: string, field: keyof OwnerDept, value: string) => {
-    setOwnerDepts(prev => prev.map(dept => (dept.id === id ? { ...dept, [field]: value } : dept)));
-  };
-
   // 회의체 추가
   const addMeeting = () => {
     const newId = Date.now().toString();
@@ -449,6 +452,41 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     handleEmployeeSearchClose();
   };
 
+  // 부서 검색 팝업 열기
+  const handleDepartmentSearchClick = (id: string) => {
+    setCurrentOwnerDeptId(id);
+    setDepartmentSearchOpen(true);
+  };
+
+  // 부서 검색 팝업 닫기
+  const handleDepartmentSearchClose = () => {
+    setDepartmentSearchOpen(false);
+    setCurrentOwnerDeptId('');
+  };
+
+  // 부서 선택 완료
+  const handleDepartmentSelect = (departments: Department | Department[]) => {
+    if (currentOwnerDeptId) {
+      // 단일 선택이므로 첫 번째 요소 또는 단일 객체 사용
+      const selectedDepartment = Array.isArray(departments) ? departments[0] : departments;
+
+      if (selectedDepartment) {
+        setOwnerDepts(prev =>
+          prev.map(dept =>
+            dept.id === currentOwnerDeptId
+              ? {
+                  ...dept,
+                  deptCode: selectedDepartment.deptCode,
+                  deptName: selectedDepartment.deptName,
+                }
+              : dept
+          )
+        );
+      }
+    }
+    handleDepartmentSearchClose();
+  };
+
   // 폼 검증
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -521,16 +559,16 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           <Button onClick={onClose} variant='outlined'>
             닫기
           </Button>
-                  <Button
-          onClick={handleEditMode}
-          variant='contained'
-          sx={{
-            backgroundColor: 'var(--bank-warning)',
-            '&:hover': { backgroundColor: 'var(--bank-warning-dark)' }
-          }}
-        >
-          수정
-        </Button>
+          <Button
+            onClick={handleEditMode}
+            variant='contained'
+            sx={{
+              backgroundColor: 'var(--bank-warning)',
+              '&:hover': { backgroundColor: 'var(--bank-warning-dark)' },
+            }}
+          >
+            수정
+          </Button>
         </>
       );
     }
@@ -632,7 +670,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               <Table size='small'>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableCell sx={{ fontWeight: 'bold' }}>부서코드</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', width: 430 }}>부서코드</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>부서명</TableCell>
                     {mode !== 'view' && (
                       <TableCell sx={{ fontWeight: 'bold', width: 80 }}>작업</TableCell>
@@ -643,31 +681,25 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                   {ownerDepts.map(dept => (
                     <TableRow key={dept.id}>
                       <TableCell>
-                        <FormControl fullWidth size='small'>
-                          <Select
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <TextField
+                            fullWidth
+                            size='small'
                             value={dept.deptCode}
-                            onChange={e => {
-                              const selectedDept = getDeptCodes().find(
-                                code => code.code === e.target.value
-                              );
-                              handleOwnerDeptChange(dept.id, 'deptCode', e.target.value);
-                              handleOwnerDeptChange(
-                                dept.id,
-                                'deptName',
-                                selectedDept?.codeName || ''
-                              );
-                            }}
-                            disabled={mode === 'view'}
-                            displayEmpty
-                          >
-                            <MenuItem value=''>선택하세요</MenuItem>
-                            {getDeptCodes().map(code => (
-                              <MenuItem key={code.code} value={code.code}>
-                                {code.code}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                            disabled
+                            placeholder='부서를 선택하세요'
+                          />
+                          {mode !== 'view' && (
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              onClick={() => handleDepartmentSearchClick(dept.id)}
+                              sx={{ minWidth: 80, fontSize: '0.75rem' }}
+                            >
+                              검색
+                            </Button>
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <TextField
@@ -904,6 +936,15 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           </Box>
         </Box>
       </Box>
+
+      {/* 부서 검색 다이얼로그 */}
+      <DepartmentSearchPopup
+        open={departmentSearchOpen}
+        onClose={handleDepartmentSearchClose}
+        onSelect={handleDepartmentSelect}
+        title='소관부서 검색'
+        multiSelect={false}
+      />
 
       {/* 회의체 검색 다이얼로그 */}
       <MeetingBodySearchDialog

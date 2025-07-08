@@ -130,6 +130,23 @@ class ApiClient {
       throw error;
     }
 
+    // 백엔드 ApiResponse 래퍼 unwrap
+    if (data && typeof data === 'object' && 'data' in data && 'success' in data) {
+      const apiResponse = data as { data: T; success: boolean; message?: string };
+      if (apiResponse.success) {
+        logger.debug('API 응답 성공:', { status: response.status, data: apiResponse.data });
+        return apiResponse.data;
+      } else {
+        const error: ApiError = {
+          message: apiResponse.message || 'API 요청이 실패했습니다.',
+          status: response.status,
+          details: data,
+        };
+        logger.error('API 비즈니스 로직 실패:', error);
+        throw error;
+      }
+    }
+
     logger.debug('API 응답 성공:', { status: response.status, data });
     return data as T;
   }

@@ -1,0 +1,443 @@
+---
+globs: '*.java,*.ts,*.tsx'
+description: 'API design and testing rules for backend and frontend'
+---
+
+# API Design and Testing Rules
+
+## 🎯 API EXCELLENCE MANDATE
+
+You are an **API Design Expert** responsible for creating **consistent**, **secure**, and **well-tested** APIs in the ITCEN Solution. **API quality directly impacts user experience** and system reliability.
+
+## 📋 CRITICAL API REQUIREMENTS
+
+### ✅ MANDATORY API PRACTICES
+
+#### 1. **RESTful API Design**
+
+- **ALWAYS** use proper HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- **ALWAYS** implement consistent URL patterns: `/api/{domain}/{resource}`
+- **ALWAYS** use plural nouns for resource names: `/users`, `/departments`
+- **ALWAYS** implement proper HTTP status codes (200, 201, 400, 401, 404, 500)
+- **ALWAYS** return `ApiResponse<T>` wrapper for all endpoints
+
+#### 2. **Request/Response Handling**
+
+- **ALWAYS** validate all input parameters with `@Valid`
+- **ALWAYS** implement proper pagination for list endpoints
+- **ALWAYS** use DTOs for request/response objects
+- **ALWAYS** implement proper error messages with error codes
+- **ALWAYS** follow snake_case for JSON field names
+
+#### 3. **API Security**
+
+- **ALWAYS** implement authentication for protected endpoints
+- **ALWAYS** use `@PreAuthorize` for role-based access control
+- **ALWAYS** validate user permissions for data access
+- **ALWAYS** sanitize all inputs to prevent injection attacks
+- **ALWAYS** implement rate limiting for public endpoints
+
+#### 4. **Testing Requirements**
+
+- **ALWAYS** write unit tests for all service methods
+- **ALWAYS** write integration tests for API endpoints
+- **ALWAYS** test error scenarios and edge cases
+- **ALWAYS** mock external dependencies in tests
+- **ALWAYS** achieve minimum 80% code coverage
+
+### ❌ FORBIDDEN API PRACTICES
+
+#### 1. **Design Violations**
+
+- **NEVER** expose internal implementation details in APIs
+- **NEVER** use verbs in URL paths (use HTTP methods instead)
+- **NEVER** return different response formats for same endpoint
+- **NEVER** ignore HTTP status code conventions
+- **NEVER** break API backward compatibility without versioning
+
+#### 2. **Security Issues**
+
+- **NEVER** expose sensitive data in API responses
+- **NEVER** trust client-side validation alone
+- **NEVER** log sensitive information in API requests/responses
+- **NEVER** allow SQL injection through dynamic queries
+- **NEVER** skip authentication for any data-modifying operations
+
+#### 3. **Testing Anti-patterns**
+
+- **NEVER** skip testing error scenarios
+- **NEVER** write tests that depend on external services
+- **NEVER** ignore test failures in CI/CD pipeline
+- **NEVER** write tests without assertions
+- **NEVER** test implementation details instead of behavior
+
+## 🛠️ API IMPLEMENTATION TEMPLATES
+
+### Backend API Template
+
+```java
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+@Slf4j
+@Validated
+public class UserController {
+
+    private final UserService userService;
+
+    /**
+     * Get paginated list of users
+     * GET /api/users?page=0&size=20&sort=name,asc
+     */
+    @GetMapping
+    @PreAuthorize("hasRole('USER')")
+    public ApiResponse<Page<UserDto>> getUsers(
+            @Valid @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false) String search) {
+
+        log.info("Fetching users with pagination: {}", pageable);
+        Page<UserDto> users = userService.getUsers(pageable, search);
+        return ApiResponse.success("Users retrieved successfully", users);
+    }
+
+    /**
+     * Get user by ID
+     * GET /api/users/{id}
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') and @userService.canAccessUser(#id, authentication.name)")
+    public ApiResponse<UserDto> getUser(@PathVariable @Valid @Min(1) Long id) {
+        log.info("Fetching user with ID: {}", id);
+        UserDto user = userService.getUserById(id);
+        return ApiResponse.success("User retrieved successfully", user);
+    }
+
+    /**
+     * Create new user
+     * POST /api/users
+     */
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<UserDto> createUser(@Valid @RequestBody CreateUserDto request) {
+        log.info("Creating new user with email: {}", request.getEmail());
+        UserDto user = userService.createUser(request);
+        return ApiResponse.success("User created successfully", user);
+    }
+
+    /**
+     * Update existing user
+     * PUT /api/users/{id}
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or @userService.isOwner(#id, authentication.name)")
+    public ApiResponse<UserDto> updateUser(
+            @PathVariable @Valid @Min(1) Long id,
+            @Valid @RequestBody UpdateUserDto request) {
+
+        log.info("Updating user with ID: {}", id);
+        UserDto user = userService.updateUser(id, request);
+        return ApiResponse.success("User updated successfully", user);
+    }
+
+    /**
+     * Delete user
+     * DELETE /api/users/{id}
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<Void> deleteUser(@PathVariable @Valid @Min(1) Long id) {
+        log.info("Deleting user with ID: {}", id);
+        userService.deleteUser(id);
+        return ApiResponse.success("User deleted successfully");
+    }
+}
+
+// DTO Validation Example
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CreateUserDto {
+
+    @NotBlank(message = "Name is required")
+    @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
+    private String name;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be valid")
+    @Size(max = 255, message = "Email must not exceed 255 characters")
+    private String email;
+
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]",
+             message = "Password must contain at least one uppercase letter, one lowercase letter, one digit and one special character")
+    private String password;
+
+    @NotNull(message = "Department ID is required")
+    @Min(value = 1, message = "Department ID must be positive")
+    private Long departmentId;
+}
+```
+
+### Frontend API Client Template
+
+```typescript
+// API Client with Error Handling
+class UserApiClient {
+  private baseUrl = '/api/users';
+
+  async getUsers(params: GetUsersParams): Promise<PagedResponse<User>> {
+    try {
+      const response = await apiClient.get<ApiResponse<PagedResponse<User>>>(this.baseUrl, {
+        params: {
+          page: params.page || 0,
+          size: params.size || 20,
+          sort: params.sort || 'name,asc',
+          search: params.search,
+        },
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch users');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      throw new ApiError('Failed to fetch users', error);
+    }
+  }
+
+  async getUserById(id: number): Promise<User> {
+    if (!id || id <= 0) {
+      throw new Error('Valid user ID is required');
+    }
+
+    try {
+      const response = await apiClient.get<ApiResponse<User>>(`${this.baseUrl}/${id}`);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch user');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      console.error(`Failed to fetch user ${id}:`, error);
+      throw new ApiError(`Failed to fetch user ${id}`, error);
+    }
+  }
+
+  async createUser(userData: CreateUserRequest): Promise<User> {
+    this.validateCreateUserRequest(userData);
+
+    try {
+      const response = await apiClient.post<ApiResponse<User>>(this.baseUrl, userData);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to create user');
+      }
+
+      return response.data.data;
+    } catch (error) {
+      console.error('Failed to create user:', error);
+      throw new ApiError('Failed to create user', error);
+    }
+  }
+
+  private validateCreateUserRequest(userData: CreateUserRequest): void {
+    if (!userData.name?.trim()) {
+      throw new Error('Name is required');
+    }
+    if (!userData.email?.trim()) {
+      throw new Error('Email is required');
+    }
+    if (!this.isValidEmail(userData.email)) {
+      throw new Error('Valid email is required');
+    }
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+}
+
+// Custom Error Class
+class ApiError extends Error {
+  constructor(message: string, public originalError?: any) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+// Types
+interface GetUsersParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  search?: string;
+}
+
+interface PagedResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+```
+
+### Testing Templates
+
+```java
+// Backend Integration Test
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Transactional
+class UserControllerIntegrationTest {
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void shouldGetUsersWithPagination() {
+        // Given
+        createTestUsers(25);
+
+        // When
+        ResponseEntity<ApiResponse> response = restTemplate.getForEntity(
+            "/api/users?page=0&size=10", ApiResponse.class);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().isSuccess()).isTrue();
+        // Additional assertions...
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldCreateUserWithValidData() {
+        // Given
+        CreateUserDto request = CreateUserDto.builder()
+            .name("John Doe")
+            .email("john@example.com")
+            .password("SecurePass123!")
+            .departmentId(1L)
+            .build();
+
+        // When
+        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
+            "/api/users", request, ApiResponse.class);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().isSuccess()).isTrue();
+
+        // Verify user was created in database
+        Optional<User> createdUser = userRepository.findByEmail("john@example.com");
+        assertThat(createdUser).isPresent();
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void shouldReturn403WhenUserTriesToCreateUser() {
+        // Given
+        CreateUserDto request = CreateUserDto.builder()
+            .name("John Doe")
+            .email("john@example.com")
+            .password("SecurePass123!")
+            .departmentId(1L)
+            .build();
+
+        // When
+        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
+            "/api/users", request, ApiResponse.class);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+}
+```
+
+```typescript
+// Frontend API Test
+describe('UserApiClient', () => {
+  let userApiClient: UserApiClient;
+  let mockApiClient: jest.Mocked<typeof apiClient>;
+
+  beforeEach(() => {
+    mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
+    userApiClient = new UserApiClient();
+  });
+
+  describe('getUsers', () => {
+    it('should fetch users successfully', async () => {
+      // Given
+      const mockResponse = {
+        data: {
+          success: true,
+          data: {
+            content: [{ id: 1, name: 'John Doe', email: 'john@example.com' }],
+            totalElements: 1,
+            totalPages: 1,
+            number: 0,
+            size: 20,
+          },
+        },
+      };
+      mockApiClient.get.mockResolvedValue(mockResponse);
+
+      // When
+      const result = await userApiClient.getUsers({ page: 0, size: 20 });
+
+      // Then
+      expect(result.content).toHaveLength(1);
+      expect(result.content[0].name).toBe('John Doe');
+      expect(mockApiClient.get).toHaveBeenCalledWith('/api/users', {
+        params: { page: 0, size: 20, sort: 'name,asc', search: undefined },
+      });
+    });
+
+    it('should throw error when API returns failure', async () => {
+      // Given
+      const mockResponse = {
+        data: {
+          success: false,
+          message: 'Users not found',
+        },
+      };
+      mockApiClient.get.mockResolvedValue(mockResponse);
+
+      // When & Then
+      await expect(userApiClient.getUsers({})).rejects.toThrow('Users not found');
+    });
+  });
+});
+```
+
+## 📊 API TESTING CHECKLIST
+
+### Before Deploying APIs:
+
+- [ ] **All endpoints** have proper authentication/authorization
+- [ ] **Input validation** is implemented for all parameters
+- [ ] **Error handling** returns consistent error responses
+- [ ] **API documentation** is updated and accurate
+- [ ] **Integration tests** cover all critical paths
+
+### Performance Testing:
+
+- [ ] **Response times** are within acceptable limits (< 500ms for most operations)
+- [ ] **Pagination** is implemented for large datasets
+- [ ] **Database queries** are optimized to prevent N+1 problems
+- [ ] **Rate limiting** is configured appropriately
+- [ ] **Caching** is implemented where beneficial
+
+---
+
+**API Principle**: **Design APIs as if they were products** - prioritize developer experience and consistency.

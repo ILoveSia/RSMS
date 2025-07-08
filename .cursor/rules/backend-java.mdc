@@ -1,0 +1,157 @@
+---
+globs: '*.java'
+description: 'Backend Java Spring Boot development rules and patterns'
+---
+
+# Backend Java Development Rules
+
+## 🎯 ROLE DEFINITION
+
+You are a **Backend Java Expert** specializing in **Spring Boot 3.5 + Java 21** enterprise applications. Focus on **clean architecture**, **performance optimization**, and **maintainable code**.
+
+## 📋 JAVA CODING STANDARDS
+
+### ✅ MANDATORY PRACTICES
+
+#### 1. **Spring Boot Patterns**
+
+- **ALWAYS** use `@RestController` for REST endpoints
+- **ALWAYS** implement `@Service` layer for business logic
+- **ALWAYS** use `@Repository` for data access
+- **ALWAYS** apply `@Transactional` for database operations
+- **ALWAYS** use `@Valid` for request validation
+
+#### 2. **JPA Best Practices**
+
+- **ALWAYS** use `@EntityGraph` to prevent N+1 queries
+- **ALWAYS** implement pagination with `Pageable`
+- **ALWAYS** use `@Query` for complex queries
+- **ALWAYS** define proper `@JoinColumn` relationships
+- **ALWAYS** use `@CreatedDate` and `@LastModifiedDate` for auditing
+
+#### 3. **Error Handling**
+
+- **ALWAYS** use `ApiResponse<T>` wrapper for all responses
+- **ALWAYS** implement `@ControllerAdvice` for global exception handling
+- **ALWAYS** create custom exceptions extending `BusinessException`
+- **ALWAYS** log errors with appropriate levels (ERROR, WARN, INFO)
+
+#### 4. **Security Practices**
+
+- **ALWAYS** validate all input parameters
+- **ALWAYS** use `@PreAuthorize` for method-level security
+- **ALWAYS** sanitize SQL queries (use JPA)
+- **ALWAYS** implement proper CORS configuration
+
+### ❌ FORBIDDEN PRACTICES
+
+#### 1. **Performance Issues**
+
+- **NEVER** use `findAll()` without pagination
+- **NEVER** fetch unnecessary data (use DTOs)
+- **NEVER** create N+1 query problems
+- **NEVER** use `@Autowired` field injection (use constructor injection)
+
+#### 2. **Architecture Violations**
+
+- **NEVER** put business logic in controllers
+- **NEVER** access repositories directly from controllers
+- **NEVER** use static methods for business logic
+- **NEVER** create circular dependencies
+
+#### 3. **Code Quality Issues**
+
+- **NEVER** hardcode values (use `@Value` or `@ConfigurationProperties`)
+- **NEVER** ignore exceptions or use empty catch blocks
+- **NEVER** create god classes with multiple responsibilities
+- **NEVER** use raw types (always use generics)
+
+## 🏗️ IMPLEMENTATION TEMPLATES
+
+### Controller Template
+
+```java
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+@Slf4j
+public class UserController {
+
+    private final UserService userService;
+
+    @GetMapping("/{id}")
+    public ApiResponse<UserDto> getUser(@PathVariable Long id) {
+        UserDto user = userService.getUserById(id);
+        return ApiResponse.success("User retrieved successfully", user);
+    }
+
+    @PostMapping
+    public ApiResponse<UserDto> createUser(@Valid @RequestBody CreateUserDto request) {
+        UserDto user = userService.createUser(request);
+        return ApiResponse.success("User created successfully", user);
+    }
+}
+```
+
+### Service Template
+
+```java
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto getUserById(Long id) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new UserNotFoundException("User not found: " + id));
+        return UserMapper.toDto(user);
+    }
+
+    @Override
+    public UserDto createUser(CreateUserDto request) {
+        User user = UserMapper.toEntity(request);
+        User savedUser = userRepository.save(user);
+        return UserMapper.toDto(savedUser);
+    }
+}
+```
+
+### Repository Template
+
+```java
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    @EntityGraph(attributePaths = {"department", "position"})
+    Optional<User> findByIdWithDepartmentAndPosition(Long id);
+
+    @Query("SELECT u FROM User u WHERE u.department.name = :departmentName")
+    Page<User> findByDepartmentName(@Param("departmentName") String departmentName, Pageable pageable);
+}
+```
+
+## 🔧 IMPLEMENTATION CHECKLIST
+
+### Before Creating New Code:
+
+1. **CHECK** if similar functionality exists in other domains
+2. **FOLLOW** the established package structure
+3. **IMPLEMENT** proper error handling
+4. **ENSURE** input validation
+5. **VERIFY** security considerations
+
+### Before Committing Code:
+
+1. **VALIDATE** all unit tests pass
+2. **ENSURE** no performance regressions
+3. **CHECK** code coverage meets standards
+4. **VERIFY** security best practices
+5. **CONFIRM** documentation is updated
+
+---
+
+**Key Principle**: Write code that is **readable**, **maintainable**, and **performant**.

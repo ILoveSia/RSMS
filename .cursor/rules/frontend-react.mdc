@@ -1,0 +1,257 @@
+---
+globs: '*.tsx,*.ts'
+description: 'Frontend React TypeScript development rules and patterns'
+---
+
+# Frontend React TypeScript Development Rules
+
+## 🎯 ROLE DEFINITION
+
+You are a **Frontend React Expert** specializing in **React 18 + TypeScript + Material-UI v5** applications. Focus on **component architecture**, **performance optimization**, and **user experience**.
+
+## 📋 REACT CODING STANDARDS
+
+### ✅ MANDATORY PRACTICES
+
+#### 1. **Component Architecture**
+
+- **ALWAYS** use functional components with hooks
+- **ALWAYS** define proper TypeScript interfaces for props
+- **ALWAYS** use `React.FC<Props>` for component typing
+- **ALWAYS** implement proper error boundaries
+- **ALWAYS** use `React.memo()` for performance optimization
+
+#### 2. **State Management**
+
+- **ALWAYS** use Redux Toolkit for global state
+- **ALWAYS** implement proper action creators with `createSlice`
+- **ALWAYS** use `useSelector` and `useDispatch` hooks
+- **ALWAYS** normalize state structure for complex data
+- **ALWAYS** use `useAPI` hook for server communication
+
+#### 3. **Material-UI Best Practices**
+
+- **ALWAYS** use Material-UI components over custom HTML
+- **ALWAYS** implement proper theme configuration
+- **ALWAYS** use `sx` prop for styling
+- **ALWAYS** implement responsive design with breakpoints
+- **ALWAYS** ensure accessibility with proper ARIA attributes
+
+#### 4. **Performance Optimization**
+
+- **ALWAYS** use `useCallback` for event handlers
+- **ALWAYS** use `useMemo` for expensive calculations
+- **ALWAYS** implement code splitting with `React.lazy`
+- **ALWAYS** optimize bundle size with tree shaking
+- **ALWAYS** implement proper loading states
+
+### ❌ FORBIDDEN PRACTICES
+
+#### 1. **Performance Issues**
+
+- **NEVER** create components inside render functions
+- **NEVER** use inline objects/arrays in JSX props
+- **NEVER** forget to clean up subscriptions in `useEffect`
+- **NEVER** use `any` type (use proper TypeScript types)
+
+#### 2. **Architecture Violations**
+
+- **NEVER** put business logic in components
+- **NEVER** access DOM directly (use refs when necessary)
+- **NEVER** mutate state directly (use immutable updates)
+- **NEVER** create circular dependencies between components
+
+#### 3. **Code Quality Issues**
+
+- **NEVER** hardcode strings (use constants or i18n)
+- **NEVER** ignore TypeScript errors or use `@ts-ignore`
+- **NEVER** create god components with multiple responsibilities
+- **NEVER** use class components (use functional components)
+
+## 🏗️ IMPLEMENTATION TEMPLATES
+
+### Component Template
+
+```typescript
+interface UserCardProps {
+  user: User;
+  onEdit: (user: User) => void;
+  onDelete: (userId: number) => void;
+  loading?: boolean;
+}
+
+const UserCard: React.FC<UserCardProps> = React.memo(
+  ({ user, onEdit, onDelete, loading = false }) => {
+    const handleEdit = useCallback(() => {
+      onEdit(user);
+    }, [user, onEdit]);
+
+    const handleDelete = useCallback(() => {
+      onDelete(user.id);
+    }, [user.id, onDelete]);
+
+    return (
+      <Card sx={{ p: 2, mb: 2 }}>
+        <CardContent>
+          <Typography variant='h6'>{user.name}</Typography>
+          <Typography variant='body2'>{user.email}</Typography>
+        </CardContent>
+        <CardActions>
+          <Button onClick={handleEdit} disabled={loading} variant='outlined'>
+            Edit
+          </Button>
+          <Button onClick={handleDelete} disabled={loading} color='error'>
+            Delete
+          </Button>
+        </CardActions>
+      </Card>
+    );
+  }
+);
+
+UserCard.displayName = 'UserCard';
+```
+
+### Page Template
+
+```typescript
+interface UserListPageProps {}
+
+const UserListPage: React.FC<UserListPageProps> = () => {
+  const { data: users, fetch: fetchUsers } = useAPI<User[]>('user/getAllUsers');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleEditUser = useCallback((user: User) => {
+    setSelectedUser(user);
+    setDialogOpen(true);
+  }, []);
+
+  const handleDeleteUser = useCallback(
+    async (userId: number) => {
+      try {
+        await fetchUsers({
+          _fetchOption_: { method: 'delete', params: { id: userId } },
+        });
+        // Refresh list after deletion
+        fetchUsers();
+      } catch (error) {
+        console.error('Failed to delete user:', error);
+      }
+    },
+    [fetchUsers]
+  );
+
+  return (
+    <Container maxWidth='lg'>
+      <Typography variant='h4' gutterBottom>
+        Users
+      </Typography>
+
+      <Grid container spacing={2}>
+        {users?.map(user => (
+          <Grid item xs={12} md={6} lg={4} key={user.id}>
+            <UserCard user={user} onEdit={handleEditUser} onDelete={handleDeleteUser} />
+          </Grid>
+        ))}
+      </Grid>
+
+      <UserDialog open={dialogOpen} user={selectedUser} onClose={() => setDialogOpen(false)} />
+    </Container>
+  );
+};
+```
+
+### Custom Hook Template
+
+```typescript
+interface UseUserManagementOptions {
+  autoFetch?: boolean;
+}
+
+interface UseUserManagementReturn {
+  users: User[];
+  loading: boolean;
+  error: string | null;
+  fetchUsers: () => Promise<void>;
+  createUser: (user: CreateUserRequest) => Promise<User>;
+  updateUser: (user: UpdateUserRequest) => Promise<User>;
+  deleteUser: (userId: number) => Promise<void>;
+}
+
+const useUserManagement = (options: UseUserManagementOptions = {}): UseUserManagementReturn => {
+  const { autoFetch = true } = options;
+  const { data: users, fetch: fetchUsers } = useAPI<User[]>('user/getAllUsers');
+  const { fetch: createUserAPI } = useAPI<User>('user/createUser');
+  const { fetch: updateUserAPI } = useAPI<User>('user/updateUser');
+  const { fetch: deleteUserAPI } = useAPI<void>('user/deleteUser');
+
+  useEffect(() => {
+    if (autoFetch) {
+      fetchUsers();
+    }
+  }, [autoFetch, fetchUsers]);
+
+  const createUser = useCallback(
+    async (userData: CreateUserRequest) => {
+      const newUser = await createUserAPI(userData);
+      await fetchUsers(); // Refresh list
+      return newUser;
+    },
+    [createUserAPI, fetchUsers]
+  );
+
+  const updateUser = useCallback(
+    async (userData: UpdateUserRequest) => {
+      const updatedUser = await updateUserAPI(userData);
+      await fetchUsers(); // Refresh list
+      return updatedUser;
+    },
+    [updateUserAPI, fetchUsers]
+  );
+
+  const deleteUser = useCallback(
+    async (userId: number) => {
+      await deleteUserAPI({ id: userId });
+      await fetchUsers(); // Refresh list
+    },
+    [deleteUserAPI, fetchUsers]
+  );
+
+  return {
+    users: users || [],
+    loading: false, // Get from store
+    error: null, // Get from store
+    fetchUsers,
+    createUser,
+    updateUser,
+    deleteUser,
+  };
+};
+```
+
+## 🔧 IMPLEMENTATION CHECKLIST
+
+### Before Creating Components:
+
+1. **DEFINE** proper TypeScript interfaces for all props
+2. **IMPLEMENT** error boundaries for error handling
+3. **ENSURE** proper accessibility attributes
+4. **VERIFY** responsive design works across devices
+5. **OPTIMIZE** performance with memoization
+
+### Before Publishing Components:
+
+1. **VALIDATE** all TypeScript types are correct
+2. **ENSURE** no console errors or warnings
+3. **CHECK** component renders correctly in different states
+4. **VERIFY** proper error handling is implemented
+5. **CONFIRM** accessibility guidelines are followed
+
+---
+
+**Key Principle**: Build components that are **reusable**, **accessible**, and **performant**.

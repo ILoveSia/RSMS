@@ -253,7 +253,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             borderRadius: '4px',
           }}
         >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>원장차수</span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <FormControl size='small' sx={{ minWidth: 180 }}>
             <Select
               value={selectedLedgerOrder}
@@ -303,7 +303,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
               },
             }}
           >
-            차수생성
+            책무번호생성
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <Button
@@ -374,7 +374,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             삭제
           </Button>
         </Box>
-        <Box sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ height: '600px', width: '100%' }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
             rows={rows}
@@ -386,7 +386,8 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             rowSelectionModel={selectedIds}
             disableRowSelectionOnClick
             sx={{
-              height: '100%',
+              height: error ? 'calc(100% - 30px)' : '100%',
+              width: '100%',
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary) !important',
                 fontWeight: 'bold',

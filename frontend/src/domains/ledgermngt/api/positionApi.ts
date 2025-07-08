@@ -1,5 +1,4 @@
 import apiClient from '@/app/common/api/client';
-import type { ApiResponse } from '@/app/types/common';
 
 // 직책 현황 행 타입
 export interface PositionStatusRow {
@@ -24,10 +23,8 @@ export class PositionApiService {
    * 직책 현황 목록 조회
    */
   static async getStatusList(): Promise<PositionStatusRow[]> {
-    const response = await apiClient.get<ApiResponse<PositionStatusRow[]>>(
-      '/positions/status-list'
-    );
-    return response?.data || [];
+    const response = await apiClient.get<PositionStatusRow[]>('/positions/status-list');
+    return response || [];
   }
 
   /**
@@ -48,14 +45,10 @@ export class PositionApiService {
    * 원장차수+진행상태 목록 조회 (SelectBox)
    */
   static async getLedgerOrderSelectList(): Promise<LedgerOrderSelect[]> {
-    const response = await apiClient.get<{
-      success: boolean;
-      message: string;
-      data: LedgerOrderSelect[];
-      timestamp: string;
-    }>('/positions/ledger-orders/select-list');
-
-    return response.data || [];
+    const response = await apiClient.get<LedgerOrderSelect[]>(
+      '/positions/ledger-orders/select-list'
+    );
+    return response || [];
   }
 }
 

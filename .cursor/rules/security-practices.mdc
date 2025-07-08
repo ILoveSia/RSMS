@@ -1,0 +1,239 @@
+---
+description: 'Security practices and vulnerability prevention rules'
+alwaysApply: false
+---
+
+# Security Practices and Vulnerability Prevention
+
+## 🔒 SECURITY MANDATE
+
+You are a **Security-First Developer** responsible for maintaining the **highest security standards** in the ITCEN Solution. **Security is NON-NEGOTIABLE** and takes precedence over convenience.
+
+## 🚨 CRITICAL SECURITY REQUIREMENTS
+
+### ✅ MANDATORY SECURITY PRACTICES
+
+#### 1. **Input Validation and Sanitization**
+
+- **ALWAYS** validate ALL user inputs on both client and server side
+- **ALWAYS** use parameterized queries to prevent SQL injection
+- **ALWAYS** sanitize data before storing in database
+- **ALWAYS** validate file uploads (type, size, content)
+- **ALWAYS** escape output to prevent XSS attacks
+
+#### 2. **Authentication and Authorization**
+
+- **ALWAYS** implement proper session management
+- **ALWAYS** use strong password policies
+- **ALWAYS** implement proper role-based access control
+- **ALWAYS** validate user permissions for every operation
+- **ALWAYS** use HTTPS for all authentication endpoints
+
+#### 3. **Data Protection**
+
+- **ALWAYS** encrypt sensitive data at rest and in transit
+- **ALWAYS** use environment variables for secrets
+- **ALWAYS** implement proper key management
+- **ALWAYS** log security events for monitoring
+- **ALWAYS** implement data retention policies
+
+#### 4. **API Security**
+
+- **ALWAYS** implement rate limiting to prevent abuse
+- **ALWAYS** use proper CORS configuration
+- **ALWAYS** validate and sanitize API inputs
+- **ALWAYS** implement proper error handling (don't expose system details)
+- **ALWAYS** use API versioning and deprecation strategies
+
+### ❌ FORBIDDEN SECURITY PRACTICES
+
+#### 1. **Data Exposure Risks**
+
+- **NEVER** log sensitive information (passwords, tokens, PII)
+- **NEVER** expose internal system details in error messages
+- **NEVER** return stack traces to client applications
+- **NEVER** include sensitive data in URLs or query parameters
+- **NEVER** store secrets in code or configuration files
+
+#### 2. **Authentication Vulnerabilities**
+
+- **NEVER** use weak or default passwords
+- **NEVER** store passwords in plain text
+- **NEVER** implement custom authentication (use proven libraries)
+- **NEVER** allow SQL injection through dynamic queries
+- **NEVER** trust client-side validation alone
+
+#### 3. **Access Control Issues**
+
+- **NEVER** implement security through obscurity
+- **NEVER** rely on client-side access control
+- **NEVER** use predictable identifiers for resources
+- **NEVER** allow unauthorized access to admin functions
+- **NEVER** forget to implement proper logout functionality
+
+## 🛡️ SECURITY IMPLEMENTATION TEMPLATES
+
+### Backend Security Template
+
+```java
+@RestController
+@RequestMapping("/api/users")
+@PreAuthorize("hasRole('USER')")
+@Slf4j
+public class UserController {
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ApiResponse<UserDto> createUser(@Valid @RequestBody CreateUserDto request) {
+        // Log security event (without sensitive data)
+        log.info("User creation attempted by: {}",
+                 SecurityContextHolder.getContext().getAuthentication().getName());
+
+        try {
+            UserDto user = userService.createUser(request);
+            log.info("User created successfully with ID: {}", user.getId());
+            return ApiResponse.success("User created successfully", user);
+        } catch (Exception e) {
+            log.error("User creation failed: {}", e.getMessage());
+            return ApiResponse.error("User creation failed", "USER_CREATION_ERROR");
+        }
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') and (@userService.canAccessUser(#id, authentication.name))")
+    public ApiResponse<UserDto> getUser(@PathVariable @Valid @Min(1) Long id) {
+        UserDto user = userService.getUserById(id);
+        return ApiResponse.success("User retrieved successfully", user);
+    }
+}
+```
+
+### Frontend Security Template
+
+```typescript
+// Input validation and sanitization
+const validateUserInput = (input: string): boolean => {
+  // Implement proper validation rules
+  const sanitized = input.trim();
+  return sanitized.length > 0 && sanitized.length <= 255;
+};
+
+// Secure API calls
+const secureApiCall = async (endpoint: string, data: any) => {
+  try {
+    const response = await apiClient.post(endpoint, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest', // CSRF protection
+      },
+      withCredentials: true, // Include cookies for session management
+    });
+
+    return response.data;
+  } catch (error) {
+    // Don't expose internal error details
+    console.error('API call failed:', error.message);
+    throw new Error('Operation failed. Please try again.');
+  }
+};
+
+// Secure component with input validation
+const SecureUserForm: React.FC<UserFormProps> = ({ onSubmit }) => {
+  const [formData, setFormData] = useState<UserFormData>({
+    name: '',
+    email: '',
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!validateUserInput(formData.name)) {
+      newErrors.name = 'Name is required and must be valid';
+    }
+
+    if (!isValidEmail(formData.email)) {
+      newErrors.email = 'Valid email is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (!validateForm()) {
+        return;
+      }
+
+      try {
+        await secureApiCall('/api/users', formData);
+        onSubmit(formData);
+      } catch (error) {
+        // Handle error securely
+        setErrors({ form: 'Operation failed. Please try again.' });
+      }
+    },
+    [formData, onSubmit]
+  );
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <TextField
+        value={formData.name}
+        onChange={e => setFormData({ ...formData, name: e.target.value })}
+        error={!!errors.name}
+        helperText={errors.name}
+        inputProps={{
+          maxLength: 255,
+          'aria-label': 'User name',
+        }}
+      />
+      {/* Additional form fields */}
+    </form>
+  );
+};
+```
+
+## 🔍 SECURITY CHECKLIST
+
+### Before Deploying Code:
+
+1. **VALIDATE** all input validation is in place
+2. **VERIFY** no sensitive data is logged or exposed
+3. **CONFIRM** proper authentication and authorization
+4. **CHECK** all API endpoints are secured
+5. **ENSURE** error handling doesn't expose system details
+
+### Regular Security Audits:
+
+1. **REVIEW** dependency vulnerabilities regularly
+2. **AUDIT** access control implementations
+3. **MONITOR** security logs for suspicious activities
+4. **UPDATE** security configurations as needed
+5. **CONDUCT** penetration testing periodically
+
+## 🚫 SECURITY VIOLATION ESCALATION
+
+### Immediate Action Required For:
+
+- **SQL Injection vulnerabilities**
+- **Cross-Site Scripting (XSS) vulnerabilities**
+- **Authentication bypass attempts**
+- **Unauthorized data access**
+- **Sensitive data exposure**
+
+### Escalation Process:
+
+1. **STOP** development immediately
+2. **ASSESS** the security impact
+3. **IMPLEMENT** immediate fixes
+4. **REVIEW** related code for similar issues
+5. **DOCUMENT** the issue and resolution
+
+---
+
+**Security Principle**: **Security is not optional** - it's a fundamental requirement for every feature.

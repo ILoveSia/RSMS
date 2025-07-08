@@ -2,8 +2,8 @@
  * 사원 검색 팝업 컴포넌트
  * UserController의 사용자 목록 조회 API를 사용
  */
-import type { ApiResponse } from '@/app/common/api/client';
 import apiClient from '@/app/common/api/client';
+import DepartmentApi from '@/domains/common/api/departmentApi';
 import {
   Box,
   Button,
@@ -33,6 +33,7 @@ export interface EmployeeSearchResult {
   jobRankCd: string; // 직급코드
   jobTitleCd: string; // 직책코드
   deptCd: string; // 부서코드
+  deptName?: string; // 부서명 (추가)
   email: string;
   mobile: string;
 }
@@ -90,7 +91,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 코드명 조회 함수 (Local storage 데이터 사용)
+  // 코드명 조회 함수 (Local storage 데이터 사용 - 직급용)
   const getCodeName = (groupCode: string, code: string | null | undefined): string => {
     if (!code) return '';
     const codeList = usableGroupedCodes[groupCode];
@@ -104,6 +105,36 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       return code;
     }
     return codeItem.codeName;
+  };
+
+  // 부서명 조회 함수 (DepartmentApi 사용)
+  const getDepartmentName = async (deptCd: string): Promise<string> => {
+    if (!deptCd) return '';
+    try {
+      const result = await DepartmentApi.getName(deptCd);
+
+      // 결과가 문자열인지 확인
+      if (typeof result === 'string') {
+        return result;
+      }
+
+      // 객체인 경우 data 필드 확인
+      if (typeof result === 'object' && result !== null) {
+        const obj = result as Record<string, unknown>;
+        if ('data' in obj && typeof obj.data === 'string') {
+          return obj.data;
+        }
+        if ('departmentName' in obj && typeof obj.departmentName === 'string') {
+          return obj.departmentName;
+        }
+      }
+
+      console.warn('부서명 조회 결과가 예상과 다름:', result);
+      return deptCd; // 예상과 다른 결과일 때 코드 반환
+    } catch (error) {
+      console.warn('부서명 조회 실패:', deptCd, error);
+      return deptCd; // 조회 실패 시 코드 반환
+    }
   };
 
   // 다이얼로그 초기화
@@ -142,23 +173,27 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
 
       console.log('사원 검색 API 호출:', params.toString());
 
-      const response = await apiClient.get<ApiResponse<UserResponse[]>>(
-        `/users/employees?${params.toString()}`
-      );
+      const response = await apiClient.get<UserResponse[]>(`/users/employees?${params.toString()}`);
 
-      console.log('사원 검색 응답:', response.data);
+      console.log('사원 검색 응답:', response);
 
-      if (response.data && Array.isArray(response.data)) {
-        const transformedEmployees: EmployeeSearchResult[] = response.data.map(
-          (user: UserResponse) => ({
-            id: user.id,
-            num: user.num || '',
-            username: user.username,
-            jobRankCd: user.jobRankCd || '',
-            jobTitleCd: user.jobTitleCd || '',
-            deptCd: user.deptCd || '',
-            email: user.email,
-            mobile: user.mobile,
+      if (response && Array.isArray(response)) {
+        const transformedEmployees: EmployeeSearchResult[] = await Promise.all(
+          response.map(async (user: UserResponse) => {
+            // 부서명 비동기 조회
+            const deptName = await getDepartmentName(user.deptCd);
+
+            return {
+              id: user.id,
+              num: user.num || '',
+              username: user.username,
+              jobRankCd: user.jobRankCd || '',
+              jobTitleCd: user.jobTitleCd || '',
+              deptCd: user.deptCd || '',
+              deptName: deptName,
+              email: user.email,
+              mobile: user.mobile,
+            };
           })
         );
 
@@ -166,10 +201,10 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
 
         // 검색 결과의 코드값들 로깅
         console.log(
-          '변환된 직급/부서 코드:',
+          '변환된 직급/부서 정보:',
           transformedEmployees.map(emp => ({
             jobRank: { code: emp.jobRankCd, name: getCodeName('JOB_RANK', emp.jobRankCd) },
-            dept: { code: emp.deptCd, name: getCodeName('DEPT', emp.deptCd) },
+            dept: { code: emp.deptCd, name: emp.deptName },
           }))
         );
       } else {
@@ -205,7 +240,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     setSelectedEmployee(employee);
   };
 
-  // 사원 선택 확인
+  // 선택 확인
   const handleConfirmSelect = () => {
     if (selectedEmployee && onSelect) {
       onSelect(selectedEmployee);
@@ -213,22 +248,15 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     onClose();
   };
 
-  // 다이얼로그 액션 버튼
   const renderActions = () => {
     return (
       <>
-        <Button onClick={onClose} variant='outlined'>
-          취소
-        </Button>
+        <Button onClick={onClose}>취소</Button>
         <Button
           onClick={handleConfirmSelect}
           variant='contained'
           disabled={!selectedEmployee}
-          sx={{
-            backgroundColor: 'var(--bank-primary)',
-            '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-            '&:disabled': { backgroundColor: 'var(--bank-border)' },
-          }}
+          sx={{ ml: 1 }}
         >
           선택
         </Button>
@@ -237,63 +265,64 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   };
 
   return (
-    <Dialog open={open} title={title} maxWidth='md' onClose={onClose} actions={renderActions()}>
-      <Box sx={{ mt: 2, minHeight: 500 }}>
-        {error && (
-          <Alert severity='error' sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth='lg'
+      PaperProps={{
+        sx: { height: '80vh' },
+      }}
+    >
+      <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* 제목 */}
+        <Box sx={{ mb: 2 }}>
+          <h2>{title}</h2>
+        </Box>
 
         {/* 검색 영역 */}
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <TextField
-              size='small'
-              label='사번'
-              value={searchConditions.num}
-              onChange={handleSearchConditionChange('num')}
-              onKeyPress={handleKeyPress}
-              sx={{ minWidth: 150 }}
-            />
-            <TextField
-              size='small'
               label='성명'
               value={searchConditions.username}
               onChange={handleSearchConditionChange('username')}
               onKeyPress={handleKeyPress}
-              sx={{ minWidth: 150 }}
+              size='small'
+              sx={{ minWidth: 120 }}
             />
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-              <TextField
-                size='small'
-                label='부서코드'
-                value={searchConditions.deptCd}
-                onChange={handleSearchConditionChange('deptCd')}
-                onKeyPress={handleKeyPress}
-                sx={{ minWidth: 150 }}
-              />
-              <Button
-                variant='contained'
-                onClick={handleSearch}
-                disabled={loading}
-                sx={{
-                  minWidth: 80,
-                  height: 40,
-                  backgroundColor: '#666',
-                  '&:hover': {
-                    backgroundColor: '#555',
-                  },
-                }}
-              >
-                검색
-              </Button>
-            </Box>
+            <TextField
+              label='사번'
+              value={searchConditions.num}
+              onChange={handleSearchConditionChange('num')}
+              onKeyPress={handleKeyPress}
+              size='small'
+              sx={{ minWidth: 120 }}
+            />
+            <TextField
+              label='부서코드'
+              value={searchConditions.deptCd}
+              onChange={handleSearchConditionChange('deptCd')}
+              onKeyPress={handleKeyPress}
+              size='small'
+              sx={{ minWidth: 120 }}
+            />
+            <Button
+              variant='contained'
+              onClick={handleSearch}
+              disabled={loading}
+              sx={{ minWidth: 80 }}
+            >
+              {loading ? '검색중...' : '검색'}
+            </Button>
           </Box>
         </Box>
 
+        {/* 에러 메시지 */}
+        {error && <Box sx={{ mb: 2, color: 'error.main', fontSize: '0.875rem' }}>{error}</Box>}
+
         {/* 검색 결과 테이블 */}
-        <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+        <TableContainer component={Paper} sx={{ flexGrow: 1, mb: 2 }}>
           <Table stickyHeader size='small'>
             <TableHead>
               <TableRow>
@@ -302,43 +331,43 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
                 <TableCell>직급</TableCell>
                 <TableCell>부서</TableCell>
                 <TableCell>이메일</TableCell>
-                <TableCell>휴대폰</TableCell>
+                <TableCell>연락처</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {employees.map(emp => (
+                <TableRow
+                  key={emp.id}
+                  onClick={() => handleEmployeeSelect(emp)}
+                  selected={selectedEmployee?.id === emp.id}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:hover': { backgroundColor: 'action.hover' },
+                  }}
+                >
+                  <TableCell>{emp.num || ''}</TableCell>
+                  <TableCell>{emp.username || ''}</TableCell>
+                  <TableCell>{getCodeName('JOB_RANK', emp.jobRankCd) || ''}</TableCell>
+                  <TableCell>
+                    {typeof emp.deptName === 'string' ? emp.deptName : emp.deptCd || ''}
+                  </TableCell>
+                  <TableCell>{emp.email || ''}</TableCell>
+                  <TableCell>{emp.mobile || ''}</TableCell>
+                </TableRow>
+              ))}
+              {employees.length === 0 && !loading && (
                 <TableRow>
                   <TableCell colSpan={6} align='center'>
-                    <CircularProgress size={24} />
+                    검색 결과가 없습니다.
                   </TableCell>
                 </TableRow>
-              ) : employees.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align='center'>
-                    검색된 사원이 없습니다.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                employees.map(employee => (
-                  <TableRow
-                    key={employee.id}
-                    onClick={() => handleEmployeeSelect(employee)}
-                    selected={selectedEmployee?.id === employee.id}
-                    hover
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <TableCell>{employee.num}</TableCell>
-                    <TableCell>{employee.username}</TableCell>
-                    <TableCell>{getCodeName('JOB_RANK', employee.jobRankCd)}</TableCell>
-                    <TableCell>{getCodeName('DEPT', employee.deptCd)}</TableCell>
-                    <TableCell>{employee.email}</TableCell>
-                    <TableCell>{employee.mobile}</TableCell>
-                  </TableRow>
-                ))
               )}
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* 하단 액션 버튼 */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>{renderActions()}</Box>
       </Box>
     </Dialog>
   );

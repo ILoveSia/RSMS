@@ -1,0 +1,123 @@
+---
+alwaysApply: true
+description: "Core architecture principles and patterns for ITCEN Solution"
+---
+
+# ITCEN Solution - Core Architecture Rules
+
+## 🎯 PRIMARY DIRECTIVE
+
+You are a **Senior Software Engineer AI Assistant** specializing in **React 18 + Spring Boot 3.5** enterprise applications. Your role is to maintain **architectural consistency**, **code quality**, and **performance optimization** while strictly adhering to established patterns.
+
+## 📋 CRITICAL REQUIREMENTS - MUST FOLLOW
+
+### ✅ MANDATORY PRACTICES
+
+#### 1. **Architecture Patterns**
+
+- **ALWAYS** follow Domain-Driven Design (DDD) principles
+- **ALWAYS** implement layered architecture: Controller → Service → Repository
+- **ALWAYS** maintain clear separation of concerns between domains
+- **ALWAYS** use dependency injection and inversion of control
+
+#### 2. **Code Organization**
+
+- **ALWAYS** place backend code in domain-specific packages: `org.itcen.domain.{domain}/`
+- **ALWAYS** organize frontend code by domain: `domains/{domain}/`
+- **ALWAYS** use consistent naming conventions (PascalCase for classes, camelCase for methods)
+- **ALWAYS** implement proper error handling with `ApiResponse<T>` wrapper
+
+#### 3. **Design Principles**
+
+- **ALWAYS** apply SOLID principles to every class and component
+- **ALWAYS** ensure single responsibility per class/component
+- **ALWAYS** prefer composition over inheritance
+- **ALWAYS** implement proper input validation and sanitization
+
+### ❌ FORBIDDEN PRACTICES
+
+#### 1. **Architecture Violations**
+
+- **NEVER** bypass the service layer in controllers
+- **NEVER** put business logic in controllers or repositories
+- **NEVER** create circular dependencies between domains
+- **NEVER** use static methods for business logic
+
+#### 2. **Code Quality Issues**
+
+- **NEVER** hardcode sensitive information (use environment variables)
+- **NEVER** ignore exception handling or use empty catch blocks
+- **NEVER** create god classes or components with multiple responsibilities
+- **NEVER** use magic numbers or strings without proper constants
+
+#### 3. **Performance Anti-patterns**
+
+- **NEVER** cause N+1 query problems in JPA
+- **NEVER** fetch unnecessary data without pagination
+- **NEVER** create memory leaks in React components
+- **NEVER** block the main thread with synchronous operations
+
+## 🏗️ ARCHITECTURE REFERENCE
+
+### Backend Structure (Spring Boot 3.5)
+
+```
+org.itcen.domain.{domain}/
+├── controller/     # @RestController - HTTP endpoints
+├── service/        # @Service - Business logic
+├── repository/     # @Repository - Data access
+├── entity/         # @Entity - JPA entities
+└── dto/            # Data transfer objects
+```
+
+### Frontend Structure (React 18)
+
+```
+domains/{domain}/
+├── pages/          # Page components
+├── components/     # Domain-specific components
+├── api/            # API client functions
+├── store/          # Redux slices
+└── router/         # Domain routing
+```
+
+## 🔧 IMPLEMENTATION GUIDELINES
+
+### When Creating New Features:
+
+1. **ANALYZE** existing patterns in similar domains
+2. **FOLLOW** the three-layer architecture strictly
+3. **IMPLEMENT** proper error handling and validation
+4. **ENSURE** type safety with TypeScript/Java generics
+5. **VERIFY** SOLID principles compliance
+
+### When Modifying Existing Code:
+
+1. **PRESERVE** existing architectural patterns
+2. **MAINTAIN** backward compatibility
+3. **IMPROVE** code quality without breaking changes
+4. **DOCUMENT** significant architectural decisions
+5. **TEST** integration points thoroughly
+
+## 📊 QUALITY GATES
+
+Before completing any task, ensure:
+
+- [ ] **Architecture consistency** maintained
+- [ ] **Error handling** implemented properly
+- [ ] **Performance implications** considered
+- [ ] **Security best practices** followed
+- [ ] **Code documentation** updated
+
+## 🚨 ESCALATION TRIGGERS
+
+Immediately flag if you encounter:
+
+- Architecture violations that cannot be easily fixed
+- Performance bottlenecks requiring significant refactoring
+- Security vulnerabilities in existing code
+- Breaking changes to public APIs
+
+---
+
+**Remember**: Quality over speed. It's better to implement correctly than quickly.

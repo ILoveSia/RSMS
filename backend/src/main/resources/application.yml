@@ -21,16 +21,16 @@ server:
 spring:
   application:
     name: itcen-backend
-  
+
   # 프로파일 설정
   profiles:
     active: local
-  
+
   # Spring Boot 3.5 최신 기능 활용
   main:
     banner-mode: console
     web-application-type: servlet
-  
+
   # JPA/Hibernate 설정 (Spring Boot 3.5 최적화)
   jpa:
     hibernate:
@@ -47,7 +47,7 @@ spring:
         order_updates: true
         batch_versioned_data: true
     open-in-view: false
-  
+
   # Session 설정 (임시로 비활성화)
   session:
     store-type: none
@@ -55,7 +55,7 @@ spring:
     #   flush-mode: on_save
     #   namespace: "itcen:session"
     timeout: 3600 # 1시간 (BackendApplication과 동일)
-  
+
   # 개발 도구 설정
   devtools:
     livereload:
@@ -63,7 +63,7 @@ spring:
     restart:
       enabled: true
       additional-paths: src/main/java
-  
+
   # JSON 설정 (Spring Boot 3.5 최적화)
   jackson:
     time-zone: Asia/Seoul
@@ -73,19 +73,19 @@ spring:
     serialization:
       write-dates-as-timestamps: false
       fail-on-empty-beans: false
-  
+
   # CORS 설정
   web:
     cors:
-      allowed-origins: 
-        - "http://localhost:3000"
-      allowed-methods: 
+      allowed-origins:
+        - 'http://localhost:3000'
+      allowed-methods:
         - GET
         - POST
         - PUT
         - DELETE
         - OPTIONS
-      allowed-headers: "*"
+      allowed-headers: '*'
       allow-credentials: true
       max-age: 3600
 
@@ -98,8 +98,8 @@ logging:
     org.springframework.security: DEBUG
     org.itcen: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
 
 # 관리 엔드포인트 설정 (Spring Boot 3.5 최신 기능)
 management:
@@ -132,7 +132,7 @@ spring:
   config:
     activate:
       on-profile: local
-  
+
   datasource:
     url: jdbc:postgresql://localhost:5432/dev_db
     username: postgres
@@ -146,7 +146,7 @@ spring:
       max-lifetime: 1200000
       leak-detection-threshold: 60000
       auto-commit: false
-  
+
   data:
     redis:
       host: localhost
@@ -165,7 +165,7 @@ spring:
   config:
     activate:
       on-profile: docker
-  
+
   datasource:
     url: jdbc:postgresql://postgres:5432/postgres
     username: postgres
@@ -179,7 +179,7 @@ spring:
       max-lifetime: 1200000
       leak-detection-threshold: 60000
       auto-commit: false
-  
+
   data:
     redis:
       host: redis
@@ -198,12 +198,12 @@ spring:
   config:
     activate:
       on-profile: prod
-  
+
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: false
-  
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
     username: ${DB_USERNAME:postgres}
@@ -217,7 +217,7 @@ spring:
       max-lifetime: 1200000
       leak-detection-threshold: 60000
       auto-commit: false
-  
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -244,4 +244,4 @@ logging:
   logback:
     rollingpolicy:
       max-file-size: 100MB
-      max-history: 30 
+      max-history: 30
