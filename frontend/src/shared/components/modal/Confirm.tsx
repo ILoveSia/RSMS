@@ -2,8 +2,8 @@
  * 공통 Confirm 컴포넌트
  * MUI Dialog를 기반으로 한 확인 다이얼로그
  */
+import { Button } from '@/shared/components/ui/button';
 import {
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -42,20 +42,22 @@ export const Confirm: React.FC<ConfirmProps> = ({
       <DialogContent>
         <DialogContentText id='confirm-dialog-description'>{message}</DialogContentText>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onCancel} color='inherit'>
-          {cancelText}
-        </Button>
+      <DialogActions sx={{ padding: '8px 8px', display: 'flex', mr:1, justifyContent: 'flex-end' }}>
         <Button
           onClick={onConfirm}
           variant='contained'
-          autoFocus
-          sx={{
-            backgroundColor: 'var(--bank-primary)',
-            '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-          }}
+          color='error'
+          size='small'
         >
           {confirmText}
+        </Button>
+        <Button
+          onClick={onCancel}
+          variant='contained'
+          color='inherit'
+          size='small'
+        >
+          {cancelText}
         </Button>
       </DialogActions>
     </Dialog>
