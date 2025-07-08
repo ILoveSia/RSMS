@@ -18,6 +18,7 @@ export interface BaseDialogProps {
   mode: DialogMode;
   title: string;
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  fullWidth?: boolean;
   children: ReactNode;
   onClose: () => void;
   onSave?: () => void;

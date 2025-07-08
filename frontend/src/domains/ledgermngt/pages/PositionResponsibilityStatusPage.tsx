@@ -8,11 +8,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Dialog } from '@/shared/components/modal/Dialog';
+import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { ComboBox } from '@/shared/components/ui/form';
 import type { GridColDef } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
+import ResponsibilityDialog from '../components/ResponsibilityDialog';
 
 interface IPositionResponsibilityStatusPageProps {
   className?: string;
@@ -103,7 +104,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'view' | 'edit'>('view');
+  const [dialogMode, setDialogMode] = useState<DialogMode>('view');
   const [selectedDetailData, setSelectedDetailData] = useState<PositionResponsibility | null>(null);
 
   // 오류 다이얼로그 상태
@@ -236,19 +237,11 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     setDialogOpen(true);
   };
 
-  // 수정 모드로 전환
-  const handleEditMode = () => {
-    setDialogMode('edit');
-  };
-
   // 수정 저장 핸들러
   const handleSave = async () => {
     try {
       // TODO: API 호출로 데이터 저장
       console.log('저장된 데이터:', selectedDetailData);
-
-      // 저장 후 view 모드로 전환
-      setDialogMode('view');
 
       // 목록 새로고침
       await fetchData();
@@ -441,111 +434,14 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         </Box>
 
         {/* 상세 정보 다이얼로그 */}
-        <Dialog
+        <ResponsibilityDialog
           open={dialogOpen}
+          mode={dialogMode}
+          responsibility={selectedDetailData}
           onClose={() => setDialogOpen(false)}
-          title={`책무 ${dialogMode === 'view' ? '상세 정보' : '수정'}`}
-          maxWidth="md"
-          fullWidth
-        >
-          {selectedDetailData && (
-            <>
-              <Box sx={{ p: 2 }}>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2">구분</Typography>
-                  <Chip
-                    label={selectedDetailData.classification}
-                    size="small"
-                    color={
-                      selectedDetailData.classification === '핵심' ? 'error' :
-                      selectedDetailData.classification === '중요' ? 'warning' :
-                      selectedDetailData.classification === '일반' ? 'default' : 'default'
-                    }
-                  />
-                </Box>
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
-                  <div>
-                    <Typography variant="subtitle2">직책 ID</Typography>
-                    <Typography>{selectedDetailData.positionId}</Typography>
-                  </div>
-                  <div>
-                    <Typography variant="subtitle2">직책명</Typography>
-                    <Typography>{selectedDetailData.positionName}</Typography>
-                  </div>
-                </Box>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2">책무 개요</Typography>
-                  {dialogMode === 'edit' ? (
-                    <textarea
-                      value={selectedDetailData.responsibilityOverview}
-                      onChange={(e) => setSelectedDetailData({
-                        ...selectedDetailData,
-                        responsibilityOverview: e.target.value
-                      })}
-                      style={{
-                        width: '100%',
-                        minHeight: '100px',
-                        padding: '8px',
-                        border: '1px solid var(--bank-border)',
-                        borderRadius: '4px',
-                        resize: 'vertical'
-                      }}
-                    />
-                  ) : (
-                    <Typography style={{ whiteSpace: 'pre-wrap' }}>
-                      {selectedDetailData.responsibilityOverview || '미작성'}
-                    </Typography>
-                  )}
-                </Box>
-                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                  <div>
-                    <Typography variant="subtitle2">책무 시작일</Typography>
-                    <Typography>{selectedDetailData.responsibilityStartDate}</Typography>
-                  </div>
-                  <div>
-                    <Typography variant="subtitle2">최종 수정일</Typography>
-                    <Typography>{selectedDetailData.lastModifiedDate}</Typography>
-                  </div>
-                </Box>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-                {dialogMode === 'view' ? (
-                  <>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleEditMode}
-                    >
-                      수정
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setDialogOpen(false)}
-                    >
-                      닫기
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleSave}
-                    >
-                      저장
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setDialogMode('view')}
-                    >
-                      취소
-                    </Button>
-                  </>
-                )}
-              </Box>
-            </>
-          )}
-        </Dialog>
+          onSave={handleSave}
+          onModeChange={setDialogMode}
+        />
 
         {/* 에러 다이얼로그 */}
         <ErrorDialog
