@@ -7,4 +7,4 @@ export interface IComponent<P = {}> {
       | null;
     displayName?: any;
   }
-  
+
