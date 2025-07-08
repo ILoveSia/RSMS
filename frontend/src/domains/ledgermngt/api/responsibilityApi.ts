@@ -1,4 +1,5 @@
 import apiClient from '@/app/common/api/client';
+import type { ApiResponse } from '@/app/types';
 
 // 책무 현황 행 타입
 export interface ResponsibilityRow {
@@ -10,6 +11,19 @@ export interface ResponsibilityRow {
   responsibilityRelEvid: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// 책무 상세 DTO
+export interface ResponsibilityDetailDto {
+  responsibilityDetailContent: string;
+  keyManagementTasks: string;
+  relatedBasis: string;
+}
+
+// 책무 생성/수정 요청 DTO
+export interface ResponsibilityRequestDto {
+  responsibilityContent: string;
+  details: ResponsibilityDetailDto[];
 }
 
 /**
@@ -75,25 +89,13 @@ export const responsibilityApi = {
   /**
    * 책무 생성
    */
-  create: async (
-    data: Omit<ResponsibilityRow, 'responsibilityId' | 'createdAt' | 'updatedAt'>
-  ): Promise<ResponsibilityRow> => {
-    try {
-      console.log('[responsibilityApi] create 호출 - data:', data);
+  create: async (data: ResponsibilityRequestDto): Promise<ResponsibilityRow> => {
+    const response = await apiClient.post<ApiResponse<ResponsibilityRow>>(
+      '/api/responsibilities',
+      data
+    );
 
-      const response = await apiClient.post<ResponsibilityRow>('/api/responsibilities', data);
-
-      console.log('[responsibilityApi] create 응답:', response);
-
-      // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
-      const result = response;
-      console.log('[responsibilityApi] create 결과:', result);
-
-      return result;
-    } catch (error) {
-      console.error('[responsibilityApi] create 에러:', error);
-      throw error;
-    }
+    return response.data;
   },
 
   /**
@@ -101,7 +103,7 @@ export const responsibilityApi = {
    */
   update: async (
     responsibilityId: number,
-    data: Partial<ResponsibilityRow>
+    data: ResponsibilityRequestDto
   ): Promise<ResponsibilityRow> => {
     try {
       console.log(

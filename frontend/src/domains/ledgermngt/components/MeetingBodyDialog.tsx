@@ -1,41 +1,25 @@
 /**
  * 회의체 등록/수정/조회 다이얼로그 컴포넌트
  */
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from '@mui/material';
-import React, { useEffect, useState } from 'react';
 import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
-import { Dialog } from '@/shared/components/modal';
+import Alert from '@/shared/components/modal/Alert';
+import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
+import { Box, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 
-export interface MeetingBodyDialogProps {
+interface IMeetingBodyDialogProps {
   open: boolean;
-  mode: 'create' | 'edit' | 'view';
-  meetingBody?: MeetingBody | null;
+  mode: DialogMode;
+  meetingBody: MeetingBody | null;
   onClose: () => void;
-  onSave?: (meetingBody: MeetingBody) => void;
-  onModeChange?: (newMode: 'create' | 'edit' | 'view') => void;
+  onSave: () => void;
+  onModeChange: (mode: DialogMode) => void;
 }
 
-interface FormData {
-  gubun: string;
-  meetingName: string;
-  meetingPeriod: string;
-  content: string;
-}
-
-const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
+const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
   open,
   mode,
   meetingBody,
@@ -43,22 +27,19 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
   onSave,
   onModeChange,
 }) => {
+  const [formData, setFormData] = useState<Partial<MeetingBody>>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+
   // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<
-    { data: CommonCode[] } | CommonCode[]
-  >('codeStore/allCodes');
+  const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
 
   // 공통코드 배열 추출 함수
   const getCodesArray = (): CommonCode[] => {
     if (!allCodes) return [];
-    // allCodes가 {data: CommonCode[]} 형태인지 확인
-    if (Array.isArray(allCodes)) {
-      return allCodes;
-    }
-    // allCodes가 {data: CommonCode[]} 형태라면 data 프로퍼티에서 배열 추출
-    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
-      return allCodes.data;
-    }
+    if (Array.isArray(allCodes)) return allCodes;
+    if ('data' in allCodes && Array.isArray(allCodes.data)) return allCodes.data;
     return [];
   };
 
@@ -77,307 +58,106 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
       .sort((a, b) => a.sortOrder - b.sortOrder);
   };
 
-  const [formData, setFormData] = useState<FormData>({
-    gubun: '',
-    meetingName: '',
-    meetingPeriod: '',
-    content: '',
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-
-  // 다이얼로그 제목 설정
-  const getDialogTitle = () => {
-    switch (mode) {
-      case 'create':
-        return '회의체 등록';
-      case 'edit':
-        return '회의체 수정';
-      case 'view':
-        return '회의체 상세조회';
-      default:
-        return '회의체';
-    }
-  };
-
-  // 컴포넌트 마운트 시 localStorage에서 공통코드 복원
   useEffect(() => {
-    const storedCommonCodes = localStorage.getItem('commonCodes');
-    console.log('🔍 [MeetingBodyDialog] localStorage 공통코드 확인:', !!storedCommonCodes);
-
-    if (
-      storedCommonCodes &&
-      (!allCodes ||
-        (Array.isArray(allCodes) && allCodes.length === 0) ||
-        (typeof allCodes === 'object' &&
-          'data' in allCodes &&
-          (!allCodes.data || allCodes.data.length === 0)))
-    ) {
-      try {
-        const parsedCodes = JSON.parse(storedCommonCodes);
-        console.log(
-          '✅ [MeetingBodyDialog] localStorage에서 공통코드 복원:',
-          parsedCodes.length,
-          '개'
-        );
-        setAllCodes(parsedCodes);
-      } catch (error) {
-        console.error('❌ [MeetingBodyDialog] localStorage 공통코드 복원 실패:', error);
-        localStorage.removeItem('commonCodes');
-      }
+    if (meetingBody && open) {
+      setFormData(meetingBody);
+    } else {
+      setFormData({});
     }
-  }, [allCodes, setAllCodes]);
-
-  // 폼 데이터 초기화
-  useEffect(() => {
-    if (open) {
-      if (mode === 'create') {
-        setFormData({
-          gubun: '',
-          meetingName: '',
-          meetingPeriod: '',
-          content: '',
-        });
-      } else if (meetingBody) {
-        setFormData({
-          gubun: meetingBody.gubun || '',
-          meetingName: meetingBody.meetingName || '',
-          meetingPeriod: meetingBody.meetingPeriod || '',
-          content: meetingBody.content || '',
-        });
-      }
-      setError(null);
-      setValidationErrors({});
-    }
-  }, [open, mode, meetingBody]);
-
-  // 입력값 변경 핸들러
-  const handleInputChange =
-    (field: keyof FormData) =>
-    (
-      event:
-        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-        | { target: { value: string } }
-    ) => {
-      const value = event.target.value;
-      setFormData(prev => ({
-        ...prev,
-        [field]: value,
-      }));
-
-      // 입력 시 해당 필드의 검증 에러 제거
-      if (validationErrors[field]) {
-        setValidationErrors(prev => ({
-          ...prev,
-          [field]: '',
-        }));
-      }
-    };
-
-  // 폼 검증
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.gubun.trim()) {
-      errors.gubun = '구분을 선택해주세요.';
-    }
-
-    if (!formData.meetingName.trim()) {
-      errors.meetingName = '회의체명을 입력해주세요.';
-    } else if (formData.meetingName.trim().length > 200) {
-      errors.meetingName = '회의체명은 200자 이하로 입력해주세요.';
-    }
-
-    if (formData.meetingPeriod && formData.meetingPeriod.length > 100) {
-      errors.meetingPeriod = '개최주기는 100자 이하로 입력해주세요.';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // 저장 핸들러
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
     setError(null);
+  }, [meetingBody, open]);
 
+  const handleInputChange = (field: keyof MeetingBody, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
     try {
-      let savedMeetingBody: MeetingBody;
+      setLoading(true);
+      setError(null);
 
       if (mode === 'create') {
-        savedMeetingBody = await meetingStatusApi.create({
-          gubun: formData.gubun,
-          meetingName: formData.meetingName,
-          meetingPeriod: formData.meetingPeriod,
-          content: formData.content,
-        });
-      } else if (mode === 'edit' && meetingBody) {
-        savedMeetingBody = await meetingStatusApi.update(meetingBody.meetingBodyId, {
-          gubun: formData.gubun,
-          meetingName: formData.meetingName,
-          meetingPeriod: formData.meetingPeriod,
-          content: formData.content,
-        });
-      } else {
-        throw new Error('잘못된 모드입니다.');
+        await meetingStatusApi.create(formData as MeetingBody);
+      } else if (mode === 'edit') {
+        if (!formData.meetingBodyId) {
+          throw new Error('회의체 ID가 없습니다.');
+        }
+        await meetingStatusApi.update(
+          formData.meetingBodyId,
+          formData as Omit<MeetingBody, 'meetingBodyId' | 'createdAt' | 'updatedAt'>
+        );
       }
 
-      onSave?.(savedMeetingBody);
+      setShowSuccessAlert(true);
+      // 즉시 다이얼로그를 닫고 목록을 새로고침
+      onSave();
       onClose();
-    } catch (err: unknown) {
+
+      // 1초 후에 성공 알림 닫기
+      setTimeout(() => {
+        setShowSuccessAlert(false);
+      }, 1000);
+    } catch (err) {
       console.error('회의체 저장 실패:', err);
-      const errorMessage =
-        err instanceof Error ? err.message : '회의체 저장 중 오류가 발생했습니다.';
-      setError(errorMessage);
+      setError('회의체 정보 저장에 실패했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 수정 모드로 전환 핸들러
-  const handleEditMode = () => {
-    if (onModeChange) {
-      onModeChange('edit');
-    }
-  };
-
-  // 다이얼로그 액션 버튼
-  const renderActions = () => {
-    if (mode === 'view') {
-      return (
-        <>
-          <Button onClick={onClose} variant='outlined'>
-            닫기
-          </Button>
-                  <Button
-          onClick={handleEditMode}
-          variant='contained'
-          sx={{
-            backgroundColor: 'var(--bank-warning)',
-            '&:hover': { backgroundColor: 'var(--bank-warning-dark)' }
-          }}
-        >
-          수정
-        </Button>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <Button onClick={onClose} variant='outlined' disabled={loading}>
-          취소
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant='contained'
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : null}
-        >
-          {mode === 'create' ? '등록' : '저장'}
-        </Button>
-      </>
-    );
+  const isFormValid = () => {
+    return !!(formData.gubun && formData.meetingName && formData.meetingPeriod && formData.content);
   };
 
   return (
-    <Dialog
-      open={open}
-      title={getDialogTitle()}
-      maxWidth='md'
-      onClose={onClose}
-      disableBackdropClick={loading}
-      actions={renderActions()}
-    >
-      <Box sx={{ mt: 2 }}>
-        {error && (
-          <Alert severity='error' sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
+    <>
+      <BaseDialog
+        open={open}
+        mode={mode}
+        title={mode === 'create' ? '회의체 등록' : mode === 'edit' ? '회의체 수정' : '회의체 상세'}
+        onClose={onClose}
+        onSave={handleSave}
+        onModeChange={onModeChange}
+        disableSave={!isFormValid() || loading}
+        loading={loading}
+      >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* 첫 번째 행: 구분, 개최주기 */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth error={!!validationErrors.gubun}>
-                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>
-                  구분 *
-                </InputLabel>
+              <FormControl fullWidth>
+                <InputLabel required>구분</InputLabel>
                 <Select
-                  value={formData.gubun}
-                  label='구분 *'
-                  onChange={handleInputChange('gubun')}
+                  value={formData.gubun || ''}
+                  onChange={e => handleInputChange('gubun', e.target.value)}
                   disabled={mode === 'view'}
-                  sx={
-                    mode === 'view'
-                      ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
-                      : {}
-                  }
-                  inputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
+                  label="구분"
                 >
-                  <MenuItem
-                    value=''
-                    sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
-                  >
-                    선택하세요
-                  </MenuItem>
+                  <MenuItem value="">선택하세요</MenuItem>
                   {getMeetingBodyCodes().map(code => (
-                    <MenuItem
-                      key={code.code}
-                      value={code.code}
-                      sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
-                    >
+                    <MenuItem key={code.code} value={code.code}>
                       {code.codeName}
                     </MenuItem>
                   ))}
                 </Select>
-                {validationErrors.gubun && (
-                  <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
-                    {validationErrors.gubun}
-                  </Box>
-                )}
               </FormControl>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth error={!!validationErrors.meetingPeriod}>
-                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>
-                  개최주기
-                </InputLabel>
+              <FormControl fullWidth>
+                <InputLabel>개최주기</InputLabel>
                 <Select
-                  value={formData.meetingPeriod}
-                  label='개최주기'
-                  onChange={handleInputChange('meetingPeriod')}
+                  value={formData.meetingPeriod || ''}
+                  onChange={e => handleInputChange('meetingPeriod', e.target.value)}
                   disabled={mode === 'view'}
-                  sx={
-                    mode === 'view'
-                      ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
-                      : {}
-                  }
-                  inputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
+                  label="개최주기"
                 >
-                  <MenuItem value=''>선택하세요</MenuItem>
+                  <MenuItem value="">선택하세요</MenuItem>
                   {getPeriodCodes().map(code => (
-                    <MenuItem
-                      key={code.code}
-                      value={code.code}
-                      sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
-                    >
+                    <MenuItem key={code.code} value={code.code}>
                       {code.codeName}
                     </MenuItem>
                   ))}
                 </Select>
-                {validationErrors.meetingPeriod && (
-                  <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
-                    {validationErrors.meetingPeriod}
-                  </Box>
-                )}
               </FormControl>
             </Box>
           </Box>
@@ -385,31 +165,24 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
           {/* 두 번째 행: 회의체명 */}
           <TextField
             fullWidth
-            label='회의체명 *'
-            value={formData.meetingName}
-            onChange={handleInputChange('meetingName')}
-            error={!!validationErrors.meetingName}
-            helperText={validationErrors.meetingName}
+            required
+            label="회의체명"
+            value={formData.meetingName || ''}
+            onChange={e => handleInputChange('meetingName', e.target.value)}
             disabled={mode === 'view'}
-            placeholder='회의체명을 입력하세요'
-            InputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
-            InputLabelProps={mode === 'view' ? { style: { color: 'black', fontWeight: 700 } } : {}}
+            placeholder="회의체명을 입력하세요"
           />
 
           {/* 세 번째 행: 주요 심의·의결사항 */}
           <TextField
             fullWidth
-            label='주요 심의·의결사항'
-            value={formData.content}
-            onChange={handleInputChange('content')}
-            error={!!validationErrors.content}
-            helperText={validationErrors.content}
+            label="주요 심의·의결사항"
+            value={formData.content || ''}
+            onChange={e => handleInputChange('content', e.target.value)}
             disabled={mode === 'view'}
             multiline
             rows={4}
-            placeholder='주요 심의·의결사항을 입력하세요'
-            InputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
-            InputLabelProps={mode === 'view' ? { style: { color: 'black', fontWeight: 700 } } : {}}
+            placeholder="주요 심의·의결사항을 입력하세요"
           />
 
           {/* 조회 모드일 때 추가 정보 표시 */}
@@ -417,25 +190,35 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
-                label='등록일시'
+                label="등록일시"
                 value={meetingBody.createdAt || ''}
                 disabled
-                InputProps={{ style: { color: 'black', fontWeight: 600 } }}
-                InputLabelProps={{ style: { color: 'black', fontWeight: 700 } }}
               />
               <TextField
                 fullWidth
-                label='수정일시'
+                label="수정일시"
                 value={meetingBody.updatedAt || ''}
                 disabled
-                InputProps={{ style: { color: 'black', fontWeight: 600 } }}
-                InputLabelProps={{ style: { color: 'black', fontWeight: 700 } }}
               />
             </Box>
           )}
         </Box>
-      </Box>
-    </Dialog>
+
+        {error && (
+          <Box sx={{ color: 'error.main', mt: 2, textAlign: 'center' }}>
+            {error}
+          </Box>
+        )}
+      </BaseDialog>
+
+      <Alert
+        open={showSuccessAlert}
+        message={mode === 'create' ? '회의체가 등록되었습니다.' : '회의체가 수정되었습니다.'}
+        severity="success"
+        autoHideDuration={2000}
+        onClose={() => setShowSuccessAlert(false)}
+      />
+    </>
   );
 };
 
