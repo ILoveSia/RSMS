@@ -1,4 +1,5 @@
   import { Confirm } from '@/shared/components/modal';
+import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Box, Button, FormControl, MenuItem, Select } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
@@ -27,9 +28,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
   const [pendingDelete, setPendingDelete] = useState<number[] | null>(null);
 
   const [positionDialogOpen, setPositionDialogOpen] = useState(false);
-  const [positionDialogMode, setPositionDialogMode] = useState<'create' | 'edit' | 'view'>(
-    'create'
-  );
+  const [positionDialogMode, setPositionDialogMode] = useState<DialogMode>('create');
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('');
 
@@ -123,7 +122,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
     fetchPositionStatus();
   };
 
-  const handlePositionModeChange = (newMode: 'create' | 'edit' | 'view') => {
+  const handlePositionModeChange = (newMode: DialogMode) => {
     setPositionDialogMode(newMode);
   };
 
@@ -401,10 +400,10 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
       </div>
       <PositionDialog
         open={positionDialogOpen}
-        onClose={handlePositionDialogClose}
-        onSave={handlePositionSave}
         mode={positionDialogMode}
         positionId={selectedPositionId}
+        onClose={handlePositionDialogClose}
+        onSave={handlePositionSave}
         onChangeMode={handlePositionModeChange}
       />
       <Confirm

@@ -27,6 +27,7 @@ export interface MeetingBodySearchDialogProps {
   onClose: () => void;
   onSelect?: (meetingBody: MeetingBodySearchResult) => void;
   title?: string;
+  excludeIds?: string[]; // 제외할 회의체 ID 목록
 }
 
 export interface MeetingBodySearchResult {
@@ -43,6 +44,7 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
   onClose,
   onSelect,
   title = '회의체 검색(팝업)',
+  excludeIds = [], // 기본값 빈 배열
 }) => {
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -151,21 +153,23 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
       console.log('🔍 API 응답 원본 데이터:', meetingBodyList);
 
       // API 응답을 MeetingBodySearchResult 형태로 변환 (공통코드명 사용)
-      const apiMeetingBodies: MeetingBodySearchResult[] = meetingBodyList.map(meeting => {
-        console.log(`🔍 변환 중인 회의체:`, meeting);
+      const apiMeetingBodies: MeetingBodySearchResult[] = meetingBodyList
+        .filter(meeting => !excludeIds.includes(meeting.meetingBodyId)) // 제외할 ID 필터링
+        .map(meeting => {
+          console.log(`🔍 변환 중인 회의체:`, meeting);
 
-        const periodName = getCodeName('PID03', meeting.meetingPeriod || '');
-        const gubunName = getCodeName('GUBUN01', meeting.gubun || '');
+          const periodName = getCodeName('PID03', meeting.meetingPeriod || '');
+          const gubunName = getCodeName('GUBUN01', meeting.gubun || '');
 
-        return {
-          id: meeting.meetingBodyId,
-          code: meeting.gubun || 'UNKNOWN',
-          name: meeting.meetingName,
-          period: periodName || meeting.meetingPeriod || '미정',
-          content: meeting.content || '상세내용 없음',
-          gubun: gubunName || meeting.gubun,
-        };
-      });
+          return {
+            id: meeting.meetingBodyId,
+            code: meeting.gubun || 'UNKNOWN',
+            name: meeting.meetingName,
+            period: periodName || meeting.meetingPeriod || '미정',
+            content: meeting.content || '상세내용 없음',
+            gubun: gubunName || meeting.gubun,
+          };
+        });
 
       setMeetingBodies(apiMeetingBodies);
       setFilteredMeetingBodies(apiMeetingBodies);
