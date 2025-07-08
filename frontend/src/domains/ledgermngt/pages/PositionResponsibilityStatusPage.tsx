@@ -370,7 +370,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           sx={{
             display: 'flex',
             gap: '8px',
-            marginBottom: '16px',
+            marginBottom: '6px',
             justifyContent: 'flex-end',
           }}
         >

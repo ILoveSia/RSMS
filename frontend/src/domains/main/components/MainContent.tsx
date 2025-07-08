@@ -131,20 +131,25 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
       try {
         setLoading(true);
         setError(null);
+        console.log('[MainContent] Q&A 데이터 로드 시작');
 
         // 최근 Q&A 목록 조회 (메인 화면용으로 5개만)
         const qnaList = await mainApi.getRecentQnaList(5);
         console.log('[MainContent] Q&A 데이터 로드 완료:', qnaList);
         setQaData(qnaList || []);
       } catch (err: unknown) {
-        console.error('Q&A 데이터 로드 실패:', err);
+        console.error('[MainContent] Q&A 데이터 로드 실패:', err);
         const errorMessage =
           err instanceof Error ? err.message : 'Q&A 데이터를 불러오는데 실패했습니다.';
         setError(errorMessage);
-        // 에러 발생 시 빈 배열로 설정하여 UI가 깨지지 않도록 함
         setQaData([]);
       } finally {
         setLoading(false);
+        console.log('[MainContent] Q&A 데이터 로드 완료, 현재 상태:', {
+          loading,
+          error,
+          dataLength: qaData.length
+        });
       }
     };
 
@@ -167,6 +172,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
   useEffect(() => {
     const loadCaseStudyData = async () => {
       try {
+        console.log('[MainContent] Case Study 데이터 로드 시작');
         setCaseStudyError(null);
         const caseStudies = await mainApi.getRecentCaseStudies(5);
         console.log('[MainContent] Case Study 데이터 로드 완료:', caseStudies);
@@ -177,6 +183,11 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
           err instanceof Error ? err.message : 'Case Study 데이터를 불러오는데 실패했습니다.';
         setCaseStudyError(errorMessage);
         setCaseStudyData([]);
+      } finally {
+        console.log('[MainContent] Case Study 데이터 로드 완료, 현재 상태:', {
+          error: caseStudyError,
+          dataLength: caseStudyData.length
+        });
       }
     };
     loadCaseStudyData();

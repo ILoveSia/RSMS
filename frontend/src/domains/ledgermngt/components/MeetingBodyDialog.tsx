@@ -7,7 +7,7 @@ import type { CommonCode } from '@/app/types/common';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Box, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 
 interface IMeetingBodyDialogProps {
@@ -29,7 +29,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
 }) => {
   const [formData, setFormData] = useState<Partial<MeetingBody>>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
   // 공통코드 Store에서 데이터 가져오기
@@ -64,17 +64,42 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
     } else {
       setFormData({});
     }
-    setError(null);
+    setValidationErrors({});
   }, [meetingBody, open]);
 
   const handleInputChange = (field: keyof MeetingBody, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // 값이 입력되면 해당 필드의 에러 상태를 제거
+    if (value) {
+      setValidationErrors(prev => ({ ...prev, [field]: false }));
+    }
   };
 
+  // 폼 유효성 검사
+  const validateForm = useCallback((): boolean => {
+    const errors: Record<string, boolean> = {};
+
+    if (!formData.gubun?.trim()) {
+      errors.gubun = true;
+    }
+    if (!formData.meetingPeriod?.trim()) {
+      errors.meetingPeriod = true;
+    }
+    if (!formData.meetingName?.trim()) {
+      errors.meetingName = true;
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  }, [formData]);
+
   const handleSave = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       setLoading(true);
-      setError(null);
 
       if (mode === 'create') {
         await meetingStatusApi.create(formData as MeetingBody);
@@ -89,24 +114,21 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
       }
 
       setShowSuccessAlert(true);
-      // 즉시 다이얼로그를 닫고 목록을 새로고침
       onSave();
       onClose();
 
-      // 1초 후에 성공 알림 닫기
       setTimeout(() => {
         setShowSuccessAlert(false);
       }, 1000);
     } catch (err) {
       console.error('회의체 저장 실패:', err);
-      setError('회의체 정보 저장에 실패했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
   const isFormValid = () => {
-    return !!(formData.gubun && formData.meetingName && formData.meetingPeriod && formData.content);
+    return !!(formData.gubun && formData.meetingPeriod && formData.meetingName);
   };
 
   return (
@@ -118,14 +140,16 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
         onClose={onClose}
         onSave={handleSave}
         onModeChange={onModeChange}
-        disableSave={!isFormValid() || loading}
         loading={loading}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* 첫 번째 행: 구분, 개최주기 */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth>
+              <FormControl
+                fullWidth
+                error={validationErrors.gubun}
+              >
                 <InputLabel required>구분</InputLabel>
                 <Select
                   value={formData.gubun || ''}
@@ -143,8 +167,11 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
               </FormControl>
             </Box>
             <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth>
-                <InputLabel>개최주기</InputLabel>
+              <FormControl
+                fullWidth
+                error={validationErrors.meetingPeriod}
+              >
+                <InputLabel required>개최주기</InputLabel>
                 <Select
                   value={formData.meetingPeriod || ''}
                   onChange={e => handleInputChange('meetingPeriod', e.target.value)}
@@ -171,6 +198,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
             onChange={e => handleInputChange('meetingName', e.target.value)}
             disabled={mode === 'view'}
             placeholder="회의체명을 입력하세요"
+            error={validationErrors.meetingName}
           />
 
           {/* 세 번째 행: 주요 심의·의결사항 */}
@@ -204,11 +232,11 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
           )}
         </Box>
 
-        {error && (
+        {/* error && (
           <Box sx={{ color: 'error.main', mt: 2, textAlign: 'center' }}>
             {error}
           </Box>
-        )}
+        ) */}
       </BaseDialog>
 
       <Alert
