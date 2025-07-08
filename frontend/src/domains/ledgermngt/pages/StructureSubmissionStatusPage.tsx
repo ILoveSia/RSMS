@@ -436,14 +436,23 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       {/* 메인 콘텐츠 영역 */}
       <div className='responsibility-section' style={{ marginTop: '20px' }}>
         {/* 기간 선택 영역 */}
-        <Box sx={{ display: 'flex', gap: 2, p: 2, mb: 2, bgcolor: 'var(--bank-bg-secondary)', borderRadius: 1, border: '1px solid var(--bank-border)' }}>
+        <Box sx={{
+          display: 'flex',
+          gap: '8px',
+          padding: '8px 16px',
+          mb: 2,
+          bgcolor: 'var(--bank-bg-secondary)',
+          borderRadius: 1,
+          border: '1px solid var(--bank-border)',
+          alignItems: 'center'
+        }}>
           <ComboBox
             label="원장차수"
             value={ledgerOrder}
             options={ledgerOrderOptions}
             onChange={(value) => setLedgerOrder(value as string)}
             size="small"
-            sx={{ width: 200 }}
+            sx={{ minWidth: '200px' }}
           />
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <DatePicker
@@ -451,7 +460,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               value={startDate}
               onChange={setStartDate}
               size="small"
-              sx={{ width: 200 }}
+              sx={{ width: '200px' }}
             />
             <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
             <DatePicker
@@ -459,7 +468,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               value={endDate}
               onChange={setEndDate}
               size="small"
-              sx={{ width: 200 }}
+              sx={{ width: '200px' }}
             />
           </Box>
           <Button
