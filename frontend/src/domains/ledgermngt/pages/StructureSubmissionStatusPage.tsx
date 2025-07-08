@@ -46,6 +46,14 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   // 기간 선택 상태
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [ledgerOrder, setLedgerOrder] = useState<string>('2024-001');
+
+  // 원장차수 옵션
+  const ledgerOrderOptions: SelectOption[] = [
+    { value: '2024-001', label: '2024-001' },
+    { value: '2024-002', label: '2024-002' },
+    { value: '2024-003', label: '2024-003' }
+  ];
 
   // 제출 이력 데이터
   const [historyRows, setHistoryRows] = useState<SubmissionHistoryRow[]>([]);
@@ -142,13 +150,15 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   const fetchSubmissionHistory = useCallback(async () => {
     try {
       setIsLoading(true);
-      // TODO: API 호출 구현
       const queryParams = new URLSearchParams();
       if (startDate) {
         queryParams.append('startDate', startDate.toISOString().split('T')[0]);
       }
       if (endDate) {
         queryParams.append('endDate', endDate.toISOString().split('T')[0]);
+      }
+      if (ledgerOrder) {
+        queryParams.append('ledgerOrder', ledgerOrder);
       }
 
       const response = await fetch(`/api/submission-history?${queryParams.toString()}`, {
@@ -170,7 +180,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
     } finally {
       setIsLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, ledgerOrder]);
 
   // 행 선택 변경 핸들러
   const handleHistoryRowSelectionModelChange = (
@@ -426,34 +436,32 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       {/* 메인 콘텐츠 영역 */}
       <div className='responsibility-section' style={{ marginTop: '20px' }}>
         {/* 기간 선택 영역 */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
-            alignItems: 'center',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            padding: '8px 16px',
-            borderRadius: '4px',
-          }}
-        >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--bank-text-primary)' }}>
-            기간 선택
-          </span>
-          <DatePicker
-            value={startDate}
-            onChange={setStartDate}
+        <Box sx={{ display: 'flex', gap: 2, p: 2, mb: 2, bgcolor: 'var(--bank-bg-secondary)', borderRadius: 1, border: '1px solid var(--bank-border)' }}>
+          <ComboBox
+            label="원장차수"
+            value={ledgerOrder}
+            options={ledgerOrderOptions}
+            onChange={(value) => setLedgerOrder(value as string)}
             size="small"
-            format="yyyy-MM-dd"
+            sx={{ width: 200 }}
           />
-          <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
-          <DatePicker
-            value={endDate}
-            onChange={setEndDate}
-            size="small"
-            format="yyyy-MM-dd"
-          />
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <DatePicker
+              label="시작일"
+              value={startDate}
+              onChange={setStartDate}
+              size="small"
+              sx={{ width: 200 }}
+            />
+            <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
+            <DatePicker
+              label="종료일"
+              value={endDate}
+              onChange={setEndDate}
+              size="small"
+              sx={{ width: 200 }}
+            />
+          </Box>
           <Button
             variant="contained"
             size="small"
@@ -462,7 +470,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           >
             조회
           </Button>
-        </div>
+        </Box>
 
         {/* 버튼 영역 */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>

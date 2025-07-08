@@ -1,6 +1,8 @@
   import { Confirm } from '@/shared/components/modal';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Box, Button, FormControl, MenuItem, Select } from '@mui/material';
+import { Button } from '@/shared/components/ui/button';
+import { ComboBox } from '@/shared/components/ui/form';
+import { Box } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -240,8 +242,8 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
       </div>
       <div className='responsibility-divider'></div>
       <div className='responsibility-section' style={{ marginTop: '20px' }}>
-        <div
-          style={{
+        <Box
+          sx={{
             display: 'flex',
             gap: '8px',
             marginBottom: '16px',
@@ -252,123 +254,78 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             borderRadius: '4px',
           }}
         >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <FormControl size='small' sx={{ minWidth: 180 }}>
-            <Select
-              value={selectedLedgerOrder}
-              onChange={e => setSelectedLedgerOrder(e.target.value)}
-              displayEmpty
-              sx={{ backgroundColor: 'white', fontSize: '0.85rem' }}
-            >
-              <MenuItem value='' sx={{ fontSize: '0.85rem' }}>
-                전체
-              </MenuItem>
-              {ledgerOrderOptions.length > 0 ? (
-                ledgerOrderOptions.map(option => (
-                  <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.85rem' }}>
-                    {option.label}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled sx={{ fontSize: '0.85rem' }}>
-                  데이터 로딩 중...
-                </MenuItem>
-              )}
-            </Select>
-          </FormControl>
+          <ComboBox
+            label="원장차수"
+            value={selectedLedgerOrder}
+            onChange={(value) => setSelectedLedgerOrder(value as string)}
+            options={ledgerOrderOptions}
+            size="small"
+            sx={{ minWidth: '200px' }}  // 너비 조정
+          />
           <Button
-            variant='contained'
-            size='small'
+            variant="contained"
+            size="small"
             onClick={handleSearch}
-            sx={{
-              backgroundColor: 'var(--bank-primary)',
-              color: 'white',
-              '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-            }}
           >
             조회
           </Button>
           <Button
-            variant='contained'
-            size='small'
+            variant="contained"
+            size="small"
+            color="success"
             onClick={() => {
               /* 차수생성 로직 미구현 */
-            }}
-            sx={{
-              backgroundColor: 'var(--bank-success)',
-              color: 'white',
-              '&:hover': {
-                backgroundColor: 'var(--bank-success-dark)',
-              },
             }}
           >
             책무번호생성
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <Button
-              variant='contained'
-              size='small'
+              variant="contained"
+              size="small"
+              color="success"
               onClick={() => {
                 /* 확정 로직 미구현 */
-              }}
-              sx={{
-                backgroundColor: 'var(--bank-success)',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'var(--bank-success-dark)',
-                },
               }}
             >
               확정
             </Button>
             <Button
-              variant='contained'
-              size='small'
+              variant="contained"
+              size="small"
+              color="error"
               onClick={() => {
                 /* 확정취소 로직 미구현 */
-              }}
-              sx={{
-                backgroundColor: 'var(--bank-error)',
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'var(--bank-error-dark)',
-                },
               }}
             >
               확정취소
             </Button>
           </Box>
-        </div>
+        </Box>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
           <Button
-            variant='contained'
-            color='success'
-            size='small'
+            variant="contained"
+            size="small"
+            color="success"
             onClick={handleExcelDownload}
             sx={{ mr: 1 }}
           >
             엑셀 다운로드
           </Button>
           <Button
-            variant='contained'
-            size='small'
+            variant="contained"
+            size="small"
+            color="primary"
             onClick={handleCreateClick}
-            sx={{
-              mr: 1,
-              backgroundColor: 'var(--bank-primary)',
-              '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-            }}
+            sx={{ mr: 1 }}
           >
             등록
           </Button>
           <Button
-            variant='contained'
-            size='small'
+            variant="contained"
+            size="small"
+            color="error"
             onClick={handleDelete}
-            sx={{
-              backgroundColor: 'var(--bank-error)',
-              '&:hover': { backgroundColor: 'var(--bank-error-dark)' },
-            }}
           >
             삭제
           </Button>

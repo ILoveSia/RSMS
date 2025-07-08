@@ -6,7 +6,9 @@ import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
 import { Confirm } from '@/shared/components/modal';
-import { Box, Button, FormControl, MenuItem, Select } from '@mui/material';
+import { Button } from '@/shared/components/ui/button';
+import { ComboBox } from '@/shared/components/ui/form';
+import { Box } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
@@ -336,7 +338,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
     <div className='main-content'>
       {/* 페이지 제목 */}
       <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [100] 회의체 현황</h1>
+        <h1 className='responsibility-header__title'>★ [300] 회의체 현황</h1>
       </div>
 
       {/* 노란색 구분선 */}
@@ -345,8 +347,8 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
       {/* 메인 콘텐츠 영역 */}
       <div className='responsibility-section' style={{ marginTop: '20px' }}>
         {/* 필터 영역 */}
-        <div
-          style={{
+        <Box
+          sx={{
             display: 'flex',
             gap: '8px',
             marginBottom: '16px',
@@ -357,92 +359,53 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
             borderRadius: '4px',
           }}
         >
-          <span
-            style={{
-              fontWeight: 'bold',
-              fontSize: '0.9rem',
-              color: 'var(--bank-text-primary)',
-            }}
-          >
-            구분
-          </span>
-          <FormControl size='small' sx={{ minWidth: 80 }}>
-            <Select
-              value={filterDivision}
-              onChange={e => setFilterDivision(e.target.value)}
-              sx={{
-                backgroundColor: 'white',
-                fontSize: '0.85rem',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--bank-border)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--bank-border-dark)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--bank-primary)',
-                },
-              }}
-            >
-              <MenuItem value='전체' sx={{ fontSize: '0.85rem' }}>
-                전체
-              </MenuItem>
-              {getMeetingBodyCodes().map(code => (
-                <MenuItem key={code.code} value={code.code} sx={{ fontSize: '0.85rem' }}>
-                  {code.codeName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <ComboBox
+            label="구분"
+            value={filterDivision}
+            onChange={(value) => setFilterDivision(value as string)}
+            options={[
+              { value: '전체', label: '전체' },
+              ...getMeetingBodyCodes().map(code => ({
+                value: code.code,
+                label: code.codeName
+              }))
+            ]}
+            size="small"
+          />
           <Button
-            variant='contained'
-            size='small'
+            variant="contained"
+            size="small"
             onClick={handleSearch}
-            sx={{
-              backgroundColor: 'var(--bank-primary)',
-              color: 'white',
-              fontSize: '0.85rem',
-              fontWeight: '500',
-              '&:hover': {
-                backgroundColor: 'var(--bank-primary-dark)',
-              },
-            }}
           >
             조회
           </Button>
-        </div>
+        </Box>
 
         {/* 버튼 영역 */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
           <Button
-            variant='contained'
-            color='success'
-            size='small'
+            variant="contained"
+            size="small"
+            color="success"
             onClick={handleExcelDownload}
             sx={{ mr: 1 }}
           >
             엑셀 다운로드
           </Button>
           <Button
-            variant='contained'
-            size='small'
+            variant="contained"
+            size="small"
+            color="primary"
             onClick={handleCreateClick}
-            sx={{
-              mr: 1,
-              backgroundColor: 'var(--bank-primary)',
-              '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-            }}
+            sx={{ mr: 1 }}
           >
             등록
           </Button>
           <Button
-            variant='contained'
-            size='small'
+            variant="contained"
+            size="small"
+            color="error"
             onClick={handleDelete}
-            sx={{
-              backgroundColor: 'var(--bank-error)',
-              '&:hover': { backgroundColor: 'var(--bank-error-dark)' },
-            }}
           >
             삭제
           </Button>

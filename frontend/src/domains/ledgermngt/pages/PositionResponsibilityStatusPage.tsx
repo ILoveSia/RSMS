@@ -2,7 +2,7 @@
  * 직책별 책무 현황 페이지
  * TestGrid.tsx를 대체하는 실제 업무 페이지
  */
-import { Box, Chip, Typography } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import type { GridCallbackDetails, GridPaginationModel, GridRowSelectionModel } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -112,7 +112,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [errorMessage, setErrorMessage] = useState('');
 
   // 페이징 상태
-  const [paginationModel, setPaginationModel] = useState({
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
     pageSize: 20,
   });
@@ -305,60 +305,56 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   };
 
   return (
-    <div className='main-content'>
+    <div className="main-content">
       {/* 페이지 제목 */}
-      <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [400] 직책별 책무 현황</h1>
+      <div className="responsibility-header">
+        <h1 className="responsibility-header__title">★ [400] 직책별 책무 현황</h1>
       </div>
 
       {/* 노란색 구분선 */}
-      <div className='responsibility-divider'></div>
+      <div className="responsibility-divider"></div>
 
       {/* 메인 콘텐츠 영역 */}
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
-        {/* 검색 필터 영역 */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
-            alignItems: 'center',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            padding: '8px 16px',
-            borderRadius: '4px',
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-            원장차수
-          </Typography>
+      <div className="responsibility-section" style={{ marginTop: '20px' }}>
+        {/* 필터 영역 */}
+        <Box sx={{
+          display: 'flex',
+          gap: '8px',
+          padding: '8px 16px',
+          mb: 2,
+          bgcolor: 'var(--bank-bg-secondary)',
+          borderRadius: 1,
+          border: '1px solid var(--bank-border)',
+          alignItems: 'center'
+        }}>
           <ComboBox
+            label="원장차수"
             value={ledgerOrderFilter}
-            onChange={(newValue) => setLedgerOrderFilter(newValue as string || '전체')}
             options={[
               { value: '전체', label: '전체' },
-              { value: '1', label: '1차' },
-              { value: '2', label: '2차' },
-              { value: '3', label: '3차' }
+              { value: '1차', label: '1차' },
+              { value: '2차', label: '2차' },
+              { value: '3차', label: '3차' }
             ]}
+            onChange={(value) => setLedgerOrderFilter(value as string)}
             size="small"
+            sx={{ minWidth: '200px' }}
           />
-
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', ml: 2 }}>
-            직책
-          </Typography>
           <ComboBox
+            label="직책"
             value={positionFilter}
-            onChange={(newValue) => setPositionFilter(newValue as string || '전체')}
             options={[
               { value: '전체', label: '전체' },
-              { value: '팀장', label: '팀장' },
               { value: '부장', label: '부장' },
-              { value: '과장', label: '과장' }
+              { value: '차장', label: '차장' },
+              { value: '과장', label: '과장' },
+              { value: '팀장', label: '팀장' },
+              { value: '수석', label: '수석' }
             ]}
+            onChange={(value) => setPositionFilter(value as string)}
             size="small"
+            sx={{ minWidth: '200px' }}
           />
-
           <Button
             variant="contained"
             size="small"
@@ -367,16 +363,22 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           >
             조회
           </Button>
-        </div>
+        </Box>
 
-        {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+        {/* 액션 버튼 영역 */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px',
+            justifyContent: 'flex-end',
+          }}
+        >
           <Button
             variant="contained"
             size="small"
             onClick={handleExcelUpload}
             color="success"
-            sx={{ mr: 1 }}
           >
             엑셀 업로드
           </Button>
@@ -385,7 +387,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             size="small"
             onClick={handleExcelDownload}
             color="success"
-            sx={{ mr: 1 }}
           >
             엑셀 다운로드
           </Button>
@@ -393,34 +394,39 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             variant="contained"
             size="small"
             onClick={handleChangeHistory}
+            color="warning"
+          >
+            변경 이력
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => {
+              setDialogMode('create');
+              setSelectedDetailData(null);
+              setDialogOpen(true);
+            }}
             color="primary"
           >
-            변경이력
+            등록
           </Button>
         </Box>
 
-        {/* 데이터 그리드 */}
-        <Box sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
+        {/* 그리드 영역 */}
+        <Box sx={{ height: 'calc(100vh - 300px)', width: '100%' }}>
           <DataGrid
             rows={rows}
             columns={columns}
             loading={loading}
-            rowCount={totalCount}
-            paginationMode="server"
-            pageSizeOptions={[10, 20, 50]}
-            paginationModel={{
-              page: paginationModel.page,
-              pageSize: paginationModel.pageSize,
-            }}
-            onPaginationModelChange={(model: GridPaginationModel) =>
-              setPaginationModel({ ...model })
-            }
             checkboxSelection
+            disableRowSelectionOnClick
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10, 20, 50]}
+            rowCount={totalCount}
             rowSelectionModel={selectedIds}
             onRowSelectionModelChange={handleRowSelectionModelChange}
             sx={{
-              height: '100%',
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-primary-bg) !important',
                 fontWeight: 'bold',
@@ -432,24 +438,24 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             }}
           />
         </Box>
-
-        {/* 상세 정보 다이얼로그 */}
-        <ResponsibilityDialog
-          open={dialogOpen}
-          mode={dialogMode}
-          responsibility={selectedDetailData}
-          onClose={() => setDialogOpen(false)}
-          onSave={handleSave}
-          onModeChange={setDialogMode}
-        />
-
-        {/* 에러 다이얼로그 */}
-        <ErrorDialog
-          open={errorDialogOpen}
-          errorMessage={errorMessage}
-          onClose={handleCloseErrorDialog}
-        />
       </div>
+
+      {/* 상세 다이얼로그 */}
+      <ResponsibilityDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        mode={dialogMode}
+        responsibilityId={selectedDetailData?.id || null}
+        onSave={handleSave}
+        onChangeMode={setDialogMode}
+      />
+
+      {/* 오류 다이얼로그 */}
+      <ErrorDialog
+        open={errorDialogOpen}
+        onClose={handleCloseErrorDialog}
+        errorMessage={errorMessage}
+      />
     </div>
   );
 };

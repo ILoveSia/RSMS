@@ -2,12 +2,10 @@
  * 임원 현황 페이지
  * 책무구조 원장 관리 - 임원 현황
  */
+import { Button } from '@/shared/components/ui/button';
+import { ComboBox } from '@/shared/components/ui/form';
 import {
   Box,
-  Button,
-  FormControl,
-  MenuItem,
-  Select,
   Snackbar
 } from '@mui/material';
 import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
@@ -400,7 +398,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   };
 
   return (
-    <div className="main-content">
+    <div className="executive-status-page">
       {/* 페이지 제목 */}
       <div className="responsibility-header">
         <h1 className="responsibility-header__title">★ [500] 임원 현황</h1>
@@ -411,79 +409,51 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
       <div className="responsibility-section" style={{ marginTop: '20px' }}>
         {/* 필터 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: '16px',
-          alignItems: 'center',
-          backgroundColor: 'var(--bank-bg-secondary)',
-          border: '1px solid var(--bank-border)',
-          padding: '8px 16px',
-          borderRadius: '4px'
-        }}>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--bank-text-primary)' }}>
-            원장차수
-          </span>
-          <FormControl size="small">
-            <Select
-              value={ledgerOrderFilter}
-              onChange={handleLedgerOrderChange}
-              sx={{
-                backgroundColor: 'white',
-                fontSize: '0.85rem',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--bank-border)',
-                },
-              }}
-            >
-              <MenuItem value="전체" sx={{ fontSize: '0.85rem' }}>전체</MenuItem>
-              {ledgerOrderOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value} sx={{ fontSize: '0.85rem' }}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Box sx={{ display: 'flex', gap: 2, p: 2, mb: 2, bgcolor: 'var(--bank-bg-secondary)', borderRadius: 1, border: '1px solid var(--bank-border)' }}>
+          <ComboBox
+            label="원장차수"
+            value={ledgerOrderFilter}
+            options={[
+              { value: '전체', label: '전체' },
+              ...ledgerOrderOptions
+            ]}
+            onChange={(value) => setLedgerOrderFilter(value as string)}
+            size="small"
+            sx={{ width: 200 }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={fetchExecutiveStatus}
+          >
+            조회
+          </Button>
         </Box>
 
         {/* 버튼 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          marginBottom: '16px',
-          justifyContent: 'flex-end'
-        }}>
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
+            color="primary"
+            size="small"
             onClick={handleExcelUpload}
-            sx={{
-              backgroundColor: 'var(--bank-success)',
-              '&:hover': { backgroundColor: 'var(--bank-success-dark)' },
-              fontSize: '0.85rem'
-            }}
           >
             엑셀 업로드
           </Button>
           <Button
             variant="contained"
+            color="success"
+            size="small"
             onClick={handleExcelDownload}
-            disabled={loading || rows.length === 0}
-            sx={{
-              backgroundColor: 'var(--bank-primary)',
-              '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-              fontSize: '0.85rem'
-            }}
           >
             엑셀 다운로드
           </Button>
           <Button
             variant="contained"
+            color="primary"
+            size="small"
             onClick={handleCreateExecutive}
-            sx={{
-              backgroundColor: 'var(--bank-success)',
-              '&:hover': { backgroundColor: 'var(--bank-success-dark)' },
-              fontSize: '0.85rem'
-            }}
           >
             등록
           </Button>
