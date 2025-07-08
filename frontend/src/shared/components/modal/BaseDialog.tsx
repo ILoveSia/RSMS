@@ -1,15 +1,16 @@
+import Button from '@/shared/components/ui/button/Button';
 import CloseIcon from '@mui/icons-material/Close';
 import {
-    Box,
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    IconButton,
-    Typography,
+  Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Typography,
 } from '@mui/material';
-import React, { ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React from 'react';
 
 export type DialogMode = 'create' | 'edit' | 'view';
 
@@ -144,13 +145,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                 variant="contained"
                 onClick={handleEdit}
                 disabled={loading}
-                sx={{
-                  backgroundColor: 'var(--bank-warning)',
-                  '&:hover': { backgroundColor: 'var(--bank-warning-dark)' },
-                  '&.Mui-disabled': {
-                    backgroundColor: 'var(--bank-warning-light)',
-                  },
-                }}
+                color="warning"
               >
                 수정
               </Button>
@@ -160,13 +155,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                 variant="contained"
                 onClick={onSave}
                 disabled={disableSave || loading}
-                sx={{
-                  backgroundColor: 'var(--bank-success)',
-                  '&:hover': { backgroundColor: 'var(--bank-success-dark)' },
-                  '&.Mui-disabled': {
-                    backgroundColor: 'var(--bank-success-light)',
-                  },
-                }}
+                color="success"
               >
                 {isCreateMode ? '등록' : '저장'}
               </Button>
@@ -175,19 +164,8 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
               variant="outlined"
               onClick={handleCancel}
               disabled={loading}
-              sx={{
-                ml: 1,
-                borderColor: 'var(--bank-primary)',
-                color: 'var(--bank-primary)',
-                '&:hover': {
-                  borderColor: 'var(--bank-primary-dark)',
-                  backgroundColor: 'transparent',
-                },
-                '&.Mui-disabled': {
-                  borderColor: 'var(--bank-primary-light)',
-                  color: 'var(--bank-primary-light)',
-                },
-              }}
+              color="primary"
+              sx={{ ml: 1 }}
             >
               {isEditMode ? '취소' : '닫기'}
             </Button>
