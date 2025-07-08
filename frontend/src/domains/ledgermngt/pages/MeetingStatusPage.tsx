@@ -253,7 +253,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
     setConfirmOpen(true);
   };
 
-  // 삭제 확인 모달에서 "확인" 클릭 시 실제 삭제
+  // 삭제 확인 핸들러
   const handleConfirmDelete = async () => {
     if (!pendingDelete || pendingDelete.length === 0) {
       setConfirmOpen(false);
@@ -262,7 +262,13 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
     setLoading(true);
     setError(null);
     try {
-      await meetingStatusApi.deleteBulk(pendingDelete);
+      // 단일 항목 삭제인 경우 delete API 사용
+      if (pendingDelete.length === 1) {
+        await meetingStatusApi.delete(pendingDelete[0]);
+      } else {
+        // 다중 항목 삭제인 경우 deleteBulk API 사용
+        await meetingStatusApi.deleteBulk(pendingDelete);
+      }
       setSelectedIds([]); // 선택 초기화
       fetchMeetingBodies(); // 목록 새로고침
     } catch (err: unknown) {
@@ -281,6 +287,12 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
       setConfirmOpen(false);
       setPendingDelete(null);
     }
+  };
+
+  // 삭제 취소 핸들러
+  const handleCancelDelete = () => {
+    setConfirmOpen(false);
+    setPendingDelete(null);
   };
 
   // 엑셀 다운로드 핸들러 (ExcelJS 사용)
@@ -472,18 +484,15 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
         onModeChange={handleModeChange}
       />
 
-      {/* 삭제 확인 모달 */}
+      {/* 삭제 확인 다이얼로그 */}
       <Confirm
         open={confirmOpen}
-        title='삭제 확인'
-        message='정말로 선택한 회의체를 삭제하시겠습니까?'
-        confirmText='삭제'
-        cancelText='취소'
+        title="회의체 삭제"
+        message={`선택한 ${pendingDelete?.length || 0}개의 회의체를 삭제하시겠습니까?`}
+        confirmText="삭제"
+        cancelText="취소"
         onConfirm={handleConfirmDelete}
-        onCancel={() => {
-          setConfirmOpen(false);
-          setPendingDelete(null);
-        }}
+        onCancel={handleCancelDelete}
       />
     </div>
   );

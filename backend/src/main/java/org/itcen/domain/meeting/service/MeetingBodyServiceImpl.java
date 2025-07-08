@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 
 /**
  * 회의체 Service 구현체
- * 
+ *
  * 회의체 비즈니스 로직을 구현하는 서비스 클래스입니다.
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: 회의체 비즈니스 로직만 담당
  * - Open/Closed: 새로운 기능 추가 시 확장 가능
@@ -167,13 +167,13 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
         );
 
         // 검색 조건이 모두 null이면 전체 조회
-        String gubun = (searchRequestDto.getGubun() != null && !searchRequestDto.getGubun().trim().isEmpty()) 
+        String gubun = (searchRequestDto.getGubun() != null && !searchRequestDto.getGubun().trim().isEmpty())
                 ? searchRequestDto.getGubun().trim() : null;
-        String meetingName = (searchRequestDto.getMeetingName() != null && !searchRequestDto.getMeetingName().trim().isEmpty()) 
+        String meetingName = (searchRequestDto.getMeetingName() != null && !searchRequestDto.getMeetingName().trim().isEmpty())
                 ? searchRequestDto.getMeetingName().trim() : null;
-        String meetingPeriod = (searchRequestDto.getMeetingPeriod() != null && !searchRequestDto.getMeetingPeriod().trim().isEmpty()) 
+        String meetingPeriod = (searchRequestDto.getMeetingPeriod() != null && !searchRequestDto.getMeetingPeriod().trim().isEmpty())
                 ? searchRequestDto.getMeetingPeriod().trim() : null;
-        String content = (searchRequestDto.getContent() != null && !searchRequestDto.getContent().trim().isEmpty()) 
+        String content = (searchRequestDto.getContent() != null && !searchRequestDto.getContent().trim().isEmpty())
                 ? searchRequestDto.getContent().trim() : null;
 
         // 검색 실행
@@ -229,13 +229,28 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
     @Transactional
     public void deleteMeetingBodies(List<String> ids) {
         log.info("여러 회의체 일괄 삭제 요청: {}건", ids.size());
+
+        // 존재하지 않는 ID 검증
+        List<String> existingIds = meetingBodyRepository.findAllById(ids)
+                .stream()
+                .map(MeetingBody::getMeetingBodyId)
+                .collect(Collectors.toList());
+
+        List<String> nonExistingIds = ids.stream()
+                .filter(id -> !existingIds.contains(id))
+                .collect(Collectors.toList());
+
+        if (!nonExistingIds.isEmpty()) {
+            throw new BusinessException("존재하지 않는 회의체가 포함되어 있습니다: " + String.join(", ", nonExistingIds));
+        }
+
         meetingBodyRepository.deleteAllByIdInBatch(ids);
         log.info("여러 회의체 일괄 삭제 완료: {}건", ids.size());
     }
 
     /**
      * Entity를 DTO로 변환
-     * 
+     *
      * @param meetingBody 회의체 Entity
      * @return 회의체 DTO
      */

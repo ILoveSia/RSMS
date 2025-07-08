@@ -84,7 +84,10 @@ export const meetingStatusApi = {
    * 여러 회의체 일괄 삭제
    */
   deleteBulk: async (ids: string[]): Promise<void> => {
-    await apiClient.post('/meeting-bodies/bulk-delete', { ids });
+    for (const id of ids) {
+      await apiClient.delete(`/meeting-bodies/${id}`);
+    }
+    //await apiClient.post('/meeting-bodies/bulk-delete', ids);
   },
 };
 
