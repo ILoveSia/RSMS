@@ -409,7 +409,16 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
       <div className="responsibility-section" style={{ marginTop: '20px' }}>
         {/* 필터 영역 */}
-        <Box sx={{ display: 'flex', gap: 2, p: 2, mb: 2, bgcolor: 'var(--bank-bg-secondary)', borderRadius: 1, border: '1px solid var(--bank-border)' }}>
+        <Box sx={{
+          display: 'flex',
+          gap: '8px',
+          padding: '8px 16px',
+          mb: 2,
+          bgcolor: 'var(--bank-bg-secondary)',
+          borderRadius: 1,
+          border: '1px solid var(--bank-border)',
+          alignItems: 'center'
+        }}>
           <ComboBox
             label="원장차수"
             value={ledgerOrderFilter}
@@ -419,7 +428,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             ]}
             onChange={(value) => setLedgerOrderFilter(value as string)}
             size="small"
-            sx={{ width: 200 }}
+            sx={{ minWidth: '200px' }}
           />
           <Button
             variant="contained"
@@ -435,7 +444,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         <Box sx={{ display: 'flex', gap: 1, mb: 2, justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
-            color="primary"
+            color="success"
             size="small"
             onClick={handleExcelUpload}
           >
