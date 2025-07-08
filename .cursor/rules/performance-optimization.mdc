@@ -1,8 +1,11 @@
+<<<<<<< HEAD
 ---
 description: 'Performance optimization rules and best practices'
 globs: '*.js,*.ts,*.tsx,*.java'
 ---
 
+=======
+>>>>>>> d056a66 (add cursor rules)
 # Performance Optimization Rules
 
 ## ⚡ PERFORMANCE MANDATE
