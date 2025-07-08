@@ -7,7 +7,8 @@ import {
   Button,
   FormControl,
   MenuItem,
-  Select
+  Select,
+  Snackbar
 } from '@mui/material';
 import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
@@ -15,9 +16,9 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import ErrorDialog from '../../../app/components/ErrorDialog';
-import type { ExecutiveRegistrationData } from '../../../app/components/ExecutiveRegistrationDialog';
-import ExecutiveRegistrationDialog from '../../../app/components/ExecutiveRegistrationDialog';
+import ExecutiveDetailDialog from '../../../app/components/ExecutiveDetailDialog';
 import '../../../assets/scss/style.css';
+import Alert from '../../../shared/components/ui/feedback/Alert';
 
 interface IExecutiveStatusPageProps {
   className?: string;
@@ -51,8 +52,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // 임원 등록 다이얼로그 상태
-  const [registrationDialogOpen, setRegistrationDialogOpen] = useState(false);
+  // 임원 상세 다이얼로그 상태 통합
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
+  const [selectedExecutive, setSelectedExecutive] = useState<ExecutiveStatusRow | null>(null);
+
+  // 성공 알림 상태
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // 페이징 상태
   const [paginationModel, setPaginationModel] = useState({
@@ -155,6 +162,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       flex: 1,
       align: 'center',
       headerAlign: 'center',
+      renderCell: (params) => (
+        <span
+          style={{
+            color: '#1976d2',
+            cursor: 'pointer',
+            textDecoration: 'underline'
+          }}
+          onClick={() => handleExecutiveDetail(params.row)}
+        >
+          {params.value}
+        </span>
+      ),
     },
     {
       field: 'executiveName',
@@ -218,50 +237,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           {params.value || '해당없음'}
         </span>
       )
-    },
-    {
-      field: 'actions',
-      headerName: '작업',
-      width: 180,
-      align: 'center',
-      headerAlign: 'center',
-      sortable: false,
-      filterable: false,
-      renderCell: (params) => (
-        <Box sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 1,
-          height: '100%',
-          width: '100%'
-        }}>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => handleHistoryView(params.row.id)}
-            sx={{
-              fontSize: '0.75rem',
-              minWidth: '60px',
-              height: '28px'
-            }}
-          >
-            변경이력
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => handleEditExecutive(params.row)}
-            sx={{
-              fontSize: '0.75rem',
-              minWidth: '60px',
-              height: '28px'
-            }}
-          >
-            수정
-          </Button>
-        </Box>
-      )
     }
   ];
 
@@ -270,42 +245,72 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setLedgerOrderFilter(event.target.value);
   };
 
-  // 임원 수정 핸들러
-  const handleEditExecutive = (executive: ExecutiveStatusRow) => {
-    // TODO: 수정 다이얼로그 구현
-    console.log('수정할 임원:', executive);
-    alert(`${executive.executiveName} 임원의 수정 기능을 구현 예정입니다.`);
+  // 임원 저장 핸들러 (등록/수정 공통)
+  const handleSaveExecutive = async (data: any) => {
+    try {
+      if (data.id) {
+        // 수정
+        // TODO: 실제 API 호출로 변경
+        // const response = await apiClient.put(`/executives/${data.id}`, data);
+        console.log('수정할 데이터:', data);
+
+        // 임시로 성공 처리
+        const updatedRows = rows.map(row =>
+          row.id === data.id ? { ...data } : row
+        );
+        setRows(updatedRows);
+        setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
+      } else {
+        // 등록
+        // TODO: 실제 API 호출로 변경
+        // const response = await apiClient.post('/executives', data);
+        console.log('등록할 데이터:', data);
+
+        // 임시로 성공 처리
+        const newExecutive = {
+          ...data,
+          id: rows.length + 1 // 임시 ID 생성
+        };
+        setRows([...rows, newExecutive]);
+        setSuccessMessage('임원 정보가 성공적으로 등록되었습니다.');
+      }
+
+      // 성공 메시지 표시
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+
+      // 다이얼로그 닫기
+      if (data.id) {
+        setDialogOpen(false);
+      } else {
+        setDialogOpen(false);
+      }
+
+    } catch (error) {
+      console.error('임원 저장 오류:', error);
+      setErrorMessage('임원 정보 저장 중 오류가 발생했습니다.');
+      setErrorDialogOpen(true);
+    }
   };
 
   // 임원 등록 핸들러
   const handleCreateExecutive = () => {
-    setRegistrationDialogOpen(true);
+    setSelectedExecutive(null);
+    setDialogMode('create');
+    setDialogOpen(true);
   };
 
-  // 임원 등록 다이얼로그 닫기 핸들러
-  const handleCloseRegistrationDialog = () => {
-    setRegistrationDialogOpen(false);
+  // 임원 상세 정보 핸들러
+  const handleExecutiveDetail = (executive: ExecutiveStatusRow) => {
+    setSelectedExecutive(executive);
+    setDialogMode('view');
+    setDialogOpen(true);
   };
 
-  // 임원 등록 저장 핸들러
-  const handleSaveExecutive = async (data: ExecutiveRegistrationData) => {
-    try {
-      console.log('임원 등록 데이터:', data);
-
-      // TODO: 실제 API 호출로 변경
-      // const response = await apiClient.post('/executives', data);
-
-      // 임시로 성공 처리
-      alert('임원 정보가 성공적으로 등록되었습니다.');
-
-      // 목록 새로고침
-      await fetchExecutiveStatus();
-
-    } catch (error) {
-      console.error('임원 등록 오류:', error);
-      setErrorMessage('임원 등록 중 오류가 발생했습니다.');
-      setErrorDialogOpen(true);
-    }
+  // 다이얼로그 닫기 핸들러
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedExecutive(null);
   };
 
   // DataGrid 체크박스 선택 핸들러
@@ -385,18 +390,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     } catch (error) {
       console.error('엑셀 다운로드 실패:', error);
       setError('엑셀 다운로드 중 오류가 발생했습니다.');
-    }
-  };
-
-  // 변경이력 조회
-  const handleHistoryView = (id: number) => {
-    // TODO: 변경이력 조회 기능 구현
-    console.log('변경이력 조회:', id);
-
-    // 임시로 메시지 표시
-    const targetRow = rows.find(row => row.id === id);
-    if (targetRow) {
-      alert(`${targetRow.executiveName} 임원의 변경이력을 조회합니다.`);
     }
   };
 
@@ -524,6 +517,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           />
         </Box>
 
+        {/* 성공 알림 */}
+        <Snackbar
+          open={showSuccess}
+          autoHideDuration={2000}
+          onClose={() => setShowSuccess(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert severity="success">
+            {successMessage}
+          </Alert>
+        </Snackbar>
+
         {/* 다이얼로그들 */}
         <ErrorDialog
           open={errorDialogOpen}
@@ -531,9 +536,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           errorMessage={errorMessage}
         />
 
-        <ExecutiveRegistrationDialog
-          open={registrationDialogOpen}
-          onClose={handleCloseRegistrationDialog}
+        <ExecutiveDetailDialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          executive={selectedExecutive}
           onSave={handleSaveExecutive}
         />
       </div>
