@@ -480,16 +480,16 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
                   <Stack spacing={0.5}>
                     <Typography variant='caption' color='text.secondary'>
-                      - Node.js v18.20.8+ ✅
+                      React 18.2, Spring Boot 3.5, PostgreSQL 17, Redis ✅
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      - React 18.2.0 ✅
+                      TypeScript 5.8.3 전면 적용 ✅
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      - Java JDK 21+ ✅
+                      Material-UI v5 기반 모던 디자인 시스템 ✅
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      - PostgreSQL v17+ ✅
+                      Vite 5.0.12, Hot Reload, 자동화된 설정 ✅
                     </Typography>
                   </Stack>
                 </Box>
