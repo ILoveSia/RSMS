@@ -6,6 +6,7 @@ import type { DomainRoute } from '@/app/router/route-manager';
 import React from 'react';
 
 // Lazy loading을 위한 컴포넌트 import
+const InspectionPlanManagementPage = React.lazy(() => import('@/domains/inquiry/pages/InspectionPlanManagementPage'));
 const InspectionSchedulePage = React.lazy(
   () => import('@/domains/inquiry/pages/InspectionSchedulePage')
 );
@@ -15,6 +16,18 @@ const NonEmployeePage = React.lazy(() => import('@/domains/inquiry/pages/NonEmpl
 
 // 적부구조도 이력 점검 도메인 라우트 정의 (백엔드 메뉴 URL과 일치)
 const inquiryRoutes: DomainRoute[] = [
+  {
+    path: '/inquiry/inspection-plan',
+    element: InspectionPlanManagementPage,
+    meta: {
+      title: '점검 계획 관리',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['적부구조도 이력 점검', '점검 계획 관리'],
+      icon: 'Assignment',
+      description: '점검 계획 관리 페이지',
+    },
+  },
   {
     path: '/inquiry/schedule',
     element: InspectionSchedulePage,

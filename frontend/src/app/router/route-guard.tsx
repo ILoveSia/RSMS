@@ -51,8 +51,21 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
 
   // 인증이 필요한 페이지인 경우
   if (meta?.requiresAuth && !authState.isAuthenticated) {
+    // 현재 경로가 /login이면 리다이렉트하지 않음
+    if (location.pathname === '/login') {
+      return <>{children}</>;
+    }
     console.log('❌ [RouteGuard] 인증 필요하지만 미인증 상태 -> 로그인 페이지로 리다이렉트');
     return <Navigate to='/login' state={{ from: location }} replace />;
+  }
+
+  // 인증이 필요하지 않은 페이지인 경우 (meta.requiresAuth가 false인 경우)
+  if (meta?.requiresAuth === false) {
+    // 이미 인증된 사용자가 로그인 페이지에 접근하면 메인으로 리다이렉트
+    if (location.pathname === '/login' && authState.isAuthenticated) {
+      return <Navigate to='/' replace />;
+    }
+    return <>{children}</>;
   }
 
   // 특정 역할이 필요한 페이지인 경우

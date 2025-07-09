@@ -7,7 +7,8 @@
  * - 에러 처리
  */
 import { Box, Typography } from '@mui/material';
-import React, { ComponentType, lazy } from 'react';
+import type { ComponentType } from 'react';
+import React, { lazy } from 'react';
 
 // 페이지 컴포넌트 타입
 type PageComponent = ComponentType<any>;
@@ -142,6 +143,11 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '부서별 현황',
     icon: 'business',
   },
+  '/inquiry/inspection-plan': {
+    component: () => import('@/domains/inquiry/pages/InspectionPlanManagementPage'),
+    title: '점검 계획 관리',
+    icon: 'assignment',
+  },
   '/inquiry/monthly-status': {
     component: () => import('@/domains/inquiry/pages/MonthlyStatusPage'),
     title: '월별 현황',
@@ -156,6 +162,23 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     component: () => import('@/domains/inquiry/pages/NonEmployeePage'),
     title: '비정규직',
     icon: 'person_outline',
+  },
+
+  // 책무구조도 이력 점검
+  '/history/dept-status': {
+    component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
+    title: '부서별 현황',
+    icon: 'business',
+  },
+  '/history/monthly-status': {
+    component: () => import('@/domains/inquiry/pages/MonthlyStatusPage'),
+    title: '월별 현황',
+    icon: 'calendar_month',
+  },
+  '/history/inspection-schedule': {
+    component: () => import('@/domains/inquiry/pages/InspectionSchedulePage'),
+    title: '점검일정',
+    icon: 'schedule',
   },
 
   // 점검계획
@@ -177,19 +200,17 @@ export class PageComponentMapper {
     const mapping = PAGE_COMPONENT_MAPPING[path];
 
     if (!mapping) {
-      console.warn(`[PageComponentMapper] 등록되지 않은 경로: ${path}`);
-      return () => <ErrorPage error={`등록되지 않은 페이지: ${path}`} />;
+      console.error(`❌ [PageComponentMapper] 경로에 해당하는 컴포넌트를 찾을 수 없습니다: ${path}`);
+      return ErrorPage;
     }
 
-    // lazy loading으로 컴포넌트 반환
-    return lazy(() =>
-      mapping.component().catch(error => {
-        console.error(`[PageComponentMapper] 컴포넌트 로딩 실패: ${path}`, error);
-        return {
-          default: () => <ErrorPage error={`컴포넌트 로딩 실패: ${path}`} />,
-        };
-      })
-    );
+    try {
+      // lazy 컴포넌트 생성
+      return lazy(mapping.component);
+    } catch (error) {
+      console.error(`❌ [PageComponentMapper] 컴포넌트 로딩 중 오류 발생:`, error);
+      return ErrorPage;
+    }
   }
 
   /**

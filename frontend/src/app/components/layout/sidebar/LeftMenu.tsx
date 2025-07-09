@@ -158,36 +158,34 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         return;
       }
 
-      // 페이지 정보 가져오기
-      const pageInfo = PageComponentMapper.getPageInfo(menu.menuUrl);
-      console.log('페이지 정보:', pageInfo);
+      console.log('🔍 [LeftMenu] 메뉴 클릭:', menu.menuUrl);
 
-      if (!pageInfo) {
-        console.warn('❌ 등록되지 않은 메뉴 경로:', menu.menuUrl);
+      // PageComponentMapper에서 컴포넌트 정보 가져오기
+      const pageInfo = PageComponentMapper.getPageInfo(menu.menuUrl);
+      const PageComponent = PageComponentMapper.getComponent(menu.menuUrl);
+
+      console.log('📄 [LeftMenu] 페이지 정보:', pageInfo);
+      console.log('🧩 [LeftMenu] 컴포넌트:', PageComponent);
+      console.log('🧩 [LeftMenu] 컴포넌트 타입:', typeof PageComponent);
+
+      if (!pageInfo || !PageComponent) {
+        console.error('❌ [LeftMenu] 페이지 정보 또는 컴포넌트를 찾을 수 없음');
         return;
       }
 
-      // 페이지 컴포넌트 가져오기
-      const PageComponent = PageComponentMapper.getComponent(menu.menuUrl);
-      console.log('페이지 컴포넌트:', PageComponent);
-
-      // 탭 추가 시도
-      console.log('탭 추가 시도:', {
-        title: pageInfo.title,
-        path: menu.menuUrl,
-        closable: true,
-        icon: pageInfo.icon,
-      });
-
       try {
+        // 탭 추가
         addTab({
           title: pageInfo.title,
           path: menu.menuUrl,
-          component: <PageComponent />,
+          component: PageComponent,
           closable: true,
           icon: pageInfo.icon,
         });
         console.log('✅ 탭 추가 성공');
+
+        // 이벤트 버블링 방지
+        event?.stopPropagation();
       } catch (error) {
         console.error('❌ 탭 추가 실패:', error);
       }

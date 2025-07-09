@@ -5,9 +5,12 @@
 import { LeftMenu, TopHeader } from '@/app/components/layout';
 import type { IComponent } from '@/app/types';
 import MainPage from '@/domains/main/pages/MainPage';
-import { TabContainer, TabProvider, useTabContext } from '@/shared/components/tabs';
+import { TabContainer, TabProvider } from '@/shared/components/tabs';
 import { useAuth } from '@/shared/context/AuthContext';
+import { useTabContext } from '@/shared/context/TabContext';
+import { PageComponentMapper } from '@/shared/utils/pageComponentMapper';
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import '../../../assets/scss/style.css';
 
 interface IMainLayoutProps {
@@ -18,13 +21,21 @@ interface IMainLayoutProps {
 // 홈 탭 초기화 컴포넌트
 const HomeTabInitializer: React.FC = () => {
   const { addTab, tabs = [] } = useTabContext(); // 기본값 설정으로 안전한 접근
+  const location = useLocation();
 
   useEffect(() => {
+    // 현재 URL에 해당하는 페이지 정보 가져오기
+    const currentPageInfo = PageComponentMapper.getPageInfo(location.pathname);
+    const currentComponent = PageComponentMapper.getComponent(location.pathname);
+
     // 홈 탭이 이미 존재하는지 확인 (방어 코드 추가)
     const homeTabExists = Array.isArray(tabs) && tabs.some(tab => tab.path === '/main');
 
+    // 현재 경로에 해당하는 탭이 이미 존재하는지 확인
+    const currentTabExists = Array.isArray(tabs) && tabs.some(tab => tab.path === location.pathname);
+
+    // 홈 탭이 없으면 추가
     if (!homeTabExists) {
-      // 홈 탭 추가
       addTab({
         title: '홈',
         path: '/main',
@@ -33,7 +44,18 @@ const HomeTabInitializer: React.FC = () => {
         icon: 'home',
       });
     }
-  }, [addTab, tabs]);
+
+    // 현재 URL이 메인이 아니고, 해당하는 탭이 없으면 추가
+    if (location.pathname !== '/main' && !currentTabExists && currentPageInfo && currentComponent) {
+      addTab({
+        title: currentPageInfo.title,
+        path: location.pathname,
+        component: currentComponent,
+        closable: true,
+        icon: currentPageInfo.icon,
+      });
+    }
+  }, [addTab, tabs, location.pathname]);
 
   return null;
 };
