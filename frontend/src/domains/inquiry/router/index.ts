@@ -13,6 +13,7 @@ const InspectionSchedulePage = React.lazy(
 const MonthlyStatusPage = React.lazy(() => import('@/domains/inquiry/pages/MonthlyStatusPage'));
 const DeptStatusPage = React.lazy(() => import('@/domains/inquiry/pages/DeptStatusPage'));
 const NonEmployeePage = React.lazy(() => import('@/domains/inquiry/pages/NonEmployeePage'));
+const DeficiencyStatusPage = React.lazy(() => import('@/domains/inquiry/pages/DeficiencyStatusPage'));
 
 // 적부구조도 이력 점검 도메인 라우트 정의 (백엔드 메뉴 URL과 일치)
 const inquiryRoutes: DomainRoute[] = [
@@ -29,7 +30,19 @@ const inquiryRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/inquiry/schedule',
+    path: '/inquiry/deficiency-status',
+    element: DeficiencyStatusPage,
+    meta: {
+      title: '미흡상황 현황',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['적부구조도 이력 점검', '미흡상황 현황'],
+      icon: 'Warning',
+      description: '미흡상황 현황 페이지',
+    },
+  },
+  {
+    path: '/inquiry/inspection-schedule',
     element: InspectionSchedulePage,
     meta: {
       title: '점검 계획',

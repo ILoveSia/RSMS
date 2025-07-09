@@ -163,6 +163,11 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '비정규직',
     icon: 'person_outline',
   },
+  '/inquiry/deficiency-status': {
+    component: () => import('@/domains/inquiry/pages/DeficiencyStatusPage'),
+    title: '미흡상황 현황',
+    icon: 'warning',
+  },
 
   // 책무구조도 이력 점검
   '/history/dept-status': {
