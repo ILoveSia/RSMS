@@ -6,10 +6,10 @@ import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
 import { Dialog } from '@/shared/components/modal';
+import { Button } from '@/shared/components/ui/button';
+import { Alert } from '@/shared/components/ui/feedback';
 import {
-  Alert,
   Box,
-  Button,
   CircularProgress,
   Divider,
   List,
@@ -20,7 +20,7 @@ import {
   TextField,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { meetingStatusApi } from '../../ledgermngt/api/meetingStatusApi';
+import { meetingStatusApi } from '../../domains/ledgermngt/api/meetingStatusApi';
 
 export interface MeetingBodySearchDialogProps {
   open: boolean;
@@ -227,20 +227,16 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
   const renderActions = () => {
     return (
       <>
-        <Button onClick={onClose} variant='outlined'>
-          취소
-        </Button>
         <Button
           onClick={handleConfirmSelect}
           variant='contained'
+          color='primary'
           disabled={!selectedMeetingBody}
-          sx={{
-            backgroundColor: 'var(--bank-primary)',
-            '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-            '&:disabled': { backgroundColor: 'var(--bank-border)' },
-          }}
         >
           선택
+        </Button>
+        <Button onClick={onClose} variant='outlined'>
+          취소
         </Button>
       </>
     );
@@ -250,7 +246,7 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
     <Dialog open={open} title={title} maxWidth='sm' onClose={onClose} actions={renderActions()}>
       <Box sx={{ mt: 2, minHeight: 400 }}>
         {error && (
-          <Alert severity='error' sx={{ mb: 2 }}>
+          <Alert severity='error' sx={{ mb: 2 }} title='오류'>
             {error}
           </Alert>
         )}
@@ -274,13 +270,7 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
             variant='contained'
             onClick={handleSearch}
             disabled={loading}
-            sx={{
-              minWidth: 80,
-              backgroundColor: 'var(--bank-secondary)',
-              '&:hover': {
-                backgroundColor: 'var(--bank-secondary-dark)',
-              },
-            }}
+            color='primary'
           >
             검색
           </Button>

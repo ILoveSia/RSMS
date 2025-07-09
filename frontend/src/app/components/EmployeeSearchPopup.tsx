@@ -2,41 +2,38 @@
  * 사원 검색 팝업 컴포넌트
  * UserController의 사용자 목록 조회 API를 사용
  */
-import React, { useState, useEffect } from 'react';
+import apiClient from '@/app/common/api/client';
+import DepartmentApi from '@/domains/common/api/departmentApi';
+import { Dialog } from '@/shared/components/modal';
+import { Button } from '@/shared/components/ui/button';
 import {
   Box,
-  Button,
-  TextField,
   Paper,
-  Alert,
-  CircularProgress,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Checkbox,
+  TextField,
 } from '@mui/material';
-import Dialog from './Dialog';
-import { api } from '../services/api';
+import React, { useEffect, useState } from 'react';
 
 export interface EmployeeSearchPopupProps {
   open: boolean;
   onClose: () => void;
-  onSelect?: (employee: EmployeeSearchResult | EmployeeSearchResult[]) => void;
+  onSelect?: (employee: EmployeeSearchResult) => void;
   title?: string;
-  visibleColumns?: string[]; // 보여줄 컬럼들 (기본값: 모든 컬럼)
-  multiSelect?: boolean; // 다중 선택 여부
 }
 
 export interface EmployeeSearchResult {
   id: string;
-  num: string;          // 사번
-  username: string;     // 성명
-  jobRankCd: string;    // 직급코드
-  jobTitleCd: string;   // 직책코드
-  deptCd: string;       // 부서코드
+  num: string; // 사번
+  username: string; // 성명
+  jobRankCd: string; // 직급코드
+  jobTitleCd: string; // 직책코드
+  deptCd: string; // 부서코드
+  deptName?: string; // 부서명 (추가)
   email: string;
   mobile: string;
 }
@@ -55,14 +52,11 @@ interface UserResponse {
   updatedAt: string;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
 // Local storage에서 공통코드 가져오는 함수
-function getCommonCodesFromLocalStorage(): Record<string, { code: string; codeName: string; groupCode: string }[]> {
+function getCommonCodesFromLocalStorage(): Record<
+  string,
+  { code: string; codeName: string; groupCode: string }[]
+> {
   try {
     const codes = localStorage.getItem('commonCodes');
     if (!codes) return {};
@@ -77,43 +71,27 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   open,
   onClose,
   onSelect,
-  title = "사원 검색",
-  visibleColumns = ['num', 'username', 'jobRankCd', 'deptCd', 'email', 'mobile'], // 기본값: 모든 컬럼
-  multiSelect = false, // 기본값: 단일 선택
+  title = '사원 검색',
 }) => {
   // 공통코드 Local storage에서 읽기
   const usableGroupedCodes = getCommonCodesFromLocalStorage();
 
-  // 전체 컬럼 정의
-  const allColumns = [
-    { field: 'num', headerName: '사번', width: 100 },
-    { field: 'username', headerName: '성명', width: 100 },
-    { field: 'jobRankCd', headerName: '직급', width: 100 },
-    { field: 'deptCd', headerName: '부서', width: 150 },
-    { field: 'email', headerName: '이메일', width: 200 },
-    { field: 'mobile', headerName: '휴대폰', width: 150 },
-  ];
-
-  // visibleColumns에 따라 컬럼 필터링
-  const columns = allColumns.filter(column => visibleColumns.includes(column.field));
-  
   // 검색 조건 상태
   const [searchConditions, setSearchConditions] = useState({
     username: '',
     num: '',
+    deptCd: '',
   });
-  
+
   // 검색 결과 상태
   const [employees, setEmployees] = useState<EmployeeSearchResult[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeSearchResult | null>(null);
-  const [selectedEmployees, setSelectedEmployees] = useState<EmployeeSearchResult[]>([]);
-  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState<string[]>([]);
-  
+
   // 로딩 및 에러 상태
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 코드명 조회 함수 (Local storage 데이터 사용)
+  // 코드명 조회 함수 (Local storage 데이터 사용 - 직급용)
   const getCodeName = (groupCode: string, code: string | null | undefined): string => {
     if (!code) return '';
     const codeList = usableGroupedCodes[groupCode];
@@ -121,7 +99,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       console.log(`코드 목록 없음 또는 잘못된 형식 - 그룹: ${groupCode}`);
       return code;
     }
-    const codeItem = codeList.find((item) => item.code === code);
+    const codeItem = codeList.find(item => item.code === code);
     if (!codeItem) {
       console.log(`매칭되는 코드 없음 - 그룹: ${groupCode}, 코드: ${code}`);
       return code;
@@ -129,36 +107,44 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     return codeItem.codeName;
   };
 
-  // 컬럼별 렌더링 함수
-  const renderCellValue = (field: string, employee: EmployeeSearchResult): string => {
-    switch (field) {
-      case 'num':
-        return employee.num;
-      case 'username':
-        return employee.username;
-      case 'jobRankCd':
-        return getCodeName('JOB_RANK', employee.jobRankCd);
-      case 'deptCd':
-        return getCodeName('DEPT', employee.deptCd);
-      case 'email':
-        return employee.email;
-      case 'mobile':
-        return employee.mobile;
-      default:
-        return '';
+  // 부서명 조회 함수 (DepartmentApi 사용)
+  const getDepartmentName = async (deptCd: string): Promise<string> => {
+    if (!deptCd) return '';
+    try {
+      const result = await DepartmentApi.getName(deptCd);
+
+      // 결과가 문자열인지 확인
+      if (typeof result === 'string') {
+        return result;
+      }
+
+      // 객체인 경우 data 필드 확인
+      if (typeof result === 'object' && result !== null) {
+        const obj = result as Record<string, unknown>;
+        if ('data' in obj && typeof obj.data === 'string') {
+          return obj.data;
+        }
+        if ('departmentName' in obj && typeof obj.departmentName === 'string') {
+          return obj.departmentName;
+        }
+      }
+
+      console.warn('부서명 조회 결과가 예상과 다름:', result);
+      return deptCd; // 예상과 다른 결과일 때 코드 반환
+    } catch (error) {
+      console.warn('부서명 조회 실패:', deptCd, error);
+      return deptCd; // 조회 실패 시 코드 반환
     }
   };
 
   // 다이얼로그 초기화
   useEffect(() => {
     if (open) {
-      setSearchConditions({ username: '', num: '' });
+      setSearchConditions({ username: '', num: '', deptCd: '' });
       setEmployees([]);
       setSelectedEmployee(null);
-      setSelectedEmployees([]);
-      setSelectedEmployeeIds([]);
       setError(null);
-      
+
       // 초기 데이터 로드
       handleSearch();
     }
@@ -168,7 +154,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   const handleSearch = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const params = new URLSearchParams({
         limit: '100', // 최대 100명까지 조회
@@ -181,34 +167,46 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       if (searchConditions.num?.trim()) {
         params.append('num', searchConditions.num.trim());
       }
+      if (searchConditions.deptCd?.trim()) {
+        params.append('deptCd', searchConditions.deptCd.trim());
+      }
 
       console.log('사원 검색 API 호출:', params.toString());
-      
-      const response = await api.get<ApiResponse<UserResponse[]>>(
-        `/users/employees?${params.toString()}`
-      );
 
-      console.log('사원 검색 응답:', response.data);
+      const response = await apiClient.get<UserResponse[]>(`/users/employees?${params.toString()}`);
 
-      if (response.data.success && response.data.data) {
-        const transformedEmployees: EmployeeSearchResult[] = response.data.data.map((user: UserResponse) => ({
-          id: user.id,
-          num: user.num || '',
-          username: user.username,
-          jobRankCd: user.jobRankCd || '',
-          jobTitleCd: user.jobTitleCd || '',
-          deptCd: user.deptCd || '',
-          email: user.email,
-          mobile: user.mobile,
-        }));
+      console.log('사원 검색 응답:', response);
+
+      if (response && Array.isArray(response)) {
+        const transformedEmployees: EmployeeSearchResult[] = await Promise.all(
+          response.map(async (user: UserResponse) => {
+            // 부서명 비동기 조회
+            const deptName = await getDepartmentName(user.deptCd);
+
+            return {
+              id: user.id,
+              num: user.num || '',
+              username: user.username,
+              jobRankCd: user.jobRankCd || '',
+              jobTitleCd: user.jobTitleCd || '',
+              deptCd: user.deptCd || '',
+              deptName: deptName,
+              email: user.email,
+              mobile: user.mobile,
+            };
+          })
+        );
 
         setEmployees(transformedEmployees);
-        
+
         // 검색 결과의 코드값들 로깅
-        console.log('변환된 직급/부서 코드:', transformedEmployees.map(emp => ({
-          jobRank: { code: emp.jobRankCd, name: getCodeName('JOB_RANK', emp.jobRankCd) },
-          dept: { code: emp.deptCd, name: getCodeName('DEPT', emp.deptCd) }
-        })));
+        console.log(
+          '변환된 직급/부서 정보:',
+          transformedEmployees.map(emp => ({
+            jobRank: { code: emp.jobRankCd, name: getCodeName('JOB_RANK', emp.jobRankCd) },
+            dept: { code: emp.deptCd, name: emp.deptName },
+          }))
+        );
       } else {
         setEmployees([]);
       }
@@ -222,14 +220,13 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   };
 
   // 검색 조건 변경
-  const handleSearchConditionChange = (field: keyof typeof searchConditions) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSearchConditions(prev => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
-  };
+  const handleSearchConditionChange =
+    (field: keyof typeof searchConditions) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchConditions(prev => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
+    };
 
   // 엔터키 검색
   const handleKeyPress = (event: React.KeyboardEvent) => {
@@ -238,67 +235,32 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     }
   };
 
-  // 사원 선택 (단일 선택용)
+  // 사원 선택
   const handleEmployeeSelect = (employee: EmployeeSearchResult) => {
-    if (!multiSelect) {
     setSelectedEmployee(employee);
-    }
   };
 
-  // 체크박스 선택/해제 (다중 선택용)
-  const handleCheckboxChange = (employee: EmployeeSearchResult, checked: boolean) => {
-    if (checked) {
-      setSelectedEmployees(prev => [...prev, employee]);
-      setSelectedEmployeeIds(prev => [...prev, employee.id]);
-    } else {
-      setSelectedEmployees(prev => prev.filter(emp => emp.id !== employee.id));
-      setSelectedEmployeeIds(prev => prev.filter(id => id !== employee.id));
-    }
-  };
-
-  // 전체 선택/해제
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedEmployees([...employees]);
-      setSelectedEmployeeIds(employees.map(emp => emp.id));
-    } else {
-      setSelectedEmployees([]);
-      setSelectedEmployeeIds([]);
-    }
-  };
-
-  // 사원 선택 확인
+  // 선택 확인
   const handleConfirmSelect = () => {
-    if (!onSelect) return;
-    
-    if (multiSelect) {
-      if (selectedEmployees.length > 0) {
-        onSelect(selectedEmployees);
-      }
-    } else {
-      if (selectedEmployee) {
+    if (selectedEmployee && onSelect) {
       onSelect(selectedEmployee);
-      }
     }
     onClose();
   };
 
-  // 다이얼로그 액션 버튼
   const renderActions = () => {
-    const hasSelection = multiSelect ? selectedEmployees.length > 0 : !!selectedEmployee;
-    const selectionCount = multiSelect ? selectedEmployees.length : (selectedEmployee ? 1 : 0);
-    
     return (
       <>
-        <Button onClick={onClose} variant="outlined">
-          취소
-        </Button>
         <Button
           onClick={handleConfirmSelect}
-          variant="contained"
-          disabled={!hasSelection}
+          variant='contained'
+          color='primary'
+          disabled={!selectedEmployee}
         >
-          선택 ({selectionCount})
+          선택
+        </Button>
+        <Button onClick={onClose}>
+          취소
         </Button>
       </>
     );
@@ -307,127 +269,102 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   return (
     <Dialog
       open={open}
-      title={title}
-      maxWidth="md"
       onClose={onClose}
+      title={title}
+      maxWidth='lg'
       actions={renderActions()}
     >
-      <Box sx={{ mt: 2, minHeight: 500 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
+      <Box sx={{ height: '80vh', display: 'flex', flexDirection: 'column' }}>
         {/* 검색 영역 */}
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <TextField
-              size="small"
-              label="성명"
+              label='성명'
               value={searchConditions.username}
               onChange={handleSearchConditionChange('username')}
               onKeyPress={handleKeyPress}
-              sx={{ minWidth: 150 }}
+              size='small'
+              sx={{ minWidth: 120 }}
             />
-              <TextField
-                size="small"
-              label="사번"
+            <TextField
+              label='사번'
               value={searchConditions.num}
               onChange={handleSearchConditionChange('num')}
-                onKeyPress={handleKeyPress}
-                sx={{ minWidth: 150 }}
-              />
-              <Button
-                variant="contained"
-                onClick={handleSearch}
-                disabled={loading}
-                sx={{
-                  minWidth: 80,
-                  height: 40,
-                  backgroundColor: '#666',
-                  '&:hover': {
-                    backgroundColor: '#555'
-                  }
-                }}
-              >
-                검색
-              </Button>
+              onKeyPress={handleKeyPress}
+              size='small'
+              sx={{ minWidth: 120 }}
+            />
+            <TextField
+              label='부서코드'
+              value={searchConditions.deptCd}
+              onChange={handleSearchConditionChange('deptCd')}
+              onKeyPress={handleKeyPress}
+              size='small'
+              sx={{ minWidth: 120 }}
+            />
+            <Button
+              onClick={handleSearch}
+              variant='contained'
+              color='secondary'
+              disabled={loading}
+            >
+              {loading ? '검색중...' : '검색'}
+            </Button>
           </Box>
         </Box>
 
+        {/* 에러 메시지 */}
+        {error && <Box sx={{ mb: 2, color: 'error.main', fontSize: '0.875rem' }}>{error}</Box>}
+
         {/* 검색 결과 테이블 */}
-        <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
-          <Table stickyHeader size="small">
+        <TableContainer component={Paper} sx={{ flexGrow: 1, mb: 2 }}>
+          <Table stickyHeader size='small'>
             <TableHead>
               <TableRow>
-                {multiSelect && (
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      indeterminate={
-                        selectedEmployees.length > 0 && selectedEmployees.length < employees.length
-                      }
-                      checked={employees.length > 0 && selectedEmployees.length === employees.length}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                    />
-                  </TableCell>
-                )}
-                {columns.map((column) => (
-                  <TableCell key={column.field}>{column.headerName}</TableCell>
-                ))}
+                <TableCell>사번</TableCell>
+                <TableCell>성명</TableCell>
+                <TableCell>직급</TableCell>
+                <TableCell>부서</TableCell>
+                <TableCell>이메일</TableCell>
+                <TableCell>연락처</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {loading ? (
+              {employees.map(emp => (
+                <TableRow
+                  key={emp.id}
+                  onClick={() => handleEmployeeSelect(emp)}
+                  selected={selectedEmployee?.id === emp.id}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:hover': { backgroundColor: 'action.hover' },
+                  }}
+                >
+                  <TableCell>{emp.num || ''}</TableCell>
+                  <TableCell>{emp.username || ''}</TableCell>
+                  <TableCell>{getCodeName('JOB_RANK', emp.jobRankCd) || ''}</TableCell>
+                  <TableCell>
+                    {typeof emp.deptName === 'string' ? emp.deptName : emp.deptCd || ''}
+                  </TableCell>
+                  <TableCell>{emp.email || ''}</TableCell>
+                  <TableCell>{emp.mobile || ''}</TableCell>
+                </TableRow>
+              ))}
+              {employees.length === 0 && !loading && (
                 <TableRow>
-                  <TableCell colSpan={multiSelect ? columns.length + 1 : columns.length} align="center">
-                    <CircularProgress size={24} />
+                  <TableCell colSpan={6} align='center'>
+                    검색 결과가 없습니다.
                   </TableCell>
                 </TableRow>
-              ) : employees.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={multiSelect ? columns.length + 1 : columns.length} align="center">
-                    검색된 사원이 없습니다.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                employees.map((employee) => {
-                  const isSelected = multiSelect 
-                    ? selectedEmployeeIds.includes(employee.id)
-                    : selectedEmployee?.id === employee.id;
-                  
-                  return (
-                  <TableRow
-                    key={employee.id}
-                    onClick={() => handleEmployeeSelect(employee)}
-                      selected={isSelected}
-                    hover
-                      sx={{ cursor: multiSelect ? 'default' : 'pointer' }}
-                  >
-                      {multiSelect && (
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={selectedEmployeeIds.includes(employee.id)}
-                            onChange={(e) => handleCheckboxChange(employee, e.target.checked)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </TableCell>
-                      )}
-                      {columns.map((column) => (
-                        <TableCell key={column.field}>
-                          {renderCellValue(column.field, employee)}
-                        </TableCell>
-                      ))}
-                  </TableRow>
-                  );
-                })
               )}
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* 하단 액션 버튼 제거 */}
       </Box>
     </Dialog>
   );
 };
 
-export default EmployeeSearchPopup; 
+export default EmployeeSearchPopup;

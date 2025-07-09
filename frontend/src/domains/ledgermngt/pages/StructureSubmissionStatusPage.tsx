@@ -595,6 +595,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                   placeholder="제출 대상 임원을 선택하세요"
                   size="small"
                   disabled={true}
+                  sx={{ minWidth: '300px' }}
                 />
                 <Button
                   variant="contained"

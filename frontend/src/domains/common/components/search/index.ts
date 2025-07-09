@@ -10,8 +10,8 @@ export type {
 } from './DepartmentSearchPopup';
 
 // 직원 검색 팝업
-export { default as EmployeeSearchPopup } from './EmployeeSearchPopup';
+export { default as EmployeeSearchPopup } from '../../../../app/components/EmployeeSearchPopup';
 export type {
   EmployeeSearchPopupProps,
   EmployeeSearchResult
-} from './EmployeeSearchPopup';
+} from '../../../../app/components/EmployeeSearchPopup';

@@ -3,18 +3,18 @@
  * 여러 화면에서 공통으로 사용할 수 있는 부서 검색 및 선택 팝업
  */
 import DepartmentApi, {
-  type Department as ApiDepartment,
+    type Department as ApiDepartment,
 } from '@/domains/common/api/departmentApi';
 import { Dialog } from '@/shared/components/modal';
+import { Button } from '@/shared/components/ui/button';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  InputAdornment,
-  TextField,
-  Typography,
+    Alert,
+    Box,
+    CircularProgress,
+    InputAdornment,
+    TextField,
+    Typography,
 } from '@mui/material';
 import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
@@ -222,15 +222,16 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   // 액션 버튼들
   const renderActions = () => (
     <>
-      <Button onClick={onClose} variant='outlined'>
-        취소
-      </Button>
       <Button
         onClick={handleSelectComplete}
         variant='contained'
+        color='primary'
         disabled={selectedRows.length === 0}
       >
         선택 ({selectedRows.length})
+      </Button>
+      <Button onClick={onClose}>
+        취소
       </Button>
     </>
   );
@@ -256,13 +257,10 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
             }}
           />
           <Button
-            variant='contained'
             onClick={handleSearch}
-            sx={{
-              minWidth: 80,
-              backgroundColor: 'var(--bank-secondary)',
-              '&:hover': { backgroundColor: 'var(--bank-secondary-dark)' },
-            }}
+            variant='contained'
+            color='secondary'
+            size='medium'
           >
             검색
           </Button>
