@@ -350,7 +350,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
     <div className='main-content'>
       {/* 페이지 제목 */}
       <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [300] 회의체 현황</h1>
+        <h1 className='responsibility-header__title'>★ [100] 회의체 현황</h1>
       </div>
 
       {/* 노란색 구분선 */}
