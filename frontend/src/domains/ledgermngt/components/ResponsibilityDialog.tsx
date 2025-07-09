@@ -30,7 +30,6 @@ interface IResponsibilityDialogProps {
 }
 
 const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
-const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   open,
   mode,
   responsibilityId,
