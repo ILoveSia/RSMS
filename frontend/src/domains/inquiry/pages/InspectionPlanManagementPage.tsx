@@ -2,16 +2,17 @@
  * 점검 계획 관리 페이지
  * 책무구조 원장 관리 - 점검 계획 관리
  */
-import {
-  Box,
-  Chip
-} from '@mui/material';
-import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
+import { Box, Typography } from '@mui/material';
+import type { GridColDef } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import ErrorDialog from '../../../app/components/ErrorDialog';
-import '../../../assets/scss/style.css';
+import ErrorDialog from '@/app/components/ErrorDialog';
+import '@/assets/scss/style.css';
+import { Button } from '@/shared/components/ui/button';
+import { ComboBox, DatePicker } from '@/shared/components/ui/form';
+import type { SelectOption } from '@/shared/types/common';
+import { Chip } from '@mui/material';
 
 interface IInspectionPlanManagementPageProps {
   className?: string;
@@ -29,12 +30,49 @@ interface InspectionPlanRow {
   remarks?: string;              // 비고
 }
 
+interface RegistrationData {
+  planCode: SelectOption | null;
+  roundName: SelectOption | null;
+  inspectionStartDate: Date;
+  inspectionEndDate: Date;
+  inspectionTarget: SelectOption | null;
+  remarks: SelectOption | null;
+}
+
+// 초기 등록 데이터
+const initialRegistrationData: RegistrationData = {
+  planCode: null,
+  roundName: null,
+  inspectionStartDate: new Date(),
+  inspectionEndDate: new Date(),
+  inspectionTarget: null,
+  remarks: null
+};
+
+// 초기 수정 데이터
+const initialEditData: RegistrationData = {
+  planCode: null,
+  roundName: null,
+  inspectionStartDate: new Date(),
+  inspectionEndDate: new Date(),
+  inspectionTarget: null,
+  remarks: null
+};
+
 const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps> = (): React.JSX.Element => {
   console.log('🏗️ [InspectionPlanManagementPage] 컴포넌트 렌더링 시작');
 
   // 기간 선택 상태
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [ledgerOrder, setLedgerOrder] = useState<string>('2024-001');
+
+  // 원장차수 옵션
+  const ledgerOrderOptions: SelectOption[] = [
+    { value: '2024-001', label: '2024-001' },
+    { value: '2024-002', label: '2024-002' },
+    { value: '2024-003', label: '2024-003' }
+  ];
 
   // 점검 계획 데이터
   const [planRows, setPlanRows] = useState<InspectionPlanRow[]>([]);
@@ -43,39 +81,26 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
   // 선택된 상세 정보
   const [selectedPlanDetail, setSelectedPlanDetail] = useState<InspectionPlanRow | null>(null);
 
-  // 선택된 행 ID
-  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
-
-  // 등록 모드 상태
-  const [isRegistrationMode, setIsRegistrationMode] = useState<boolean>(false);
-
-  // 수정 모드 상태
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  // 등록/수정 모드
+  const [isRegistrationMode, setIsRegistrationMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // 등록 폼 데이터
-  const [registrationData, setRegistrationData] = useState({
-    planCode: '',
-    roundName: '',
-    inspectionPeriod: '',
-    inspectionTarget: '',
-    remarks: ''
-  });
+  const [registrationData, setRegistrationData] = useState<RegistrationData>(initialRegistrationData);
 
   // 수정 폼 데이터
-  const [editData, setEditData] = useState({
-    planCode: '',
-    roundName: '',
-    inspectionPeriod: '',
-    inspectionTarget: '',
-    remarks: ''
-  });
+  const [editData, setEditData] = useState<RegistrationData>(initialEditData);
 
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  // 로딩 상태
+  const [isLoading, setIsLoading] = useState(false);
+
   const fetchInspectionPlans = useCallback(async () => {
     try {
+      setIsLoading(true);
       // 임시 테스트 데이터 - 점검 계획
       const planTestData: InspectionPlanRow[] = [
         {
@@ -124,23 +149,15 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
         }
       ];
 
-      // 기간 필터링 적용
-      let filteredData = planTestData;
-
-      if (startDate || endDate) {
-        filteredData = filteredData.filter(item => {
-          const periodMatch = item.inspectionPeriod.includes(startDate) ||
-                            item.inspectionPeriod.includes(endDate) ||
-                            (!startDate && !endDate);
-          return periodMatch;
-        });
-      }
-
-      setPlanRows(filteredData);
+      setPlanRows(planTestData);
     } catch (err) {
       console.error('점검 계획 데이터 로딩 실패:', err);
+      setErrorMessage('점검 계획 데이터를 불러오는 데 실패했습니다.');
+      setErrorDialogOpen(true);
+    } finally {
+      setIsLoading(false);
     }
-  }, [startDate, endDate]);
+  }, []);
 
   useEffect(() => {
     fetchInspectionPlans();
@@ -152,15 +169,15 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       field: 'planCode',
       headerName: '점검계획 코드',
       flex: 1,
-      minWidth: 130,
+      minWidth: 150,
       align: 'center',
       headerAlign: 'center',
     },
     {
       field: 'roundName',
       headerName: '점검 회차명',
-      flex: 1.2,
-      minWidth: 150,
+      flex: 1.3,
+      minWidth: 200,
       align: 'center',
       headerAlign: 'center',
     },
@@ -168,7 +185,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       field: 'inspectionPeriod',
       headerName: '점검 기간',
       flex: 1.3,
-      minWidth: 160,
+      minWidth: 200,
       align: 'center',
       headerAlign: 'center',
     },
@@ -176,21 +193,19 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       field: 'targetItemCount',
       headerName: '대상 점검항목 수',
       flex: 1,
-      minWidth: 120,
+      minWidth: 150,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => {
-        return `${params.value}개`;
-      }
+      renderCell: (params: any) => `${params.value}개`
     },
     {
       field: 'isModified',
       headerName: '수정여부',
       flex: 0.8,
-      minWidth: 100,
+      minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => (
+      renderCell: (params: any) => (
         <Chip
           label={params.value ? '수정' : '미수정'}
           color={params.value ? 'warning' : 'success'}
@@ -202,10 +217,10 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       field: 'progressStatus',
       headerName: '진행상태',
       flex: 0.8,
-      minWidth: 100,
+      minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => {
+      renderCell: (params: any) => {
         let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
         switch (params.value) {
@@ -236,161 +251,186 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
     }
   ];
 
-  const handlePlanRowSelectionModelChange = (newSelection: GridRowSelectionModel) => {
-    setSelectedPlanIds(newSelection as number[]);
-  };
-
-  const handlePlanRowClick = (params: any) => {
-    setSelectedPlanDetail(params.row);
-    setSelectedRowId(params.row.id);
-    setIsRegistrationMode(false); // 행 클릭 시 등록 모드 해제
-    setIsEditMode(false); // 행 클릭 시 수정 모드 해제
-  };
-
-  const handleRegistrationClick = () => {
-    setIsRegistrationMode(true);
-    setIsEditMode(false); // 수정 모드 해제
-    setSelectedPlanDetail(null); // 상세 표시 해제
-    setSelectedRowId(null); // 선택된 행 해제
-  };
-
-  const handleRegistrationCancel = () => {
-    setIsRegistrationMode(false);
-    setRegistrationData({
-      planCode: '',
-      roundName: '',
-      inspectionPeriod: '',
-      inspectionTarget: '',
-      remarks: ''
-    });
-  };
-
-  const handleRegistrationSave = () => {
-    // 필수 필드 유효성 검사
-    if (!registrationData.planCode.trim()) {
-      setErrorMessage('점검 계획 코드를 입력해주세요.');
-      setErrorDialogOpen(true);
-      return;
+  // 행 클릭 핸들러
+  const handlePlanRowClick = (row: InspectionPlanRow) => {
+    // 등록 모드일 때는 등록 모드를 취소하고 상세 표시
+    if (isRegistrationMode) {
+      setIsRegistrationMode(false);
+      setRegistrationData(initialRegistrationData);
     }
-    if (!registrationData.roundName.trim()) {
-      setErrorMessage('점검 회차명을 입력해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-    if (!registrationData.inspectionPeriod.trim()) {
-      setErrorMessage('점검 기간을 입력해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-    if (!registrationData.inspectionTarget.trim()) {
-      setErrorMessage('점검 대상 선정을 입력해주세요.');
-      setErrorDialogOpen(true);
+
+    // 수정 모드일 때는 그대로 리턴 (수정 중인 내용 보호)
+    if (isEditMode) {
       return;
     }
 
-    console.log('등록 데이터:', registrationData);
-    // 실제 등록 로직 구현
-    setIsRegistrationMode(false);
-    setRegistrationData({
-      planCode: '',
-      roundName: '',
-      inspectionPeriod: '',
-      inspectionTarget: '',
-      remarks: ''
-    });
-  };
-
-  const handleRegistrationInputChange = (field: string, value: string | number | boolean) => {
-    setRegistrationData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleEditClick = () => {
-    if (selectedPlanDetail) {
-      setIsEditMode(true);
-      setIsRegistrationMode(false); // 등록 모드 해제
-      setEditData({
-        planCode: selectedPlanDetail.planCode,
-        roundName: selectedPlanDetail.roundName,
-        inspectionPeriod: selectedPlanDetail.inspectionPeriod,
-        inspectionTarget: selectedPlanDetail.inspectionTarget,
-        remarks: selectedPlanDetail.remarks || ''
-      });
-    }
-  };
-
-  const handleEditCancel = () => {
-    setIsEditMode(false);
+    setSelectedPlanDetail(row);
     setEditData({
-      planCode: '',
-      roundName: '',
-      inspectionPeriod: '',
-      inspectionTarget: '',
-      remarks: ''
+      planCode: { value: row.planCode, label: row.planCode },
+      roundName: { value: row.roundName, label: row.roundName },
+      inspectionStartDate: new Date(row.inspectionPeriod.split(' ~ ')[0]),
+      inspectionEndDate: new Date(row.inspectionPeriod.split(' ~ ')[1]),
+      inspectionTarget: { value: row.inspectionTarget, label: row.inspectionTarget },
+      remarks: row.remarks ? { value: row.remarks, label: row.remarks } : null
     });
   };
 
-  const handleEditSave = () => {
-    // 필수 필드 유효성 검사
-    if (!editData.planCode.trim()) {
-      setErrorMessage('점검 계획 코드를 입력해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-    if (!editData.roundName.trim()) {
-      setErrorMessage('점검 회차명을 입력해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-    if (!editData.inspectionPeriod.trim()) {
-      setErrorMessage('점검 기간을 입력해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-    if (!editData.inspectionTarget.trim()) {
-      setErrorMessage('점검 대상 선정을 입력해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
+  // 등록 모드 전환
+  const handleRegistrationModeToggle = () => {
+    // 등록 모드로 전환할 때
+    if (!isRegistrationMode) {
+      // 기존 상태 초기화
+      setIsRegistrationMode(true);
+      setIsEditMode(false);
+      setSelectedPlanDetail(null);
+      setSelectedPlanIds([]);
 
-    console.log('수정 데이터:', editData);
-    // 실제 수정 로직 구현
-
-    // 선택된 상세 정보 업데이트
-    if (selectedPlanDetail) {
-      const updatedDetail = {
-        ...selectedPlanDetail,
-        planCode: editData.planCode,
-        roundName: editData.roundName,
-        inspectionPeriod: editData.inspectionPeriod,
-        inspectionTarget: editData.inspectionTarget,
-        remarks: editData.remarks
-      };
-      setSelectedPlanDetail(updatedDetail);
-
-      // 테이블 데이터도 업데이트
-      setPlanRows(prev => prev.map(row =>
-        row.id === selectedPlanDetail.id ? updatedDetail : row
-      ));
+      // 수정 중이든 아니든 모든 폼 데이터 초기화
+      setRegistrationData(initialRegistrationData);
+      setEditData(initialEditData);
+    } else {
+      // 등록 모드 취소할 때
+      setIsRegistrationMode(false);
+      setRegistrationData(initialRegistrationData);
     }
-
-    setIsEditMode(false);
-    setEditData({
-      planCode: '',
-      roundName: '',
-      inspectionPeriod: '',
-      inspectionTarget: '',
-      remarks: ''
-    });
   };
 
-  const handleEditInputChange = (field: string, value: string) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // 수정 모드 전환
+  const handleEditModeToggle = () => {
+    setIsEditMode(!isEditMode);
+    if (!isEditMode) {
+      setRegistrationData(initialRegistrationData);
+      setIsRegistrationMode(false);
+    } else {
+      setSelectedPlanDetail(null); // 수정 모드 진입 시 선택된 행 상세 정보 초기화
+    }
+  };
+
+  // 옵션 데이터
+  const planCodeOptions: SelectOption[] = [
+    { value: 'IP-2024-001', label: 'IP-2024-001' },
+    { value: 'IP-2024-002', label: 'IP-2024-002' },
+    { value: 'IP-2024-003', label: 'IP-2024-003' },
+  ];
+
+  const roundNameOptions: SelectOption[] = [
+    { value: '1차 정기점검', label: '1차 정기점검' },
+    { value: '2차 정기점검', label: '2차 정기점검' },
+    { value: '특별점검', label: '특별점검' },
+  ];
+
+  const inspectionTargetOptions: SelectOption[] = [
+    { value: '리스크관리부', label: '리스크관리부' },
+    { value: '준법지원부', label: '준법지원부' },
+    { value: '내부통제부', label: '내부통제부' },
+  ];
+
+  // ComboBox 변경 핸들러
+  const handleComboBoxChange = (
+    field: keyof RegistrationData,
+    value: SelectOption | null,
+    setter: React.Dispatch<React.SetStateAction<RegistrationData>>
+  ) => {
+    setter(prev => ({ ...prev, [field]: value }));
+  };
+
+  // 폼 유효성 검사
+  const validateForm = (data: RegistrationData): boolean => {
+    if (!data.planCode) {
+      setErrorMessage('점검 계획 코드를 선택해주세요.');
+      setErrorDialogOpen(true);
+      return false;
+    }
+
+    if (!data.roundName) {
+      setErrorMessage('점검 회차명을 선택해주세요.');
+      setErrorDialogOpen(true);
+      return false;
+    }
+
+    if (!data.inspectionTarget) {
+      setErrorMessage('점검 대상을 선택해주세요.');
+      setErrorDialogOpen(true);
+      return false;
+    }
+
+    return true;
+  };
+
+  // 등록 처리
+  const handleSubmit = async () => {
+    if (!validateForm(registrationData)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('등록 데이터:', registrationData);
+      // 실제 등록 API 호출 구현
+
+      setIsRegistrationMode(false);
+      setRegistrationData(initialRegistrationData);
+
+      await fetchInspectionPlans();
+    } catch (err) {
+      console.error('등록 실패:', err);
+      setErrorMessage('등록에 실패했습니다.');
+      setErrorDialogOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 수정 처리
+  const handleUpdate = async () => {
+    if (!validateForm(editData)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('수정 데이터:', editData);
+      // 실제 수정 API 호출 구현
+
+      setIsEditMode(false);
+      setEditData(initialEditData);
+
+      await fetchInspectionPlans();
+    } catch (err) {
+      console.error('수정 실패:', err);
+      setErrorMessage('수정에 실패했습니다.');
+      setErrorDialogOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 삭제 처리
+  const handleDelete = async () => {
+    if (selectedPlanIds.length === 0) {
+      setErrorMessage('삭제할 항목을 선택해주세요.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    if (!window.confirm('선택한 항목을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('삭제 대상:', selectedPlanIds);
+      // 실제 삭제 API 호출 구현
+
+      setSelectedPlanIds([]);
+      await fetchInspectionPlans();
+    } catch (err) {
+      console.error('삭제 실패:', err);
+      setErrorMessage('삭제에 실패했습니다.');
+      setErrorDialogOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleErrorDialogClose = () => {
@@ -398,76 +438,513 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
     setErrorMessage('');
   };
 
-  // 점검 대상 선정 선택 핸들러 (임시)
-  const handleSelectInspectionTarget = (mode: 'registration' | 'edit' | 'detail') => {
-    // TODO: 실제 팝업/다이얼로그 구현 필요
-    // 예시: prompt로 임시 구현
-    const selected = window.prompt('점검 대상을 입력하세요 (예: 리스크관리부, 준법지원부)');
-    if (selected !== null) {
-      if (mode === 'registration') {
-        setRegistrationData(prev => ({ ...prev, inspectionTarget: selected }));
-      } else if (mode === 'edit') {
-        setEditData(prev => ({ ...prev, inspectionTarget: selected }));
-      }
-      // detail 모드는 일반적으로 선택 불가, 필요시 구현
-    }
-  };
-
   return (
-    <Box sx={{
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      p: 2,
-      gap: 2,
-    }}>
-      {/* 검색 조건 */}
-      <Box sx={{
-        display: 'flex',
-        gap: 2,
-        alignItems: 'center',
-        p: 2,
-        backgroundColor: 'background.paper',
-        borderRadius: 1,
-      }}>
-        {/* 기존 검색 조건 컴포넌트들 */}
-      </Box>
+    <div className='main-content'>
+      {/* 페이지 제목 */}
+      <div className='responsibility-header'>
+        <h1 className='responsibility-header__title'>★ [900] 점검 계획 관리</h1>
+      </div>
 
-      {/* 버튼 그룹 */}
-      <Box sx={{
-        display: 'flex',
-        gap: 1,
-        justifyContent: 'flex-end',
-      }}>
-        {/* 기존 버튼들 */}
-      </Box>
+      {/* 노란색 구분선 */}
+      <div className='responsibility-divider'></div>
 
-      {/* 데이터 그리드 */}
-      <Box sx={{
-        flex: 1,
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: 'background.paper',
-        borderRadius: 1,
-        overflow: 'hidden',
-      }}>
-        <DataGrid
-          rows={planRows}
-          columns={planColumns}
-          onRowSelectionModelChange={handlePlanRowSelectionModelChange}
-          onRowClick={handlePlanRowClick}
-          checkboxSelection
-          disableRowSelectionOnClick
-          sx={{
-            border: 'none',
-            '& .MuiDataGrid-cell:focus': {
-              outline: 'none',
-            },
-          }}
-        />
-      </Box>
+      {/* 메인 콘텐츠 영역 */}
+      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+        {/* 기간 선택 영역 */}
+        <Box sx={{
+          display: 'flex',
+          gap: '8px',
+          padding: '8px 16px',
+          mb: 2,
+          bgcolor: 'var(--bank-bg-secondary)',
+          borderRadius: 1,
+          border: '1px solid var(--bank-border)',
+          alignItems: 'center'
+        }}>
+          <ComboBox
+            label="원장차수"
+            value={ledgerOrder}
+            options={ledgerOrderOptions}
+            onChange={(value) => setLedgerOrder(value as string)}
+            size="small"
+            sx={{ minWidth: '200px' }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <DatePicker
+              label="시작일"
+              value={startDate}
+              onChange={setStartDate}
+              size="small"
+              sx={{ width: '200px' }}
+            />
+            <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
+            <DatePicker
+              label="종료일"
+              value={endDate}
+              onChange={setEndDate}
+              size="small"
+              sx={{ width: '200px' }}
+            />
+          </Box>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={fetchInspectionPlans}
+            color="primary"
+          >
+            조회
+          </Button>
+        </Box>
+
+        {/* 상단 버튼 영역 */}
+        <Box sx={{
+          display: 'flex',
+          gap: 1,
+          marginBottom: 2,
+          justifyContent: 'flex-end'  // 오른쪽 정렬 추가
+        }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleRegistrationModeToggle}
+            disabled={isLoading}
+          >
+            등록
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleDelete}
+            color="error"
+            disabled={selectedPlanIds.length === 0 || isLoading}
+          >
+            삭제
+          </Button>
+        </Box>
+
+        {/* 데이터 그리드 */}
+        <Box sx={{
+          height: 400,
+          width: '100%',
+          backgroundColor: 'var(--bank-surface)',
+          border: '1px solid var(--bank-border)',
+          borderRadius: '4px',
+          marginBottom: '20px'
+        }}>
+          <DataGrid
+            rows={planRows}
+            columns={planColumns}
+            loading={isLoading}
+            checkboxSelection
+            disableRowSelectionOnClick
+            autoHeight
+            onRowClick={(params) => handlePlanRowClick(params.row as InspectionPlanRow)}
+            onRowSelectionModelChange={(newSelection: any) => {
+              setSelectedPlanIds(newSelection as number[]);
+            }}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-cell:focus': {
+                outline: 'none',
+              },
+            }}
+          />
+        </Box>
+
+        {/* 선택된 행 상세 정보 */}
+        {selectedPlanDetail && !isRegistrationMode && !isEditMode && (
+          <Box sx={{
+            marginTop: '20px',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
+            borderRadius: '4px',
+            padding: '16px'
+          }}>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              marginBottom: '16px',
+              fontSize: '0.95rem',
+              color: 'var(--bank-text-primary)'
+            }}>
+              점검 계획 상세 정보
+            </Typography>
+
+            <Box sx={{
+              border: '1px solid var(--bank-border)',
+              borderRadius: '4px',
+              backgroundColor: '#ffffff',
+              padding: '16px',
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: '16px',
+              alignItems: 'center'
+            }}>
+              {/* 점검 계획 코드 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                점검계획 코드
+              </Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                {selectedPlanDetail.planCode}
+              </Typography>
+
+              {/* 점검 회차명 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                점검 회차명
+              </Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                {selectedPlanDetail.roundName}
+              </Typography>
+
+              {/* 점검 기간 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                점검 기간
+              </Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                {selectedPlanDetail.inspectionPeriod}
+              </Typography>
+
+              {/* 점검 대상 선정 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                점검 대상 선정
+              </Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                {selectedPlanDetail.inspectionTarget}
+              </Typography>
+
+              {/* 비고 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                비고
+              </Typography>
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
+                {selectedPlanDetail.remarks || '-'}
+              </Typography>
+            </Box>
+            {/* 상세 하단 수정 버튼 */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
+              <Button
+                variant="contained"
+                size="small"
+                color="primary"
+                onClick={() => {
+                  setIsEditMode(true);
+                  setEditData({
+                    planCode: { value: selectedPlanDetail.planCode, label: selectedPlanDetail.planCode },
+                    roundName: { value: selectedPlanDetail.roundName, label: selectedPlanDetail.roundName },
+                    inspectionStartDate: new Date(selectedPlanDetail.inspectionPeriod.split(' ~ ')[0]),
+                    inspectionEndDate: new Date(selectedPlanDetail.inspectionPeriod.split(' ~ ')[1]),
+                    inspectionTarget: { value: selectedPlanDetail.inspectionTarget, label: selectedPlanDetail.inspectionTarget },
+                    remarks: selectedPlanDetail.remarks ? { value: selectedPlanDetail.remarks, label: selectedPlanDetail.remarks } : null
+                  });
+                }}
+              >
+                수정
+              </Button>
+            </Box>
+          </Box>
+        )}
+
+        {/* 등록 폼 */}
+        {isRegistrationMode && (
+          <Box sx={{
+            marginTop: '20px',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
+            borderRadius: '4px',
+            padding: '16px'
+          }}>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              marginBottom: '16px',
+              fontSize: '0.95rem',
+              color: 'var(--bank-text-primary)'
+            }}>
+              점검 계획 등록
+            </Typography>
+
+            <Box sx={{
+              border: '1px solid var(--bank-border)',
+              borderRadius: '4px',
+              backgroundColor: '#ffffff',
+              padding: '16px',
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: '16px',
+              alignItems: 'center'
+            }}>
+              {/* 점검 계획 코드 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 계획 코드
+              </Typography>
+              <ComboBox
+                value={registrationData.planCode}
+                onChange={(value) => handleComboBoxChange(
+                  'planCode',
+                  value as SelectOption | null,
+                  setRegistrationData
+                )}
+                options={planCodeOptions}
+                placeholder="점검 계획 코드를 선택하세요"
+                size="small"
+              />
+
+              {/* 점검 회차명 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 회차명
+              </Typography>
+              <ComboBox
+                value={registrationData.roundName}
+                onChange={(value) => handleComboBoxChange(
+                  'roundName',
+                  value as SelectOption | null,
+                  setRegistrationData
+                )}
+                options={roundNameOptions}
+                placeholder="점검 회차명을 선택하세요"
+                size="small"
+              />
+
+              {/* 점검 기간 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 기간
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <DatePicker
+                  value={registrationData.inspectionStartDate}
+                  onChange={(date) => {
+                    if (date) {
+                      setRegistrationData(prev => ({ ...prev, inspectionStartDate: date }));
+                    }
+                  }}
+                  size="small"
+                  label="시작일"
+                  maxDate={registrationData.inspectionEndDate}
+                />
+                <Typography sx={{ color: 'var(--bank-text-secondary)' }}>~</Typography>
+                <DatePicker
+                  value={registrationData.inspectionEndDate}
+                  onChange={(date) => {
+                    if (date) {
+                      setRegistrationData(prev => ({ ...prev, inspectionEndDate: date }));
+                    }
+                  }}
+                  size="small"
+                  label="마지막 일"
+                  minDate={registrationData.inspectionStartDate}
+                />
+              </Box>
+
+              {/* 점검 대상 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 대상
+              </Typography>
+              <ComboBox
+                value={registrationData.inspectionTarget}
+                onChange={(value) => handleComboBoxChange(
+                  'inspectionTarget',
+                  value as SelectOption | null,
+                  setRegistrationData
+                )}
+                options={inspectionTargetOptions}
+                placeholder="점검 대상을 선택하세요"
+                size="small"
+              />
+
+              {/* 비고 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                비고
+              </Typography>
+              <ComboBox
+                value={registrationData.remarks}
+                onChange={(value) => handleComboBoxChange(
+                  'remarks',
+                  value as SelectOption | null,
+                  setRegistrationData
+                )}
+                options={[]}
+                placeholder="비고를 입력하세요"
+                size="small"
+              />
+            </Box>
+
+            {/* 저장/취소 버튼 */}
+            <Box sx={{
+              display: 'flex',
+              gap: 1,
+              justifyContent: 'flex-end',
+              marginTop: '16px'
+            }}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleSubmit}
+                color="primary"
+                disabled={isLoading}
+              >
+                등록
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleRegistrationModeToggle}
+                disabled={isLoading}
+              >
+                취소
+              </Button>
+            </Box>
+          </Box>
+        )}
+
+        {/* 수정 폼 */}
+        {isEditMode && (
+          <Box sx={{
+            marginTop: '20px',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
+            borderRadius: '4px',
+            padding: '16px'
+          }}>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              marginBottom: '16px',
+              fontSize: '0.95rem',
+              color: 'var(--bank-text-primary)'
+            }}>
+              점검 계획 수정
+            </Typography>
+
+            <Box sx={{
+              border: '1px solid var(--bank-border)',
+              borderRadius: '4px',
+              backgroundColor: '#ffffff',
+              padding: '16px',
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: '16px',
+              alignItems: 'center'
+            }}>
+              {/* 점검 계획 코드 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 계획 코드
+              </Typography>
+              <ComboBox
+                value={editData.planCode}
+                onChange={(value) => handleComboBoxChange(
+                  'planCode',
+                  value as SelectOption | null,
+                  setEditData
+                )}
+                options={planCodeOptions}
+                placeholder="점검 계획 코드를 선택하세요"
+                size="small"
+              />
+
+              {/* 점검 회차명 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 회차명
+              </Typography>
+              <ComboBox
+                value={editData.roundName}
+                onChange={(value) => handleComboBoxChange(
+                  'roundName',
+                  value as SelectOption | null,
+                  setEditData
+                )}
+                options={roundNameOptions}
+                placeholder="점검 회차명을 선택하세요"
+                size="small"
+              />
+
+              {/* 점검 기간 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 기간
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <DatePicker
+                  value={editData.inspectionStartDate}
+                  onChange={(date) => {
+                    if (date) {
+                      setEditData(prev => ({ ...prev, inspectionStartDate: date }));
+                    }
+                  }}
+                  size="small"
+                  label="시작일"
+                  maxDate={editData.inspectionEndDate}
+                />
+                <Typography sx={{ color: 'var(--bank-text-secondary)' }}>~</Typography>
+                <DatePicker
+                  value={editData.inspectionEndDate}
+                  onChange={(date) => {
+                    if (date) {
+                      setEditData(prev => ({ ...prev, inspectionEndDate: date }));
+                    }
+                  }}
+                  size="small"
+                  label="마지막 일"
+                  minDate={editData.inspectionStartDate}
+                />
+              </Box>
+
+              {/* 점검 대상 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                점검 대상
+              </Typography>
+              <ComboBox
+                value={editData.inspectionTarget}
+                onChange={(value) => handleComboBoxChange(
+                  'inspectionTarget',
+                  value as SelectOption | null,
+                  setEditData
+                )}
+                options={inspectionTargetOptions}
+                placeholder="점검 대상을 선택하세요"
+                size="small"
+              />
+
+              {/* 비고 */}
+              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+                비고
+              </Typography>
+              <ComboBox
+                value={editData.remarks}
+                onChange={(value) => handleComboBoxChange(
+                  'remarks',
+                  value as SelectOption | null,
+                  setEditData
+                )}
+                options={[]}
+                placeholder="비고를 입력하세요"
+                size="small"
+              />
+            </Box>
+
+            {/* 저장/취소 버튼 */}
+            <Box sx={{
+              display: 'flex',
+              gap: 1,
+              justifyContent: 'flex-end',
+              marginTop: '16px'
+            }}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleUpdate}
+                color="primary"
+                disabled={isLoading}
+              >
+                수정
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleEditModeToggle}
+                disabled={isLoading}
+              >
+                취소
+              </Button>
+            </Box>
+          </Box>
+        )}
+      </div>
 
       {/* 에러 다이얼로그 */}
       <ErrorDialog
@@ -475,7 +952,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
         errorMessage={errorMessage}
         onClose={handleErrorDialogClose}
       />
-    </Box>
+    </div>
   );
 };
 
