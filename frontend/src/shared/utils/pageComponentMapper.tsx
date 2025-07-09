@@ -143,6 +143,11 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '부서별 현황',
     icon: 'business',
   },
+  '/inquiry/inspection-depart': {
+    component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
+    title: '점검 현황(부서별)',
+    icon: 'business',
+  },
   '/inquiry/inspection-plan': {
     component: () => import('@/domains/inquiry/pages/InspectionPlanManagementPage'),
     title: '점검 계획 관리',
