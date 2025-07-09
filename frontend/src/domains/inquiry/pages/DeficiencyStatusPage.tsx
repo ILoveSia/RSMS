@@ -2,11 +2,12 @@
  * 미흡상황 현황 페이지 컴포넌트
  * 컴플라이언스 체크 - 미흡상황 현황 관리
  */
-import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Box, Button, FormControl, MenuItem, Select } from '@mui/material';
-import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
+import { Button } from '@/shared/components/ui/button';
+import { Modal } from '@/shared/components/ui/feedback';
+import { Select } from '@/shared/components/ui/form';
+import { Box, Typography } from '@mui/material';
+import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -31,8 +32,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const [inspectionRound, setInspectionRound] = useState<string>('2024-001');
   const [departmentFilter, setDepartmentFilter] = useState<string>('전체');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-
 
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -91,7 +90,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   }, [fetchDeficiencies]);
 
   // 컬럼 정의
-  const columns: GridColDef<DeficiencyRow>[] = [
+  const columns: GridColDef[] = [
     {
       field: 'improvementPlan',
       headerName: '개선계획',
@@ -115,17 +114,20 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       width: 150,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => (
-        <span
-          style={{
-            color: params.value.includes('완료') ? '#2e7d32' :
-                   params.value.includes('진행중') ? '#ed6c02' : '#1976d2',
-            fontWeight: 'bold'
-          }}
-        >
-          {params.value}
-        </span>
-      )
+      renderCell: (params) => {
+        const stringValue = String(params.value);
+        return (
+          <span
+            style={{
+              color: stringValue.includes('완료') ? '#2e7d32' :
+                     stringValue.includes('진행중') ? '#ed6c02' : '#1976d2',
+              fontWeight: 'bold'
+            }}
+          >
+            {params.value}
+          </span>
+        );
+      }
     },
     {
       field: 'inspector',
@@ -144,9 +146,9 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       field: 'writeDate',
       headerName: '작성일자',
       width: 110,
-      valueFormatter: (value) => dayjs(value).format('YYYY.MM.DD'),
       align: 'center',
-      headerAlign: 'center'
+      headerAlign: 'center',
+      valueFormatter: ({ value }) => dayjs(value).format('YYYY.MM.DD')
     },
   ];
 
@@ -194,19 +196,24 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     // TODO: 승인 다이얼로그 구현
   };
 
-
-
   // 오류 다이얼로그 닫기
   const handleCloseErrorDialog = () => {
     setErrorDialogOpen(false);
     setErrorMessage('');
   };
 
-  // 엑셀 다운로드 핸들러 (임시 비활성화)
-  const handleExcelDownload = () => {
-    console.log('엑셀 다운로드 - 구현 예정');
-    // TODO: XLSX 라이브러리 타입 설정 후 구현
-  };
+  const inspectionRoundOptions = [
+    { value: '2024-001', label: '2024-001' },
+    { value: '2024-002', label: '2024-002' },
+    { value: '2024-003', label: '2024-003' },
+  ];
+
+  const departmentOptions = [
+    { value: '전체', label: '전체' },
+    { value: '영업부', label: '영업부' },
+    { value: '인사부', label: '인사부' },
+    { value: '재무부', label: '재무부' },
+  ];
 
   return (
     <div className="main-content">
@@ -216,123 +223,130 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       <div className="responsibility-divider"></div>
 
       <div className="responsibility-section" style={{ marginTop: '20px' }}>
-          {/* 필터 영역 */}
-          <Box sx={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
-            alignItems: 'center',
-            backgroundColor: '#f8f9fa',
-            border: '1px solid #e9ecef',
-            padding: '8px 16px',
-            borderRadius: '4px'
-          }}>
-            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>
-              점검회차
-            </span>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <Select
-                value={inspectionRound}
-                onChange={(e) => setInspectionRound(e.target.value)}
-                sx={{ backgroundColor: 'white', fontSize: '0.85rem' }}
-              >
-                <MenuItem value="2024-001" sx={{ fontSize: '0.85rem' }}>2024-001</MenuItem>
-                <MenuItem value="2024-002" sx={{ fontSize: '0.85rem' }}>2024-002</MenuItem>
-                <MenuItem value="2024-003" sx={{ fontSize: '0.85rem' }}>2024-003</MenuItem>
-              </Select>
-            </FormControl>
+        {/* 필터 영역 */}
+        <Box sx={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '16px',
+          alignItems: 'center',
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #e9ecef',
+          padding: '8px 16px',
+          borderRadius: '4px'
+        }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>
+            점검회차
+          </span>
+          <Select
+            value={inspectionRound}
+            onChange={(value) => setInspectionRound(value as string)}
+            options={inspectionRoundOptions}
+            size="small"
+            style={{ width: 120 }}
+          />
 
-            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>
-              부서
-            </span>
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <Select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                sx={{ backgroundColor: 'white', fontSize: '0.85rem' }}
-              >
-                <MenuItem value="전체" sx={{ fontSize: '0.85rem' }}>전체</MenuItem>
-                <MenuItem value="리스크관리부" sx={{ fontSize: '0.85rem' }}>리스크관리부</MenuItem>
-                <MenuItem value="준법감시부" sx={{ fontSize: '0.85rem' }}>준법감시부</MenuItem>
-                <MenuItem value="내부통제부" sx={{ fontSize: '0.85rem' }}>내부통제부</MenuItem>
-                <MenuItem value="경영지원부" sx={{ fontSize: '0.85rem' }}>경영지원부</MenuItem>
-              </Select>
-            </FormControl>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>
+            부서
+          </span>
+          <Select
+            value={departmentFilter}
+            onChange={(value) => setDepartmentFilter(value as string)}
+            options={departmentOptions}
+            size="small"
+            style={{ width: 120 }}
+          />
 
-            <Box sx={{ flexGrow: 1 }} />
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleSearch}
-              sx={{
-                backgroundColor: '#333',
-                color: 'white',
-                '&:hover': { backgroundColor: '#555' }
-              }}
-            >
-              조회
-            </Button>
-          </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleSearch}
+            style={{ marginLeft: '8px' }}
+          >
+            조회
+          </Button>
+        </Box>
 
-          {/* 버튼 영역 */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-            <Button variant="contained" color="success" size="small" sx={{ mr: 1 }} onClick={handleExcelDownload}>
-              엑셀 다운로드
-            </Button>
-            <Button variant="contained" color="primary" size="small" sx={{ mr: 1 }} onClick={handleImprovementPlanChange}>
-              개선계획 변경
-            </Button>
-            <Button variant="contained" color="info" size="small" sx={{ mr: 1 }} onClick={handleImplementationWrite}>
-              이행결과 작성
-            </Button>
-            <Button variant="contained" color="warning" size="small" onClick={handleApproval}>
-              승인하기
-            </Button>
-          </Box>
+        {/* 버튼 영역 */}
+        <Box sx={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '16px',
+          justifyContent: 'flex-end'
+        }}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleImprovementPlanChange}
+          >
+            개선계획 변경
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleImplementationWrite}
+          >
+            이행결과 작성
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            onClick={handleApproval}
+          >
+            승인하기
+          </Button>
+        </Box>
 
-          {/* 데이터 그리드 */}
-          <Box sx={{ height: 'calc(100vh - 400px)', width: '100%' }}>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <DataGrid
-              className="responsibility-grid"
-              rows={rows}
-              columns={columns}
-              loading={loading}
-              checkboxSelection
-              disableRowSelectionOnClick
-              onRowSelectionModelChange={(selectionModel: GridRowSelectionModel) => {
-                if (Array.isArray(selectionModel)) {
-                  setSelectedIds(selectionModel.map(Number));
-                } else {
-                  setSelectedIds([]);
-                }
-              }}
-              getRowId={(row) => row.deficiencyId}
-              sx={{
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: '#b0c4de !important',
-                  fontWeight: 'bold',
-                },
-                '& .MuiDataGrid-row': {
-                  cursor: 'pointer'
-                },
-                '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-                  outline: 'none',
-                },
-              }}
-              getRowHeight={() => 'auto'}
-            />
-          </Box>
-        </div>
+        {/* 그리드 영역 */}
+        <Box sx={{ width: '100%', height: 400 }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={loading}
+            getRowId={(row: DeficiencyRow) => row.deficiencyId}
+            checkboxSelection
+            disableRowSelectionOnClick
+            onRowSelectionModelChange={(newSelection) => {
+              setSelectedIds(newSelection as number[]);
+            }}
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 10 }
+              },
+            }}
+            pageSizeOptions={[10, 25, 50]}
+            localeText={{
+              noRowsLabel: '표시할 데이터가 없습니다.',
+              MuiTablePagination: {
+                labelRowsPerPage: '페이지당 행 수:',
+                labelDisplayedRows: ({ from, to, count }) =>
+                  `${from}-${to} / ${count}`,
+              },
+              columnMenuLabel: '메뉴',
+              columnMenuShowColumns: '열 표시',
+              columnMenuFilter: '필터',
+              columnMenuHideColumn: '숨기기',
+              columnMenuUnsort: '정렬 해제',
+              columnMenuSortAsc: '오름차순 정렬',
+              columnMenuSortDesc: '내림차순 정렬',
+            }}
+          />
+        </Box>
 
-        <ErrorDialog
+        {/* 오류 다이얼로그 */}
+        <Modal
           open={errorDialogOpen}
-          title="오류"
-          errorMessage={errorMessage}
           onClose={handleCloseErrorDialog}
-        />
+          title="알림"
+        >
+          <Typography>{errorMessage}</Typography>
+        </Modal>
+      </div>
     </div>
   );
-}
+};
 
 export default DeficiencyStatusPage;

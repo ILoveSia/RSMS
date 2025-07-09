@@ -2,17 +2,15 @@
  * 점검 계획 관리 페이지
  * 책무구조 원장 관리 - 점검 계획 관리
  */
-import { Box, Typography } from '@mui/material';
-import type { GridColDef } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
-import React, { useCallback, useEffect, useState } from 'react';
-
-import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import { ComboBox, DatePicker } from '@/shared/components/ui/form';
 import type { SelectOption } from '@/shared/types/common';
-import { Chip } from '@mui/material';
+import { Box, Chip, TextField, Typography } from '@mui/material';
+import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import ErrorDialog from '@/app/components/ErrorDialog';
 
 interface IInspectionPlanManagementPageProps {
   className?: string;
@@ -31,32 +29,32 @@ interface InspectionPlanRow {
 }
 
 interface RegistrationData {
-  planCode: SelectOption | null;
-  roundName: SelectOption | null;
+  planCode: string;
+  roundName: string;
   inspectionStartDate: Date;
   inspectionEndDate: Date;
   inspectionTarget: SelectOption | null;
-  remarks: SelectOption | null;
+  remarks: string;
 }
 
 // 초기 등록 데이터
 const initialRegistrationData: RegistrationData = {
-  planCode: null,
-  roundName: null,
+  planCode: '',
+  roundName: '',
   inspectionStartDate: new Date(),
   inspectionEndDate: new Date(),
   inspectionTarget: null,
-  remarks: null
+  remarks: ''
 };
 
 // 초기 수정 데이터
 const initialEditData: RegistrationData = {
-  planCode: null,
-  roundName: null,
+  planCode: '',
+  roundName: '',
   inspectionStartDate: new Date(),
   inspectionEndDate: new Date(),
   inspectionTarget: null,
-  remarks: null
+  remarks: ''
 };
 
 const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps> = (): React.JSX.Element => {
@@ -266,12 +264,37 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
 
     setSelectedPlanDetail(row);
     setEditData({
-      planCode: { value: row.planCode, label: row.planCode },
-      roundName: { value: row.roundName, label: row.roundName },
+      planCode: row.planCode,
+      roundName: row.roundName,
       inspectionStartDate: new Date(row.inspectionPeriod.split(' ~ ')[0]),
       inspectionEndDate: new Date(row.inspectionPeriod.split(' ~ ')[1]),
       inspectionTarget: { value: row.inspectionTarget, label: row.inspectionTarget },
-      remarks: row.remarks ? { value: row.remarks, label: row.remarks } : null
+      remarks: row.remarks || ''
+    });
+  };
+
+  // 상세 정보 데이터
+  const [detailData, setDetailData] = useState<RegistrationData>(initialEditData);
+
+  // 행 선택 핸들러
+  const handleRowClick = (params: any) => {
+    const row = params.row;
+    if (isEditMode) {
+      setIsEditMode(false);
+      setEditData(initialEditData);
+    }
+    if (isRegistrationMode) {
+      setIsRegistrationMode(false);
+      setRegistrationData(initialRegistrationData);
+    }
+    setSelectedPlanDetail(row);
+    setDetailData({
+      planCode: row.planCode,
+      roundName: row.roundName,
+      inspectionStartDate: new Date(row.inspectionPeriod.split(' ~ ')[0]),
+      inspectionEndDate: new Date(row.inspectionPeriod.split(' ~ ')[1]),
+      inspectionTarget: { value: row.inspectionTarget, label: row.inspectionTarget },
+      remarks: row.remarks || ''
     });
   };
 
@@ -334,16 +357,42 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
     setter(prev => ({ ...prev, [field]: value }));
   };
 
+  // TextField 변경 핸들러
+  const handleTextFieldChange = (
+    field: keyof RegistrationData,
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<RegistrationData>>
+  ) => {
+    setter(prev => ({ ...prev, [field]: value }));
+  };
+
+  // DatePicker 변경 핸들러
+  const handleDateChange = (
+    field: keyof RegistrationData,
+    date: Date | null,
+    setter: React.Dispatch<React.SetStateAction<RegistrationData>>
+  ) => {
+    if (date) {
+      setter(prev => ({ ...prev, [field]: date }));
+    }
+  };
+
   // 폼 유효성 검사
   const validateForm = (data: RegistrationData): boolean => {
-    if (!data.planCode) {
-      setErrorMessage('점검 계획 코드를 선택해주세요.');
+    if (!data.roundName) {
+      setErrorMessage('점검 회차명을 입력해주세요.');
       setErrorDialogOpen(true);
       return false;
     }
 
-    if (!data.roundName) {
-      setErrorMessage('점검 회차명을 선택해주세요.');
+    if (!data.inspectionStartDate) {
+      setErrorMessage('점검 시작일을 선택해주세요.');
+      setErrorDialogOpen(true);
+      return false;
+    }
+
+    if (!data.inspectionEndDate) {
+      setErrorMessage('점검 종료일을 선택해주세요.');
       setErrorDialogOpen(true);
       return false;
     }
@@ -538,15 +587,25 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             checkboxSelection
             disableRowSelectionOnClick
             autoHeight
-            onRowClick={(params) => handlePlanRowClick(params.row as InspectionPlanRow)}
-            onRowSelectionModelChange={(newSelection: any) => {
+            onRowClick={handleRowClick}
+            onRowSelectionModelChange={(newSelection) => {
               setSelectedPlanIds(newSelection as number[]);
             }}
             sx={{
               border: 'none',
               '& .MuiDataGrid-cell:focus': {
-                outline: 'none',
-              },
+                outline: 'none'
+              }
+            }}
+            localeText={{
+              noRowsLabel: '데이터가 없습니다.',
+              columnMenuLabel: '메뉴',
+              columnMenuShowColumns: '열 표시',
+              columnMenuFilter: '필터',
+              columnMenuHideColumn: '열 숨기기',
+              columnMenuUnsort: '정렬 해제',
+              columnMenuSortAsc: '오름차순 정렬',
+              columnMenuSortDesc: '내림차순 정렬',
             }}
           />
         </Box>
@@ -628,12 +687,12 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
                 onClick={() => {
                   setIsEditMode(true);
                   setEditData({
-                    planCode: { value: selectedPlanDetail.planCode, label: selectedPlanDetail.planCode },
-                    roundName: { value: selectedPlanDetail.roundName, label: selectedPlanDetail.roundName },
+                    planCode: selectedPlanDetail.planCode,
+                    roundName: selectedPlanDetail.roundName,
                     inspectionStartDate: new Date(selectedPlanDetail.inspectionPeriod.split(' ~ ')[0]),
                     inspectionEndDate: new Date(selectedPlanDetail.inspectionPeriod.split(' ~ ')[1]),
                     inspectionTarget: { value: selectedPlanDetail.inspectionTarget, label: selectedPlanDetail.inspectionTarget },
-                    remarks: selectedPlanDetail.remarks ? { value: selectedPlanDetail.remarks, label: selectedPlanDetail.remarks } : null
+                    remarks: selectedPlanDetail.remarks || ''
                   });
                 }}
               >
@@ -671,36 +730,15 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
               gap: '16px',
               alignItems: 'center'
             }}>
-              {/* 점검 계획 코드 */}
+              {/* 점검 회차 */}
               <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                점검 계획 코드
+                점검 회차
               </Typography>
-              <ComboBox
-                value={registrationData.planCode}
-                onChange={(value) => handleComboBoxChange(
-                  'planCode',
-                  value as SelectOption | null,
-                  setRegistrationData
-                )}
-                options={planCodeOptions}
-                placeholder="점검 계획 코드를 선택하세요"
-                size="small"
-              />
-
-              {/* 점검 회차명 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                점검 회차명
-              </Typography>
-              <ComboBox
+              <TextField
                 value={registrationData.roundName}
-                onChange={(value) => handleComboBoxChange(
-                  'roundName',
-                  value as SelectOption | null,
-                  setRegistrationData
-                )}
-                options={roundNameOptions}
-                placeholder="점검 회차명을 선택하세요"
+                onChange={(e) => handleTextFieldChange('roundName', e.target.value, setRegistrationData)}
                 size="small"
+                fullWidth
               />
 
               {/* 점검 기간 */}
@@ -710,26 +748,24 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                 <DatePicker
                   value={registrationData.inspectionStartDate}
-                  onChange={(date) => {
-                    if (date) {
-                      setRegistrationData(prev => ({ ...prev, inspectionStartDate: date }));
+                  onChange={(date) => handleDateChange('inspectionStartDate', date, setRegistrationData)}
+                  size="small"
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: '40px'
                     }
                   }}
-                  size="small"
-                  label="시작일"
-                  maxDate={registrationData.inspectionEndDate}
                 />
-                <Typography sx={{ color: 'var(--bank-text-secondary)' }}>~</Typography>
+                <Typography>~</Typography>
                 <DatePicker
                   value={registrationData.inspectionEndDate}
-                  onChange={(date) => {
-                    if (date) {
-                      setRegistrationData(prev => ({ ...prev, inspectionEndDate: date }));
+                  onChange={(date) => handleDateChange('inspectionEndDate', date, setRegistrationData)}
+                  size="small"
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: '40px'
                     }
                   }}
-                  size="small"
-                  label="마지막 일"
-                  minDate={registrationData.inspectionStartDate}
                 />
               </Box>
 
@@ -753,16 +789,13 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
               <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
                 비고
               </Typography>
-              <ComboBox
+              <TextField
                 value={registrationData.remarks}
-                onChange={(value) => handleComboBoxChange(
-                  'remarks',
-                  value as SelectOption | null,
-                  setRegistrationData
-                )}
-                options={[]}
-                placeholder="비고를 입력하세요"
+                onChange={(e) => handleTextFieldChange('remarks', e.target.value, setRegistrationData)}
                 size="small"
+                fullWidth
+                multiline
+                rows={3}
               />
             </Box>
 
@@ -826,32 +859,23 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
               <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
                 점검 계획 코드
               </Typography>
-              <ComboBox
+              <TextField
                 value={editData.planCode}
-                onChange={(value) => handleComboBoxChange(
-                  'planCode',
-                  value as SelectOption | null,
-                  setEditData
-                )}
-                options={planCodeOptions}
-                placeholder="점검 계획 코드를 선택하세요"
+                disabled
                 size="small"
+                fullWidth
               />
 
               {/* 점검 회차명 */}
               <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
                 점검 회차명
               </Typography>
-              <ComboBox
+              <TextField
                 value={editData.roundName}
-                onChange={(value) => handleComboBoxChange(
-                  'roundName',
-                  value as SelectOption | null,
-                  setEditData
-                )}
-                options={roundNameOptions}
-                placeholder="점검 회차명을 선택하세요"
+                onChange={(e) => setEditData(prev => ({ ...prev, roundName: e.target.value }))}
+                placeholder="점검 회차명을 입력하세요"
                 size="small"
+                fullWidth
               />
 
               {/* 점검 기간 */}
@@ -861,26 +885,24 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                 <DatePicker
                   value={editData.inspectionStartDate}
-                  onChange={(date) => {
-                    if (date) {
-                      setEditData(prev => ({ ...prev, inspectionStartDate: date }));
+                  onChange={(date) => handleDateChange('inspectionStartDate', date, setEditData)}
+                  size="small"
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: '40px'
                     }
                   }}
-                  size="small"
-                  label="시작일"
-                  maxDate={editData.inspectionEndDate}
                 />
-                <Typography sx={{ color: 'var(--bank-text-secondary)' }}>~</Typography>
+                <Typography>~</Typography>
                 <DatePicker
                   value={editData.inspectionEndDate}
-                  onChange={(date) => {
-                    if (date) {
-                      setEditData(prev => ({ ...prev, inspectionEndDate: date }));
+                  onChange={(date) => handleDateChange('inspectionEndDate', date, setEditData)}
+                  size="small"
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: '40px'
                     }
                   }}
-                  size="small"
-                  label="마지막 일"
-                  minDate={editData.inspectionStartDate}
                 />
               </Box>
 
@@ -904,16 +926,12 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
               <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
                 비고
               </Typography>
-              <ComboBox
+              <TextField
                 value={editData.remarks}
-                onChange={(value) => handleComboBoxChange(
-                  'remarks',
-                  value as SelectOption | null,
-                  setEditData
-                )}
-                options={[]}
+                onChange={(e) => setEditData(prev => ({ ...prev, remarks: e.target.value }))}
                 placeholder="비고를 입력하세요"
                 size="small"
+                fullWidth
               />
             </Box>
 
