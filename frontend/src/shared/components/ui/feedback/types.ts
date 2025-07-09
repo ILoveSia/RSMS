@@ -1,7 +1,9 @@
-import type { AlertColor } from '@mui/material/Alert';
 import type { Theme } from '@mui/material/styles';
 import type { SxProps } from '@mui/system';
 import { ReactNode } from 'react';
+
+// AlertColor 타입을 직접 정의 (MUI import 이슈 방지)
+type AlertColor = 'error' | 'warning' | 'info' | 'success';
 
 // 기본 컴포넌트 Props 인터페이스
 export interface BaseComponentProps {
@@ -23,37 +25,6 @@ export interface ToastProps {
     vertical: 'top' | 'bottom';
     horizontal: 'left' | 'center' | 'right';
   };
-  action?: ReactNode;
-  className?: string;
-  sx?: SxProps<Theme>;
-}
-
-// Modal 컴포넌트 타입
-export interface ModalProps extends BaseComponentProps {
-  open: boolean;
-  onClose: () => void;
-  title?: string;
-  children: ReactNode;
-  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
-  fullWidth?: boolean;
-  fullScreen?: boolean;
-  disableEscapeKeyDown?: boolean;
-  disableBackdropClick?: boolean;
-  actions?: ReactNode;
-  hideCloseButton?: boolean;
-  className?: string;
-  sx?: SxProps<Theme>;
-}
-
-// Alert 컴포넌트 타입
-export interface AlertProps extends BaseComponentProps {
-  severity?: AlertColor;
-  variant?: 'filled' | 'outlined' | 'standard';
-  children: ReactNode;
-  title?: string;
-  onClose?: () => void;
-  closable?: boolean;
-  icon?: ReactNode;
   action?: ReactNode;
   className?: string;
   sx?: SxProps<Theme>;

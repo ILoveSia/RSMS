@@ -11,11 +11,22 @@ export const mainApi = {
    * @param limit 조회할 개수 (기본값: 5)
    */
   getRecentQnaList: async (limit: number = 5): Promise<QnaListResponseDto[]> => {
-    const response = await apiClient.get<{data: QnaListResponseDto[]}>(
-      `/qna/recent?limit=${limit}`
-    );
+    try {
+      console.log(`[mainApi] getRecentQnaList 호출 - limit: ${limit}`);
 
-    return response?.data || [];
+      const response = await apiClient.get<QnaListResponseDto[]>(`/qna/recent?limit=${limit}`);
+
+      console.log('[mainApi] getRecentQnaList 응답:', response);
+
+      // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
+      const result = response || [];
+      console.log('[mainApi] getRecentQnaList 결과:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[mainApi] getRecentQnaList 에러:', error);
+      throw error;
+    }
   },
 
   /**
@@ -23,18 +34,42 @@ export const mainApi = {
    * @param limit 조회할 개수 (기본값: 5)
    */
   getRecentCaseStudies: async (limit: number = 5): Promise<CaseStudyDto[]> => {
-    const response = await apiClient.get<{data: CaseStudyDto[]}>(`/api/case-studies/recent?limit=${limit}`);
+    try {
+      console.log(`[mainApi] getRecentCaseStudies 호출 - limit: ${limit}`);
 
-    return response?.data || [];
+      const response = await apiClient.get<CaseStudyDto[]>(
+        `/api/case-studies/recent?limit=${limit}`
+      );
+
+      console.log('[mainApi] getRecentCaseStudies 응답:', response);
+
+      // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
+      const result = response || [];
+      console.log('[mainApi] getRecentCaseStudies 결과:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[mainApi] getRecentCaseStudies 에러:', error);
+      throw error;
+    }
   },
 
   /**
    * 대시보드 통계 정보 조회 (향후 확장용)
    */
   getDashboardStats: async (): Promise<any> => {
-    // 향후 대시보드 통계 API 구현 시 사용
-    const response = await apiClient.get('/api/dashboard/stats');
-    return response;
+    try {
+      console.log('[mainApi] getDashboardStats 호출');
+
+      // 향후 대시보드 통계 API 구현 시 사용
+      const response = await apiClient.get('/api/dashboard/stats');
+
+      console.log('[mainApi] getDashboardStats 응답:', response);
+      return response;
+    } catch (error) {
+      console.error('[mainApi] getDashboardStats 에러:', error);
+      throw error;
+    }
   },
 };
 

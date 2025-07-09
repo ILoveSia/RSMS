@@ -21,7 +21,6 @@ import {
   CircularProgress,
   FormControl,
   IconButton,
-  InputLabel,
   MenuItem,
   Paper,
   Select,
@@ -35,12 +34,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
-// 백엔드 ApiResponse<T> DTO에 대응하는 타입
-interface ApiSuccessResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
+// ApiSuccessResponse 인터페이스 제거 - apiClient가 이미 unwrap함
 
 export interface PositionData {
   positionsId: string;
@@ -143,6 +137,12 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     { id: '1', deptCode: '', deptName: '' },
   ]);
 
+  // 책무기술서 작성 부서
+  const [writeDept, setWriteDept] = useState<{ deptCode: string; deptName: string }>({
+    deptCode: '',
+    deptName: '',
+  });
+
   // 주관회의체 목록
   const [meetings, setMeetings] = useState<MeetingData[]>([
     {
@@ -172,9 +172,12 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   const [employeeSearchOpen, setEmployeeSearchOpen] = useState(false);
   const [currentManagerId, setCurrentManagerId] = useState<string>('');
 
-  // 부서 검색 다이얼로그 상태
+  // 부서 검색 다이얼로그 상태 (소관부서용)
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
   const [currentOwnerDeptId, setCurrentOwnerDeptId] = useState<string>('');
+
+  // 부서 검색 다이얼로그 상태 (작성부서용)
+  const [writeDeptSearchOpen, setWriteDeptSearchOpen] = useState(false);
 
   // 다이얼로그 제목 설정
   const getDialogTitle = () => {
@@ -218,52 +221,77 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const response: ApiSuccessResponse<PositionData> = await apiClient.get(`/positions/${id}`);
+        console.log('직책 상세조회 요청:', id);
+        const positionData: PositionData = await apiClient.get(`/positions/${id}`);
+        console.log('직책 상세조회 응답:', positionData);
 
-        if (response && response.success) {
-          const positionData = response.data;
-          setFormData({
-            positionName: positionData.positionName || '',
-            writeDeptCd: positionData.writeDeptCd || '',
-          });
-          const ownerDeptsData = positionData.ownerDepts || [];
-          const meetingsData = positionData.meetings || [];
-          const managersData = positionData.managers || [];
+        setFormData({
+          positionName: positionData.positionName || '',
+          writeDeptCd: positionData.writeDeptCd || '',
+        });
 
-          setOwnerDepts(
-            ownerDeptsData.length > 0
-              ? ownerDeptsData.map((d, i) => ({ id: String(i + 1), ...d }))
-              : [{ id: '1', deptCode: '', deptName: '' }]
-          );
-          setMeetings(
-            meetingsData.length > 0
-              ? meetingsData.map((m, i) => ({
+        // 작성부서 정보 설정
+        const writeDeptCode = positionData.writeDeptCd || '';
+        const writeDeptName =
+          getDeptCodes().find(code => code.code === writeDeptCode)?.codeName || '';
+        console.log('작성부서 설정:', { writeDeptCode, writeDeptName, allCodes: getDeptCodes() });
+        setWriteDept({
+          deptCode: writeDeptCode,
+          deptName: writeDeptName,
+        });
+        const ownerDeptsData = positionData.ownerDepts || [];
+        const meetingsData = positionData.meetings || [];
+        const managersData = positionData.managers || [];
+
+        setOwnerDepts(
+          ownerDeptsData.length > 0
+            ? ownerDeptsData.map((d, i) => ({ id: String(i + 1), ...d }))
+            : [{ id: '1', deptCode: '', deptName: '' }]
+        );
+        setMeetings(
+          meetingsData.length > 0
+            ? meetingsData.map((m, i) => {
+                // memberGubun 값 매핑 (백엔드 데이터와 프론트엔드 코드 불일치 해결)
+                let mappedMemberGubun = m.memberGubun;
+                if (m.memberGubun === 'GUBUN01' || m.memberGubun === 'GB01') {
+                  mappedMemberGubun = 'MG01'; // 위원장으로 매핑
+                } else if (m.memberGubun === 'GUBUN02' || m.memberGubun === 'GB02') {
+                  mappedMemberGubun = 'MG02'; // 위원으로 매핑
+                } else if (!getMebGubunCodes().find(code => code.code === m.memberGubun)) {
+                  mappedMemberGubun = ''; // 매칭되지 않는 값은 빈 값으로 설정
+                }
+
+                console.log('회의체 memberGubun 매핑:', {
+                  original: m.memberGubun,
+                  mapped: mappedMemberGubun,
+                  availableCodes: getMebGubunCodes().map(c => c.code),
+                });
+
+                return {
                   id: String(i + 1),
                   ...m,
-                  memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
-                }))
-              : [
-                  {
-                    id: '1',
-                    meetingBodyId: '',
-                    meetingBodyName: '',
-                    memberGubun: '',
-                    meetingPeriod: '',
-                    deliberationContent: '',
-                  },
-                ]
-          );
-          setManagers(
-            managersData.length > 0
-              ? managersData.map((m, i) => ({ id: String(i + 1), ...m }))
-              : [{ id: '1', empNo: '', empName: '', position: '' }]
-          );
-        } else {
-          setError(response?.message || '상세 정보를 불러오는데 실패했습니다.');
-        }
+                  memberGubun: mappedMemberGubun,
+                };
+              })
+            : [
+                {
+                  id: '1',
+                  meetingBodyId: '',
+                  meetingBodyName: '',
+                  memberGubun: '',
+                  meetingPeriod: '',
+                  deliberationContent: '',
+                },
+              ]
+        );
+        setManagers(
+          managersData.length > 0
+            ? managersData.map((m, i) => ({ id: String(i + 1), ...m }))
+            : [{ id: '1', empNo: '', empName: '', position: '' }]
+        );
       } catch (err) {
+        console.error('직책 상세조회 오류:', err);
         setError('상세 정보를 불러오는 중 오류가 발생했습니다.');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -281,6 +309,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           positionName: '',
           writeDeptCd: '',
         });
+        setWriteDept({ deptCode: '', deptName: '' });
         setOwnerDepts([{ id: '1', deptCode: '', deptName: '' }]);
         setMeetings([
           {
@@ -464,7 +493,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     setCurrentOwnerDeptId('');
   };
 
-  // 부서 선택 완료
+  // 부서 선택 완료 (소관부서용)
   const handleDepartmentSelect = (departments: Department | Department[]) => {
     if (currentOwnerDeptId) {
       // 단일 선택이므로 첫 번째 요소 또는 단일 객체 사용
@@ -485,6 +514,38 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       }
     }
     handleDepartmentSearchClose();
+  };
+
+  // 작성부서 검색 팝업 닫기
+  const handleWriteDeptSearchClose = () => {
+    setWriteDeptSearchOpen(false);
+  };
+
+  // 작성부서 선택 완료
+  const handleWriteDeptSelect = (departments: Department | Department[]) => {
+    // 단일 선택이므로 첫 번째 요소 또는 단일 객체 사용
+    const selectedDepartment = Array.isArray(departments) ? departments[0] : departments;
+
+    if (selectedDepartment) {
+      console.log('작성부서 선택:', selectedDepartment);
+      setWriteDept({
+        deptCode: selectedDepartment.deptCode,
+        deptName: selectedDepartment.deptName,
+      });
+      // formData도 동기화
+      setFormData(prev => ({
+        ...prev,
+        writeDeptCd: selectedDepartment.deptCode,
+      }));
+      // 유효성 검사 오류 제거
+      if (validationErrors.writeDeptCd) {
+        setValidationErrors(prev => ({
+          ...prev,
+          writeDeptCd: '',
+        }));
+      }
+    }
+    handleWriteDeptSearchClose();
   };
 
   // 폼 검증
@@ -521,24 +582,22 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     };
 
     try {
-      let response: ApiSuccessResponse<PositionData>;
+      console.log('직책 저장 요청:', { mode, positionId, data: positionRequestData });
+      let responseData: PositionData;
       if (mode === 'create') {
-        response = await apiClient.post('/positions', positionRequestData);
+        responseData = await apiClient.post('/positions', positionRequestData);
       } else {
-        response = await apiClient.put(`/positions/${positionId}`, positionRequestData);
+        responseData = await apiClient.put(`/positions/${positionId}`, positionRequestData);
       }
+      console.log('직책 저장 응답:', responseData);
 
-      if (response.success) {
-        if (onSave) {
-          onSave(response.data);
-        }
-        onClose();
-      } else {
-        setError(response.message || '저장에 실패했습니다.');
+      if (onSave) {
+        onSave(responseData);
       }
+      onClose();
     } catch (err) {
+      console.error('직책 저장 오류:', err);
       setError('저장 중 오류가 발생했습니다.');
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -625,27 +684,56 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           {/* 책무기술서 작성 부서 */}
           <Box>
             <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>책무기술서 작성 부서</Box>
-            <FormControl fullWidth error={!!validationErrors.writeDeptCd}>
-              <InputLabel>작성부서 *</InputLabel>
-              <Select
-                value={formData.writeDeptCd}
-                label='작성부서 *'
-                onChange={handleInputChange('writeDeptCd')}
-                disabled={mode === 'view'}
-              >
-                <MenuItem value=''>선택하세요</MenuItem>
-                {getDeptCodes().map(code => (
-                  <MenuItem key={code.code} value={code.code}>
-                    {code.codeName}
-                  </MenuItem>
-                ))}
-              </Select>
-              {validationErrors.writeDeptCd && (
-                <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
-                  {validationErrors.writeDeptCd}
-                </Box>
-              )}
-            </FormControl>
+            <TableContainer component={Paper} variant='outlined'>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold', width: 430 }}>부서코드</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>부서명</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={writeDept.deptCode}
+                          disabled
+                          placeholder='부서를 선택하세요'
+                          error={!!validationErrors.writeDeptCd}
+                        />
+                        {mode !== 'view' && (
+                          <Button
+                            size='small'
+                            variant='outlined'
+                            onClick={() => setWriteDeptSearchOpen(true)}
+                            sx={{ minWidth: 80, fontSize: '0.75rem' }}
+                          >
+                            검색
+                          </Button>
+                        )}
+                      </Box>
+                      {validationErrors.writeDeptCd && (
+                        <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
+                          {validationErrors.writeDeptCd}
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth
+                        size='small'
+                        value={writeDept.deptName}
+                        disabled
+                        placeholder='부서를 선택하면 자동 입력됩니다'
+                      />
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Box>
 
           {/* 소관부서 */}
@@ -790,7 +878,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell>
                         <FormControl fullWidth size='small'>
                           <Select
-                            value={meeting.memberGubun}
+                            value={
+                              getMebGubunCodes().find(code => code.code === meeting.memberGubun)
+                                ? meeting.memberGubun
+                                : ''
+                            }
                             onChange={e =>
                               handleMeetingChange(meeting.id, 'memberGubun', e.target.value)
                             }
@@ -937,12 +1029,21 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         </Box>
       </Box>
 
-      {/* 부서 검색 다이얼로그 */}
+      {/* 소관부서 검색 다이얼로그 */}
       <DepartmentSearchPopup
         open={departmentSearchOpen}
         onClose={handleDepartmentSearchClose}
         onSelect={handleDepartmentSelect}
         title='소관부서 검색'
+        multiSelect={false}
+      />
+
+      {/* 작성부서 검색 다이얼로그 */}
+      <DepartmentSearchPopup
+        open={writeDeptSearchOpen}
+        onClose={handleWriteDeptSearchClose}
+        onSelect={handleWriteDeptSelect}
+        title='작성부서 검색'
         multiSelect={false}
       />
 

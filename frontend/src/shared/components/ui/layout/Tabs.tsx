@@ -8,7 +8,35 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { forwardRef, useEffect, useState } from 'react';
-import { TabItem, TabsProps } from './types';
+
+// Tab 아이템 타입
+export interface TabItem {
+  id: string;
+  label: string;
+  content: React.ReactNode;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+  badge?: string | number;
+}
+
+// Tabs 컴포넌트 타입
+export interface TabsProps {
+  items: TabItem[];
+  defaultValue?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  variant?: 'standard' | 'scrollable' | 'fullWidth';
+  orientation?: 'horizontal' | 'vertical';
+  indicatorColor?: 'primary' | 'secondary';
+  textColor?: 'primary' | 'secondary' | 'inherit';
+  scrollButtons?: 'auto' | 'desktop' | 'on' | 'off';
+  allowScrollButtonsMobile?: boolean;
+  centered?: boolean;
+  lazy?: boolean; // 탭 내용 지연 로딩
+  keepMounted?: boolean; // 탭 내용 유지
+  className?: string;
+  sx?: any;
+}
 
 /**
  * Tabs 컴포넌트

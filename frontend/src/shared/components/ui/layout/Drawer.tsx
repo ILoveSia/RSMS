@@ -9,7 +9,24 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { forwardRef } from 'react';
-import { DrawerProps } from './types';
+
+// DrawerProps 타입 정의
+export interface DrawerProps {
+  open: boolean;
+  onClose: () => void;
+  anchor?: 'left' | 'right' | 'top' | 'bottom';
+  variant?: 'permanent' | 'persistent' | 'temporary';
+  width?: number | string;
+  title?: string;
+  children?: React.ReactNode;
+  actions?: React.ReactNode;
+  hideCloseButton?: boolean;
+  disableBackdropClick?: boolean;
+  elevation?: number;
+  keepMounted?: boolean;
+  className?: string;
+  sx?: any;
+}
 
 /**
  * Drawer 컴포넌트

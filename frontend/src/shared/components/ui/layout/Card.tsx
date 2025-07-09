@@ -1,19 +1,46 @@
-import React, { forwardRef } from 'react';
-import {
-  Card as MuiCard,
-  CardHeader,
-  CardContent,
-  CardMedia,
-  CardActions,
-  Typography,
-  Avatar,
-  IconButton,
-  Box,
-  Skeleton,
-  useTheme
-} from '@mui/material';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { CardProps } from './types';
+import {
+  Box,
+  CardActions,
+  CardContent,
+  CardHeader,
+  CardMedia,
+  IconButton,
+  Card as MuiCard,
+  Skeleton,
+  useTheme,
+} from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
+import React, { forwardRef, ReactNode } from 'react';
+
+// Card 컴포넌트 Props 타입 정의
+export interface CardProps {
+  variant?: 'elevation' | 'outlined';
+  elevation?: number;
+  square?: boolean;
+  raised?: boolean;
+  header?: ReactNode;
+  title?: string;
+  subtitle?: string;
+  media?: {
+    component?: string;
+    image?: string;
+    alt?: string;
+    height?: number;
+  };
+  actions?: ReactNode;
+  children?: ReactNode;
+  footer?: ReactNode;
+  loading?: boolean;
+  hoverable?: boolean;
+  clickable?: boolean;
+  onClick?: () => void;
+  className?: string;
+  sx?: SxProps<Theme>;
+  id?: string;
+  'data-testid'?: string;
+  style?: React.CSSProperties;
+}
 
 /**
  * Card 컴포넌트
@@ -48,162 +75,159 @@ import { CardProps } from './types';
  * </Card>
  * ```
  */
-const Card = forwardRef<HTMLDivElement, CardProps>(({
-  variant = 'elevation',
-  elevation = 1,
-  square = false,
-  raised = false,
-  header,
-  title,
-  subtitle,
-  media,
-  actions,
-  children,
-  footer,
-  loading = false,
-  hoverable = false,
-  clickable = false,
-  onClick,
-  className,
-  sx,
-  ...props
-}, ref) => {
-  const theme = useTheme();
+const Card = forwardRef<HTMLDivElement, CardProps>(
+  (
+    {
+      variant = 'elevation',
+      elevation = 1,
+      square = false,
+      raised = false,
+      header,
+      title,
+      subtitle,
+      media,
+      actions,
+      children,
+      footer,
+      loading = false,
+      hoverable = false,
+      clickable = false,
+      onClick,
+      className,
+      sx,
+      ...props
+    },
+    ref
+  ) => {
+    const theme = useTheme();
 
-  // 호버 및 클릭 스타일
-  const getCardSx = () => {
-    let cardSx = sx || {};
+    // 호버 및 클릭 스타일
+    const getCardSx = () => {
+      let cardSx = sx || {};
 
-    if (hoverable || clickable) {
-      cardSx = {
-        ...cardSx,
-        transition: theme.transitions.create(['box-shadow', 'transform'], {
-          duration: theme.transitions.duration.short,
-        }),
-        '&:hover': {
-          boxShadow: theme.shadows[raised ? 8 : 4],
-          ...(hoverable && {
-            transform: 'translateY(-2px)',
+      if (hoverable || clickable) {
+        cardSx = {
+          ...cardSx,
+          transition: theme.transitions.create(['box-shadow', 'transform'], {
+            duration: theme.transitions.duration.short,
           }),
-        },
-      };
-    }
+          '&:hover': {
+            boxShadow: theme.shadows[raised ? 8 : 4],
+            ...(hoverable && {
+              transform: 'translateY(-2px)',
+            }),
+          },
+        };
+      }
 
-    if (clickable) {
-      cardSx = {
-        ...cardSx,
-        cursor: 'pointer',
-        '&:active': {
-          transform: 'scale(0.98)',
-        },
-      };
-    }
+      if (clickable) {
+        cardSx = {
+          ...cardSx,
+          cursor: 'pointer',
+          '&:active': {
+            transform: 'scale(0.98)',
+          },
+        };
+      }
 
-    return cardSx;
-  };
+      return cardSx;
+    };
 
-  // 로딩 상태 렌더링
-  const renderLoading = () => (
-    <Box p={2}>
-      <Skeleton variant="text" width="60%" height={32} />
-      <Skeleton variant="text" width="40%" height={24} sx={{ mb: 2 }} />
-      <Skeleton variant="rectangular" width="100%" height={120} />
-    </Box>
-  );
-
-  // 헤더 렌더링
-  const renderHeader = () => {
-    if (header) {
-      return header;
-    }
-
-    if (title || subtitle) {
-      return (
-        <CardHeader
-          title={title}
-          subheader={subtitle}
-          action={
-            <IconButton aria-label="settings">
-              <MoreVertIcon />
-            </IconButton>
-          }
-        />
-      );
-    }
-
-    return null;
-  };
-
-  // 미디어 렌더링
-  const renderMedia = () => {
-    if (!media) return null;
-
-    return (
-      <CardMedia
-        component={media.component || 'img'}
-        height={media.height || 200}
-        image={media.image}
-        alt={media.alt || ''}
-      />
-    );
-  };
-
-  // 컨텐츠 렌더링
-  const renderContent = () => {
-    if (loading) {
-      return renderLoading();
-    }
-
-    if (!children) return null;
-
-    return (
-      <CardContent>
-        {children}
-      </CardContent>
-    );
-  };
-
-  // 액션 렌더링
-  const renderActions = () => {
-    if (!actions) return null;
-
-    return (
-      <CardActions>
-        {actions}
-      </CardActions>
-    );
-  };
-
-  // 푸터 렌더링
-  const renderFooter = () => {
-    if (!footer) return null;
-
-    return (
-      <Box p={2} pt={0}>
-        {footer}
+    // 로딩 상태 렌더링
+    const renderLoading = () => (
+      <Box p={2}>
+        <Skeleton variant='text' width='60%' height={32} />
+        <Skeleton variant='text' width='40%' height={24} sx={{ mb: 2 }} />
+        <Skeleton variant='rectangular' width='100%' height={120} />
       </Box>
     );
-  };
 
-  return (
-    <MuiCard
-      ref={ref}
-      variant={variant}
-      elevation={raised ? 8 : elevation}
-      square={square}
-      className={className}
-      sx={getCardSx()}
-      onClick={clickable ? onClick : undefined}
-      {...props}
-    >
-      {renderHeader()}
-      {renderMedia()}
-      {renderContent()}
-      {renderActions()}
-      {renderFooter()}
-    </MuiCard>
-  );
-});
+    // 헤더 렌더링
+    const renderHeader = () => {
+      if (header) {
+        return header;
+      }
+
+      if (title || subtitle) {
+        return (
+          <CardHeader
+            title={title}
+            subheader={subtitle}
+            action={
+              <IconButton aria-label='settings'>
+                <MoreVertIcon />
+              </IconButton>
+            }
+          />
+        );
+      }
+
+      return null;
+    };
+
+    // 미디어 렌더링
+    const renderMedia = () => {
+      if (!media) return null;
+
+      return (
+        <CardMedia
+          component={media.component || 'img'}
+          height={media.height || 200}
+          image={media.image}
+          alt={media.alt || ''}
+        />
+      );
+    };
+
+    // 컨텐츠 렌더링
+    const renderContent = () => {
+      if (loading) {
+        return renderLoading();
+      }
+
+      if (!children) return null;
+
+      return <CardContent>{children}</CardContent>;
+    };
+
+    // 액션 렌더링
+    const renderActions = () => {
+      if (!actions) return null;
+
+      return <CardActions>{actions}</CardActions>;
+    };
+
+    // 푸터 렌더링
+    const renderFooter = () => {
+      if (!footer) return null;
+
+      return (
+        <Box p={2} pt={0}>
+          {footer}
+        </Box>
+      );
+    };
+
+    return (
+      <MuiCard
+        ref={ref}
+        variant={variant}
+        elevation={raised ? 8 : elevation}
+        square={square}
+        className={className}
+        sx={getCardSx()}
+        onClick={clickable ? onClick : undefined}
+        {...props}
+      >
+        {renderHeader()}
+        {renderMedia()}
+        {renderContent()}
+        {renderActions()}
+        {renderFooter()}
+      </MuiCard>
+    );
+  }
+);
 
 Card.displayName = 'Card';
 

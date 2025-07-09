@@ -1,5 +1,4 @@
 import apiClient from '@/app/common/api/client';
-import type { ApiResponse } from '@/app/types/common';
 
 // 책무 현황 행 타입
 export interface ResponsibilityRow {
@@ -22,28 +21,55 @@ export const responsibilityApi = {
    * @param responsibilityId 선택적 책무 ID 검색
    */
   getStatusList: async (responsibilityId?: string): Promise<ResponsibilityRow[]> => {
-    const params = new URLSearchParams();
+    try {
+      const params = new URLSearchParams();
 
-    if (responsibilityId) {
-      params.append('responsibilityId', responsibilityId);
+      if (responsibilityId) {
+        params.append('responsibilityId', responsibilityId);
+      }
+
+      console.log(`[responsibilityApi] getStatusList 호출 - responsibilityId: ${responsibilityId}`);
+      console.log(`[responsibilityApi] API URL: /api/responsibilities/status?${params.toString()}`);
+
+      const response = await apiClient.get<ResponsibilityRow[]>(
+        `/api/responsibilities/status?${params.toString()}`
+      );
+
+      console.log('[responsibilityApi] getStatusList 응답:', response);
+
+      // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
+      const result = response || [];
+      console.log('[responsibilityApi] getStatusList 결과:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[responsibilityApi] getStatusList 에러:', error);
+      throw error;
     }
-
-    const response = await apiClient.get<ApiResponse<ResponsibilityRow[]>>(
-      `/api/responsibilities/status?${params.toString()}`
-    );
-
-    return response?.data || [];
   },
 
   /**
    * 책무 단건 조회
    */
   getById: async (responsibilityId: number): Promise<ResponsibilityRow> => {
-    const response = await apiClient.get<ApiResponse<ResponsibilityRow>>(
-      `/api/responsibilities/${responsibilityId}`
-    );
+    try {
+      console.log(`[responsibilityApi] getById 호출 - responsibilityId: ${responsibilityId}`);
 
-    return response.data;
+      const response = await apiClient.get<ResponsibilityRow>(
+        `/api/responsibilities/${responsibilityId}`
+      );
+
+      console.log('[responsibilityApi] getById 응답:', response);
+
+      // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
+      const result = response;
+      console.log('[responsibilityApi] getById 결과:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[responsibilityApi] getById 에러:', error);
+      throw error;
+    }
   },
 
   /**
@@ -52,12 +78,22 @@ export const responsibilityApi = {
   create: async (
     data: Omit<ResponsibilityRow, 'responsibilityId' | 'createdAt' | 'updatedAt'>
   ): Promise<ResponsibilityRow> => {
-    const response = await apiClient.post<ApiResponse<ResponsibilityRow>>(
-      '/api/responsibilities',
-      data
-    );
+    try {
+      console.log('[responsibilityApi] create 호출 - data:', data);
 
-    return response.data;
+      const response = await apiClient.post<ResponsibilityRow>('/api/responsibilities', data);
+
+      console.log('[responsibilityApi] create 응답:', response);
+
+      // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
+      const result = response;
+      console.log('[responsibilityApi] create 결과:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[responsibilityApi] create 에러:', error);
+      throw error;
+    }
   },
 
   /**
@@ -67,19 +103,44 @@ export const responsibilityApi = {
     responsibilityId: number,
     data: Partial<ResponsibilityRow>
   ): Promise<ResponsibilityRow> => {
-    const response = await apiClient.put<ApiResponse<ResponsibilityRow>>(
-      `/api/responsibilities/${responsibilityId}`,
-      data
-    );
+    try {
+      console.log(
+        `[responsibilityApi] update 호출 - responsibilityId: ${responsibilityId}, data:`,
+        data
+      );
 
-    return response.data;
+      const response = await apiClient.put<ResponsibilityRow>(
+        `/api/responsibilities/${responsibilityId}`,
+        data
+      );
+
+      console.log('[responsibilityApi] update 응답:', response);
+
+      // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
+      const result = response;
+      console.log('[responsibilityApi] update 결과:', result);
+
+      return result;
+    } catch (error) {
+      console.error('[responsibilityApi] update 에러:', error);
+      throw error;
+    }
   },
 
   /**
    * 책무 삭제
    */
   delete: async (responsibilityId: number): Promise<void> => {
-    await apiClient.delete(`/api/responsibilities/${responsibilityId}`);
+    try {
+      console.log(`[responsibilityApi] delete 호출 - responsibilityId: ${responsibilityId}`);
+
+      await apiClient.delete(`/api/responsibilities/${responsibilityId}`);
+
+      console.log('[responsibilityApi] delete 완료');
+    } catch (error) {
+      console.error('[responsibilityApi] delete 에러:', error);
+      throw error;
+    }
   },
 };
 

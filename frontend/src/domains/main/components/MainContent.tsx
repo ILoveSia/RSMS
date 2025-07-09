@@ -3,10 +3,10 @@ import type { QnaListResponseDto } from '@/app/types/qna';
 import { Dialog } from '@/shared/components/modal';
 import type { ServerDataGridApi, ServerRequest } from '@/shared/components/ui/data-display';
 import { ServerDataGrid } from '@/shared/components/ui/data-display';
-import { useToastHelpers } from '@/shared/components/ui/feedback/ToastProvider';
+import { Alert, Loading, useToastHelpers } from '@/shared/components/ui/feedback';
 import type { DataGridColumn } from '@/shared/types/common';
-import { Alert, Box, CircularProgress } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { Box } from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../../assets/scss/style.css';
 import { mainApi } from '../api/mainApi';
 
@@ -14,7 +14,7 @@ interface MainContentProps {
   className?: string;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
+const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConceptDialogOpen, setIsConceptDialogOpen] = useState(false);
   const [qaData, setQaData] = useState<QnaListResponseDto[]>([]);
@@ -25,71 +25,95 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
 
   const { showError, showSuccess } = useToastHelpers();
 
-  // Q&A ServerDataGrid API 구현
-  const qaApi: ServerDataGridApi<QnaListResponseDto> = {
-    fetchData: async (request: ServerRequest) => {
-      try {
-        const qnaList = await mainApi.getRecentQnaList(request.size || 5);
-        const content = qnaList || [];
-        return {
-          content,
-          totalElements: content.length,
-          totalPages: 1,
-          number: 0,
-          size: request.size || 5,
-          first: true,
-          last: true,
-          numberOfElements: content.length,
-          empty: content.length === 0,
-        };
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Q&A 데이터를 불러오는데 실패했습니다.';
-        showError(errorMessage);
-        throw err;
-      }
-    },
-    exportData: async (request: ServerRequest) => {
-      const data = await mainApi.getRecentQnaList(request.size || 5);
-      return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    },
-    deleteRows: async (ids: (string | number)[]) => {
-      showSuccess(`${ids.length}개 항목이 선택되었습니다.`);
-    },
-  };
+  // Q&A ServerDataGrid API 구현 (성능 최적화)
+  const qaApi: ServerDataGridApi<QnaListResponseDto> = useMemo(
+    () => ({
+      fetchData: async (request: ServerRequest) => {
+        try {
+          console.log('[MainContent] Q&A fetchData 호출:', request);
 
-  // Case Study ServerDataGrid API 구현
-  const caseStudyApi: ServerDataGridApi<CaseStudyDto> = {
-    fetchData: async (request: ServerRequest) => {
-      try {
-        const caseStudies = await mainApi.getRecentCaseStudies(request.size || 5);
-        const content = caseStudies || [];
-        return {
-          content,
-          totalElements: content.length,
-          totalPages: 1,
-          number: 0,
-          size: request.size || 5,
-          first: true,
-          last: true,
-          numberOfElements: content.length,
-          empty: content.length === 0,
-        };
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Case Study 데이터를 불러오는데 실패했습니다.';
-        showError(errorMessage);
-        throw err;
-      }
-    },
-    exportData: async (request: ServerRequest) => {
-      const data = await mainApi.getRecentCaseStudies(request.size || 5);
-      return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    },
-    deleteRows: async (ids: (string | number)[]) => {
-      showSuccess(`${ids.length}개 항목이 선택되었습니다.`);
-    },
-  };
+          const qnaList = await mainApi.getRecentQnaList(request.size || 5);
+          const content = qnaList || [];
+
+          console.log('[MainContent] Q&A 데이터 처리 결과:', content);
+
+          const response = {
+            content,
+            totalElements: content.length,
+            totalPages: 1,
+            number: 0,
+            size: request.size || 5,
+            first: true,
+            last: true,
+            numberOfElements: content.length,
+            empty: content.length === 0,
+          };
+
+          console.log('[MainContent] Q&A ServerResponse:', response);
+          return response;
+        } catch (err) {
+          console.error('[MainContent] Q&A fetchData 에러:', err);
+          const errorMessage =
+            err instanceof Error ? err.message : 'Q&A 데이터를 불러오는데 실패했습니다.';
+          showError(errorMessage);
+          throw err;
+        }
+      },
+      exportData: async (request: ServerRequest) => {
+        const data = await mainApi.getRecentQnaList(request.size || 5);
+        return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      },
+      deleteRows: async (ids: (string | number)[]) => {
+        showSuccess(`${ids.length}개 항목이 선택되었습니다.`);
+      },
+    }),
+    [showError, showSuccess]
+  );
+
+  // Case Study ServerDataGrid API 구현 (성능 최적화)
+  const caseStudyApi: ServerDataGridApi<CaseStudyDto> = useMemo(
+    () => ({
+      fetchData: async (request: ServerRequest) => {
+        try {
+          console.log('[MainContent] Case Study fetchData 호출:', request);
+
+          const caseStudies = await mainApi.getRecentCaseStudies(request.size || 5);
+          const content = caseStudies || [];
+
+          console.log('[MainContent] Case Study 데이터 처리 결과:', content);
+
+          const response = {
+            content,
+            totalElements: content.length,
+            totalPages: 1,
+            number: 0,
+            size: request.size || 5,
+            first: true,
+            last: true,
+            numberOfElements: content.length,
+            empty: content.length === 0,
+          };
+
+          console.log('[MainContent] Case Study ServerResponse:', response);
+          return response;
+        } catch (err) {
+          console.error('[MainContent] Case Study fetchData 에러:', err);
+          const errorMessage =
+            err instanceof Error ? err.message : 'Case Study 데이터를 불러오는데 실패했습니다.';
+          showError(errorMessage);
+          throw err;
+        }
+      },
+      exportData: async (request: ServerRequest) => {
+        const data = await mainApi.getRecentCaseStudies(request.size || 5);
+        return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      },
+      deleteRows: async (ids: (string | number)[]) => {
+        showSuccess(`${ids.length}개 항목이 선택되었습니다.`);
+      },
+    }),
+    [showError, showSuccess]
+  );
 
   // 컴포넌트 마운트 디버깅
   useEffect(() => {
@@ -110,6 +134,7 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
 
         // 최근 Q&A 목록 조회 (메인 화면용으로 5개만)
         const qnaList = await mainApi.getRecentQnaList(5);
+        console.log('[MainContent] Q&A 데이터 로드 완료:', qnaList);
         setQaData(qnaList || []);
       } catch (err: unknown) {
         console.error('Q&A 데이터 로드 실패:', err);
@@ -126,14 +151,17 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
     loadQnaData();
   }, []);
 
-  // Q&A 컬럼 정의
-  const qaColumns: DataGridColumn<QnaListResponseDto>[] = [
-    { field: 'category', headerName: '카테고리', width: 120 },
-    { field: 'title', headerName: '제목', width: 400, flex: 1 },
-    { field: 'questionerName', headerName: '작성자', width: 120 },
-    { field: 'createdAtFormatted', headerName: '작성일', width: 120 },
-    { field: 'statusDescription', headerName: '상태', width: 100 },
-  ];
+  // Q&A 컬럼 정의 (성능 최적화)
+  const qaColumns: DataGridColumn<QnaListResponseDto>[] = useMemo(
+    () => [
+      { field: 'category', headerName: '카테고리', width: 120 },
+      { field: 'title', headerName: '제목', width: 400, flex: 1 },
+      { field: 'questionerName', headerName: '작성자', width: 120 },
+      { field: 'createdAtFormatted', headerName: '작성일', width: 120 },
+      { field: 'statusDescription', headerName: '상태', width: 100 },
+    ],
+    []
+  );
 
   // Case Study 데이터 로드
   useEffect(() => {
@@ -141,8 +169,10 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
       try {
         setCaseStudyError(null);
         const caseStudies = await mainApi.getRecentCaseStudies(5);
+        console.log('[MainContent] Case Study 데이터 로드 완료:', caseStudies);
         setCaseStudyData(caseStudies || []);
       } catch (err: unknown) {
+        console.error('Case Study 데이터 로드 실패:', err);
         const errorMessage =
           err instanceof Error ? err.message : 'Case Study 데이터를 불러오는데 실패했습니다.';
         setCaseStudyError(errorMessage);
@@ -152,14 +182,39 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
     loadCaseStudyData();
   }, []);
 
-  // Case Study 컬럼 정의
-  const caseStudyColumns: DataGridColumn<CaseStudyDto>[] = [
-    { field: 'caseStudyId', headerName: 'ID', width: 90 },
-    { field: 'caseStudyTitle', headerName: '제목', width: 300, flex: 1 },
-    { field: 'caseStudyContent', headerName: '내용', width: 300 },
-    { field: 'createdId', headerName: '작성자', width: 120 },
-    { field: 'createdAt', headerName: '작성일', width: 120 },
-  ];
+  // Case Study 컬럼 정의 (성능 최적화)
+  const caseStudyColumns: DataGridColumn<CaseStudyDto>[] = useMemo(
+    () => [
+      { field: 'caseStudyId', headerName: 'ID', width: 90 },
+      { field: 'caseStudyTitle', headerName: '제목', width: 300 },
+      { field: 'caseStudyContent', headerName: '내용', width: 300, flex: 1 },
+      { field: 'createdId', headerName: '작성자', width: 120 },
+      {
+        field: 'createdAt',
+        headerName: '작성일',
+        width: 120,
+        renderCell: ({ value }) => {
+          if (!value) return '-';
+          const date = new Date(value);
+          return date
+            .toLocaleDateString('ko-KR', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            })
+            .replace(/\. /g, '.')
+            .replace(/\.$/, '');
+        },
+      },
+    ],
+    []
+  );
+
+  // 다이얼로그 핸들러들 (성능 최적화)
+  const handleDialogOpen = useCallback(() => setIsDialogOpen(true), []);
+  const handleDialogClose = useCallback(() => setIsDialogOpen(false), []);
+  const handleConceptDialogOpen = useCallback(() => setIsConceptDialogOpen(true), []);
+  const handleConceptDialogClose = useCallback(() => setIsConceptDialogOpen(false), []);
 
   return (
     <div className={`main-content ${className}`}>
@@ -178,7 +233,7 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
           {/* 책무구조도의 기본 개념 */}
           <div
             className='responsibility-card'
-            onClick={() => setIsConceptDialogOpen(true)}
+            onClick={handleConceptDialogOpen}
             style={{ cursor: 'pointer' }}
           >
             <div className='responsibility-card__header'>
@@ -217,7 +272,7 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
           {/* 금융당국 · 협회 등 자료료 */}
           <div
             className='responsibility-card'
-            onClick={() => setIsDialogOpen(true)}
+            onClick={handleDialogOpen}
             style={{ cursor: 'pointer' }}
           >
             <div className='responsibility-card__header'>
@@ -273,7 +328,7 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
                       height: '100%',
                     }}
                   >
-                    <CircularProgress />
+                    <Loading />
                   </Box>
                 ) : error ? (
                   <Box sx={{ p: 2 }}>
@@ -289,6 +344,10 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
                     columns={qaColumns}
                     height='100%'
                     autoHeight={false}
+                    rowIdField='id'
+                    searchable={false}
+                    refreshable={false}
+                    toolbar={false}
                     initialState={{
                       pagination: {
                         paginationModel: { page: 0, pageSize: 5 },
@@ -407,6 +466,10 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
                     columns={caseStudyColumns}
                     height='100%'
                     autoHeight={false}
+                    rowIdField='caseStudyId'
+                    searchable={false}
+                    refreshable={false}
+                    toolbar={false}
                     initialState={{
                       pagination: {
                         paginationModel: { page: 0, pageSize: 5 },
@@ -596,7 +659,7 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
         open={isDialogOpen}
         title='금융당국 · 협회 등 자료'
         maxWidth='md'
-        onClose={() => setIsDialogOpen(false)}
+        onClose={handleDialogClose}
       >
         <div className='guidance-popup'>
           <div className='guidance-popup__header'>
@@ -644,7 +707,7 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
         open={isConceptDialogOpen}
         title='책무구조도 무엇인가요?'
         maxWidth='md'
-        onClose={() => setIsConceptDialogOpen(false)}
+        onClose={handleConceptDialogClose}
       >
         <div className='concept-popup'>
           <div className='concept-popup__header'>
@@ -691,6 +754,8 @@ const MainContent: React.FC<MainContentProps> = ({ className = '' }) => {
       </Dialog>
     </div>
   );
-};
+});
+
+MainContent.displayName = 'MainContent';
 
 export default MainContent;
