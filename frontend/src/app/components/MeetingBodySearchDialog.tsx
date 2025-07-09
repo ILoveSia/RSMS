@@ -7,16 +7,12 @@ import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
 import { Dialog } from '@/shared/components/modal';
 import { Button } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
 import { Alert } from '@/shared/components/ui/feedback';
+import type { DataGridColumn } from '@/shared/types/common';
 import {
   Box,
   CircularProgress,
-  Divider,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Paper,
   TextField,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
@@ -211,9 +207,38 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
   };
 
   // 회의체 선택
-  const handleMeetingBodySelect = (meetingBody: MeetingBodySearchResult) => {
-    setSelectedMeetingBody(meetingBody);
+  const handleMeetingBodySelect = (selectedIds: (string | number)[], selectedData: MeetingBodySearchResult[]) => {
+    if (selectedData.length > 0) {
+      setSelectedMeetingBody(selectedData[0]);
+    } else {
+      setSelectedMeetingBody(null);
+    }
   };
+
+  // DataGrid 컬럼 정의
+  const columns: DataGridColumn<MeetingBodySearchResult>[] = [
+    {
+      field: 'code' as keyof MeetingBodySearchResult,
+      headerName: '회의체 코드',
+      width: 120,
+    },
+    {
+      field: 'name' as keyof MeetingBodySearchResult,
+      headerName: '회의체명',
+      flex: 1,
+      minWidth: 200,
+    },
+    {
+      field: 'period' as keyof MeetingBodySearchResult,
+      headerName: '주기',
+      width: 100,
+    },
+    {
+      field: 'gubun' as keyof MeetingBodySearchResult,
+      headerName: '구분',
+      width: 120,
+    },
+  ];
 
   // 회의체 선택 확인
   const handleConfirmSelect = () => {
@@ -243,7 +268,7 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} title={title} maxWidth='sm' onClose={onClose} actions={renderActions()}>
+    <Dialog open={open} title={title} maxWidth='md' onClose={onClose} actions={renderActions()}>
       <Box sx={{ mt: 2, minHeight: 400 }}>
         {error && (
           <Alert severity='error' sx={{ mb: 2 }} title='오류'>
@@ -251,134 +276,48 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
           </Alert>
         )}
 
-        {/* 검색 영역 */}
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
           <TextField
-            fullWidth
             size='small'
-            placeholder='검색'
+            placeholder='회의체명 또는 코드로 검색'
             value={searchKeyword}
-            onChange={e => setSearchKeyword(e.target.value)}
+            onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyPress={handleKeyPress}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'white',
-              },
-            }}
+            fullWidth
           />
           <Button
             variant='contained'
             onClick={handleSearch}
             disabled={loading}
             color='primary'
+            sx={{ minWidth: 80 }}
           >
             검색
           </Button>
         </Box>
 
-        {/* 회의체 목록 */}
-        <Paper
-          variant='outlined'
-          sx={{
-            height: 320,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {loading ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100%',
-              }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : (
-            <List
-              sx={{
-                flex: 1,
-                overflow: 'auto',
-                p: 0,
-                '& .MuiListItem-root': {
-                  p: 0,
-                },
-              }}
-            >
-              {filteredMeetingBodies.length === 0 ? (
-                <ListItem>
-                  <ListItemText
-                    primary='검색 결과가 없습니다.'
-                    sx={{ textAlign: 'center', color: 'text.secondary' }}
-                  />
-                </ListItem>
-              ) : (
-                filteredMeetingBodies.map((meeting, index) => (
-                  <React.Fragment key={meeting.id}>
-                    <ListItem disablePadding>
-                      <ListItemButton
-                        selected={selectedMeetingBody?.id === meeting.id}
-                        onClick={() => handleMeetingBodySelect(meeting)}
-                        sx={{
-                          py: 1.5,
-                          px: 2,
-                          '&.Mui-selected': {
-                            backgroundColor: 'var(--bank-primary)',
-                            color: 'white',
-                            '&:hover': {
-                              backgroundColor: 'var(--bank-primary-dark)',
-                            },
-                            '& .MuiListItemText-secondary': {
-                              color: 'rgba(255, 255, 255, 0.7)',
-                            },
-                          },
-                          '&:hover': {
-                            backgroundColor:
-                              selectedMeetingBody?.id === meeting.id
-                                ? '#1565c0'
-                                : 'rgba(0, 0, 0, 0.04)',
-                          },
-                        }}
-                      >
-                        <ListItemText
-                          primary={meeting.name}
-                          secondary={`${meeting.gubun} | ${meeting.period || '개최주기 미정'}`}
-                          primaryTypographyProps={{
-                            fontWeight: selectedMeetingBody?.id === meeting.id ? 'bold' : 'normal',
-                            fontSize: '0.95rem',
-                          }}
-                          secondaryTypographyProps={{
-                            fontSize: '0.8rem',
-                          }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                    {index < filteredMeetingBodies.length - 1 && <Divider />}
-                  </React.Fragment>
-                ))
-              )}
-            </List>
-          )}
-        </Paper>
-
-        {/* 선택된 항목 정보 */}
-        {selectedMeetingBody && (
-          <Box sx={{ mt: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-            <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mb: 1 }}>
-              선택된 회의체: {selectedMeetingBody.name}
-            </Box>
-            <Box sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>
-              구분: {selectedMeetingBody.gubun} | 개최주기: {selectedMeetingBody.period}
-            </Box>
-            {selectedMeetingBody.content && (
-              <Box sx={{ fontSize: '0.8rem', color: 'text.secondary', mt: 0.5 }}>
-                {selectedMeetingBody.content}
-              </Box>
-            )}
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+            <CircularProgress />
           </Box>
+        ) : (
+          <DataGrid
+            data={filteredMeetingBodies}
+            columns={columns}
+            height={300}
+            selectable
+            multiSelect={false}
+            onRowSelectionChange={handleMeetingBodySelect}
+            selectedRows={selectedMeetingBody ? [selectedMeetingBody.id] : []}
+            density='compact'
+            searchable={false}
+            toolbar={false}
+            hideFooterPagination
+            disableColumnMenu
+            disableColumnFilter
+            disableColumnSort
+            rowIdField='id'
+          />
         )}
       </Box>
     </Dialog>
