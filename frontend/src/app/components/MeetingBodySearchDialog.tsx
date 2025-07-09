@@ -296,11 +296,11 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
           </Button>
         </Box>
 
-        {loading ? (
+          {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
+              <CircularProgress />
+            </Box>
+          ) : (
           <DataGrid
             data={filteredMeetingBodies}
             columns={columns}

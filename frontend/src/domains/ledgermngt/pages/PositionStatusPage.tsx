@@ -1,9 +1,11 @@
-  import { Confirm } from '@/shared/components/modal';
+import DepartmentSearchPopup, { type Department } from '@/app/components/DepartmentSearchPopup';
+import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/app/components/EmployeeSearchPopup';
+import { Confirm } from '@/shared/components/modal';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { ComboBox } from '@/shared/components/ui/form';
 import { Box } from '@mui/material';
-import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRenderCellParams, type GridRowSelectionModel } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -33,6 +35,23 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
   const [positionDialogMode, setPositionDialogMode] = useState<DialogMode>('create');
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('');
+
+  // 부서 검색 팝업 상태
+  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<PositionStatusRow | null>(null);
+
+  // 직원 검색 팝업 상태
+  const [employeeSearchOpen, setEmployeeSearchOpen] = useState(false);
+
+  // 직원 선택 핸들러
+  const handleEmployeeSelect = (employee: EmployeeSearchResult) => {
+    if (selectedPosition) {
+      // TODO: API 호출하여 선택된 직원 정보 업데이트
+      console.log('Selected employee:', employee);
+      console.log('For position:', selectedPosition);
+    }
+    setEmployeeSearchOpen(false);
+  };
 
   // 직책 현황 조회
   const fetchPositionStatus = useCallback(async () => {
@@ -73,6 +92,18 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
     fetchLedgerOrders();
   }, [fetchPositionStatus, fetchLedgerOrders]);
 
+  // 부서 선택 핸들러
+  const handleDepartmentSelect = (departments: Department | Department[]) => {
+    if (selectedPosition) {
+      // 단일 부서만 처리
+      const department = Array.isArray(departments) ? departments[0] : departments;
+      // TODO: API 호출하여 선택된 부서 정보 업데이트
+      console.log('Selected department:', department);
+      console.log('For position:', selectedPosition);
+    }
+    setDepartmentSearchOpen(false);
+  };
+
   const positionColumns: GridColDef[] = [
     {
       field: 'positionsNm',
@@ -93,8 +124,35 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
       align: 'center',
       headerAlign: 'center',
     },
-    { field: 'ownerDeptNms', headerName: '소관부서', width: 300, flex: 2 },
-    { field: 'writeDeptNm', headerName: '책무기술서 작성 부서', width: 200, flex: 2 },
+    {
+      field: 'ownerDeptNms',
+      headerName: '소관부서',
+      width: 300,
+      align: 'center',
+      headerAlign: 'center',
+      flex: 2,
+      renderCell: (params: GridRenderCellParams) => params.value || '-'
+    },
+    {
+      field: 'writeDeptNm',
+      headerName: '책무기술서 작성 부서',
+      width: 200,
+      flex: 2,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => (
+        <span
+          style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={e => {
+            e.stopPropagation();
+            setSelectedPosition(params.row);
+            setDepartmentSearchOpen(true);
+          }}
+        >
+          {params.value || '부서 선택'}
+        </span>
+      ),
+    },
     {
       field: 'adminCount',
       headerName: '관리자 수',
@@ -102,6 +160,18 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
       width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderCell: params => (
+        <span
+          style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={e => {
+            e.stopPropagation();
+            setSelectedPosition(params.row);
+            setEmployeeSearchOpen(true);
+          }}
+        >
+          {params.value || '0'}
+        </span>
+      ),
     },
   ];
 
@@ -362,6 +432,19 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
         onClose={handlePositionDialogClose}
         onSave={handlePositionSave}
         onChangeMode={handlePositionModeChange}
+      />
+      <DepartmentSearchPopup
+        open={departmentSearchOpen}
+        onClose={() => setDepartmentSearchOpen(false)}
+        onSelect={handleDepartmentSelect}
+        multiSelect={false}
+        title="책무기술서 작성 부서 선택"
+      />
+      <EmployeeSearchPopup
+        open={employeeSearchOpen}
+        onClose={() => setEmployeeSearchOpen(false)}
+        onSelect={handleEmployeeSelect}
+        title="관리자 선택"
       />
       <Confirm
         open={confirmOpen}

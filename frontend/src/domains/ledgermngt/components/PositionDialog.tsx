@@ -6,12 +6,12 @@
  * - SOLID 원칙 준수
  * - 단일 책임 원칙 (SRP)에 따라 컴포넌트 분리
  */
+import type { Department } from '@/app/components/DepartmentSearchPopup';
+import DepartmentSearchPopup from '@/app/components/DepartmentSearchPopup';
 import type { MeetingBodySearchResult } from '@/app/components/MeetingBodySearchDialog';
 import MeetingBodySearchDialog from '@/app/components/MeetingBodySearchDialog';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import type { Department } from '@/domains/common/components/search/DepartmentSearchPopup';
-import DepartmentSearchPopup from '@/domains/common/components/search/DepartmentSearchPopup';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import RemoveIcon from '@mui/icons-material/Remove';
