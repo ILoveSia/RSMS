@@ -9,7 +9,7 @@ import { useReduxState } from '@/app/store/use-store';
 import { Button } from '@/shared/components/ui/button';
 import { Alert, Loading, useToastHelpers } from '@/shared/components/ui/feedback';
 import { Card } from '@/shared/components/ui/layout';
-import { useAuth } from '@/shared/context/AuthContext';
+import { useAuth, type User as AuthUser } from '@/shared/context/AuthContext';
 import {
   AccountCircle,
   Business,
@@ -39,12 +39,46 @@ interface ILoginPageProps {
   password?: string;
 }
 
-interface User {
+// Redux 저장용 사용자 정보 인터페이스
+interface LoginUser {
   userid: string;
   username: string;
   email: string;
   role?: string;
   accessibleMenus?: Menu[];
+}
+
+// API 응답 타입 정의
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp?: string;
+}
+
+// 로그인 응답 데이터 타입
+interface LoginResponseData {
+  userId: string;
+  username: string;
+  email: string;
+  authorities: string[];
+  sessionId: string;
+  loginTime: string;
+  sessionExpireTime: string;
+  rememberMe: boolean;
+  accessibleMenus: Menu[];
+}
+
+// 공통코드 타입
+interface CommonCode {
+  id: number;
+  codeGroup: string;
+  codeValue: string;
+  codeName: string;
+  codeNameEn?: string;
+  sortOrder?: number;
+  isActive: boolean;
+  description?: string;
 }
 
 interface Menu {
@@ -70,11 +104,12 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
   const theme = useTheme();
 
   // Redux Store 훅 사용
-  const { data: loginData, setData: setLoginData } = useReduxState<User>('loginStore/login');
+  const { data: loginData, setData: setLoginData } = useReduxState<LoginUser>('loginStore/login');
   const { data: menuData, setData: setMenuData } = useReduxState<Menu[]>(
     'menuStore/accessibleMenus'
   );
-  const { data: allCodes, setData: setAllCodes } = useReduxState<any[]>('codeStore/allCodes');
+  const { data: allCodes, setData: setAllCodes } =
+    useReduxState<CommonCode[]>('codeStore/allCodes');
 
   // AuthContext 훅 사용
   const { setAuthenticatedUser } = useAuth();
@@ -118,12 +153,30 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
     try {
       console.log('🔍 [공통코드] 공통코드 조회 시작');
 
-      const allCodesResult = await apiClient.get<unknown>('/api/common-codes');
+      const allCodesResult = await apiClient.get<ApiResponse<CommonCode[]> | CommonCode[]>(
+        '/api/common-codes'
+      );
       console.log('✅ [공통코드] 모든 공통코드 조회 성공:', allCodesResult);
 
-      const commonCodesData = (allCodesResult as any).data || allCodesResult;
-      setAllCodes(commonCodesData);
+      // ApiResponse 래퍼 구조인지 확인하여 적절히 처리
+      let commonCodesData: CommonCode[];
+      if (
+        allCodesResult &&
+        typeof allCodesResult === 'object' &&
+        'data' in allCodesResult &&
+        'success' in allCodesResult
+      ) {
+        const apiResponse = allCodesResult as ApiResponse<CommonCode[]>;
+        if (apiResponse.success && apiResponse.data) {
+          commonCodesData = apiResponse.data;
+        } else {
+          throw new Error(apiResponse.message || '공통코드 조회에 실패했습니다.');
+        }
+      } else {
+        commonCodesData = allCodesResult as CommonCode[];
+      }
 
+      setAllCodes(commonCodesData);
       localStorage.setItem('commonCodes', JSON.stringify(commonCodesData));
       console.log('✅ [localStorage] 공통코드 데이터 저장 완료');
     } catch (error) {
@@ -140,7 +193,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
       console.log('✅ [메뉴] 접근 가능한 메뉴 조회 성공:', menuResult);
 
       if (Array.isArray(menuResult) && menuResult.length > 0) {
-        const convertedMenus = menuResult.map((menu: any) => ({
+        const convertedMenus = menuResult.map((menu: Menu) => ({
           id: Number(menu.id),
           menuCode: menu.menuCode,
           menuName: menu.menuName,
@@ -194,26 +247,43 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
     try {
       console.log('🔍 [API] 로그인 API 호출 시작:', { userid });
 
-      const response = await apiClient.post<unknown>('/auth/login', loginRequestData);
+      const response = await apiClient.post<ApiResponse<LoginResponseData> | LoginResponseData>(
+        '/auth/login',
+        loginRequestData
+      );
       console.log('✅ [API] 로그인 API 호출 성공:', response);
 
-      const userData = (response as any).data || response;
+      // ApiResponse 래퍼 구조인지 확인하여 적절히 처리
+      let userData: LoginResponseData;
+      if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+        const apiResponse = response as ApiResponse<LoginResponseData>;
+        if (apiResponse.success && apiResponse.data) {
+          userData = apiResponse.data;
+          console.log('✅ [로그인] ApiResponse 래퍼에서 데이터 추출:', userData);
+        } else {
+          throw new Error(apiResponse.message || '로그인에 실패했습니다.');
+        }
+      } else {
+        userData = response as LoginResponseData;
+        console.log('✅ [로그인] 직접 데이터 사용:', userData);
+      }
 
-      const userForStore: User = {
-        userid: userData.userid || userid,
-        username: userData.username || userid,
-        email: userData.email || `${userid}@example.com`,
-        role: userData.role || 'USER',
+      const userForStore: LoginUser = {
+        userid: userData.userId, // 필드명 매핑: userId → userid
+        username: userData.username,
+        email: userData.email,
+        role: userData.authorities?.[0]?.replace('ROLE_', '') || 'USER', // authorities에서 role 추출
         accessibleMenus: userData.accessibleMenus || [],
       };
 
       setLoginData(userForStore);
 
-      const userForAuth = {
-        id: userForStore.userid,
+      const userForAuth: AuthUser = {
+        userid: userForStore.userid,
         username: userForStore.username,
         email: userForStore.email,
-        roles: [userForStore.role || 'USER'],
+        role: userForStore.role,
+        roles: userData.authorities?.map(auth => auth.replace('ROLE_', '')) || ['USER'],
       };
 
       setAuthenticatedUser(userForAuth);

@@ -1,20 +1,31 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-//import { useReduxState } from '../../../store/use-store';
 import '../../../../assets/scss/style.css';
+import { useReduxState } from '../../../store/use-store';
 
 interface TopHeaderProps {
   className?: string;
   style?: React.CSSProperties;
 }
 
+// Redux 저장용 사용자 정보 인터페이스
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+  accessibleMenus?: unknown[];
+}
+
 const TopHeader: React.FC<TopHeaderProps> = ({ className = '', style }) => {
   console.log('📱 [TopHeader] 렌더링 시작:', { className });
 
   const navigate = useNavigate();
-  const user = JSON.parse(sessionStorage.getItem('user') || '{}');
 
-  console.log('📱 [TopHeader] 사용자 정보:', user);
+  // Redux Store에서 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+
+  console.log('📱 [TopHeader] Redux loginData:', loginData);
 
   const handleTitleClick = () => {
     navigate('/main');
@@ -24,7 +35,11 @@ const TopHeader: React.FC<TopHeaderProps> = ({ className = '', style }) => {
     // localStorage에서 메뉴 데이터 삭제
     localStorage.removeItem('accessibleMenus');
     localStorage.removeItem('commonCodes');
-    console.log('🔄 [TopHeader] 로그아웃 - localStorage 데이터 삭제 (메뉴, 공통코드)');
+
+    // sessionStorage에서 사용자 정보 삭제
+    sessionStorage.removeItem('user');
+
+    console.log('🔄 [TopHeader] 로그아웃 - localStorage 및 sessionStorage 데이터 삭제');
 
     // 로그인 페이지로 이동
     navigate('/login');
@@ -67,7 +82,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ className = '', style }) => {
             </svg>
           </div>
           <span className='top-header__user-name'>
-            {user?.username || 'Guest'} ({user?.email || ''})
+            {loginData?.username || 'Guest'} ({loginData?.email || ''})
           </span>
           <button className='top-header__logout-button' title='로그아웃' onClick={handleLogout}>
             <svg fill='none' stroke='currentColor' viewBox='0 0 24 24'>
