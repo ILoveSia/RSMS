@@ -372,12 +372,9 @@ const DataGrid = <T extends Record<string, any>>({
         }}
         sx={{
           border: 'none',
-          '& .MuiDataGrid-cell': {
-            borderBottom: '1px solid rgba(224, 224, 224, 0.5)',
-          },
-          '& .MuiDataGrid-columnHeaders': {
-            backgroundColor: '#f5f5f5',
-            borderBottom: '1px solid rgba(224, 224, 224, 1)',
+          '& .MuiDataGrid-main': {
+            borderRight: '1px solid rgba(224, 224, 224, 1)',
+            borderLeft: '1px solid rgba(224, 224, 224, 1)',
           },
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'rgba(25, 118, 210, 0.04)',
