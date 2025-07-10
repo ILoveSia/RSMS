@@ -38,7 +38,7 @@ import type {
   GridRowSelectionModel,
   GridSortModel,
 } from '@mui/x-data-grid';
-import { GridToolbar, DataGrid as MuiDataGrid } from '@mui/x-data-grid';
+import { DataGrid as MuiDataGrid } from '@mui/x-data-grid';
 // import { koKR } from '@mui/x-data-grid/locales';
 import React from 'react';
 
@@ -72,13 +72,9 @@ export interface DataGridProps<T = any> extends BaseComponentProps {
   density?: 'compact' | 'standard' | 'comfortable';
 
   // 기능 설정
-  searchable?: boolean;
-  filterable?: boolean;
   sortable?: boolean;
-  exportable?: boolean;
 
   // 커스터마이징
-  toolbar?: boolean | React.ComponentType<any>;
   noDataMessage?: string;
   rowIdField?: keyof T;
 
@@ -106,7 +102,7 @@ const convertColumnsToMuiFormat = <T,>(columns: DataGridColumn<T>[]): GridColDef
     maxWidth: col.maxWidth,
     flex: col.flex,
     sortable: col.sortable,
-    filterable: col.filterable,
+    filterable: false, // 필터 기능 비활성화
     editable: col.editable,
     align: col.align,
     headerAlign: col.headerAlign,
@@ -152,16 +148,12 @@ const DataGrid = <T extends Record<string, any>>({
   maxHeight,
   autoHeight = false,
   density = 'standard',
-  searchable = true,
-  filterable = true,
   sortable = true,
-  exportable = false,
-  toolbar = true,
   noDataMessage = '표시할 데이터가 없습니다.',
   rowIdField = 'id' as keyof T,
   virtualization = true,
-  disableColumnMenu = false,
-  disableColumnFilter = false,
+  disableColumnMenu = true, // 기본값을 true로 변경
+  disableColumnFilter = true, // 기본값을 true로 변경
   disableColumnSort = false,
   disableRowSelectionOnClick = false,
   hideFooter = false,
@@ -376,15 +368,8 @@ const DataGrid = <T extends Record<string, any>>({
         onSortModelChange={handleSortModelChange}
         onFilterModelChange={handleFilterModelChange}
         slots={{
-          toolbar: toolbar === true ? GridToolbar : toolbar || undefined,
           pagination: CustomPagination,
         }}
-        slotProps={{
-          toolbar: {
-            showQuickFilter: searchable,
-          },
-        }}
-        // localeText={koKR.components.MuiDataGrid.defaultProps.localeText}
         sx={{
           border: 'none',
           '& .MuiDataGrid-cell': {
