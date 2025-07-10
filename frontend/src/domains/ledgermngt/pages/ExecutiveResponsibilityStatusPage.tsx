@@ -209,7 +209,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     <div className='main-content'>
       {/* 페이지 제목 */}
       <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [1200] 임원별 책무 현황</h1>
+        <h1 className='responsibility-header__title'>★ [600] 임원별 책무 현황</h1>
       </div>
 
       {/* 노란색 구분선 */}

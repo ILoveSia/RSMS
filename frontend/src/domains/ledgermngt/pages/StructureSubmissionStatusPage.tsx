@@ -59,22 +59,11 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   const [historyRows, setHistoryRows] = useState<SubmissionHistoryRow[]>([]);
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<number[]>([]);
 
-  // 등록/수정 모드
+  // 등록 모드
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
 
   // 등록 폼 데이터
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
-    historyCode: null,
-    executiveName: null,
-    position: null,
-    submissionDate: new Date(),
-    attachmentFile: '',
-    remarks: null
-  });
-
-  // 수정 모드 상태
-  const [editData, setEditData] = useState<RegistrationData>({
     historyCode: null,
     executiveName: null,
     position: null,
@@ -204,40 +193,15 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
 
   // 행 클릭 핸들러
   const handleHistoryRowClick = (row: SubmissionHistoryRow) => {
-    if (isRegistrationMode || isEditMode) {
+    if (isRegistrationMode) {
       return;
     }
-
-    setEditData({
-      historyCode: { value: row.historyCode, label: row.historyCode },
-      executiveName: { value: row.executiveName, label: row.executiveName },
-      position: { value: row.position, label: row.position },
-      submissionDate: new Date(row.submissionDate),
-      attachmentFile: row.attachmentFile || '',
-      remarks: row.remarks ? { value: row.remarks, label: row.remarks } : null
-    });
   };
 
   // 등록 모드 전환
   const handleRegistrationModeToggle = () => {
     setIsRegistrationMode(!isRegistrationMode);
     if (!isRegistrationMode) {
-      setEditData({
-        historyCode: null,
-        executiveName: null,
-        position: null,
-        submissionDate: new Date(),
-        attachmentFile: '',
-        remarks: null
-      });
-      setIsEditMode(false);
-    }
-  };
-
-  // 수정 모드 전환
-  const handleEditModeToggle = () => {
-    setIsEditMode(!isEditMode);
-    if (!isEditMode) {
       setRegistrationData({
         historyCode: null,
         executiveName: null,
@@ -246,7 +210,14 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
         attachmentFile: '',
         remarks: null
       });
-      setIsRegistrationMode(false);
+
+      // 등록 폼으로 스크롤
+      setTimeout(() => {
+        const formSection = document.getElementById('submission-form-section');
+        if (formSection) {
+          formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
     }
   };
 
@@ -283,7 +254,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       return;
     }
 
-    const setData = isRegistrationMode ? setRegistrationData : setEditData;
+    const setData = setRegistrationData;
     setData(prev => ({
       ...prev,
       attachmentFile: file.name
@@ -293,8 +264,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   // 직원 선택 핸들러
   const handleEmployeeSelect = (employee: EmployeeSearchResult | EmployeeSearchResult[]) => {
     if (!Array.isArray(employee)) {
-      const setData = isRegistrationMode ? setRegistrationData : setEditData;
-      setData(prev => ({
+      setRegistrationData(prev => ({
         ...prev,
         executiveName: { value: employee.username, label: employee.username },
         position: { value: employee.jobTitleCd, label: employee.jobTitleCd }
@@ -334,7 +304,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
 
   // 제출 이력 등록
   const handleSubmit = async () => {
-    const data = isRegistrationMode ? registrationData : editData;
+    const data = registrationData;
     if (!validateForm(data)) return;
 
     try {
@@ -362,24 +332,17 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
         formData.append('remarks', String(data.remarks.value));
       }
 
-      const url = isRegistrationMode ? '/api/submission-history' : `/api/submission-history/${selectedHistoryIds[0]}`;
-      const method = isRegistrationMode ? 'POST' : 'PUT';
-
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('/api/submission-history', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(isRegistrationMode ? '제출 이력 등록에 실패했습니다.' : '제출 이력 수정에 실패했습니다.');
+        throw new Error('제출 이력 등록에 실패했습니다.');
       }
 
       // 성공 후 초기화
-      if (isRegistrationMode) {
-        handleRegistrationModeToggle();
-      } else {
-        handleEditModeToggle();
-      }
+      handleRegistrationModeToggle();
       fetchSubmissionHistory();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
@@ -496,17 +459,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           <Button
             variant="contained"
             size="small"
-            onClick={handleEditModeToggle}
-            disabled={!selectedHistoryIds.length || isLoading}
-            color="success"
-            sx={{ mr: 1 }}
-            style={{ color: 'white' }}
-          >
-            수정
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
             onClick={handleDelete}
             disabled={!selectedHistoryIds.length || isLoading}
             color="primary"
@@ -535,25 +487,28 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           />
         </Box>
 
-        {/* 등록/수정 폼 영역 */}
-        {(isRegistrationMode || isEditMode) && (
-          <Box sx={{
-            marginTop: '20px',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            borderRadius: '4px',
-            padding: '16px'
-          }}>
+        {/* 등록 폼 영역 */}
+        {isRegistrationMode && (
+          <Box
+            id="submission-form-section"
+            sx={{
+              marginTop: '20px',
+              backgroundColor: 'var(--bank-bg-secondary)',
+              border: '1px solid var(--bank-border)',
+              borderRadius: '4px',
+              padding: '16px'
+            }}
+          >
             <Typography variant="h6" sx={{
               fontWeight: 'bold',
               marginBottom: '16px',
               fontSize: '0.95rem',
               color: 'var(--bank-text-primary)'
             }}>
-              {isRegistrationMode ? '책무구조도 제출 등록' : '책무구조도 제출 상세'}
+              책무구조도 제출 등록
             </Typography>
 
-            {/* 기존 폼 필드들 유지 */}
+            {/* 기존 폼 필드들 */}
             <Box sx={{
               border: '1px solid var(--bank-border)',
               borderRadius: '4px',
@@ -569,16 +524,15 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                 제출이력 코드
               </Typography>
               <ComboBox
-                value={isRegistrationMode ? registrationData.historyCode : editData.historyCode}
+                value={registrationData.historyCode}
                 onChange={(value) => handleComboBoxChange(
                   'historyCode',
                   value as SelectOption | null,
-                  isRegistrationMode ? setRegistrationData : setEditData
+                  setRegistrationData
                 )}
                 options={historyCodeOptions}
                 placeholder="제출이력 코드를 선택하세요"
                 size="small"
-                disabled={!isRegistrationMode && !isEditMode}
               />
 
               {/* 제출 대상 임원 */}
@@ -587,11 +541,11 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               </Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <ComboBox
-                  value={isRegistrationMode ? registrationData.executiveName : editData.executiveName}
+                  value={registrationData.executiveName}
                   onChange={(value) => handleComboBoxChange(
                     'executiveName',
                     value as SelectOption | null,
-                    isRegistrationMode ? setRegistrationData : setEditData
+                    setRegistrationData
                   )}
                   options={[]}
                   placeholder="제출 대상 임원을 선택하세요"
@@ -603,7 +557,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                   variant="contained"
                   size="small"
                   onClick={() => setEmployeePopupOpen(true)}
-                  disabled={!isRegistrationMode && !isEditMode}
                 >
                   검색
                 </Button>
@@ -614,11 +567,11 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                 제출 대상 임원 직책
               </Typography>
               <ComboBox
-                value={isRegistrationMode ? registrationData.position : editData.position}
+                value={registrationData.position}
                 onChange={(value) => handleComboBoxChange(
                   'position',
                   value as SelectOption | null,
-                  isRegistrationMode ? setRegistrationData : setEditData
+                  setRegistrationData
                 )}
                 options={positionOptions}
                 placeholder="제출 대상 임원 직책을 입력하세요"
@@ -631,15 +584,10 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                 책무구조도 제출일
               </Typography>
               <DatePicker
-                value={isRegistrationMode ? registrationData.submissionDate : editData.submissionDate}
+                value={registrationData.submissionDate}
                 onChange={(date) => {
-                  if (isRegistrationMode) {
-                    setRegistrationData(prev => ({ ...prev, submissionDate: date || new Date() }));
-                  } else {
-                    setEditData(prev => ({ ...prev, submissionDate: date || new Date() }));
-                  }
+                  setRegistrationData(prev => ({ ...prev, submissionDate: date || new Date() }));
                 }}
-                disabled={!isRegistrationMode && !isEditMode}
                 size="small"
               />
 
@@ -661,7 +609,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                     variant="contained"
                     size="small"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={!isRegistrationMode && !isEditMode}
                   >
                     파일 선택
                   </Button>
@@ -673,16 +620,15 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                 비고
               </Typography>
               <ComboBox
-                value={isRegistrationMode ? registrationData.remarks : editData.remarks}
+                value={registrationData.remarks}
                 onChange={(value) => handleComboBoxChange(
                   'remarks',
                   value as SelectOption | null,
-                  isRegistrationMode ? setRegistrationData : setEditData
+                  setRegistrationData
                 )}
                 options={[]}
                 placeholder="비고를 입력하세요"
                 size="small"
-                disabled={!isRegistrationMode && !isEditMode}
               />
             </Box>
 
@@ -695,12 +641,12 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
                 disabled={isLoading}
                 color="success"
               >
-                {isRegistrationMode ? '등록' : '수정'}
+                등록
               </Button>
               <Button
                 variant="contained"
                 size="small"
-                onClick={isRegistrationMode ? handleRegistrationModeToggle : handleEditModeToggle}
+                onClick={handleRegistrationModeToggle}
                 disabled={isLoading}
                 color="primary"
               >

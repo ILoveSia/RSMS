@@ -83,6 +83,16 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // 상세 정보 영역으로 스크롤하는 useEffect 추가
+  useEffect(() => {
+    if (selectedPlanDetail && !isRegistrationMode && !isEditMode) {
+      const detailSection = document.getElementById('detail-section');
+      if (detailSection) {
+        detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [selectedPlanDetail, isRegistrationMode, isEditMode]);
+
   // 등록 폼 데이터
   const [registrationData, setRegistrationData] = useState<RegistrationData>(initialRegistrationData);
 
@@ -311,6 +321,14 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       // 수정 중이든 아니든 모든 폼 데이터 초기화
       setRegistrationData(initialRegistrationData);
       setEditData(initialEditData);
+
+      // 등록 폼으로 스크롤
+      setTimeout(() => {
+        const registrationSection = document.getElementById('registration-section');
+        if (registrationSection) {
+          registrationSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
     } else {
       // 등록 모드 취소할 때
       setIsRegistrationMode(false);
@@ -613,13 +631,16 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
 
         {/* 선택된 행 상세 정보 */}
         {selectedPlanDetail && !isRegistrationMode && !isEditMode && (
-          <Box sx={{
-            marginTop: '20px',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            borderRadius: '4px',
-            padding: '16px'
-          }}>
+          <Box
+            id="detail-section"
+            sx={{
+              marginTop: '20px',
+              backgroundColor: 'var(--bank-bg-secondary)',
+              border: '1px solid var(--bank-border)',
+              borderRadius: '4px',
+              padding: '16px'
+            }}
+          >
             <Typography variant="h6" sx={{
               fontWeight: 'bold',
               marginBottom: '16px',
@@ -705,13 +726,16 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
 
         {/* 등록 폼 */}
         {isRegistrationMode && (
-          <Box sx={{
-            marginTop: '20px',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            borderRadius: '4px',
-            padding: '16px'
-          }}>
+          <Box
+            id="registration-section"
+            sx={{
+              marginTop: '20px',
+              backgroundColor: 'var(--bank-bg-secondary)',
+              border: '1px solid var(--bank-border)',
+              borderRadius: '4px',
+              padding: '16px'
+            }}
+          >
             <Typography variant="h6" sx={{
               fontWeight: 'bold',
               marginBottom: '16px',
