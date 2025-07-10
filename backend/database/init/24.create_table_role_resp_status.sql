@@ -3,6 +3,7 @@
 -- Drop table
 
 -- DROP TABLE public.role_resp_status;
+-- 직책별 책무 현황 테이블
 
 CREATE TABLE public.role_resp_status (
 	role_resp_status_id bigserial NOT NULL,
