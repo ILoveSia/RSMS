@@ -6,12 +6,18 @@ import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
 import { Confirm } from '@/shared/components/modal';
-import { Button, DataGrid, Select } from '@/shared/components/ui';
+import { Button } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
+import { Select } from '@/shared/components/ui/form';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import type { DataGridColumn } from '@/shared/types/common';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
-import type { GridColDef } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../../assets/scss/style.css';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 import MeetingBodyDialog from '../components/MeetingBodyDialog';
@@ -20,39 +26,35 @@ interface IMeetingStatusPageProps {
   className?: string;
 }
 
-const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Element => {
+const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): React.JSX.Element => {
   // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<
-    { data: CommonCode[] } | CommonCode[]
-  >('codeStore/allCodes');
+  const { data: allCodes, setData: setAllCodes } = useReduxState<{
+    data: CommonCode[];
+    setData: (newData: CommonCode[]) => void;
+  }>('codeStore/allCodes');
 
   // 공통코드 배열 추출 함수
-  const getCodesArray = (): CommonCode[] => {
+  const getCodesArray = useCallback((): CommonCode[] => {
     if (!allCodes) return [];
-    // allCodes가 {data: CommonCode[]} 형태인지 확인
-    if (Array.isArray(allCodes)) {
-      return allCodes;
-    }
-    // allCodes가 {data: CommonCode[]} 형태라면 data 프로퍼티에서 배열 추출
-    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
-      return allCodes.data;
-    }
-    return [];
-  };
+    return Array.isArray(allCodes) ? allCodes : allCodes.data || [];
+  }, [allCodes]);
 
   // 공통코드 헬퍼 함수
-  const getMeetingBodyCodes = () => {
+  const getMeetingBodyCodes = useCallback(() => {
     const codes = getCodesArray();
     return codes
       .filter(code => code.groupCode === 'MEETING_BODY' && code.useYn === 'Y')
       .sort((a, b) => a.sortOrder - b.sortOrder);
-  };
+  }, [getCodesArray]);
 
-  const getCodeName = (groupCode: string, code: string): string => {
-    const codes = getCodesArray();
-    const found = codes.find(item => item.groupCode === groupCode && item.code === code);
-    return found?.codeName || code;
-  };
+  const getCodeName = useCallback(
+    (groupCode: string, code: string): string => {
+      const codes = getCodesArray();
+      const found = codes.find(item => item.groupCode === groupCode && item.code === code);
+      return found?.codeName || code;
+    },
+    [getCodesArray]
+  );
 
   const [meetingBodies, setMeetingBodies] = useState<MeetingBody[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -76,49 +78,51 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
   const [pendingDelete, setPendingDelete] = useState<string[] | null>(null);
 
   // 회의체 현황 컬럼 정의
-  const meetingColumns: GridColDef[] = [
-    {
-      field: 'gubun',
-      headerName: '구분',
-      width: 100,
-      renderCell: params => getCodeName('MEETING_BODY', params.value),
-    },
-    {
-      field: 'meetingName',
-      headerName: '회의체명',
-      width: 200,
-      flex: 1,
-      renderCell: params => (
-        <span
-          style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
-          onClick={e => {
-            e.stopPropagation(); // row click 이벤트 방지
-            const selectedMeetingBody = meetingBodies.find(
-              mb => mb.meetingBodyId === params.row.meetingBodyId
-            );
-            if (selectedMeetingBody) {
-              setDialogMode('view');
-              setSelectedMeetingBody(selectedMeetingBody);
-              setDialogOpen(true);
-            }
-          }}
-        >
-          {params.value}
-        </span>
-      ),
-    },
-
-    {
-      field: 'meetingPeriod',
-      headerName: '개최주기',
-      width: 120,
-      renderCell: params => getCodeName('PERIOD', params.value),
-    },
-    { field: 'content', headerName: '주요 심의·의결사항', width: 300, flex: 2 },
-  ];
+  const meetingColumns: DataGridColumn<MeetingBody>[] = useMemo(
+    () => [
+      {
+        field: 'gubun',
+        headerName: '구분',
+        width: 100,
+        renderCell: ({ value }) => getCodeName('MEETING_BODY', (value as string) || ''),
+      },
+      {
+        field: 'meetingName',
+        headerName: '회의체명',
+        width: 200,
+        flex: 1,
+        renderCell: ({ value, row }) => (
+          <span
+            style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
+            onClick={e => {
+              e.stopPropagation(); // row click 이벤트 방지
+              const selectedMeetingBody = meetingBodies.find(
+                mb => mb.meetingBodyId === row.meetingBodyId
+              );
+              if (selectedMeetingBody) {
+                setDialogMode('view');
+                setSelectedMeetingBody(selectedMeetingBody);
+                setDialogOpen(true);
+              }
+            }}
+          >
+            {String(value)}
+          </span>
+        ),
+      },
+      {
+        field: 'meetingPeriod',
+        headerName: '개최주기',
+        width: 120,
+        renderCell: ({ value }) => getCodeName('PERIOD', (value as string) || ''),
+      },
+      { field: 'content', headerName: '주요 심의·의결사항', width: 300, flex: 2 },
+    ],
+    [getCodeName, meetingBodies]
+  );
 
   // API 호출 함수
-  const fetchMeetingBodies = async () => {
+  const fetchMeetingBodies = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -178,13 +182,21 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
         totalElements: totalElements,
         totalPages: totalPages,
       }));
-    } catch (err: any) {
-      console.error('❌ [MeetingStatusPage] 회의체 목록 조회 실패:', err);
-      setError(err.message || '회의체 목록 조회에 실패했습니다.');
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string'
+      ) {
+        setError((err as { message: string }).message);
+      } else {
+        setError('회의체 목록 조회에 실패했습니다.');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [pageInfo.page, pageInfo.size, filterDivision]);
 
   // 컴포넌트 마운트 시 localStorage에서 공통코드 복원
   useEffect(() => {
@@ -201,8 +213,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
       try {
         const parsedCodes = JSON.parse(storedCommonCodes);
         setAllCodes(parsedCodes);
-      } catch (error) {
-        console.error('❌ [MeetingStatusPage] localStorage 공통코드 복원 실패:', error);
+      } catch {
         localStorage.removeItem('commonCodes');
       }
     }
@@ -211,48 +222,48 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     fetchMeetingBodies();
-  }, [filterDivision, pageInfo.page, pageInfo.size]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [filterDivision, pageInfo.page, pageInfo.size, fetchMeetingBodies]);
 
   // 조회 버튼 클릭 핸들러
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     setPageInfo(prev => ({ ...prev, page: 0 }));
     fetchMeetingBodies();
-  };
+  }, [fetchMeetingBodies]);
 
   // 다이얼로그 핸들러 함수들
-  const handleCreateClick = () => {
+  const handleCreateClick = useCallback(() => {
     setDialogMode('create');
     setSelectedMeetingBody(null);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleDialogClose = () => {
+  const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
     setSelectedMeetingBody(null);
-  };
+  }, []);
 
-  const handleDialogSave = () => {
+  const handleDialogSave = useCallback(() => {
     // 목록 새로고침
     fetchMeetingBodies();
-  };
+  }, [fetchMeetingBodies]);
 
   // 다이얼로그 모드 변경 핸들러
-  const handleModeChange = (newMode: 'create' | 'edit' | 'view') => {
+  const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view') => {
     setDialogMode(newMode);
-  };
+  }, []);
 
   // 삭제 버튼 클릭 시: 모달만 띄움
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
       setError('삭제할 항목을 선택하세요.');
       return;
     }
     setPendingDelete(selectedIds);
     setConfirmOpen(true);
-  };
+  }, [selectedIds]);
 
-  // 삭제 확인 핸들러
-  const handleConfirmDelete = async () => {
+  // 삭제 확인 모달에서 "확인" 클릭 시 실제 삭제
+  const handleConfirmDelete = useCallback(async () => {
     if (!pendingDelete || pendingDelete.length === 0) {
       setConfirmOpen(false);
       return;
@@ -260,13 +271,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
     setLoading(true);
     setError(null);
     try {
-      // 단일 항목 삭제인 경우 delete API 사용
-      if (pendingDelete.length === 1) {
-        await meetingStatusApi.delete(pendingDelete[0]);
-      } else {
-        // 다중 항목 삭제인 경우 deleteBulk API 사용
-        await meetingStatusApi.deleteBulk(pendingDelete);
-      }
+      await meetingStatusApi.deleteBulk(pendingDelete);
       setSelectedIds([]); // 선택 초기화
       fetchMeetingBodies(); // 목록 새로고침
     } catch (err: unknown) {
@@ -285,16 +290,10 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
       setConfirmOpen(false);
       setPendingDelete(null);
     }
-  };
-
-  // 삭제 취소 핸들러
-  const handleCancelDelete = () => {
-    setConfirmOpen(false);
-    setPendingDelete(null);
-  };
+  }, [pendingDelete, fetchMeetingBodies]);
 
   // 엑셀 다운로드 핸들러 (ExcelJS 사용)
-  const handleExcelDownload = async () => {
+  const handleExcelDownload = useCallback(async () => {
     if (!meetingBodies || meetingBodies.length === 0) {
       setError('엑셀로 내보낼 데이터가 없습니다.');
       return;
@@ -338,51 +337,75 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
       saveAs(blob, `회의체_현황_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    } catch (error) {
-      console.error('엑셀 다운로드 실패:', error);
+    } catch {
       setError('엑셀 다운로드 중 오류가 발생했습니다.');
     }
-  };
+  }, [meetingBodies, getCodeName]);
 
   return (
-    <div className='main-content'>
-      {/* 페이지 제목 */}
-      <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [100] 회의체 현황</h1>
-      </div>
+    <PageContainer
+      sx={{
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      <PageHeader
+        title=' [100] 회의체 현황'
+        icon={<GroupsIcon />}
+        description='회의체별 현황 및 주요 심의·의결사항을 조회하고 관리합니다.'
+        elevation={false}
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          flexShrink: 0,
+        }}
+      />
 
-      {/* 노란색 구분선 */}
-      <div className='responsibility-divider'></div>
-
-      {/* 메인 콘텐츠 영역 */}
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+      <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',  // 좌우 패딩을 3으로 수정
+          py: 1,
+          px:0
+        }}
+      >
         {/* 필터 영역 */}
         <Box
           sx={{
             display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
+            gap: 1.5,
+            mb: 2,
             alignItems: 'center',
             backgroundColor: 'var(--bank-bg-secondary)',
             border: '1px solid var(--bank-border)',
-            padding: '8px 16px',
-            borderRadius: '4px',
+            p: 1.5,
+            borderRadius: 1,
+            flexShrink: 0,
           }}
         >
-          <span
-            style={{
+          <Box
+            sx={{
               fontWeight: 'bold',
               fontSize: '0.9rem',
               color: 'var(--bank-text-primary)',
+              minWidth: '40px',
+              textAlign: 'right',
             }}
           >
-            구분
-          </span>
+            구분:
+          </Box>
           <Select
+            size='small'
             value={filterDivision}
             onChange={value => setFilterDivision(value as string)}
-            size='small'
-            sx={{ minWidth: 120, maxWidth: 150 }}
             options={[
               { value: '전체', label: '전체' },
               ...getMeetingBodyCodes().map(code => ({
@@ -390,88 +413,94 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
                 label: code.codeName,
               })),
             ]}
+            sx={{
+              minWidth: 140,
+              maxWidth: 180,
+              '& .MuiSelect-select': {
+                py: 0.5,
+              },
+            }}
           />
-          <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
+          <Button
+            variant='contained'
+            size='small'
+            onClick={handleSearch}
+            sx={{
+              minWidth: 60,
+              px: 2,
+              py: 0.5,
+              fontSize: '0.875rem',
+            }}
+          >
             조회
           </Button>
         </Box>
 
         {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, flexShrink: 0 }}>
           <Button
-            variant="contained"
-            size="small"
-            color="success"
+            variant='contained'
+            color='success'
+            size='small'
             onClick={handleExcelDownload}
             sx={{ mr: 1 }}
           >
             엑셀 다운로드
           </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="primary"
-            onClick={handleCreateClick}
-            color='primary'
-            sx={{ mr: 1 }}
-          >
+          <Button variant='contained' size='small' onClick={handleCreateClick} sx={{ mr: 1 }}>
             등록
           </Button>
-          <Button variant='contained' size='small' onClick={handleDelete} color='error'>
+          <Button variant='contained' size='small' color='error' onClick={handleDelete}>
             삭제
           </Button>
         </Box>
 
+        {/* 에러 메시지 */}
+        {error && (
+          <Box sx={{ color: 'error.main', mb: 1, fontSize: '0.875rem', flexShrink: 0 }}>
+            {error}
+          </Box>
+        )}
+
         {/* 데이터 그리드 */}
-        <Box sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <DataGrid
+        <Box
+          sx={{
+            flex: 1,
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            minHeight: 0, // flex item이 축소될 수 있도록 설정
+            position: 'relative',
+          }}
+        >
+          <DataGrid<MeetingBody>
             data={meetingBodies}
-            columns={meetingColumns.map(col => ({
-              field: col.field,
-              headerName: col.headerName,
-              width: col.width,
-              flex: col.flex,
-              sortable: col.sortable,
-              align: col.align,
-              renderCell: col.renderCell,
-            }))}
+            columns={meetingColumns}
             loading={loading}
-            height='100%'
-            selectable={true}
-            multiSelect={true}
+            height={500} // 명확한 픽셀 높이 설정
+            selectable
+            multiSelect
             selectedRows={selectedIds}
-            onRowSelectionChange={selectedRows => {
-              setSelectedIds(selectedRows.map(id => String(id)));
-            }}
-            pagination={{
-              page: pageInfo.page + 1, // 공통 컴포넌트는 1부터 시작
-              pageSize: pageInfo.size,
-              totalItems: pageInfo.totalElements,
-              totalPages: Math.ceil(pageInfo.totalElements / pageInfo.size),
-              onPageChange: page => {
-                setPageInfo(prev => ({ ...prev, page: page - 1 })); // 0부터 시작으로 변환
-              },
-              onPageSizeChange: size => {
-                setPageInfo(prev => ({ ...prev, size, page: 0 }));
-              },
-              pageSizeOptions: [10, 20, 50],
+            onRowSelectionChange={selectedRowIds => {
+              setSelectedIds(selectedRowIds.map(id => String(id)));
             }}
             rowIdField='meetingBodyId'
-            sx={{
-              height: '100%',
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'var(--bank-primary-bg) !important',
-                fontWeight: 'bold',
-                color: 'var(--bank-text-primary)',
+            pagination={{
+              page: pageInfo.page + 1, // DataGrid는 1-based pagination
+              pageSize: pageInfo.size,
+              totalItems: pageInfo.totalElements,
+              onPageChange: page => {
+                setPageInfo(prev => ({ ...prev, page: page - 1 })); // 0-based로 변환
               },
-              '& .MuiDataGrid-row': {
-                cursor: 'pointer',
+              onPageSizeChange: pageSize => {
+                setPageInfo(prev => ({ ...prev, size: pageSize, page: 0 }));
               },
             }}
+            serverSide
           />
         </Box>
-      </div>
+      </PageContent>
 
       {/* 회의체 등록/수정/조회 다이얼로그 */}
       <MeetingBodyDialog
@@ -483,18 +512,21 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
         onModeChange={handleModeChange}
       />
 
-      {/* 삭제 확인 다이얼로그 */}
+      {/* 삭제 확인 모달 */}
       <Confirm
         open={confirmOpen}
-        title="회의체 삭제"
-        message={`선택한 ${pendingDelete?.length || 0}개의 회의체를 삭제하시겠습니까?`}
-        confirmText="삭제"
-        cancelText="취소"
+        title='삭제 확인'
+        message='정말로 선택한 회의체를 삭제하시겠습니까?'
+        confirmText='삭제'
+        cancelText='취소'
         onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setPendingDelete(null);
+        }}
       />
-    </div>
+    </PageContainer>
   );
-};
+});
 
 export default MeetingStatusPage;
