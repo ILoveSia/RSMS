@@ -1,3 +1,4 @@
+import { useTabContext } from '@/shared/context/TabContext';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../../../assets/scss/style.css';
@@ -21,6 +22,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ className = '', style }) => {
   console.log('📱 [TopHeader] 렌더링 시작:', { className });
 
   const navigate = useNavigate();
+  const { setActiveTab, addTab } = useTabContext();
 
   // Redux Store에서 사용자 정보 가져오기
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
@@ -28,7 +30,14 @@ const TopHeader: React.FC<TopHeaderProps> = ({ className = '', style }) => {
   console.log('📱 [TopHeader] Redux loginData:', loginData);
 
   const handleTitleClick = () => {
-    navigate('/main');
+    // 홈 탭으로 이동
+    addTab({
+      id: 'home',
+      title: '메인화면',
+      content: 'main',
+      closeable: false
+    });
+    setActiveTab('home');
   };
 
   const handleLogout = () => {
