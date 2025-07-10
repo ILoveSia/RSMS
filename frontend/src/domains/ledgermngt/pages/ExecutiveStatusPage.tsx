@@ -2,6 +2,10 @@
  * 임원 현황 페이지
  * 책무구조 원장 관리 - 임원 현황
  */
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material';
 import {
   Box,
@@ -403,16 +407,39 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   };
 
   return (
-    <div className="executive-status-page">
-      {/* 페이지 제목 */}
-      <div className="responsibility-header">
-        <h1 className="responsibility-header__title">★ [500] 임원 현황</h1>
-      </div>
+    <PageContainer
+      sx={{
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      <PageHeader
+        title="[500] 임원 현황"
+        icon={<GroupsIcon />}
+        description="임원 직책을 조회하고 관리합니다."
+        elevation={false}
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          flexShrink: 0,
+        }}
+      />
 
-      {/* 노란색 구분선 */}
-      <div className="responsibility-divider"></div>
-
-      <div className="responsibility-section" style={{ marginTop: '20px' }}>
+      <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+          py: 1,
+        }}
+      >
         {/* 필터 영역 */}
         <Box sx={{
           display: 'flex',
@@ -453,7 +480,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         <Box sx={{
           display: 'flex',
           gap: '8px',
-          marginBottom: '16px',
+          marginBottom: '6px',
           justifyContent: 'flex-end'
         }}>
           <Button
@@ -484,7 +511,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         </Box>
 
         {/* 데이터 그리드 */}
-        <Box sx={{ height: 600, width: '100%' }}>
+        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
           <DataGrid
             rows={rows}
             columns={executiveColumns}
@@ -536,8 +563,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           executive={selectedExecutive}
           onSave={handleSaveExecutive}
         />
-      </div>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };
 

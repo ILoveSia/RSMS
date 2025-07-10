@@ -2,15 +2,18 @@
  * 점검 계획 관리 페이지
  * 책무구조 원장 관리 - 점검 계획 관리
  */
+import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import { ComboBox, DatePicker } from '@/shared/components/ui/form';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { SelectOption } from '@/shared/types/common';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box, Chip, TextField, Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
-
-import ErrorDialog from '@/app/components/ErrorDialog';
 
 interface IInspectionPlanManagementPageProps {
   className?: string;
@@ -57,7 +60,7 @@ const initialEditData: RegistrationData = {
   remarks: ''
 };
 
-const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps> = (): React.JSX.Element => {
+const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps> = React.memo((): React.JSX.Element => {
   console.log('🏗️ [InspectionPlanManagementPage] 컴포넌트 렌더링 시작');
 
   // 기간 선택 상태
@@ -506,17 +509,35 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
   };
 
   return (
-    <div className='main-content'>
-      {/* 페이지 제목 */}
-      <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [900] 점검 계획 관리</h1>
-      </div>
 
-      {/* 노란색 구분선 */}
-      <div className='responsibility-divider'></div>
+    <PageContainer
+    sx={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      minHeight: 0,
+    }}
+    >
+      <PageHeader
+        title="[900] 점검 계획 관리"
+        icon={<GroupsIcon />}
+        description="점검 계획을 등록하고 관리합니다."
+        elevation={false}
+      />
+      <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+          py: 1,
+        }}
+      >
 
-      {/* 메인 콘텐츠 영역 */}
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+
         {/* 기간 선택 영역 */}
         <Box sx={{
           display: 'flex',
@@ -987,7 +1008,6 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             </Box>
           </Box>
         )}
-      </div>
 
       {/* 에러 다이얼로그 */}
       <ErrorDialog
@@ -995,8 +1015,9 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
         errorMessage={errorMessage}
         onClose={handleErrorDialogClose}
       />
-    </div>
+      </PageContent>
+    </PageContainer>
   );
-};
+});
 
 export default InspectionPlanManagementPage;

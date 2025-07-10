@@ -6,8 +6,12 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import { ComboBox } from '@/shared/components/ui/form';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { SelectOption } from '@/shared/types/common';
-import { Box, Card, CardContent, Chip } from '@mui/material';
+import { Groups as GroupsIcon } from '@mui/icons-material';
+import { Box, Chip } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -206,17 +210,39 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   };
 
   return (
-    <div className='main-content'>
-      {/* 페이지 제목 */}
-      <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [600] 임원별 책무 현황</h1>
-      </div>
+    <PageContainer
+      sx={{
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      <PageHeader
+        title="[600] 임원별 책무 현황"
+        icon={<GroupsIcon />}
+        description="임원별 책무 현황을 조회합니다."
+        elevation={false}
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          flexShrink: 0,
+        }}
+      />
 
-      {/* 노란색 구분선 */}
-      <div className='responsibility-divider'></div>
-
-      {/* 메인 콘텐츠 영역 */}
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+      <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+          py: 1,
+        }}
+      >
         {/* 필터 영역 */}
         <Box sx={{
           display: 'flex',
@@ -255,34 +281,35 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         </Box>
 
         {/* 데이터 그리드 */}
-        <Card>
-          <CardContent>
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              loading={isLoading}
-              disableRowSelectionOnClick
-              autoHeight
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell:focus': {
-                  outline: 'none',
-                },
-              }}
-              localeText={{
-                noRowsLabel: '데이터가 없습니다.',
-                columnMenuLabel: '메뉴',
-                columnMenuShowColumns: '열 표시',
-                columnMenuFilter: '필터',
-                columnMenuHideColumn: '열 숨기기',
-                columnMenuUnsort: '정렬 해제',
-                columnMenuSortAsc: '오름차순 정렬',
-                columnMenuSortDesc: '내림차순 정렬',
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            loading={isLoading}
+            disableRowSelectionOnClick
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: 'var(--bank-bg-secondary)',
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-cell:focus': {
+                outline: 'none',
+              },
+            }}
+            localeText={{
+              noRowsLabel: '데이터가 없습니다.',
+              columnMenuLabel: '메뉴',
+              columnMenuShowColumns: '열 표시',
+              columnMenuFilter: '필터',
+              columnMenuHideColumn: '열 숨기기',
+              columnMenuUnsort: '정렬 해제',
+              columnMenuSortAsc: '오름차순 정렬',
+              columnMenuSortDesc: '내림차순 정렬',
+            }}
+          />
+        </Box>
+      </PageContent>
 
       {/* 에러 다이얼로그 */}
       <ErrorDialog
@@ -290,7 +317,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         errorMessage={errorMessage}
         onClose={handleErrorDialogClose}
       />
-    </div>
+    </PageContainer>
   );
 };
 

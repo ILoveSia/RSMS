@@ -5,10 +5,14 @@
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
-import type { SelectOption } from '@/shared/types/common';
-import { Box, Card, CardContent, Chip } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import { Groups as GroupsIcon } from '@mui/icons-material';
+import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 
 interface IDeptStatusPageProps {
@@ -47,7 +51,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   ];
 
   // 테이블 컬럼 정의
-  const columns: GridColDef[] = [
+  const columns: DataGridColumn<DeptStatusRow>[] = [
     {
       field: 'department',
       headerName: '부서명',
@@ -63,7 +67,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => `${params.value}개`
+      renderCell: ({ value }) => `${value}개`
     },
     {
       field: 'completedItems',
@@ -72,7 +76,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => `${params.value}개`
+      renderCell: ({ value }) => `${value}개`
     },
     {
       field: 'completionRate',
@@ -81,7 +85,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => `${params.value}%`
+      renderCell: ({ value }) => `${value}%`
     },
     {
       field: 'status',
@@ -90,10 +94,10 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => {
+      renderCell: ({ value }) => {
         let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
-        switch (params.value) {
+        switch (value) {
           case '진행중':
             color = 'warning';
             break;
@@ -109,7 +113,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
 
         return (
           <Chip
-            label={params.value}
+            label={value}
             color={color}
             size="small"
           />
@@ -182,17 +186,24 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   };
 
   return (
-    <div className='main-content'>
-      {/* 페이지 제목 */}
-      <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [1100] 점검 현황(부서별)</h1>
-      </div>
-
-      {/* 노란색 구분선 */}
-      <div className='responsibility-divider'></div>
-
-      {/* 메인 콘텐츠 영역 */}
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+    <PageContainer>
+      <PageHeader
+        title="[1100] 점검 현황(부서별)"
+        icon={<GroupsIcon />}
+        description="점검 현황을 부서별로 조회합니다."
+        elevation={false}
+      />
+      <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+          py: 1,
+        }}
+      >
         {/* 필터 영역 */}
         <Box sx={{
           display: 'flex',
@@ -231,42 +242,30 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
         </Box>
 
         {/* 데이터 그리드 */}
-        <Card>
-          <CardContent>
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              loading={isLoading}
-              disableRowSelectionOnClick
-              autoHeight
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell:focus': {
-                  outline: 'none',
-                },
-              }}
-              localeText={{
-                noRowsLabel: '데이터가 없습니다.',
-                columnMenuLabel: '메뉴',
-                columnMenuShowColumns: '열 표시',
-                columnMenuFilter: '필터',
-                columnMenuHideColumn: '열 숨기기',
-                columnMenuUnsort: '정렬 해제',
-                columnMenuSortAsc: '오름차순 정렬',
-                columnMenuSortDesc: '내림차순 정렬',
-              }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <DataGrid
+            data={rows}
+            columns={columns}
+            loading={isLoading}
+            error={null}
+            pagination={{
+              page: 1,
+              pageSize: 10,
+              totalItems: rows.length,
+              onPageChange: () => {},
+              onPageSizeChange: () => {}
+            }}
+          />
+        </Box>
 
-      {/* 에러 다이얼로그 */}
-      <ErrorDialog
-        open={errorDialogOpen}
-        errorMessage={errorMessage}
-        onClose={handleErrorDialogClose}
-      />
-    </div>
+        {/* 에러 다이얼로그 */}
+        <ErrorDialog
+          open={errorDialogOpen}
+          errorMessage={errorMessage}
+          onClose={handleErrorDialogClose}
+        />
+      </PageContent>
+    </PageContainer>
   );
 };
 

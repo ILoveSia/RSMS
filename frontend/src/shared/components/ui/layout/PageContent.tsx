@@ -58,13 +58,16 @@ export const PageContent: React.FC<PageContentProps> = ({
     maxWidth: maxWidth || 'none',
     mx: maxWidth ? 'auto' : 0,
     px: disablePadding ? 0 : 0,
+    height: '100%',
+    overflow: 'visible',
   };
 
   const tabStyles: SxProps<Theme> = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    minHeight: 0,
+    height: '100%',
+    overflow: 'visible',
   };
 
   return (

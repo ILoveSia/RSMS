@@ -4,10 +4,15 @@
  */
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
 import { Modal } from '@/shared/components/ui/feedback';
-import { Select } from '@/shared/components/ui/form';
+import { ComboBox } from '@/shared/components/ui/form';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import type { DataGridColumn } from '@/shared/types/common';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box, Typography } from '@mui/material';
-import { DataGrid, type GridColDef, type GridRowId } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -17,7 +22,7 @@ interface IDeficiencyStatusPageProps {
 
 // 미흡상황 데이터 타입 정의
 interface DeficiencyRow {
-  deficiencyId: number;
+  id: number;
   improvementPlan: string;
   implementationResult: string;
   inspector: string;
@@ -31,7 +36,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const [error, setError] = useState<string | null>(null);
   const [inspectionRound, setInspectionRound] = useState<string>('2024-001');
   const [departmentFilter, setDepartmentFilter] = useState<string>('전체');
-  const [selectedIds, setSelectedIds] = useState<GridRowId[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -51,7 +56,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       // 임시 테스트 데이터 (실제 구현 시 API 호출로 대체)
       const mockData: DeficiencyRow[] = [
         {
-          deficiencyId: 1,
+          id: 1,
           improvementPlan: '일일 리스크 보고서 작성 프로세스 재정비 및 체크리스트 구축',
           implementationResult: '진행중 (75% 완료)',
           inspector: '김점검',
@@ -59,7 +64,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           writeDate: '2024-01-15'
         },
         {
-          deficiencyId: 2,
+          id: 2,
           improvementPlan: '월간 준법점검 절차 매뉴얼 재작성 및 담당자 교육 실시',
           implementationResult: '계획수립 완료',
           inspector: '이감사',
@@ -67,7 +72,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           writeDate: '2024-01-20'
         },
         {
-          deficiencyId: 3,
+          id: 3,
           improvementPlan: '내부통제 평가 기준 재정립 및 평가지표 개선',
           implementationResult: '완료',
           inspector: '박감독',
@@ -90,21 +95,21 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   }, [fetchDeficiencies]);
 
   // 컬럼 정의
-  const columns: GridColDef[] = [
+  const columns: DataGridColumn<DeficiencyRow>[] = [
     {
       field: 'improvementPlan',
       headerName: '개선계획',
       width: 300,
       flex: 2,
-      renderCell: (params) => (
+      renderCell: ({ row }) => (
         <span
           style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer' }}
           onClick={(e) => {
             e.stopPropagation();
-            handleDeficiencyClick(params.row.deficiencyId);
+            handleDeficiencyClick(row.id);
           }}
         >
-          {params.value}
+          {row.improvementPlan}
         </span>
       ),
     },
@@ -114,8 +119,8 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       width: 150,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => {
-        const stringValue = String(params.value);
+      renderCell: ({ value }) => {
+        const stringValue = String(value);
         return (
           <span
             style={{
@@ -124,7 +129,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
               fontWeight: 'bold'
             }}
           >
-            {params.value}
+            {value}
           </span>
         );
       }
@@ -148,7 +153,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       width: 110,
       align: 'center',
       headerAlign: 'center',
-      valueFormatter: ({ value }) => dayjs(value).format('YYYY.MM.DD')
+      renderCell: ({ value }) => dayjs(value).format('YYYY.MM.DD')
     },
   ];
 
@@ -216,52 +221,55 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   ];
 
   return (
-    <div className="main-content">
-      <div className="responsibility-header">
-        <h1 className="responsibility-header__title">★ [1200] 미흡상황 현황</h1>
-      </div>
-      <div className="responsibility-divider"></div>
-
-      <div className="responsibility-section" style={{ marginTop: '20px' }}>
+    <PageContainer>
+      <PageHeader
+        title="[1200] 미흡상황 현황"
+        icon={<GroupsIcon />}
+        description="점검 결과에 대한 미흡상황 현황을 조회하고 관리합니다."
+        elevation={false}
+      />
+      <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'auto',
+          py: 1,
+        }}
+      >
         {/* 필터 영역 */}
         <Box sx={{
           display: 'flex',
           gap: '8px',
-          marginBottom: '16px',
-          alignItems: 'center',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #e9ecef',
           padding: '8px 16px',
-          borderRadius: '4px'
+          mb: 2,
+          bgcolor: 'var(--bank-bg-secondary)',
+          borderRadius: 1,
+          border: '1px solid var(--bank-border)',
+          alignItems: 'center'
         }}>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>
-            점검회차
-          </span>
-          <Select
+          <ComboBox
+            label="점검회차"
             value={inspectionRound}
             onChange={(value) => setInspectionRound(value as string)}
             options={inspectionRoundOptions}
             size="small"
-            style={{ width: 120 }}
+            sx={{ minWidth: '200px' }}
           />
-
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>
-            부서
-          </span>
-          <Select
+          <ComboBox
+            label="부서"
             value={departmentFilter}
             onChange={(value) => setDepartmentFilter(value as string)}
             options={departmentOptions}
             size="small"
-            style={{ width: 120 }}
+            sx={{ minWidth: '200px' }}
           />
-
           <Button
             variant="contained"
-            color="primary"
             size="small"
             onClick={handleSearch}
-            style={{ marginLeft: '8px' }}
+            color="primary"
           >
             조회
           </Button>
@@ -271,7 +279,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         <Box sx={{
           display: 'flex',
           gap: '8px',
-          marginBottom: '16px',
+          marginBottom: '8px',
           justifyContent: 'flex-end'
         }}>
           <Button
@@ -301,40 +309,21 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         </Box>
 
         {/* 그리드 영역 */}
-        <Box sx={{ width: '100%', height: 400 }}>
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <DataGrid
-            rows={rows}
+            data={rows}
             columns={columns}
             loading={loading}
-            getRowId={(row: DeficiencyRow) => row.deficiencyId}
-            checkboxSelection
-            disableRowSelectionOnClick
-            disableMultipleRowSelection={true}
-            onRowSelectionModelChange={(newSelection) => {
-              // 단일 선택만 허용하므로 마지막 선택된 항목만 사용
-              const selectedId = newSelection[newSelection.length - 1];
-              setSelectedIds(selectedId ? [selectedId] : []);
+            error={error}
+            onRowSelectionChange={(selectedIds: (string | number)[], selectedData: DeficiencyRow[]) => {
+              setSelectedIds(selectedIds.map(id => Number(id)));
             }}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10 }
-              },
-            }}
-            pageSizeOptions={[10, 25, 50]}
-            localeText={{
-              noRowsLabel: '표시할 데이터가 없습니다.',
-              MuiTablePagination: {
-                labelRowsPerPage: '페이지당 행 수:',
-                labelDisplayedRows: ({ from, to, count }) =>
-                  `${from}-${to} / ${count}`,
-              },
-              columnMenuLabel: '메뉴',
-              columnMenuShowColumns: '열 표시',
-              columnMenuFilter: '필터',
-              columnMenuHideColumn: '숨기기',
-              columnMenuUnsort: '정렬 해제',
-              columnMenuSortAsc: '오름차순 정렬',
-              columnMenuSortDesc: '내림차순 정렬',
+            pagination={{
+              page: 1,
+              pageSize: 10,
+              totalItems: rows.length,
+              onPageChange: () => {},
+              onPageSizeChange: () => {}
             }}
           />
         </Box>
@@ -347,8 +336,8 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         >
           <Typography>{errorMessage}</Typography>
         </Modal>
-      </div>
-    </div>
+      </PageContent>
+    </PageContainer>
   );
 };
 

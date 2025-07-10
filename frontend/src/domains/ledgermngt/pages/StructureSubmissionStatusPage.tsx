@@ -12,7 +12,11 @@ import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox, DatePicker } from '@/shared/components/ui/form';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 
 interface IStructureSubmissionStatusPageProps {
   className?: string;
@@ -387,17 +391,24 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   };
 
   return (
-    <div className='main-content'>
-      {/* 페이지 제목 */}
-      <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [800] 책무구조도 제출 관리</h1>
-      </div>
-
-      {/* 노란색 구분선 */}
-      <div className='responsibility-divider'></div>
-
-      {/* 메인 콘텐츠 영역 */}
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+    <PageContainer>
+      <PageHeader
+        title="[800] 책무구조도 제출 관리"
+        icon={<GroupsIcon />}
+        description="책무구조도 제출 이력을 조회하고 관리합니다."
+        elevation={false}
+      />
+      <PageContent
+      sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+          py: 1,
+        }}
+        >
         {/* 기간 선택 영역 */}
         <Box sx={{
           display: 'flex',
@@ -655,22 +666,22 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             </Box>
           </Box>
         )}
-      </div>
 
-      {/* 에러 다이얼로그 */}
-      <ErrorDialog
-        open={errorDialogOpen}
-        errorMessage={errorMessage}
-        onClose={() => setErrorDialogOpen(false)}
-      />
+        {/* 에러 다이얼로그 */}
+        <ErrorDialog
+          open={errorDialogOpen}
+          errorMessage={errorMessage}
+          onClose={() => setErrorDialogOpen(false)}
+        />
 
-      {/* 직원 검색 팝업 */}
-      <EmployeeSearchPopup
-        open={employeePopupOpen}
-        onClose={() => setEmployeePopupOpen(false)}
-        onSelect={handleEmployeeSelect}
-      />
-    </div>
+        {/* 직원 검색 팝업 */}
+        <EmployeeSearchPopup
+          open={employeePopupOpen}
+          onClose={() => setEmployeePopupOpen(false)}
+          onSelect={handleEmployeeSelect}
+        />
+      </PageContent>
+    </PageContainer>
   );
 };
 
