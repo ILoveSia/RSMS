@@ -2,8 +2,13 @@ import DepartmentSearchPopup, { type Department } from '@/app/components/Departm
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/app/components/EmployeeSearchPopup';
 import { Confirm } from '@/shared/components/modal';
 import { Button, DataGrid, Select } from '@/shared/components/ui';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import type { DataGridColumn } from '@/shared/types/common';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
-import { type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
+import { type GridRowSelectionModel } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -11,11 +16,13 @@ import '../../../assets/scss/style.css';
 import { positionApi, type PositionStatusRow } from '../api/positionApi';
 import PositionDialog from '../components/PositionDialog';
 
+type DialogMode = 'create' | 'edit' | 'view';
+
 interface IPositionStatusPageProps {
   className?: string;
 }
 
-const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Element => {
+const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): React.JSX.Element => {
   // 기존 상태 관리 방식
   const [rows, setRows] = useState<PositionStatusRow[]>([]);
   const [ledgerOrderOptions, setLedgerOrderOptions] = useState<
@@ -102,7 +109,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
     setDepartmentSearchOpen(false);
   };
 
-  const positionColumns: GridColDef[] = [
+  const positionColumns: DataGridColumn<PositionStatusRow>[] = [
     {
       field: 'positionsNm',
       headerName: '직책명',
@@ -129,7 +136,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
       align: 'center',
       headerAlign: 'center',
       flex: 2,
-      renderCell: (params: GridRenderCellParams) => params.value || '-'
+      renderCell: params => params.value || '-'
     },
     {
       field: 'writeDeptNm',
@@ -154,7 +161,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
     {
       field: 'adminCount',
       headerName: '관리자 수',
-      type: 'number',
       width: 120,
       align: 'center',
       headerAlign: 'center',
@@ -304,12 +310,38 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
   };
 
   return (
-    <div className='main-content'>
-      <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [200] 직책 현황</h1>
-      </div>
-      <div className='responsibility-divider'></div>
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
+    <PageContainer
+      sx={{
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      <PageHeader
+        title="[200] 직책 현황"
+        icon={<GroupsIcon />}
+        description="직책별 현황을 조회하고 관리합니다."
+        elevation={false}
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          flexShrink: 0,
+        }}
+      />
+      <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+          py: 1,
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
@@ -348,7 +380,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             onClick={() => {
               /* 차수생성 로직 미구현 */
             }}
-            color='success'
           >
             책무번호생성
           </Button>
@@ -360,7 +391,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
               onClick={() => {
                 /* 확정 로직 미구현 */
               }}
-              color='success'
             >
               확정
             </Button>
@@ -371,7 +401,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
               onClick={() => {
                 /* 확정취소 로직 미구현 */
               }}
-              color='error'
             >
               확정취소
             </Button>
@@ -392,7 +421,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             size="small"
             color="primary"
             onClick={handleCreateClick}
-            color='primary'
             sx={{ mr: 1 }}
           >
             등록
@@ -435,7 +463,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             }}
           />
         </Box>
-      </div>
+      </PageContent>
       <PositionDialog
         open={positionDialogOpen}
         mode={positionDialogMode}
@@ -469,8 +497,8 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
           setPendingDelete(null);
         }}
       />
-    </div>
+    </PageContainer>
   );
-};
+});
 
 export default PositionStatusPage;
