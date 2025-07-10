@@ -8,7 +8,7 @@ CREATE TABLE public.positions (
 	positions_id bigserial NOT NULL,
 	ledger_order varchar(100) NULL,
 	positions_nm varchar(200) NULL,
-	confirm_gubun_cd varchar(10) NULL,
+	approval_id int8 NULL,
 	order_status varchar(20) NULL,
 	write_dept_cd varchar(10) NULL,
 	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
