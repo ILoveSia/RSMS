@@ -2,6 +2,7 @@
  * 책무 DB 현황 페이지 컴포넌트
  */
 import { Button, DataGrid, Select } from '@/shared/components/ui';
+import { Groups as GroupsIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, InputAdornment, TextField } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -10,6 +11,9 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../../assets/scss/style.css';
+import PageContainer from '../../../shared/components/ui/layout/PageContainer';
+import PageContent from '../../../shared/components/ui/layout/PageContent';
+import PageHeader from '../../../shared/components/ui/layout/PageHeader';
 import { responsibilityApi, type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
 
@@ -22,7 +26,7 @@ interface IResponsibilityDbStatusPageProps {
   className?: string;
 }
 
-const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = () => {
+const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = React.memo(():React.JSX.Element => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<ResponsibilityRow[]>([]);
@@ -267,18 +271,30 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = (
     );
 
   return (
-    <div
-      className="main-content"
-      style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
-    >
-      <div className="responsibility-header">
-        <h1 className="responsibility-header__title">★ [300] 책무 DB 현황</h1>
-      </div>
-      <div className="responsibility-divider" />
+    <PageContainer>
 
-      <div
-        className="responsibility-section"
-        style={{ marginTop: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}
+      <PageHeader
+        title=' [300] 책무 DB 현황'
+        icon={<GroupsIcon />}
+        description='책무 현황과 변경이력을 조회하고 관리합니다.'
+        elevation={false}
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          flexShrink: 0,
+        }}
+        />
+        <PageContent
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',  // 좌우 패딩을 3으로 수정
+          py: 1,
+          px:0
+        }}
       >
         {/* 필터 영역 */}
         <Box
@@ -373,8 +389,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = (
             selectable={true}
           />
         </Box>
-      </div>
-
+      </PageContent>
       {/* 책무 다이얼로그 */}
       <ResponsibilityDialog
         open={dialogOpen}
@@ -384,8 +399,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = (
         onSave={handleDialogSave}
         onChangeMode={handleModeChange}
       />
-    </div>
+      </PageContainer>
   );
-};
+});
 
 export default ResponsibilityDbStatusPage;
