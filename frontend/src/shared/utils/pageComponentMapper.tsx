@@ -92,6 +92,11 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '책무DB 현황',
     icon: 'database',
   },
+  '/ledgermngt/executive-responsibility': {
+    component: () => import('@/domains/ledgermngt/pages/ExecutiveResponsibilityStatusPage'),
+    title: '임원별 책무 현황',
+    icon: 'Work',
+  },
 
   // 장부관리 - 새로운 경로 (데이터베이스와 일치)
   '/ledger/company-status': {
@@ -120,8 +125,7 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'business_center',
   },
   '/ledger/business-detail-status': {
-    component: () =>
-      Promise.resolve({ default: () => <ComingSoonPage title='임원별 책무 현황' /> }),
+    component: () => import('@/domains/ledgermngt/pages/ExecutiveResponsibilityStatusPage'),
     title: '임원별 책무 현황',
     icon: 'analytics',
   },

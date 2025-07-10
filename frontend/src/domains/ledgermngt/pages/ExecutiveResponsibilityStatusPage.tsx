@@ -1,6 +1,6 @@
 /**
- * 점검 현황(부서별) 페이지
- * 적부구조도 이력 점검의 부서별 점검 현황 관리 페이지
+ * 임원별 책무 현황 페이지
+ * 책무구조 원장 관리 - 임원별 책무 현황
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
@@ -11,54 +11,72 @@ import { Box, Card, CardContent, Chip } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
-interface IDeptStatusPageProps {
+interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
 }
 
-interface DeptStatusRow {
+interface ExecutiveResponsibilityRow {
   id: number;
-  department: string;        // 부서명
-  totalItems: number;        // 총 항목 수
-  completedItems: number;    // 완료 항목 수
-  completionRate: number;    // 완료율
+  executiveName: string;     // 임원명
+  position: string;          // 직책
+  jobTitle: string;          // 직위
+  totalCount: number;        // 총 책무 수
+  mainCount: number;         // 주책무 수
+  subCount: number;          // 부책무 수
   status: string;           // 상태
-  lastInspectionDate: string; // 최종 점검일
+  lastUpdateDate: string;   // 최종 수정일
 }
 
-const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
+const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatusPageProps> = () => {
   // 상태 관리
   const [selectedRound, setSelectedRound] = useState<SelectOption | null>(null);
-  const [selectedDepartment, setSelectedDepartment] = useState<SelectOption | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<SelectOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   // 옵션 데이터
   const roundOptions: SelectOption[] = [
-    { value: '2024-001', label: '2024년 1차 점검' },
-    { value: '2024-002', label: '2024년 2차 점검' },
+    { value: '2024-001', label: '2024년 1차' },
+    { value: '2024-002', label: '2024년 2차' },
   ];
 
-  const departmentOptions: SelectOption[] = [
+  const positionOptions: SelectOption[] = [
     { value: 'all', label: '전체' },
-    { value: 'risk', label: '리스크관리부' },
-    { value: 'compliance', label: '준법지원부' },
-    { value: 'internal', label: '내부통제부' },
+    { value: 'chairman', label: '이사회 의장' },
+    { value: 'president', label: '은행장' },
+    { value: 'executive', label: '상임이사' },
   ];
 
   // 테이블 컬럼 정의
   const columns: GridColDef[] = [
     {
-      field: 'department',
-      headerName: '부서명',
+      field: 'executiveName',
+      headerName: '임원명',
+      flex: 1,
+      minWidth: 120,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'position',
+      headerName: '직책',
       flex: 1,
       minWidth: 150,
       align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'totalItems',
-      headerName: '총 항목 수',
+      field: 'jobTitle',
+      headerName: '직위',
+      flex: 1,
+      minWidth: 120,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'totalCount',
+      headerName: '총 책무 수',
       flex: 1,
       minWidth: 120,
       align: 'center',
@@ -66,8 +84,8 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       renderCell: (params) => `${params.value}개`
     },
     {
-      field: 'completedItems',
-      headerName: '완료 항목 수',
+      field: 'mainCount',
+      headerName: '주책무 수',
       flex: 1,
       minWidth: 120,
       align: 'center',
@@ -75,13 +93,13 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       renderCell: (params) => `${params.value}개`
     },
     {
-      field: 'completionRate',
-      headerName: '완료율',
+      field: 'subCount',
+      headerName: '부책무 수',
       flex: 1,
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => `${params.value}%`
+      renderCell: (params) => `${params.value}개`
     },
     {
       field: 'status',
@@ -94,13 +112,13 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
         let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
         switch (params.value) {
-          case '진행중':
+          case '검토중':
             color = 'warning';
             break;
-          case '완료':
+          case '확정':
             color = 'success';
             break;
-          case '미시작':
+          case '미작성':
             color = 'error';
             break;
           default:
@@ -117,8 +135,8 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       }
     },
     {
-      field: 'lastInspectionDate',
-      headerName: '최종 점검일',
+      field: 'lastUpdateDate',
+      headerName: '최종 수정일',
       flex: 1,
       minWidth: 150,
       align: 'center',
@@ -127,42 +145,48 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   ];
 
   // 임시 데이터
-  const [rows, setRows] = useState<DeptStatusRow[]>([
+  const [rows, setRows] = useState<ExecutiveResponsibilityRow[]>([
     {
       id: 1,
-      department: '리스크관리부',
-      totalItems: 25,
-      completedItems: 20,
-      completionRate: 80,
-      status: '진행중',
-      lastInspectionDate: '2024-03-15'
+      executiveName: '홍길동',
+      position: '이사회 의장',
+      jobTitle: '회장',
+      totalCount: 15,
+      mainCount: 10,
+      subCount: 5,
+      status: '확정',
+      lastUpdateDate: '2024-03-15'
     },
     {
       id: 2,
-      department: '준법지원부',
-      totalItems: 30,
-      completedItems: 30,
-      completionRate: 100,
-      status: '완료',
-      lastInspectionDate: '2024-03-20'
+      executiveName: '김철수',
+      position: '은행장',
+      jobTitle: '행장',
+      totalCount: 20,
+      mainCount: 12,
+      subCount: 8,
+      status: '검토중',
+      lastUpdateDate: '2024-03-20'
     },
     {
       id: 3,
-      department: '내부통제부',
-      totalItems: 28,
-      completedItems: 0,
-      completionRate: 0,
-      status: '미시작',
-      lastInspectionDate: '-'
+      executiveName: '이영희',
+      position: '상임이사',
+      jobTitle: '이사',
+      totalCount: 0,
+      mainCount: 0,
+      subCount: 0,
+      status: '미작성',
+      lastUpdateDate: '-'
     },
   ]);
 
   // 데이터 조회
-  const fetchDeptStatus = useCallback(async () => {
+  const fetchExecutiveResponsibility = useCallback(async () => {
     try {
       setIsLoading(true);
       // TODO: API 호출 구현
-      console.log('조회 조건:', { selectedRound, selectedDepartment });
+      console.log('조회 조건:', { selectedRound, selectedPosition });
     } catch (err) {
       console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터 조회에 실패했습니다.');
@@ -170,11 +194,11 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedRound, selectedDepartment]);
+  }, [selectedRound, selectedPosition]);
 
   useEffect(() => {
-    fetchDeptStatus();
-  }, [fetchDeptStatus]);
+    fetchExecutiveResponsibility();
+  }, [fetchExecutiveResponsibility]);
 
   const handleErrorDialogClose = () => {
     setErrorDialogOpen(false);
@@ -185,7 +209,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     <div className='main-content'>
       {/* 페이지 제목 */}
       <div className='responsibility-header'>
-        <h1 className='responsibility-header__title'>★ [1100] 점검 현황(부서별)</h1>
+        <h1 className='responsibility-header__title'>★ [1200] 임원별 책무 현황</h1>
       </div>
 
       {/* 노란색 구분선 */}
@@ -208,22 +232,22 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             value={selectedRound}
             onChange={(value) => setSelectedRound(value as SelectOption)}
             options={roundOptions}
-            placeholder="점검 회차 선택"
+            placeholder="원장 차수 선택"
             size="small"
             sx={{ minWidth: '200px' }}
           />
           <ComboBox
-            value={selectedDepartment}
-            onChange={(value) => setSelectedDepartment(value as SelectOption)}
-            options={departmentOptions}
-            placeholder="부서 선택"
+            value={selectedPosition}
+            onChange={(value) => setSelectedPosition(value as SelectOption)}
+            options={positionOptions}
+            placeholder="직책 선택"
             size="small"
             sx={{ minWidth: '200px' }}
           />
           <Button
             variant="contained"
             size="small"
-            onClick={fetchDeptStatus}
+            onClick={fetchExecutiveResponsibility}
             color="primary"
           >
             조회
@@ -270,4 +294,4 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   );
 };
 
-export default DeptStatusPage;
+export default ExecutiveResponsibilityStatusPage;

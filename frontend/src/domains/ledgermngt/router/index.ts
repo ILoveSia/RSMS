@@ -15,11 +15,12 @@ const NewComponentsTestPage = React.lazy(() => import('../pages/NewComponentsTes
 const PositionCardTestPage = React.lazy(() => import('../pages/PositionCardTestPage'));
 const StructureSubmissionStatusPage = React.lazy(() => import('../pages/StructureSubmissionStatusPage'));
 const ExecutiveStatusPage = React.lazy(() => import('../pages/ExecutiveStatusPage'));
+const ExecutiveResponsibilityStatusPage = React.lazy(() => import('../pages/ExecutiveResponsibilityStatusPage'));
 
 // 원장관리 도메인 라우트 정의 (백엔드 메뉴 URL과 일치)
-const ledgermngtRoutes: DomainRoute[] = [
+const routes: DomainRoute[] = [
   {
-    path: '/ledger/company-status',
+    path: '/ledgermngt/company-status',
     element: MeetingStatusPage,
     meta: {
       title: '회의채 현황',
@@ -31,7 +32,7 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/position-status',
+    path: '/ledgermngt/position-status',
     element: PositionStatusPage,
     meta: {
       title: '직책 현황',
@@ -43,7 +44,7 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/db-status',
+    path: '/ledgermngt/db-status',
     element: ResponsibilityDbStatusPage,
     meta: {
       title: '책무 DB현황',
@@ -55,7 +56,7 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/detail-status',
+    path: '/ledgermngt/detail-status',
     element: PositionResponsibilityStatusPage,
     meta: {
       title: '직책별 책무 현황',
@@ -67,7 +68,7 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/business-status',
+    path: '/ledgermngt/business-status',
     element: ExecutiveStatusPage,
     meta: {
       title: '임원 현황',
@@ -79,8 +80,8 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/business-detail-status',
-    element: TestGrid,
+    path: '/ledgermngt/business-detail-status',
+    element: ExecutiveResponsibilityStatusPage,
     meta: {
       title: '임원별 책무 현황',
       requiresAuth: true,
@@ -91,7 +92,7 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/internal-control',
+    path: '/ledgermngt/internal-control',
     element: TestGrid,
     meta: {
       title: '부서장 내부통제 항목',
@@ -103,7 +104,7 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/structure-submission',
+    path: '/ledgermngt/structure-submission',
     element: StructureSubmissionStatusPage,
     meta: {
       title: '적부구조도 제출 관리',
@@ -116,7 +117,7 @@ const ledgermngtRoutes: DomainRoute[] = [
   },
   // 테스트 페이지들 (숨김 메뉴)
   {
-    path: '/ledger/new-components-test',
+    path: '/ledgermngt/new-components-test',
     element: NewComponentsTestPage,
     meta: {
       title: '새 컴포넌트 테스트',
@@ -129,7 +130,7 @@ const ledgermngtRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledger/position-card-test',
+    path: '/ledgermngt/position-card-test',
     element: PositionCardTestPage,
     meta: {
       title: '직책 카드 테스트',
@@ -141,6 +142,18 @@ const ledgermngtRoutes: DomainRoute[] = [
       hidden: true,
     },
   },
+  {
+    path: '/ledgermngt/executive-responsibility',
+    element: ExecutiveResponsibilityStatusPage,
+    meta: {
+      title: '임원별 책무 현황',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['책무구조도 원장 관리', '임원별 책무 현황'],
+      icon: 'Work',
+      description: '임원별 책무 현황 관리 페이지',
+    },
+  },
 ];
 
-export default ledgermngtRoutes;
+export default routes;
