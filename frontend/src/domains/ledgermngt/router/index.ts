@@ -14,12 +14,6 @@ const ResponsibilityDbStatusPage = React.lazy(
   () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage')
 );
 const TestGrid = React.lazy(() => import('@/domains/ledgermngt/pages/TestGrid'));
-const NewComponentsTestPage = React.lazy(
-  () => import('@/domains/ledgermngt/pages/NewComponentsTestPage')
-);
-const PositionCardTestPage = React.lazy(
-  () => import('@/domains/ledgermngt/pages/PositionCardTestPage')
-);
 
 // 원장관리 도메인 라우트 정의 (백엔드 메뉴 URL과 일치)
 const ledgermngtRoutes: DomainRoute[] = [
@@ -117,33 +111,6 @@ const ledgermngtRoutes: DomainRoute[] = [
       breadcrumb: ['책무구조도 원장 관리', '적부구조도 제출 관리'],
       icon: 'Upload',
       description: '적부구조도 제출 관리 페이지',
-    },
-  },
-  // 테스트 페이지들 (숨김 메뉴)
-  {
-    path: '/ledger/new-components-test',
-    element: NewComponentsTestPage,
-    meta: {
-      title: '새 컴포넌트 테스트',
-      requiresAuth: true,
-      roles: ['ADMIN'],
-      breadcrumb: ['적부구조 원장 관리', '새 컴포넌트 테스트'],
-      icon: 'Science',
-      description: '새로운 컴포넌트 테스트 페이지',
-      hidden: true,
-    },
-  },
-  {
-    path: '/ledger/position-card-test',
-    element: PositionCardTestPage,
-    meta: {
-      title: '직책 카드 테스트',
-      requiresAuth: true,
-      roles: ['ADMIN'],
-      breadcrumb: ['적부구조 원장 관리', '직책 카드 테스트'],
-      icon: 'Science',
-      description: '직책 카드 컴포넌트 테스트 페이지',
-      hidden: true,
     },
   },
 ];

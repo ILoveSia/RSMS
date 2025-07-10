@@ -10,8 +10,8 @@ import {
   EmployeeSearchPopup,
   type Department,
 } from '@/domains/common/components/search';
-import { MeetingBodySearchDialog } from '@/domains/meeting/components';
-import type { MeetingBodySearchResult } from '@/domains/meeting/components/MeetingBodySearchDialog';
+import { MeetingBodySearchDialog } from '@/domains/common/components/search';
+import type { MeetingBodySearchResult } from '@/domains/common/components/search';
 import { Dialog } from '@/shared/components/modal';
 import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import {

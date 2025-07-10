@@ -20,7 +20,7 @@ import {
   TextField,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { meetingStatusApi } from '../../ledgermngt/api/meetingStatusApi';
+import { meetingStatusApi } from '../../../ledgermngt/api/meetingStatusApi';
 
 export interface MeetingBodySearchDialogProps {
   open: boolean;

@@ -7,7 +7,8 @@ import {
   Schedule as ScheduleIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { Avatar, Box, Card, CardContent, Chip, IconButton, Stack, Typography } from '@mui/material';
+import { Avatar, Box, Card, CardContent, IconButton, Stack, Typography } from '@mui/material';
+import { Chip } from '@/shared/components/ui';
 import React from 'react';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 

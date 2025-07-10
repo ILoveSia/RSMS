@@ -138,10 +138,43 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         textTransform: 'none',
         fontWeight: 500,
         borderRadius: 2,
+        minHeight: size === 'small' ? 32 : size === 'large' ? 48 : 40,
+        letterSpacing: '0.02em',
         // 로딩 상태 스타일
         ...(loading && {
           pointerEvents: 'none',
         }),
+        // 은행 프로젝트 스타일 강화
+        '&.MuiButton-containedPrimary': {
+          background: 'linear-gradient(135deg, #527a8a 0%, #3e5b66 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #3e5b66 0%, #2d4349 100%)',
+          },
+        },
+        '&.MuiButton-containedSecondary': {
+          background: 'linear-gradient(135deg, #6b7c8f 0%, #4f5d6f 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #4f5d6f 0%, #3a4552 100%)',
+          },
+        },
+        '&.MuiButton-containedSuccess': {
+          background: 'linear-gradient(135deg, #5f8a68 0%, #4a6b51 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #4a6b51 0%, #3a543e 100%)',
+          },
+        },
+        '&.MuiButton-containedWarning': {
+          background: 'linear-gradient(135deg, #c4945a 0%, #a67c47 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #a67c47 0%, #8a6638 100%)',
+          },
+        },
+        '&.MuiButton-containedError': {
+          background: 'linear-gradient(135deg, #b85c5c 0%, #9a4a4a 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #9a4a4a 0%, #7d3b3b 100%)',
+          },
+        },
         // 사용자 정의 스타일
         ...sx,
       },

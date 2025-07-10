@@ -1,19 +1,10 @@
 /**
  * 책무 DB 현황 페이지 컴포넌트
  */
+import { Button, DataGrid, Select } from '@/shared/components/ui';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  Box,
-  Button,
-  FormControl,
-  InputAdornment,
-  MenuItem,
-  Select,
-  TextField,
-} from '@mui/material';
-import type { SelectChangeEvent } from '@mui/material/Select';
-import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
+import { Box, InputAdornment, TextField } from '@mui/material';
+import type { GridColDef } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -165,23 +156,12 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         '[ResponsibilityDbStatusPage] 책무 셀 클릭 - responsibilityId:',
         responsibilityId
       );
+      // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
       setSelectedResponsibilityId(responsibilityId);
       setDialogMode('view');
       setDialogOpen(true);
+      console.log('[ResponsibilityDbStatusPage] 다이얼로그 상태 업데이트 완료');
     }, []);
-
-    // selectedResponsibilityId와 dialogMode가 변경된 후 다이얼로그를 엽니다.
-    useEffect(() => {
-      if (dialogMode === 'view' && selectedResponsibilityId !== null) {
-        console.log(
-          '[ResponsibilityDbStatusPage] 다이얼로그 열기 - responsibilityId:',
-          selectedResponsibilityId,
-          'mode:',
-          dialogMode
-        );
-        setDialogOpen(true);
-      }
-    }, [selectedResponsibilityId, dialogMode]);
 
     // 다이얼로그 닫기 (성능 최적화)
     const handleDialogClose = useCallback(() => {
@@ -271,31 +251,9 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       }
     }, [rows]);
 
-    // 행 선택 핸들러 (성능 최적화)
-    const handleRowSelectionChange = useCallback(
-      (selectionModel: GridRowSelectionModel) => {
-        console.log('[ResponsibilityDbStatusPage] 행 선택 변경 - selectionModel:', selectionModel);
-
-        if (Array.isArray(selectionModel) && selectionModel.length > 0) {
-          const selectedRow = rows.find(row => row.responsibilityDetailId === selectionModel[0]);
-          const newSelectedId = selectedRow ? Number(selectedRow.responsibilityId) : null;
-          console.log('[ResponsibilityDbStatusPage] 선택된 책무 ID:', newSelectedId);
-          setSelectedResponsibilityId(newSelectedId);
-        } else {
-          setSelectedResponsibilityId(null);
-        }
-      },
-      [rows]
-    );
-
     // 검색 텍스트 변경 핸들러 (성능 최적화)
     const handleSearchTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchText(e.target.value);
-    }, []);
-
-    // 원장차수 변경 핸들러 (성능 최적화)
-    const handleLedgerOrderChange = useCallback((e: SelectChangeEvent<string>) => {
-      setLedgerOrder(e.target.value);
     }, []);
 
     console.log(
@@ -335,17 +293,13 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             }}
           >
             <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>원장차수</span>
-            <FormControl size='small' sx={{ minWidth: 150 }}>
-              <Select
-                value={ledgerOrder}
-                onChange={handleLedgerOrderChange}
-                sx={{ backgroundColor: 'white', fontSize: '0.85rem' }}
-              >
-                <MenuItem value='2024-001' sx={{ fontSize: '0.85rem' }}>
-                  2024-001(직책확정)
-                </MenuItem>
-              </Select>
-            </FormControl>
+            <Select
+              value={ledgerOrder}
+              onChange={value => setLedgerOrder(value as string)}
+              size='small'
+              sx={{ minWidth: 120, maxWidth: 180 }}
+              options={[{ value: '2024-001', label: '2024-001(직책확정)' }]}
+            />
             <span
               style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
             >
@@ -367,16 +321,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               }}
             />
             <Box sx={{ flexGrow: 1 }} />
-            <Button
-              variant='contained'
-              size='small'
-              onClick={handleSearch}
-              sx={{
-                backgroundColor: 'var(--bank-primary)',
-                color: 'white',
-                '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-              }}
-            >
+            <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
               조회
             </Button>
           </Box>
@@ -387,47 +332,25 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             <Button
               variant='contained'
               size='small'
-              sx={{
-                mr: 1,
-                backgroundColor: 'var(--bank-success)',
-                '&:hover': { backgroundColor: 'var(--bank-success-dark)' },
-              }}
+              color='success'
+              sx={{ mr: 1 }}
               onClick={handleExcelDownload}
             >
               엑셀 다운로드
             </Button>
-            <Button
-              variant='contained'
-              size='small'
-              sx={{
-                mr: 1,
-                backgroundColor: 'var(--bank-warning)',
-                '&:hover': { backgroundColor: 'var(--bank-warning-dark)' },
-              }}
-            >
+            <Button variant='contained' size='small' color='warning' sx={{ mr: 1 }}>
               변경 이력
             </Button>
             <Button
               variant='contained'
               size='small'
-              sx={{
-                mr: 1,
-                backgroundColor: 'var(--bank-primary)',
-                '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-              }}
+              color='primary'
+              sx={{ mr: 1 }}
               onClick={handleCreateClick}
             >
               등록
             </Button>
-            <Button
-              variant='contained'
-              size='small'
-              sx={{
-                mr: 1,
-                backgroundColor: 'var(--bank-error)',
-                '&:hover': { backgroundColor: 'var(--bank-error-dark)' },
-              }}
-            >
+            <Button variant='contained' size='small' color='error' sx={{ mr: 1 }}>
               삭제
             </Button>
           </Box>
@@ -445,13 +368,26 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <DataGrid
               className='responsibility-grid'
-              rows={rows}
-              columns={columns}
+              data={rows}
+              columns={columns as any}
               loading={loading}
-              checkboxSelection
-              disableRowSelectionOnClick
-              onRowSelectionModelChange={handleRowSelectionChange}
-              getRowId={row => row.responsibilityDetailId}
+              height='100%'
+              selectable={true}
+              multiSelect={false}
+              selectedRows={selectedResponsibilityId ? [selectedResponsibilityId] : []}
+              onRowSelectionChange={selectedRows => {
+                if (selectedRows.length > 0) {
+                  const selectedRow = rows.find(
+                    row => row.responsibilityDetailId === selectedRows[0]
+                  );
+                  setSelectedResponsibilityId(
+                    selectedRow ? Number(selectedRow.responsibilityId) : null
+                  );
+                } else {
+                  setSelectedResponsibilityId(null);
+                }
+              }}
+              rowIdField='responsibilityDetailId'
               sx={{
                 flex: 1,
                 minHeight: 400,
@@ -476,7 +412,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
                   outline: 'none',
                 },
               }}
-              getRowHeight={() => 'auto'}
             />
           </Box>
         </div>

@@ -22,7 +22,10 @@ import {
   useTheme,
 } from '@mui/material';
 import React, { forwardRef, useCallback, useRef, useState } from 'react';
-import { FileUploadProps } from './types';
+import type { FileUploadProps as FileUploadPropsType } from './types';
+
+// FileUpload 컴포넌트 자체 Props 타입 정의
+export interface FileUploadProps extends FileUploadPropsType {}
 
 /**
  * FileUpload 컴포넌트

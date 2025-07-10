@@ -19,8 +19,10 @@ export const createApiAction = <RequestType = unknown, ResponseType = unknown>(
   url: string
 ) => {
   return createAsyncThunk<ResponseType, RequestType>(actionType, async (params: RequestType) => {
-    const response = await apiClient.get<ResponseType>(url, { params });
-    return response.data;
+    const response = await apiClient.get<ResponseType>(url, {
+      params: params as Record<string, string | number>,
+    });
+    return response;
   });
 };
 
@@ -111,8 +113,10 @@ export const useReduxState = <T = unknown>(statePath: string) => {
 // 직접 API 호출 (Redux 없이)
 export const fetchAPI = async <T = unknown>(url: string, params?: unknown): Promise<T> => {
   try {
-    const response = await apiClient.get<T>(url, { params });
-    return response.data;
+    const response = await apiClient.get<T>(url, {
+      params: params as Record<string, string | number>,
+    });
+    return response;
   } catch (error) {
     console.error('[API] Error:', error);
     throw error;

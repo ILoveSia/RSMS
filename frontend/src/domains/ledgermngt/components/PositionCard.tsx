@@ -1,10 +1,11 @@
+import { Chip } from '@/shared/components/ui';
 import { useMutation, useQuery } from '@/shared/hooks';
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { Box, Card, CardContent, Chip, IconButton, Typography } from '@mui/material';
+import { Box, Card, CardContent, IconButton, Typography } from '@mui/material';
 import React from 'react';
 import { positionApi } from '../api/positionApi';
 

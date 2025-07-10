@@ -1,22 +1,13 @@
 /**
  * 회의체 등록/수정/조회 다이얼로그 컴포넌트
  */
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from '@mui/material';
-import React, { useEffect, useState } from 'react';
 import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
 import { Dialog } from '@/shared/components/modal';
+import { Button, Select } from '@/shared/components/ui';
+import { Alert, Box, CircularProgress, TextField } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 
 export interface MeetingBodyDialogProps {
@@ -153,7 +144,7 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
     }
   }, [open, mode, meetingBody]);
 
-  // 입력값 변경 핸들러
+  // 입력값 변경 핸들러 (TextField용)
   const handleInputChange =
     (field: keyof FormData) =>
     (
@@ -165,6 +156,23 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
       setFormData(prev => ({
         ...prev,
         [field]: value,
+      }));
+
+      // 입력 시 해당 필드의 검증 에러 제거
+      if (validationErrors[field]) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [field]: '',
+        }));
+      }
+    };
+
+  // Select 컴포넌트용 변경 핸들러
+  const handleSelectChange =
+    (field: keyof FormData) => (value: string | number | string[] | number[]) => {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value as string,
       }));
 
       // 입력 시 해당 필드의 검증 에러 제거
@@ -255,16 +263,9 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
           <Button onClick={onClose} variant='outlined'>
             닫기
           </Button>
-                  <Button
-          onClick={handleEditMode}
-          variant='contained'
-          sx={{
-            backgroundColor: 'var(--bank-warning)',
-            '&:hover': { backgroundColor: 'var(--bank-warning-dark)' }
-          }}
-        >
-          수정
-        </Button>
+          <Button onClick={handleEditMode} variant='contained' color='warning'>
+            수정
+          </Button>
         </>
       );
     }
@@ -306,79 +307,50 @@ const MeetingBodyDialog: React.FC<MeetingBodyDialogProps> = ({
           {/* 첫 번째 행: 구분, 개최주기 */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth error={!!validationErrors.gubun}>
-                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>
-                  구분 *
-                </InputLabel>
-                <Select
-                  value={formData.gubun}
-                  label='구분 *'
-                  onChange={handleInputChange('gubun')}
-                  disabled={mode === 'view'}
-                  sx={
-                    mode === 'view'
-                      ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
-                      : {}
-                  }
-                  inputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
-                >
-                  <MenuItem
-                    value=''
-                    sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
-                  >
-                    선택하세요
-                  </MenuItem>
-                  {getMeetingBodyCodes().map(code => (
-                    <MenuItem
-                      key={code.code}
-                      value={code.code}
-                      sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
-                    >
-                      {code.codeName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {validationErrors.gubun && (
-                  <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
-                    {validationErrors.gubun}
-                  </Box>
-                )}
-              </FormControl>
+              <Select
+                value={formData.gubun}
+                label='구분 *'
+                onChange={handleSelectChange('gubun')}
+                disabled={mode === 'view'}
+                error={!!validationErrors.gubun}
+                helperText={validationErrors.gubun}
+                fullWidth
+                sx={
+                  mode === 'view'
+                    ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
+                    : {}
+                }
+                options={[
+                  { value: '', label: '선택하세요' },
+                  ...getMeetingBodyCodes().map(code => ({
+                    value: code.code,
+                    label: code.codeName,
+                  })),
+                ]}
+              />
             </Box>
             <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth error={!!validationErrors.meetingPeriod}>
-                <InputLabel sx={mode === 'view' ? { color: 'black', fontWeight: 700 } : {}}>
-                  개최주기
-                </InputLabel>
-                <Select
-                  value={formData.meetingPeriod}
-                  label='개최주기'
-                  onChange={handleInputChange('meetingPeriod')}
-                  disabled={mode === 'view'}
-                  sx={
-                    mode === 'view'
-                      ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
-                      : {}
-                  }
-                  inputProps={mode === 'view' ? { style: { color: 'black', fontWeight: 600 } } : {}}
-                >
-                  <MenuItem value=''>선택하세요</MenuItem>
-                  {getPeriodCodes().map(code => (
-                    <MenuItem
-                      key={code.code}
-                      value={code.code}
-                      sx={mode === 'view' ? { color: 'black', fontWeight: 600 } : {}}
-                    >
-                      {code.codeName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {validationErrors.meetingPeriod && (
-                  <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
-                    {validationErrors.meetingPeriod}
-                  </Box>
-                )}
-              </FormControl>
+              <Select
+                value={formData.meetingPeriod}
+                label='개최주기'
+                onChange={handleSelectChange('meetingPeriod')}
+                disabled={mode === 'view'}
+                error={!!validationErrors.meetingPeriod}
+                helperText={validationErrors.meetingPeriod}
+                fullWidth
+                sx={
+                  mode === 'view'
+                    ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
+                    : {}
+                }
+                options={[
+                  { value: '', label: '선택하세요' },
+                  ...getPeriodCodes().map(code => ({
+                    value: code.code,
+                    label: code.codeName,
+                  })),
+                ]}
+              />
             </Box>
           </Box>
 

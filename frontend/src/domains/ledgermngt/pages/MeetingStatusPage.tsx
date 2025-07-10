@@ -6,9 +6,9 @@ import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
 import { Confirm } from '@/shared/components/modal';
-import { Box, Button, FormControl, MenuItem, Select } from '@mui/material';
+import { Button, DataGrid, Select } from '@/shared/components/ui';
+import { Box } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useEffect, useState } from 'react';
@@ -366,48 +366,20 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
           >
             구분
           </span>
-          <FormControl size='small' sx={{ minWidth: 80 }}>
-            <Select
-              value={filterDivision}
-              onChange={e => setFilterDivision(e.target.value)}
-              sx={{
-                backgroundColor: 'white',
-                fontSize: '0.85rem',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--bank-border)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--bank-border-dark)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'var(--bank-primary)',
-                },
-              }}
-            >
-              <MenuItem value='전체' sx={{ fontSize: '0.85rem' }}>
-                전체
-              </MenuItem>
-              {getMeetingBodyCodes().map(code => (
-                <MenuItem key={code.code} value={code.code} sx={{ fontSize: '0.85rem' }}>
-                  {code.codeName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button
-            variant='contained'
+          <Select
+            value={filterDivision}
+            onChange={value => setFilterDivision(value as string)}
             size='small'
-            onClick={handleSearch}
-            sx={{
-              backgroundColor: 'var(--bank-primary)',
-              color: 'white',
-              fontSize: '0.85rem',
-              fontWeight: '500',
-              '&:hover': {
-                backgroundColor: 'var(--bank-primary-dark)',
-              },
-            }}
-          >
+            sx={{ minWidth: 120, maxWidth: 150 }}
+            options={[
+              { value: '전체', label: '전체' },
+              ...getMeetingBodyCodes().map(code => ({
+                value: code.code,
+                label: code.codeName,
+              })),
+            ]}
+          />
+          <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
             조회
           </Button>
         </div>
@@ -427,23 +399,12 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
             variant='contained'
             size='small'
             onClick={handleCreateClick}
-            sx={{
-              mr: 1,
-              backgroundColor: 'var(--bank-primary)',
-              '&:hover': { backgroundColor: 'var(--bank-primary-dark)' },
-            }}
+            color='primary'
+            sx={{ mr: 1 }}
           >
             등록
           </Button>
-          <Button
-            variant='contained'
-            size='small'
-            onClick={handleDelete}
-            sx={{
-              backgroundColor: 'var(--bank-error)',
-              '&:hover': { backgroundColor: 'var(--bank-error-dark)' },
-            }}
-          >
+          <Button variant='contained' size='small' onClick={handleDelete} color='error'>
             삭제
           </Button>
         </Box>
@@ -452,38 +413,38 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = (): React.JSX.Eleme
         <Box sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
-            rows={meetingBodies}
-            columns={meetingColumns}
+            data={meetingBodies}
+            columns={meetingColumns.map(col => ({
+              field: col.field,
+              headerName: col.headerName,
+              width: col.width,
+              flex: col.flex,
+              sortable: col.sortable,
+              align: col.align,
+              renderCell: col.renderCell,
+            }))}
             loading={loading}
-            // onRowClick={handleRowClick} // "회의체명" 셀 클릭만 상세조회로 제한
-            getRowId={row => row.meetingBodyId}
-            pagination
-            paginationMode='server'
-            checkboxSelection // 필요시만 사용
-            rowCount={pageInfo.totalElements}
-            pageSizeOptions={[10, 20, 50]}
-            paginationModel={{
-              page: pageInfo.page,
+            height='100%'
+            selectable={true}
+            multiSelect={true}
+            selectedRows={selectedIds}
+            onRowSelectionChange={selectedRows => {
+              setSelectedIds(selectedRows.map(id => String(id)));
+            }}
+            pagination={{
+              page: pageInfo.page + 1, // 공통 컴포넌트는 1부터 시작
               pageSize: pageInfo.size,
+              totalItems: pageInfo.totalElements,
+              totalPages: Math.ceil(pageInfo.totalElements / pageInfo.size),
+              onPageChange: page => {
+                setPageInfo(prev => ({ ...prev, page: page - 1 })); // 0부터 시작으로 변환
+              },
+              onPageSizeChange: size => {
+                setPageInfo(prev => ({ ...prev, size, page: 0 }));
+              },
+              pageSizeOptions: [10, 20, 50],
             }}
-            onPaginationModelChange={model =>
-              setPageInfo(prev => ({ ...prev, page: model.page, size: model.pageSize }))
-            }
-            rowSelectionModel={selectedIds}
-            onRowSelectionModelChange={newSelectionModel => {
-              let stringIds: string[] = [];
-              if (Array.isArray(newSelectionModel)) {
-                stringIds = newSelectionModel.map(id => String(id));
-              } else if (
-                newSelectionModel &&
-                typeof newSelectionModel === 'object' &&
-                'ids' in newSelectionModel &&
-                newSelectionModel.ids instanceof Set
-              ) {
-                stringIds = Array.from(newSelectionModel.ids).map(String);
-              }
-              setSelectedIds(stringIds);
-            }}
+            rowIdField='meetingBodyId'
             sx={{
               height: '100%',
               '& .MuiDataGrid-columnHeaders': {

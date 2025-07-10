@@ -5,7 +5,8 @@ import {
   Edit as EditIcon,
   Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { Box, Card, CardContent, Chip, IconButton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, IconButton, Stack, Typography } from '@mui/material';
+import { Chip } from '@/shared/components/ui';
 import React from 'react';
 import { responsibilityApi } from '../api/responsibilityApi';
 

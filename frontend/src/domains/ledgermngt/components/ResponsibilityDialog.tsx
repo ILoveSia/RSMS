@@ -3,11 +3,11 @@
  */
 import apiClient from '@/app/common/api/client';
 import { Dialog } from '@/shared/components/modal';
+import { Button } from '@/shared/components/ui';
 import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import {
   Alert,
   Box,
-  Button,
   CircularProgress,
   IconButton,
   Paper,
@@ -27,6 +27,7 @@ interface ApiSuccessResponse<T> {
   success: boolean;
   message: string;
   data: T;
+  timestamp?: string;
 }
 
 // 책무 데이터 타입
@@ -99,6 +100,7 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
       responsibilityId
     );
     const fetchDetails = async (id: string) => {
+      console.log('[ResponsibilityDialog] fetchDetails 시작 - id:', id);
       setLoading(true);
       setError(null);
       try {
@@ -116,25 +118,41 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
           details: DetailResponseType[];
         };
 
-        const response = await apiClient.get<ApiSuccessResponse<ResponseType>>(
-          `/api/responsibilities/${id}`
-        );
+        console.log('[ResponsibilityDialog] API 호출 시작 - URL:', `/api/responsibilities/${id}`);
+        const response = await apiClient.get<ApiSuccessResponse<ResponseType> | ResponseType>(`/api/responsibilities/${id}`);
 
-        if (response && response.data) {
-          const fetchedData = response.data;
-          setResponsibilityContent(fetchedData.responsibilityContent);
-          setDetails(
-            fetchedData.details.map((d: DetailResponseType) => ({
-              id: String(d.id),
-              responsibilityDetailId: String(d.id),
-              responsibilityDetailContent: d.responsibilityDetailContent,
-              keyManagementTasks: d.keyManagementTasks,
-              relatedBasis: d.relatedBasis,
-            }))
-          );
+        console.log('[ResponsibilityDialog] API 응답:', response);
+
+        // ApiResponse 래퍼 구조인지 확인하여 적절히 처리
+        let fetchedData: ResponseType;
+        if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+          // ApiResponse 래퍼 구조인 경우
+          const apiResponse = response as ApiSuccessResponse<ResponseType>;
+          if (apiResponse.success && apiResponse.data) {
+            fetchedData = apiResponse.data;
+            console.log('[ResponsibilityDialog] ApiResponse 래퍼에서 데이터 추출:', fetchedData);
+          } else {
+            throw new Error(apiResponse.message || '데이터를 불러오는 데 실패했습니다.');
+          }
+        } else if (response) {
+          // 이미 unwrap된 데이터인 경우
+          fetchedData = response as ResponseType;
+          console.log('[ResponsibilityDialog] 직접 데이터 사용:', fetchedData);
         } else {
           throw new Error('데이터를 불러오는 데 실패했습니다.');
         }
+
+        setResponsibilityContent(fetchedData.responsibilityContent);
+        setDetails(
+          fetchedData.details.map((d: DetailResponseType) => ({
+            id: String(d.id),
+            responsibilityDetailId: String(d.id),
+            responsibilityDetailContent: d.responsibilityDetailContent,
+            keyManagementTasks: d.keyManagementTasks,
+            relatedBasis: d.relatedBasis,
+          }))
+        );
+        console.log('[ResponsibilityDialog] 데이터 설정 완료');
       } catch (err) {
         const error = err as Error;
         setError(error.message || '상세 정보를 불러오는 중 오류가 발생했습니다.');
@@ -145,9 +163,21 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
     };
 
     if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
-      console.log('[ResponsibilityDialog useEffect] fetchDetails 호출:', responsibilityId);
+      console.log('[ResponsibilityDialog useEffect] fetchDetails 호출 조건 만족:', {
+        mode,
+        responsibilityId,
+        open,
+      });
       fetchDetails(responsibilityId.toString());
-    } else if (open) {
+    } else {
+      console.log('[ResponsibilityDialog useEffect] fetchDetails 호출 조건 불만족:', {
+        mode,
+        responsibilityId,
+        open,
+      });
+    }
+
+    if (open) {
       setResponsibilityContent('');
       setDetails([
         {
@@ -256,14 +286,7 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
           <Button onClick={onClose} variant='outlined'>
             닫기
           </Button>
-          <Button
-            onClick={handleEditMode}
-            variant='contained'
-            sx={{
-              backgroundColor: 'var(--bank-warning)',
-              '&:hover': { backgroundColor: 'var(--bank-warning-dark)' },
-            }}
-          >
+          <Button onClick={handleEditMode} variant='contained' color='warning'>
             수정
           </Button>
         </Box>
@@ -274,14 +297,7 @@ const ResponsibilityDialog: React.FC<ResponsibilityDialogProps> = ({
         <Button onClick={onClose} variant='outlined'>
           취소
         </Button>
-        <Button
-          onClick={handleSave}
-          variant='contained'
-          sx={{
-            backgroundColor: 'var(--bank-success)',
-            '&:hover': { backgroundColor: 'var(--bank-success-dark)' },
-          }}
-        >
+        <Button onClick={handleSave} variant='contained' color='success'>
           저장
         </Button>
       </Box>

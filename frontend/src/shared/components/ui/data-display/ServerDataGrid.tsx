@@ -528,6 +528,14 @@ const ServerDataGrid = <T extends Record<string, any>>({
         id={id}
         data-testid={dataTestId}
       >
+        {/* 최상단 구분선 */}
+        <Box
+          sx={{
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        />
+
         {toolbar && <CustomToolbar />}
         <Box
           sx={{
@@ -559,9 +567,22 @@ const ServerDataGrid = <T extends Record<string, any>>({
       id={id}
       data-testid={dataTestId}
     >
+      {/* 최상단 구분선 */}
+      <Box
+        sx={{
+          borderTop: 1,
+          borderColor: 'divider',
+        }}
+      />
+
       {toolbar && <CustomToolbar />}
 
-      <Box sx={{ flex: 1, position: 'relative' }}>
+      <Box
+        sx={{
+          flex: 1,
+          position: 'relative',
+        }}
+      >
         <MuiDataGrid
           rows={processedData}
           columns={muiColumns}

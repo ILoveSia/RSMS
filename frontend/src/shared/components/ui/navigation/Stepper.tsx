@@ -9,7 +9,11 @@ import {
   useTheme,
 } from '@mui/material';
 import { forwardRef } from 'react';
-import { StepItem, StepperProps } from './types';
+import type { StepItem as StepItemType, StepperProps as StepperPropsType } from './types';
+
+// Stepper 컴포넌트 자체 타입 정의
+export interface StepItem extends StepItemType {}
+export interface StepperProps extends StepperPropsType {}
 
 // 커스텀 StepIcon 컴포넌트
 const CustomStepIcon = styled('div')<{
