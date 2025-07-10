@@ -8,42 +8,42 @@ import { createTheme } from '@mui/material/styles';
 // MUI v7 CSS Variables 타입 지원
 import type {} from '@mui/material/themeCssVarsAugmentation';
 
-// 커스텀 색상 팔레트
+// 은행 프로젝트 색상 팔레트 - 차분하고 모던한 색상
 const palette = {
   primary: {
-    main: '#1976d2',
-    light: '#42a5f5',
-    dark: '#1565c0',
+    main: '#527a8a', // 차분한 블루그레이
+    light: '#6b94a6', // 라이트 블루그레이
+    dark: '#3e5b66', // 다크 블루그레이
     contrastText: '#ffffff',
   },
   secondary: {
-    main: '#dc004e',
-    light: '#ff5983',
-    dark: '#9a0036',
+    main: '#6b7c8f', // 중성적인 그레이블루
+    light: '#8a9bae', // 라이트 그레이블루
+    dark: '#4f5d6f', // 다크 그레이블루
     contrastText: '#ffffff',
   },
   success: {
-    main: '#2e7d32',
-    light: '#4caf50',
-    dark: '#1b5e20',
+    main: '#5f8a68', // 차분한 녹색
+    light: '#7ba582', // 라이트 녹색
+    dark: '#4a6b51', // 다크 녹색
     contrastText: '#ffffff',
   },
   warning: {
-    main: '#ed6c02',
-    light: '#ff9800',
-    dark: '#e65100',
+    main: '#c4945a', // 차분한 주황색
+    light: '#d4a975', // 라이트 주황색
+    dark: '#a67c47', // 다크 주황색
     contrastText: '#ffffff',
   },
   error: {
-    main: '#d32f2f',
-    light: '#ef5350',
-    dark: '#c62828',
+    main: '#b85c5c', // 차분한 빨간색
+    light: '#c77777', // 라이트 빨간색
+    dark: '#9a4a4a', // 다크 빨간색
     contrastText: '#ffffff',
   },
   info: {
-    main: '#0288d1',
-    light: '#03a9f4',
-    dark: '#01579b',
+    main: '#6b94a6', // 은행 Primary Light와 동일
+    light: '#8aabb8', // 라이트 정보 색상
+    dark: '#527a8a', // 다크 정보 색상 (Primary와 동일)
     contrastText: '#ffffff',
   },
   grey: {
@@ -179,8 +179,201 @@ const commonComponents = {
         borderRadius: 8,
         fontWeight: 500,
         boxShadow: 'none',
+        transition: 'all 0.2s ease-in-out',
         '&:hover': {
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0px 2px 8px rgba(82, 122, 138, 0.2)',
+          transform: 'translateY(-1px)',
+        },
+        '&:active': {
+          transform: 'translateY(0)',
+        },
+      },
+      // 은행 프로젝트에 맞는 버튼 스타일 개선
+      containedPrimary: {
+        backgroundColor: '#527a8a',
+        color: '#ffffff',
+        '&:hover': {
+          backgroundColor: '#3e5b66',
+          boxShadow: '0px 3px 12px rgba(82, 122, 138, 0.3)',
+        },
+        '&:disabled': {
+          backgroundColor: '#b0b7bb',
+          color: '#ffffff',
+        },
+      },
+      containedSecondary: {
+        backgroundColor: '#6b7c8f',
+        color: '#ffffff',
+        '&:hover': {
+          backgroundColor: '#4f5d6f',
+          boxShadow: '0px 3px 12px rgba(107, 124, 143, 0.3)',
+        },
+        '&:disabled': {
+          backgroundColor: '#b0b7bb',
+          color: '#ffffff',
+        },
+      },
+      containedSuccess: {
+        backgroundColor: '#5f8a68',
+        color: '#ffffff',
+        '&:hover': {
+          backgroundColor: '#4a6b51',
+          boxShadow: '0px 3px 12px rgba(95, 138, 104, 0.3)',
+        },
+        '&:disabled': {
+          backgroundColor: '#b0b7bb',
+          color: '#ffffff',
+        },
+      },
+      containedWarning: {
+        backgroundColor: '#c4945a',
+        color: '#ffffff',
+        '&:hover': {
+          backgroundColor: '#a67c47',
+          boxShadow: '0px 3px 12px rgba(196, 148, 90, 0.3)',
+        },
+        '&:disabled': {
+          backgroundColor: '#b0b7bb',
+          color: '#ffffff',
+        },
+      },
+      containedError: {
+        backgroundColor: '#b85c5c',
+        color: '#ffffff',
+        '&:hover': {
+          backgroundColor: '#9a4a4a',
+          boxShadow: '0px 3px 12px rgba(184, 92, 92, 0.3)',
+        },
+        '&:disabled': {
+          backgroundColor: '#b0b7bb',
+          color: '#ffffff',
+        },
+      },
+      containedInfo: {
+        backgroundColor: '#6b94a6',
+        color: '#ffffff',
+        '&:hover': {
+          backgroundColor: '#527a8a',
+          boxShadow: '0px 3px 12px rgba(107, 148, 166, 0.3)',
+        },
+        '&:disabled': {
+          backgroundColor: '#b0b7bb',
+          color: '#ffffff',
+        },
+      },
+      outlinedPrimary: {
+        borderColor: '#527a8a',
+        color: '#527a8a',
+        '&:hover': {
+          borderColor: '#3e5b66',
+          backgroundColor: 'rgba(82, 122, 138, 0.08)',
+          color: '#3e5b66',
+        },
+        '&:disabled': {
+          borderColor: '#b0b7bb',
+          color: '#b0b7bb',
+        },
+      },
+      outlinedSecondary: {
+        borderColor: '#6b7c8f',
+        color: '#6b7c8f',
+        '&:hover': {
+          borderColor: '#4f5d6f',
+          backgroundColor: 'rgba(107, 124, 143, 0.08)',
+          color: '#4f5d6f',
+        },
+        '&:disabled': {
+          borderColor: '#b0b7bb',
+          color: '#b0b7bb',
+        },
+      },
+      outlinedSuccess: {
+        borderColor: '#5f8a68',
+        color: '#5f8a68',
+        '&:hover': {
+          borderColor: '#4a6b51',
+          backgroundColor: 'rgba(95, 138, 104, 0.08)',
+          color: '#4a6b51',
+        },
+        '&:disabled': {
+          borderColor: '#b0b7bb',
+          color: '#b0b7bb',
+        },
+      },
+      outlinedWarning: {
+        borderColor: '#c4945a',
+        color: '#c4945a',
+        '&:hover': {
+          borderColor: '#a67c47',
+          backgroundColor: 'rgba(196, 148, 90, 0.08)',
+          color: '#a67c47',
+        },
+        '&:disabled': {
+          borderColor: '#b0b7bb',
+          color: '#b0b7bb',
+        },
+      },
+      outlinedError: {
+        borderColor: '#b85c5c',
+        color: '#b85c5c',
+        '&:hover': {
+          borderColor: '#9a4a4a',
+          backgroundColor: 'rgba(184, 92, 92, 0.08)',
+          color: '#9a4a4a',
+        },
+        '&:disabled': {
+          borderColor: '#b0b7bb',
+          color: '#b0b7bb',
+        },
+      },
+      textPrimary: {
+        color: '#527a8a',
+        '&:hover': {
+          backgroundColor: 'rgba(82, 122, 138, 0.08)',
+          color: '#3e5b66',
+        },
+        '&:disabled': {
+          color: '#b0b7bb',
+        },
+      },
+      textSecondary: {
+        color: '#6b7c8f',
+        '&:hover': {
+          backgroundColor: 'rgba(107, 124, 143, 0.08)',
+          color: '#4f5d6f',
+        },
+        '&:disabled': {
+          color: '#b0b7bb',
+        },
+      },
+      textSuccess: {
+        color: '#5f8a68',
+        '&:hover': {
+          backgroundColor: 'rgba(95, 138, 104, 0.08)',
+          color: '#4a6b51',
+        },
+        '&:disabled': {
+          color: '#b0b7bb',
+        },
+      },
+      textWarning: {
+        color: '#c4945a',
+        '&:hover': {
+          backgroundColor: 'rgba(196, 148, 90, 0.08)',
+          color: '#a67c47',
+        },
+        '&:disabled': {
+          color: '#b0b7bb',
+        },
+      },
+      textError: {
+        color: '#b85c5c',
+        '&:hover': {
+          backgroundColor: 'rgba(184, 92, 92, 0.08)',
+          color: '#9a4a4a',
+        },
+        '&:disabled': {
+          color: '#b0b7bb',
         },
       },
     },
@@ -234,13 +427,13 @@ export const theme = createTheme({
       palette: {
         ...palette,
         background: {
-          default: '#fafafa',
+          default: '#f8f9fb', // 은행 프로젝트 배경색
           paper: '#ffffff',
         },
         text: {
-          primary: 'rgba(0, 0, 0, 0.87)',
-          secondary: 'rgba(0, 0, 0, 0.6)',
-          disabled: 'rgba(0, 0, 0, 0.38)',
+          primary: '#2d3e50', // 은행 프로젝트 텍스트 색상
+          secondary: '#6c7b7f', // 은행 프로젝트 보조 텍스트
+          disabled: '#b0b7bb', // 은행 프로젝트 비활성 텍스트
         },
       },
     },
@@ -274,13 +467,13 @@ export const lightTheme = createTheme({
     mode: 'light',
     ...palette,
     background: {
-      default: '#fafafa',
+      default: '#f8f9fb', // 은행 프로젝트 배경색
       paper: '#ffffff',
     },
     text: {
-      primary: 'rgba(0, 0, 0, 0.87)',
-      secondary: 'rgba(0, 0, 0, 0.6)',
-      disabled: 'rgba(0, 0, 0, 0.38)',
+      primary: '#2d3e50', // 은행 프로젝트 텍스트 색상
+      secondary: '#6c7b7f', // 은행 프로젝트 보조 텍스트
+      disabled: '#b0b7bb', // 은행 프로젝트 비활성 텍스트
     },
   },
   typography,

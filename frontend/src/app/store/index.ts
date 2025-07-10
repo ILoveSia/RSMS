@@ -151,7 +151,7 @@ export const useAPI = <T = unknown>(actionType: string) => {
         switch (options.method) {
           case 'get':
             response = await apiClient.get(apiUrl, {
-              params: requestData,
+              params: requestData as Record<string, string | number>,
               headers: options.headers,
             });
             break;

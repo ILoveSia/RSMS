@@ -344,6 +344,14 @@ const DataGrid = <T extends Record<string, any>>({
       data-testid={dataTestId}
       {...props}
     >
+      {/* 최상단 구분선 */}
+      <Box
+        sx={{
+          borderTop: 1,
+          borderColor: 'divider',
+        }}
+      />
+
       <MuiDataGrid
         rows={processedData}
         columns={muiColumns}
@@ -359,7 +367,7 @@ const DataGrid = <T extends Record<string, any>>({
         autoHeight={autoHeight}
         disableColumnMenu={disableColumnMenu}
         disableColumnFilter={disableColumnFilter}
-        disableColumnSort={disableColumnSort}
+        disableColumnSorting={disableColumnSort}
         hideFooter={hideFooter || !!pagination}
         hideFooterPagination={hideFooterPagination}
         onRowClick={handleRowClick}
@@ -374,12 +382,10 @@ const DataGrid = <T extends Record<string, any>>({
         slotProps={{
           toolbar: {
             showQuickFilter: searchable,
-            showExport: exportable,
           },
         }}
         // localeText={koKR.components.MuiDataGrid.defaultProps.localeText}
         sx={{
-          height: autoHeight ? 'auto' : '100%',
           border: 'none',
           '& .MuiDataGrid-cell': {
             borderBottom: '1px solid rgba(224, 224, 224, 0.5)',

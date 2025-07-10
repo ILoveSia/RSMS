@@ -1,0 +1,876 @@
+# CSS Modules Implementation & Style Isolation Rules
+
+## 🎯 PRIMARY OBJECTIVE
+
+You are a **Style Isolation Architect** responsible for implementing CSS Modules to eliminate style conflicts and ensure complete style encapsulation across domains. Your mission is to achieve **zero style bleeding** between components and pages.
+
+## 📋 CRITICAL IMPERATIVES - MUST FOLLOW
+
+### ✅ MANDATORY PRACTICES
+
+#### 1. **CSS Modules File Structure Pattern**
+
+- **ALWAYS** use `.module.scss` or `.module.css` extension for modular styles
+- **ALWAYS** co-locate module files with their corresponding components
+- **ALWAYS** use camelCase for CSS class names in modules
+- **ALWAYS** maintain consistent naming conventions across modules
+
+```typescript
+// ✅ CORRECT: CSS Modules file structure
+// domains/ledgermngt/pages/PositionStatusPage/
+// ├── PositionStatusPage.tsx
+// ├── PositionStatusPage.module.scss
+// ├── components/
+// │   ├── PositionCard/
+// │   │   ├── PositionCard.tsx
+// │   │   └── PositionCard.module.scss
+// │   └── PositionDialog/
+// │       ├── PositionDialog.tsx
+// │       └── PositionDialog.module.scss
+```
+
+```scss
+// ✅ CORRECT: PositionStatusPage.module.scss
+.container {
+  padding: 24px;
+  background: var(--ledger-bg, #fafafa);
+  min-height: 100vh;
+
+  // Isolation guarantee
+  isolation: isolate;
+  contain: layout style;
+}
+
+.header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ledger-border, #e0e0e0);
+
+  .title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ledger-text-primary, #333);
+    margin: 0;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+    color: var(--ledger-text-secondary, #666);
+    margin-top: 4px;
+  }
+}
+
+.actionBar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+
+  .searchSection {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex: 1;
+  }
+
+  .buttonGroup {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+.gridContainer {
+  border: 1px solid var(--ledger-border, #e0e0e0);
+  border-radius: 4px;
+  background: white;
+  overflow: hidden;
+
+  // Prevent style inheritance issues
+  all: initial;
+  font-family: inherit;
+
+  .dataGrid {
+    min-height: 400px;
+
+    // Scoped Material-UI overrides
+    :global(.MuiDataGrid-root) {
+      border: none;
+
+      .MuiDataGrid-columnHeaders {
+        background-color: var(--ledger-header-bg, #f5f5f5);
+        border-bottom: 2px solid var(--ledger-primary, #1976d2);
+      }
+
+      .MuiDataGrid-row {
+        &:hover {
+          background-color: var(--ledger-row-hover, #f0f7ff);
+        }
+
+        &.Mui-selected {
+          background-color: var(--ledger-row-selected, #e3f2fd);
+        }
+      }
+    }
+  }
+}
+
+.errorMessage {
+  color: var(--ledger-error, #d32f2f);
+  background: var(--ledger-error-bg, #ffebee);
+  padding: 12px;
+  border-radius: 4px;
+  border-left: 4px solid var(--ledger-error, #d32f2f);
+  margin-bottom: 16px;
+}
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+
+  .spinner {
+    color: var(--ledger-primary, #1976d2);
+  }
+}
+
+// Responsive design within module
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .actionBar {
+    flex-direction: column;
+    gap: 12px;
+
+    .searchSection {
+      width: 100%;
+    }
+
+    .buttonGroup {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+}
+```
+
+```typescript
+// ✅ CORRECT: Component implementation with CSS Modules
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Typography } from '@mui/material';
+import { DataGrid } from '@/shared/components/ui/data-display/DataGrid';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { Select } from '@/shared/components/ui/form/Select';
+import { WorkIcon } from '@mui/icons-material';
+
+// CSS Modules import
+import styles from './PositionStatusPage.module.scss';
+
+interface PositionStatusPageProps {
+  className?: string;
+}
+
+const PositionStatusPage: React.FC<PositionStatusPageProps> = ({
+  className
+}) => {
+  const [positions, setPositions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Combine external className with module styles
+  const containerClass = `${styles.container} ${className || ''}`;
+
+  return (
+    <PageContainer className={containerClass}>
+      <PageHeader
+        title="[200] 직책 현황"
+        icon={<WorkIcon />}
+        description="직책별 현황 및 관리자 정보를 조회하고 관리합니다."
+        className={styles.header}
+      />
+
+      <div className={styles.actionBar}>
+        <div className={styles.searchSection}>
+          <Typography variant="body2" className={styles.label}>
+            책무번호:
+          </Typography>
+          <Select
+            size="small"
+            placeholder="선택하세요"
+            className={styles.select}
+          />
+          <Button
+            variant="contained"
+            size="small"
+            className={styles.searchButton}
+          >
+            조회
+          </Button>
+        </div>
+
+        <div className={styles.buttonGroup}>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            className={styles.excelButton}
+          >
+            엑셀 다운로드
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            className={styles.createButton}
+          >
+            등록
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            className={styles.deleteButton}
+          >
+            삭제
+          </Button>
+        </div>
+      </div>
+
+      {error && (
+        <div className={styles.errorMessage}>
+          {error}
+        </div>
+      )}
+
+      <div className={styles.gridContainer}>
+        <DataGrid
+          data={positions}
+          columns={columns}
+          loading={loading}
+          className={styles.dataGrid}
+        />
+      </div>
+    </PageContainer>
+  );
+};
+
+export default PositionStatusPage;
+```
+
+#### 2. **Component-Level Style Isolation**
+
+- **ALWAYS** create separate module files for each component
+- **ALWAYS** use CSS custom properties for theming within modules
+- **ALWAYS** scope global overrides with `:global()` selector
+- **ALWAYS** prevent style leakage with CSS containment
+
+```scss
+// ✅ CORRECT: PositionDialog.module.scss
+.dialog {
+  // Component isolation
+  isolation: isolate;
+  contain: layout style;
+
+  // CSS custom properties for theming
+  --dialog-primary: var(--ledger-primary, #1976d2);
+  --dialog-border: var(--ledger-border, #e0e0e0);
+  --dialog-bg: white;
+  --dialog-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  // Scoped Material-UI overrides
+  :global(.MuiDialog-paper) {
+    border-top: 3px solid var(--dialog-primary);
+    box-shadow: var(--dialog-shadow);
+    max-width: 800px;
+    width: 90vw;
+  }
+
+  :global(.MuiDialogTitle-root) {
+    background: linear-gradient(135deg, var(--dialog-primary) 0%, #1565c0 100%);
+    color: white;
+    padding: 16px 24px;
+
+    .titleIcon {
+      margin-right: 8px;
+      font-size: 1.25rem;
+    }
+  }
+}
+
+.content {
+  padding: 24px;
+
+  .formSection {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .sectionTitle {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--dialog-primary);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--dialog-border);
+    }
+
+    .fieldGroup {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+
+      .field {
+        display: flex;
+        flex-direction: column;
+
+        .label {
+          font-weight: 500;
+          margin-bottom: 4px;
+          color: #333;
+        }
+
+        .required {
+          color: #d32f2f;
+          margin-left: 4px;
+        }
+      }
+    }
+  }
+}
+
+.actions {
+  padding: 16px 24px;
+  border-top: 1px solid var(--dialog-border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  background: #fafafa;
+
+  .button {
+    min-width: 80px;
+
+    &.primary {
+      background: var(--dialog-primary);
+
+      &:hover {
+        background: #1565c0;
+      }
+    }
+
+    &.secondary {
+      border: 1px solid var(--dialog-border);
+      background: white;
+
+      &:hover {
+        background: #f5f5f5;
+      }
+    }
+  }
+}
+
+// Error and loading states
+.errorState {
+  color: #d32f2f;
+  background: #ffebee;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin: 16px 0;
+  border-left: 4px solid #d32f2f;
+}
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+```
+
+#### 3. **Global Style Override Pattern**
+
+- **ALWAYS** use `:global()` for Material-UI component overrides
+- **ALWAYS** scope global overrides to specific modules
+- **ALWAYS** maintain specificity without using `!important`
+- **ALWAYS** document global overrides for maintainability
+
+```scss
+// ✅ CORRECT: Global overrides within modules
+.dataGridWrapper {
+  // Scoped global overrides for Material-UI DataGrid
+  :global(.MuiDataGrid-root) {
+    border: none;
+    font-family: 'Roboto', sans-serif;
+
+    // Header styling
+    .MuiDataGrid-columnHeaders {
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+      border-bottom: 2px solid var(--ledger-primary, #1976d2);
+
+      .MuiDataGrid-columnHeader {
+        &:focus {
+          outline: 2px solid var(--ledger-primary, #1976d2);
+          outline-offset: -2px;
+        }
+      }
+
+      .MuiDataGrid-columnHeaderTitle {
+        font-weight: 600;
+        color: #333;
+      }
+    }
+
+    // Row styling
+    .MuiDataGrid-row {
+      &:nth-of-type(even) {
+        background-color: #fafafa;
+      }
+
+      &:hover {
+        background-color: var(--ledger-row-hover, #f0f7ff);
+      }
+
+      &.Mui-selected {
+        background-color: var(--ledger-row-selected, #e3f2fd);
+
+        &:hover {
+          background-color: var(--ledger-row-selected-hover, #bbdefb);
+        }
+      }
+    }
+
+    // Cell styling
+    .MuiDataGrid-cell {
+      border-bottom: 1px solid #e0e0e0;
+
+      &:focus {
+        outline: 2px solid var(--ledger-primary, #1976d2);
+        outline-offset: -2px;
+      }
+
+      // Action cell styling
+      &.actionCell {
+        .MuiButton-root {
+          margin: 0 2px;
+          min-width: 60px;
+          font-size: 0.75rem;
+        }
+      }
+    }
+
+    // Footer styling
+    .MuiDataGrid-footerContainer {
+      border-top: 2px solid var(--ledger-primary, #1976d2);
+      background: #f5f5f5;
+    }
+  }
+}
+
+// Button overrides within module scope
+.buttonOverrides {
+  :global(.MuiButton-root) {
+    &.ledger-primary {
+      background: linear-gradient(135deg, var(--ledger-primary, #1976d2) 0%, #1565c0 100%);
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+
+      &:hover {
+        background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+      }
+
+      &:disabled {
+        background: #e0e0e0;
+        color: #9e9e9e;
+        box-shadow: none;
+      }
+    }
+
+    &.ledger-secondary {
+      border: 2px solid var(--ledger-primary, #1976d2);
+      color: var(--ledger-primary, #1976d2);
+      background: white;
+
+      &:hover {
+        background: var(--ledger-primary, #1976d2);
+        color: white;
+      }
+    }
+  }
+}
+```
+
+### ❌ FORBIDDEN PRACTICES - NEVER DO
+
+#### 1. **Style Leakage Violations**
+
+- **NEVER** use global CSS classes without module scoping
+- **NEVER** modify shared CSS files for component-specific styling
+- **NEVER** use `!important` to override styles
+- **NEVER** create style dependencies between unrelated modules
+
+```scss
+// ❌ WRONG: Global style contamination
+// assets/scss/style.css (NEVER modify for component needs)
+.position-page {
+  // This affects ALL elements with this class globally!
+  padding: 24px;
+}
+
+.btn {
+  // NEVER add component-specific styles to global classes
+  &.position-btn {
+    background: #1976d2 !important; // NEVER use !important
+  }
+}
+
+// ❌ WRONG: Unscoped global overrides
+.MuiDataGrid-root {
+  // This affects ALL DataGrids in the entire application!
+  border: none;
+}
+```
+
+```scss
+// ❌ WRONG: Cross-module dependencies
+// PositionStatusPage.module.scss
+.container {
+  // NEVER depend on classes from other modules
+  .inquiry-button {
+    // This creates coupling with inquiry domain!
+    margin-left: 10px;
+  }
+
+  // NEVER reference other module classes
+  @import '../inquiry/InquiryPage.module.scss'; // Wrong!
+}
+```
+
+#### 2. **Naming Convention Violations**
+
+- **NEVER** use kebab-case in CSS Modules (use camelCase)
+- **NEVER** use generic class names that could conflict
+- **NEVER** use abbreviated or unclear class names
+- **NEVER** mix naming conventions within the same module
+
+```scss
+// ❌ WRONG: Poor naming conventions
+.pos-page { // Too abbreviated
+  .btn-grp { // Unclear abbreviation
+    .primary-btn { // kebab-case instead of camelCase
+      // ...
+    }
+  }
+}
+
+.container { // Too generic
+  .item { // Too generic
+    .data { // Too generic
+      // ...
+    }
+  }
+}
+```
+
+#### 3. **Module Structure Violations**
+
+- **NEVER** create monolithic CSS modules for multiple components
+- **NEVER** share module files between unrelated components
+- **NEVER** nest component modules deeply without organization
+- **NEVER** mix regular CSS with CSS Modules in the same file
+
+```scss
+// ❌ WRONG: Monolithic module file
+// LedgerDomain.module.scss (NEVER create domain-wide modules)
+.positionPage { /* ... */ }
+.responsibilityPage { /* ... */ }
+.meetingPage { /* ... */ }
+.positionDialog { /* ... */ }
+.responsibilityDialog { /* ... */ }
+// This file becomes unmaintainable!
+```
+
+## 🛠️ IMPLEMENTATION PATTERNS
+
+### Pattern 1: Modular Theme System
+
+```scss
+// ✅ CORRECT: Theme variables within modules
+// shared/styles/themes/ledger-theme.module.scss
+:export {
+  primary: #1976d2;
+  secondary: #424242;
+  success: #4caf50;
+  error: #d32f2f;
+  warning: #ff9800;
+  info: #2196f3;
+
+  spacingXs: 4px;
+  spacingSm: 8px;
+  spacingMd: 16px;
+  spacingLg: 24px;
+  spacingXl: 32px;
+
+  borderRadius: 4px;
+  borderRadiusLg: 8px;
+
+  fontFamily: 'Roboto, sans-serif';
+  fontSizeSmall: 0.875rem;
+  fontSizeMedium: 1rem;
+  fontSizeLarge: 1.25rem;
+}
+```
+
+```typescript
+// ✅ CORRECT: Using theme in components
+import themeVars from '@/shared/styles/themes/ledger-theme.module.scss';
+import styles from './PositionCard.module.scss';
+
+const PositionCard: React.FC<PositionCardProps> = ({ position }) => {
+  const cardStyle = {
+    '--card-primary': themeVars.primary,
+    '--card-spacing': themeVars.spacingMd,
+    '--card-border-radius': themeVars.borderRadius,
+  } as React.CSSProperties;
+
+  return (
+    <div className={styles.card} style={cardStyle}>
+      {/* Card content */}
+    </div>
+  );
+};
+```
+
+### Pattern 2: Responsive Module Design
+
+```scss
+// ✅ CORRECT: Responsive design within modules
+// PositionStatusPage.module.scss
+.container {
+  padding: var(--spacing-lg, 24px);
+
+  // Mobile-first approach
+  @media (max-width: 768px) {
+    padding: var(--spacing-md, 16px);
+  }
+
+  @media (max-width: 480px) {
+    padding: var(--spacing-sm, 8px);
+  }
+}
+
+.actionBar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--spacing-md, 16px);
+  align-items: center;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm, 8px);
+  }
+
+  .searchSection {
+    display: flex;
+    gap: var(--spacing-sm, 8px);
+    align-items: center;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+
+  .buttonGroup {
+    display: flex;
+    gap: var(--spacing-xs, 4px);
+
+    @media (max-width: 768px) {
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 480px) {
+      justify-content: stretch;
+
+      .button {
+        flex: 1;
+      }
+    }
+  }
+}
+```
+
+### Pattern 3: Animation and Transition Modules
+
+```scss
+// ✅ CORRECT: Animation within modules
+// DialogTransitions.module.scss
+.dialogEnter {
+  opacity: 0;
+  transform: scale(0.8) translateY(-20px);
+}
+
+.dialogEnterActive {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dialogExit {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.dialogExitActive {
+  opacity: 0;
+  transform: scale(0.8) translateY(-20px);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.slideInFromRight {
+  animation: slideInFromRight 300ms ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.fadeIn {
+  animation: fadeIn 200ms ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+```
+
+## 📊 QUALITY GATES & VALIDATION
+
+### Pre-Implementation Checklist
+
+Before implementing CSS Modules, **MUST** verify:
+
+- [ ] **File Structure**: Module files co-located with components
+- [ ] **Naming Convention**: camelCase for all class names
+- [ ] **Scope Isolation**: No global class dependencies
+- [ ] **Theme Integration**: CSS custom properties used for theming
+- [ ] **Responsive Design**: Mobile-first approach implemented
+
+### Post-Implementation Validation
+
+After CSS Modules implementation, **MUST** verify:
+
+- [ ] **Style Isolation**: No style bleeding to other components
+- [ ] **Performance**: No increase in bundle size or render time
+- [ ] **Maintainability**: Clear and logical class organization
+- [ ] **Accessibility**: Focus states and ARIA compliance maintained
+- [ ] **Browser Compatibility**: Styles work across target browsers
+
+## 🚨 DEBUGGING & TROUBLESHOOTING
+
+### Style Conflict Detection
+
+```typescript
+// ✅ CORRECT: Style conflict detection utility
+const detectStyleConflicts = () => {
+  const allStyleSheets = Array.from(document.styleSheets);
+  const globalRules: string[] = [];
+  const moduleRules: string[] = [];
+
+  allStyleSheets.forEach(sheet => {
+    try {
+      const rules = Array.from(sheet.cssRules || sheet.rules);
+      rules.forEach(rule => {
+        if (rule.type === CSSRule.STYLE_RULE) {
+          const styleRule = rule as CSSStyleRule;
+          const selector = styleRule.selectorText;
+
+          if (selector.includes('_') && selector.includes('__')) {
+            // CSS Modules generated class
+            moduleRules.push(selector);
+          } else {
+            // Global class
+            globalRules.push(selector);
+          }
+        }
+      });
+    } catch (e) {
+      // Cross-origin stylesheet, skip
+    }
+  });
+
+  // Check for potential conflicts
+  const conflicts = globalRules.filter(globalRule =>
+    moduleRules.some(moduleRule =>
+      moduleRule.includes(globalRule.replace(/[.#]/, ''))
+    )
+  );
+
+  if (conflicts.length > 0) {
+    console.warn('Potential style conflicts detected:', conflicts);
+  }
+
+  return conflicts;
+};
+```
+
+### Module Class Name Validation
+
+```typescript
+// ✅ CORRECT: Class name validation
+const validateModuleClassNames = (styles: Record<string, string>) => {
+  const invalidNames: string[] = [];
+
+  Object.keys(styles).forEach(className => {
+    // Check for kebab-case (should be camelCase)
+    if (className.includes('-')) {
+      invalidNames.push(`${className}: Use camelCase instead of kebab-case`);
+    }
+
+    // Check for generic names
+    const genericNames = ['container', 'wrapper', 'item', 'content', 'box'];
+    if (genericNames.includes(className)) {
+      invalidNames.push(`${className}: Too generic, use more specific name`);
+    }
+
+    // Check for abbreviations
+    if (className.length < 3) {
+      invalidNames.push(`${className}: Too short, use descriptive name`);
+    }
+  });
+
+  if (invalidNames.length > 0) {
+    console.warn('Invalid CSS Module class names:', invalidNames);
+  }
+
+  return invalidNames;
+};
+```
+
+---
+
+**Remember**: **CSS Modules are only effective when properly isolated**. Every style must be scoped, every override must be contained, and every module must be independent.
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,1199 @@
+# Domain Context State Management & Redux Isolation Rules
+
+## 🎯 PRIMARY OBJECTIVE
+
+You are a **State Architecture Specialist** responsible for implementing domain-specific Context-based state management to eliminate cross-domain state contamination and reduce Redux dependencies. Your mission is to achieve **complete state isolation** between domains while maintaining optimal performance.
+
+## 📋 CRITICAL IMPERATIVES - MUST FOLLOW
+
+### ✅ MANDATORY PRACTICES
+
+#### 1. **Domain Context Structure Pattern**
+
+- **ALWAYS** create separate Context providers for each domain
+- **ALWAYS** use TypeScript for complete type safety in contexts
+- **ALWAYS** implement proper error boundaries for context consumers
+- **ALWAYS** optimize context performance with useMemo and useCallback
+
+```typescript
+// ✅ CORRECT: Domain-specific context structure
+// domains/ledgermngt/context/LedgerContext.tsx
+import React, { createContext, useContext, useReducer, useMemo, useCallback, ReactNode } from 'react';
+
+// Domain-specific types
+interface Position {
+  id: number;
+  name: string;
+  departmentId: number;
+  responsibilities: string[];
+  adminCount: number;
+  status: 'active' | 'inactive' | 'pending';
+}
+
+interface LedgerOrder {
+  id: string;
+  name: string;
+  year: number;
+  quarter: number;
+  status: 'draft' | 'confirmed' | 'finalized';
+}
+
+interface LedgerState {
+  // UI State
+  selectedLedgerOrder: string;
+  filterOptions: {
+    department: string;
+    status: string;
+    dateRange: [Date | null, Date | null];
+  };
+
+  // Data State
+  positions: Position[];
+  ledgerOrders: LedgerOrder[];
+
+  // Loading States
+  loading: {
+    positions: boolean;
+    ledgerOrders: boolean;
+    saving: boolean;
+  };
+
+  // Error States
+  errors: {
+    positions: string | null;
+    ledgerOrders: string | null;
+    general: string | null;
+  };
+
+  // Cache State
+  cache: {
+    lastFetch: Date | null;
+    invalidateAt: Date | null;
+  };
+}
+
+// Action types with complete type safety
+type LedgerAction =
+  | { type: 'SET_SELECTED_LEDGER_ORDER'; payload: string }
+  | { type: 'UPDATE_FILTER_OPTIONS'; payload: Partial<LedgerState['filterOptions']> }
+  | { type: 'SET_POSITIONS'; payload: Position[] }
+  | { type: 'ADD_POSITION'; payload: Position }
+  | { type: 'UPDATE_POSITION'; payload: { id: number; updates: Partial<Position> } }
+  | { type: 'DELETE_POSITION'; payload: number }
+  | { type: 'SET_LEDGER_ORDERS'; payload: LedgerOrder[] }
+  | { type: 'SET_LOADING'; payload: { key: keyof LedgerState['loading']; value: boolean } }
+  | { type: 'SET_ERROR'; payload: { key: keyof LedgerState['errors']; value: string | null } }
+  | { type: 'CLEAR_ERRORS' }
+  | { type: 'INVALIDATE_CACHE' }
+  | { type: 'RESET_STATE' };
+
+// Initial state
+const initialLedgerState: LedgerState = {
+  selectedLedgerOrder: '',
+  filterOptions: {
+    department: '',
+    status: '',
+    dateRange: [null, null],
+  },
+  positions: [],
+  ledgerOrders: [],
+  loading: {
+    positions: false,
+    ledgerOrders: false,
+    saving: false,
+  },
+  errors: {
+    positions: null,
+    ledgerOrders: null,
+    general: null,
+  },
+  cache: {
+    lastFetch: null,
+    invalidateAt: null,
+  },
+};
+
+// Reducer with comprehensive state management
+const ledgerReducer = (state: LedgerState, action: LedgerAction): LedgerState => {
+  switch (action.type) {
+    case 'SET_SELECTED_LEDGER_ORDER':
+      return {
+        ...state,
+        selectedLedgerOrder: action.payload,
+        // Clear related errors when selection changes
+        errors: {
+          ...state.errors,
+          positions: null,
+        },
+      };
+
+    case 'UPDATE_FILTER_OPTIONS':
+      return {
+        ...state,
+        filterOptions: {
+          ...state.filterOptions,
+          ...action.payload,
+        },
+      };
+
+    case 'SET_POSITIONS':
+      return {
+        ...state,
+        positions: action.payload,
+        loading: {
+          ...state.loading,
+          positions: false,
+        },
+        errors: {
+          ...state.errors,
+          positions: null,
+        },
+        cache: {
+          ...state.cache,
+          lastFetch: new Date(),
+          invalidateAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+        },
+      };
+
+    case 'ADD_POSITION':
+      return {
+        ...state,
+        positions: [...state.positions, action.payload],
+      };
+
+    case 'UPDATE_POSITION':
+      return {
+        ...state,
+        positions: state.positions.map(position =>
+          position.id === action.payload.id
+            ? { ...position, ...action.payload.updates }
+            : position
+        ),
+      };
+
+    case 'DELETE_POSITION':
+      return {
+        ...state,
+        positions: state.positions.filter(position => position.id !== action.payload),
+      };
+
+    case 'SET_LEDGER_ORDERS':
+      return {
+        ...state,
+        ledgerOrders: action.payload,
+        loading: {
+          ...state.loading,
+          ledgerOrders: false,
+        },
+        errors: {
+          ...state.errors,
+          ledgerOrders: null,
+        },
+      };
+
+    case 'SET_LOADING':
+      return {
+        ...state,
+        loading: {
+          ...state.loading,
+          [action.payload.key]: action.payload.value,
+        },
+      };
+
+    case 'SET_ERROR':
+      return {
+        ...state,
+        errors: {
+          ...state.errors,
+          [action.payload.key]: action.payload.value,
+        },
+        loading: {
+          ...state.loading,
+          positions: false,
+          ledgerOrders: false,
+          saving: false,
+        },
+      };
+
+    case 'CLEAR_ERRORS':
+      return {
+        ...state,
+        errors: {
+          positions: null,
+          ledgerOrders: null,
+          general: null,
+        },
+      };
+
+    case 'INVALIDATE_CACHE':
+      return {
+        ...state,
+        cache: {
+          lastFetch: null,
+          invalidateAt: null,
+        },
+      };
+
+    case 'RESET_STATE':
+      return initialLedgerState;
+
+    default:
+      return state;
+  }
+};
+
+// Context interface with complete API
+interface LedgerContextType {
+  // State
+  state: LedgerState;
+
+  // UI Actions
+  setSelectedLedgerOrder: (orderId: string) => void;
+  updateFilterOptions: (options: Partial<LedgerState['filterOptions']>) => void;
+  clearErrors: () => void;
+  resetState: () => void;
+
+  // Data Actions
+  setPositions: (positions: Position[]) => void;
+  addPosition: (position: Position) => void;
+  updatePosition: (id: number, updates: Partial<Position>) => void;
+  deletePosition: (id: number) => void;
+  setLedgerOrders: (orders: LedgerOrder[]) => void;
+
+  // Loading Actions
+  setLoading: (key: keyof LedgerState['loading'], value: boolean) => void;
+  setError: (key: keyof LedgerState['errors'], value: string | null) => void;
+
+  // Cache Actions
+  invalidateCache: () => void;
+  isCacheValid: () => boolean;
+
+  // Computed Values
+  filteredPositions: Position[];
+  selectedLedgerOrderData: LedgerOrder | null;
+  hasErrors: boolean;
+  isLoading: boolean;
+}
+
+// Create context with proper typing
+const LedgerContext = createContext<LedgerContextType | undefined>(undefined);
+
+// Provider component with performance optimizations
+interface LedgerProviderProps {
+  children: ReactNode;
+  initialState?: Partial<LedgerState>;
+}
+
+export const LedgerProvider: React.FC<LedgerProviderProps> = ({
+  children,
+  initialState
+}) => {
+  const [state, dispatch] = useReducer(
+    ledgerReducer,
+    initialState ? { ...initialLedgerState, ...initialState } : initialLedgerState
+  );
+
+  // Memoized action creators to prevent unnecessary re-renders
+  const setSelectedLedgerOrder = useCallback((orderId: string) => {
+    dispatch({ type: 'SET_SELECTED_LEDGER_ORDER', payload: orderId });
+  }, []);
+
+  const updateFilterOptions = useCallback((options: Partial<LedgerState['filterOptions']>) => {
+    dispatch({ type: 'UPDATE_FILTER_OPTIONS', payload: options });
+  }, []);
+
+  const clearErrors = useCallback(() => {
+    dispatch({ type: 'CLEAR_ERRORS' });
+  }, []);
+
+  const resetState = useCallback(() => {
+    dispatch({ type: 'RESET_STATE' });
+  }, []);
+
+  const setPositions = useCallback((positions: Position[]) => {
+    dispatch({ type: 'SET_POSITIONS', payload: positions });
+  }, []);
+
+  const addPosition = useCallback((position: Position) => {
+    dispatch({ type: 'ADD_POSITION', payload: position });
+  }, []);
+
+  const updatePosition = useCallback((id: number, updates: Partial<Position>) => {
+    dispatch({ type: 'UPDATE_POSITION', payload: { id, updates } });
+  }, []);
+
+  const deletePosition = useCallback((id: number) => {
+    dispatch({ type: 'DELETE_POSITION', payload: id });
+  }, []);
+
+  const setLedgerOrders = useCallback((orders: LedgerOrder[]) => {
+    dispatch({ type: 'SET_LEDGER_ORDERS', payload: orders });
+  }, []);
+
+  const setLoading = useCallback((key: keyof LedgerState['loading'], value: boolean) => {
+    dispatch({ type: 'SET_LOADING', payload: { key, value } });
+  }, []);
+
+  const setError = useCallback((key: keyof LedgerState['errors'], value: string | null) => {
+    dispatch({ type: 'SET_ERROR', payload: { key, value } });
+  }, []);
+
+  const invalidateCache = useCallback(() => {
+    dispatch({ type: 'INVALIDATE_CACHE' });
+  }, []);
+
+  // Memoized computed values
+  const isCacheValid = useCallback(() => {
+    if (!state.cache.invalidateAt) return false;
+    return new Date() < state.cache.invalidateAt;
+  }, [state.cache.invalidateAt]);
+
+  const filteredPositions = useMemo(() => {
+    let filtered = state.positions;
+
+    if (state.filterOptions.department) {
+      filtered = filtered.filter(position =>
+        position.departmentId.toString() === state.filterOptions.department
+      );
+    }
+
+    if (state.filterOptions.status) {
+      filtered = filtered.filter(position =>
+        position.status === state.filterOptions.status
+      );
+    }
+
+    return filtered;
+  }, [state.positions, state.filterOptions]);
+
+  const selectedLedgerOrderData = useMemo(() => {
+    return state.ledgerOrders.find(order => order.id === state.selectedLedgerOrder) || null;
+  }, [state.ledgerOrders, state.selectedLedgerOrder]);
+
+  const hasErrors = useMemo(() => {
+    return Object.values(state.errors).some(error => error !== null);
+  }, [state.errors]);
+
+  const isLoading = useMemo(() => {
+    return Object.values(state.loading).some(loading => loading);
+  }, [state.loading]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo<LedgerContextType>(() => ({
+    state,
+    setSelectedLedgerOrder,
+    updateFilterOptions,
+    clearErrors,
+    resetState,
+    setPositions,
+    addPosition,
+    updatePosition,
+    deletePosition,
+    setLedgerOrders,
+    setLoading,
+    setError,
+    invalidateCache,
+    isCacheValid,
+    filteredPositions,
+    selectedLedgerOrderData,
+    hasErrors,
+    isLoading,
+  }), [
+    state,
+    setSelectedLedgerOrder,
+    updateFilterOptions,
+    clearErrors,
+    resetState,
+    setPositions,
+    addPosition,
+    updatePosition,
+    deletePosition,
+    setLedgerOrders,
+    setLoading,
+    setError,
+    invalidateCache,
+    isCacheValid,
+    filteredPositions,
+    selectedLedgerOrderData,
+    hasErrors,
+    isLoading,
+  ]);
+
+  return (
+    <LedgerContext.Provider value={contextValue}>
+      {children}
+    </LedgerContext.Provider>
+  );
+};
+
+// Custom hook with error handling
+export const useLedgerContext = (): LedgerContextType => {
+  const context = useContext(LedgerContext);
+
+  if (context === undefined) {
+    throw new Error('useLedgerContext must be used within a LedgerProvider');
+  }
+
+  return context;
+};
+
+// Selective hooks for performance optimization
+export const useLedgerState = () => {
+  const { state } = useLedgerContext();
+  return state;
+};
+
+export const useLedgerActions = () => {
+  const {
+    setSelectedLedgerOrder,
+    updateFilterOptions,
+    clearErrors,
+    resetState,
+    setPositions,
+    addPosition,
+    updatePosition,
+    deletePosition,
+    setLedgerOrders,
+    setLoading,
+    setError,
+    invalidateCache,
+  } = useLedgerContext();
+
+  return {
+    setSelectedLedgerOrder,
+    updateFilterOptions,
+    clearErrors,
+    resetState,
+    setPositions,
+    addPosition,
+    updatePosition,
+    deletePosition,
+    setLedgerOrders,
+    setLoading,
+    setError,
+    invalidateCache,
+  };
+};
+
+export const useLedgerComputed = () => {
+  const {
+    filteredPositions,
+    selectedLedgerOrderData,
+    hasErrors,
+    isLoading,
+    isCacheValid,
+  } = useLedgerContext();
+
+  return {
+    filteredPositions,
+    selectedLedgerOrderData,
+    hasErrors,
+    isLoading,
+    isCacheValid,
+  };
+};
+```
+
+#### 2. **Context Integration with API Layer**
+
+- **ALWAYS** integrate Context with domain-specific API services
+- **ALWAYS** implement proper error handling and loading states
+- **ALWAYS** use optimistic updates where appropriate
+- **ALWAYS** implement caching and invalidation strategies
+
+```typescript
+// ✅ CORRECT: Context integration with API services
+// domains/ledgermngt/hooks/useLedgerAPI.ts
+import { useCallback } from 'react';
+import { useLedgerContext } from '../context/LedgerContext';
+import { positionApi } from '../api/positionApi';
+import { ledgerOrderApi } from '../api/ledgerOrderApi';
+
+export const useLedgerAPI = () => {
+  const {
+    setPositions,
+    addPosition,
+    updatePosition,
+    deletePosition,
+    setLedgerOrders,
+    setLoading,
+    setError,
+    isCacheValid,
+    invalidateCache,
+  } = useLedgerContext();
+
+  // Fetch positions with caching
+  const fetchPositions = useCallback(async (force = false) => {
+    if (!force && isCacheValid()) {
+      return; // Use cached data
+    }
+
+    setLoading('positions', true);
+    setError('positions', null);
+
+    try {
+      const positions = await positionApi.getList();
+      setPositions(positions);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch positions';
+      setError('positions', errorMessage);
+    } finally {
+      setLoading('positions', false);
+    }
+  }, [setPositions, setLoading, setError, isCacheValid]);
+
+  // Create position with optimistic update
+  const createPosition = useCallback(async (positionData: Omit<Position, 'id'>) => {
+    setLoading('saving', true);
+    setError('general', null);
+
+    // Optimistic update
+    const tempId = Date.now();
+    const optimisticPosition: Position = {
+      ...positionData,
+      id: tempId,
+    };
+    addPosition(optimisticPosition);
+
+    try {
+      const createdPosition = await positionApi.create(positionData);
+
+      // Replace optimistic update with real data
+      deletePosition(tempId);
+      addPosition(createdPosition);
+
+      return createdPosition;
+    } catch (error) {
+      // Rollback optimistic update
+      deletePosition(tempId);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create position';
+      setError('general', errorMessage);
+      throw error;
+    } finally {
+      setLoading('saving', false);
+    }
+  }, [addPosition, deletePosition, setLoading, setError]);
+
+  // Update position with optimistic update
+  const updatePositionData = useCallback(async (
+    id: number,
+    updates: Partial<Position>
+  ) => {
+    setLoading('saving', true);
+    setError('general', null);
+
+    // Store original data for rollback
+    const originalPosition = positions.find(p => p.id === id);
+    if (!originalPosition) {
+      setError('general', 'Position not found');
+      setLoading('saving', false);
+      return;
+    }
+
+    // Optimistic update
+    updatePosition(id, updates);
+
+    try {
+      const updatedPosition = await positionApi.update(id, updates);
+
+      // Update with server response
+      updatePosition(id, updatedPosition);
+
+      return updatedPosition;
+    } catch (error) {
+      // Rollback optimistic update
+      updatePosition(id, originalPosition);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update position';
+      setError('general', errorMessage);
+      throw error;
+    } finally {
+      setLoading('saving', false);
+    }
+  }, [updatePosition, setLoading, setError]);
+
+  // Delete position with optimistic update
+  const deletePositionData = useCallback(async (id: number) => {
+    setLoading('saving', true);
+    setError('general', null);
+
+    // Store original data for rollback
+    const originalPosition = positions.find(p => p.id === id);
+    if (!originalPosition) {
+      setError('general', 'Position not found');
+      setLoading('saving', false);
+      return;
+    }
+
+    // Optimistic update
+    deletePosition(id);
+
+    try {
+      await positionApi.delete(id);
+      // Position already removed optimistically
+    } catch (error) {
+      // Rollback optimistic update
+      addPosition(originalPosition);
+
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete position';
+      setError('general', errorMessage);
+      throw error;
+    } finally {
+      setLoading('saving', false);
+    }
+  }, [deletePosition, addPosition, setLoading, setError]);
+
+  // Fetch ledger orders
+  const fetchLedgerOrders = useCallback(async () => {
+    setLoading('ledgerOrders', true);
+    setError('ledgerOrders', null);
+
+    try {
+      const orders = await ledgerOrderApi.getList();
+      setLedgerOrders(orders);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch ledger orders';
+      setError('ledgerOrders', errorMessage);
+    } finally {
+      setLoading('ledgerOrders', false);
+    }
+  }, [setLedgerOrders, setLoading, setError]);
+
+  // Invalidate and refresh all data
+  const refreshData = useCallback(async () => {
+    invalidateCache();
+    await Promise.all([
+      fetchPositions(true),
+      fetchLedgerOrders(),
+    ]);
+  }, [invalidateCache, fetchPositions, fetchLedgerOrders]);
+
+  return {
+    fetchPositions,
+    createPosition,
+    updatePosition: updatePositionData,
+    deletePosition: deletePositionData,
+    fetchLedgerOrders,
+    refreshData,
+  };
+};
+```
+
+#### 3. **Context Provider Composition Pattern**
+
+- **ALWAYS** compose multiple domain contexts when needed
+- **ALWAYS** maintain clear provider hierarchy
+- **ALWAYS** implement context error boundaries
+- **ALWAYS** optimize provider re-renders
+
+```typescript
+// ✅ CORRECT: Context provider composition
+// domains/ledgermngt/context/LedgerProviders.tsx
+import React, { ReactNode } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
+import { LedgerProvider } from './LedgerContext';
+import { LedgerUIProvider } from './LedgerUIContext';
+import { LedgerNotificationProvider } from './LedgerNotificationContext';
+
+interface LedgerProvidersProps {
+  children: ReactNode;
+}
+
+// Error fallback component
+const LedgerErrorFallback: React.FC<{ error: Error; resetErrorBoundary: () => void }> = ({
+  error,
+  resetErrorBoundary,
+}) => (
+  <div className="ledger-error-boundary">
+    <h2>원장 관리 시스템 오류</h2>
+    <p>원장 관리 기능에서 오류가 발생했습니다.</p>
+    <details style={{ whiteSpace: 'pre-wrap' }}>
+      <summary>오류 상세 정보</summary>
+      {error.message}
+    </details>
+    <button onClick={resetErrorBoundary}>다시 시도</button>
+  </div>
+);
+
+// Composed providers with error boundary
+export const LedgerProviders: React.FC<LedgerProvidersProps> = ({ children }) => {
+  return (
+    <ErrorBoundary
+      FallbackComponent={LedgerErrorFallback}
+      onError={(error, errorInfo) => {
+        // Log error to monitoring service
+        console.error('Ledger Context Error:', error, errorInfo);
+      }}
+      onReset={() => {
+        // Reset any global state if needed
+        window.location.reload();
+      }}
+    >
+      <LedgerProvider>
+        <LedgerUIProvider>
+          <LedgerNotificationProvider>
+            {children}
+          </LedgerNotificationProvider>
+        </LedgerUIProvider>
+      </LedgerProvider>
+    </ErrorBoundary>
+  );
+};
+
+// Domain-specific UI context
+// domains/ledgermngt/context/LedgerUIContext.tsx
+interface LedgerUIState {
+  sidebarCollapsed: boolean;
+  activeTab: string;
+  dialogStates: {
+    positionDialog: boolean;
+    responsibilityDialog: boolean;
+    confirmDialog: boolean;
+  };
+  tableSettings: {
+    pageSize: number;
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+    filters: Record<string, any>;
+  };
+}
+
+interface LedgerUIContextType {
+  uiState: LedgerUIState;
+  toggleSidebar: () => void;
+  setActiveTab: (tab: string) => void;
+  openDialog: (dialog: keyof LedgerUIState['dialogStates']) => void;
+  closeDialog: (dialog: keyof LedgerUIState['dialogStates']) => void;
+  updateTableSettings: (settings: Partial<LedgerUIState['tableSettings']>) => void;
+  resetUIState: () => void;
+}
+
+const LedgerUIContext = createContext<LedgerUIContextType | undefined>(undefined);
+
+export const LedgerUIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [uiState, setUIState] = useState<LedgerUIState>({
+    sidebarCollapsed: false,
+    activeTab: 'positions',
+    dialogStates: {
+      positionDialog: false,
+      responsibilityDialog: false,
+      confirmDialog: false,
+    },
+    tableSettings: {
+      pageSize: 20,
+      sortBy: 'name',
+      sortOrder: 'asc',
+      filters: {},
+    },
+  });
+
+  const toggleSidebar = useCallback(() => {
+    setUIState(prev => ({
+      ...prev,
+      sidebarCollapsed: !prev.sidebarCollapsed,
+    }));
+  }, []);
+
+  const setActiveTab = useCallback((tab: string) => {
+    setUIState(prev => ({
+      ...prev,
+      activeTab: tab,
+    }));
+  }, []);
+
+  const openDialog = useCallback((dialog: keyof LedgerUIState['dialogStates']) => {
+    setUIState(prev => ({
+      ...prev,
+      dialogStates: {
+        ...prev.dialogStates,
+        [dialog]: true,
+      },
+    }));
+  }, []);
+
+  const closeDialog = useCallback((dialog: keyof LedgerUIState['dialogStates']) => {
+    setUIState(prev => ({
+      ...prev,
+      dialogStates: {
+        ...prev.dialogStates,
+        [dialog]: false,
+      },
+    }));
+  }, []);
+
+  const updateTableSettings = useCallback((settings: Partial<LedgerUIState['tableSettings']>) => {
+    setUIState(prev => ({
+      ...prev,
+      tableSettings: {
+        ...prev.tableSettings,
+        ...settings,
+      },
+    }));
+  }, []);
+
+  const resetUIState = useCallback(() => {
+    setUIState({
+      sidebarCollapsed: false,
+      activeTab: 'positions',
+      dialogStates: {
+        positionDialog: false,
+        responsibilityDialog: false,
+        confirmDialog: false,
+      },
+      tableSettings: {
+        pageSize: 20,
+        sortBy: 'name',
+        sortOrder: 'asc',
+        filters: {},
+      },
+    });
+  }, []);
+
+  const contextValue = useMemo<LedgerUIContextType>(() => ({
+    uiState,
+    toggleSidebar,
+    setActiveTab,
+    openDialog,
+    closeDialog,
+    updateTableSettings,
+    resetUIState,
+  }), [
+    uiState,
+    toggleSidebar,
+    setActiveTab,
+    openDialog,
+    closeDialog,
+    updateTableSettings,
+    resetUIState,
+  ]);
+
+  return (
+    <LedgerUIContext.Provider value={contextValue}>
+      {children}
+    </LedgerUIContext.Provider>
+  );
+};
+
+export const useLedgerUI = (): LedgerUIContextType => {
+  const context = useContext(LedgerUIContext);
+
+  if (context === undefined) {
+    throw new Error('useLedgerUI must be used within a LedgerUIProvider');
+  }
+
+  return context;
+};
+```
+
+### ❌ FORBIDDEN PRACTICES - NEVER DO
+
+#### 1. **Cross-Domain State Dependencies**
+
+- **NEVER** access other domain contexts from within a domain
+- **NEVER** share state between unrelated domains through context
+- **NEVER** create circular dependencies between domain contexts
+- **NEVER** use global Redux for domain-specific UI state
+
+```typescript
+// ❌ WRONG: Cross-domain context dependencies
+// domains/ledgermngt/context/LedgerContext.tsx
+import { useInquiryContext } from '../inquiry/context/InquiryContext'; // WRONG!
+
+const LedgerProvider = ({ children }) => {
+  // NEVER access other domain contexts
+  const { inquiryData } = useInquiryContext(); // This breaks isolation!
+
+  // ...
+};
+
+// ❌ WRONG: Sharing state between domains
+interface LedgerState {
+  // NEVER include other domain state
+  inquirySettings: InquirySettings; // Wrong!
+  meetingPreferences: MeetingPreferences; // Wrong!
+}
+
+// ❌ WRONG: Global Redux for domain UI state
+// store/uiSlice.ts
+interface GlobalUIState {
+  // NEVER put domain-specific UI state in global store
+  ledgerSidebarCollapsed: boolean; // Wrong!
+  inquiryTableFilters: any; // Wrong!
+}
+```
+
+#### 2. **Context Performance Violations**
+
+- **NEVER** create contexts without proper memoization
+- **NEVER** pass non-memoized objects or functions as context values
+- **NEVER** create overly broad contexts that cause unnecessary re-renders
+- **NEVER** ignore context performance optimization
+
+```typescript
+// ❌ WRONG: Non-memoized context value
+const BadLedgerProvider = ({ children }) => {
+  const [state, setState] = useState(initialState);
+
+  // NEVER create new objects on every render
+  const contextValue = {
+    state,
+    actions: {
+      updatePosition: (id, data) => { /* ... */ }, // New function every render!
+      deletePosition: (id) => { /* ... */ }, // New function every render!
+    },
+    computed: {
+      filteredPositions: state.positions.filter(/* ... */), // Computed every render!
+    },
+  };
+
+  return (
+    <LedgerContext.Provider value={contextValue}>
+      {children}
+    </LedgerContext.Provider>
+  );
+};
+
+// ❌ WRONG: Overly broad context
+interface MassiveContextType {
+  // NEVER combine unrelated concerns
+  positionState: PositionState;
+  responsibilityState: ResponsibilityState;
+  meetingState: MeetingState;
+  uiState: UIState;
+  apiState: APIState;
+  // This causes unnecessary re-renders!
+}
+```
+
+#### 3. **Context Structure Violations**
+
+- **NEVER** create contexts without proper TypeScript typing
+- **NEVER** use contexts outside their intended provider scope
+- **NEVER** create contexts without error handling
+- **NEVER** mix different concerns in a single context
+
+```typescript
+// ❌ WRONG: No TypeScript typing
+const BadContext = createContext(); // No type safety!
+
+const useBadContext = () => {
+  const context = useContext(BadContext);
+  // No type checking, no error handling!
+  return context;
+};
+
+// ❌ WRONG: Mixed concerns in single context
+interface BadContextType {
+  // NEVER mix data, UI, and API concerns
+  positions: Position[]; // Data concern
+  sidebarCollapsed: boolean; // UI concern
+  apiClient: ApiClient; // API concern
+  theme: Theme; // Theme concern
+  // These should be separate contexts!
+}
+```
+
+## 🛠️ IMPLEMENTATION PATTERNS
+
+### Pattern 1: Context Composition with Hooks
+
+```typescript
+// ✅ CORRECT: Composed context hooks
+// domains/ledgermngt/hooks/useLedger.ts
+export const useLedger = () => {
+  const dataContext = useLedgerContext();
+  const uiContext = useLedgerUI();
+  const apiHooks = useLedgerAPI();
+
+  return {
+    // Data access
+    ...dataContext,
+
+    // UI controls
+    ui: uiContext,
+
+    // API operations
+    api: apiHooks,
+
+    // Composed operations
+    refreshAll: async () => {
+      uiContext.resetUIState();
+      await apiHooks.refreshData();
+    },
+
+    createPositionWithUI: async (data: Omit<Position, 'id'>) => {
+      uiContext.openDialog('positionDialog');
+      try {
+        const result = await apiHooks.createPosition(data);
+        uiContext.closeDialog('positionDialog');
+        return result;
+      } catch (error) {
+        // Dialog stays open for error handling
+        throw error;
+      }
+    },
+  };
+};
+```
+
+### Pattern 2: Context Persistence
+
+```typescript
+// ✅ CORRECT: Context state persistence
+// domains/ledgermngt/hooks/useLedgerPersistence.ts
+export const useLedgerPersistence = () => {
+  const { state, resetState } = useLedgerContext();
+  const { uiState, resetUIState } = useLedgerUI();
+
+  // Save state to localStorage
+  useEffect(() => {
+    const persistedState = {
+      selectedLedgerOrder: state.selectedLedgerOrder,
+      filterOptions: state.filterOptions,
+      uiSettings: {
+        activeTab: uiState.activeTab,
+        tableSettings: uiState.tableSettings,
+      },
+    };
+
+    localStorage.setItem('ledger-context-state', JSON.stringify(persistedState));
+  }, [state.selectedLedgerOrder, state.filterOptions, uiState.activeTab, uiState.tableSettings]);
+
+  // Restore state from localStorage
+  const restoreState = useCallback(() => {
+    try {
+      const saved = localStorage.getItem('ledger-context-state');
+      if (saved) {
+        const parsedState = JSON.parse(saved);
+        // Restore state through context actions
+        setSelectedLedgerOrder(parsedState.selectedLedgerOrder);
+        updateFilterOptions(parsedState.filterOptions);
+        setActiveTab(parsedState.uiSettings.activeTab);
+        updateTableSettings(parsedState.uiSettings.tableSettings);
+      }
+    } catch (error) {
+      console.warn('Failed to restore ledger context state:', error);
+      // Clear corrupted data
+      localStorage.removeItem('ledger-context-state');
+    }
+  }, []);
+
+  // Clear persisted state
+  const clearPersistedState = useCallback(() => {
+    localStorage.removeItem('ledger-context-state');
+    resetState();
+    resetUIState();
+  }, [resetState, resetUIState]);
+
+  return {
+    restoreState,
+    clearPersistedState,
+  };
+};
+```
+
+### Pattern 3: Context Testing Utilities
+
+```typescript
+// ✅ CORRECT: Context testing utilities
+// domains/ledgermngt/context/__tests__/LedgerContext.test.tsx
+import { renderHook, act } from '@testing-library/react';
+import { LedgerProvider, useLedgerContext } from '../LedgerContext';
+
+// Test wrapper
+const createWrapper = (initialState?: Partial<LedgerState>) => {
+  return ({ children }: { children: React.ReactNode }) => (
+    <LedgerProvider initialState={initialState}>
+      {children}
+    </LedgerProvider>
+  );
+};
+
+describe('LedgerContext', () => {
+  it('should provide initial state', () => {
+    const { result } = renderHook(() => useLedgerContext(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.state.selectedLedgerOrder).toBe('');
+    expect(result.current.state.positions).toEqual([]);
+    expect(result.current.state.loading.positions).toBe(false);
+  });
+
+  it('should update selected ledger order', () => {
+    const { result } = renderHook(() => useLedgerContext(), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.setSelectedLedgerOrder('2024-Q1');
+    });
+
+    expect(result.current.state.selectedLedgerOrder).toBe('2024-Q1');
+  });
+
+  it('should handle position operations', () => {
+    const { result } = renderHook(() => useLedgerContext(), {
+      wrapper: createWrapper(),
+    });
+
+    const newPosition: Position = {
+      id: 1,
+      name: 'Test Position',
+      departmentId: 1,
+      responsibilities: ['Test'],
+      adminCount: 1,
+      status: 'active',
+    };
+
+    act(() => {
+      result.current.addPosition(newPosition);
+    });
+
+    expect(result.current.state.positions).toContain(newPosition);
+
+    act(() => {
+      result.current.updatePosition(1, { name: 'Updated Position' });
+    });
+
+    expect(result.current.state.positions[0].name).toBe('Updated Position');
+
+    act(() => {
+      result.current.deletePosition(1);
+    });
+
+    expect(result.current.state.positions).toHaveLength(0);
+  });
+});
+```
+
+## 📊 QUALITY GATES & VALIDATION
+
+### Pre-Implementation Checklist
+
+Before implementing Context-based state management, **MUST** verify:
+
+- [ ] **Domain Boundaries**: Context scope limited to single domain
+- [ ] **Type Safety**: Complete TypeScript interfaces defined
+- [ ] **Performance**: Memoization and optimization implemented
+- [ ] **Error Handling**: Error boundaries and fallbacks in place
+- [ ] **Testing**: Test utilities and coverage planned
+
+### Post-Implementation Validation
+
+After Context implementation, **MUST** verify:
+
+- [ ] **Isolation**: No cross-domain dependencies
+- [ ] **Performance**: No unnecessary re-renders
+- [ ] **Memory**: No memory leaks or context accumulation
+- [ ] **Persistence**: State persistence works correctly
+- [ ] **Error Recovery**: Error boundaries handle failures gracefully
+
+---
+
+**Remember**: **Context isolation is state isolation**. Every domain context must be completely independent and self-contained.
+description:
+globs:
+alwaysApply: false
+---

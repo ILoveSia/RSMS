@@ -8,8 +8,25 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { Box, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 
-interface ResponsibilityDetail {
-  id: string;
+// 백엔드 ApiResponse<T> DTO에 대응하는 타입
+interface ApiSuccessResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp?: string;
+}
+
+// 책무 데이터 타입
+export interface ResponsibilityData {
+  responsibilityId?: string;
+  responsibilityContent: string;
+  details: ResponsibilityDetail[];
+}
+
+// 책무 상세 데이터 타입
+export interface ResponsibilityDetail {
+  id?: string; // 프론트엔드에서 사용하는 임시 ID
+  responsibilityDetailId?: string; // 백엔드 ID
   responsibilityDetailContent: string;
   keyManagementTasks: string;
   relatedBasis: string;
@@ -52,49 +69,143 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  // 책무 데이터 조회
-  React.useEffect(() => {
-    const fetchResponsibility = async () => {
-      if (responsibilityId && open) {
-        try {
-          setLoading(true);
-          // TODO: API 호출로 책무 데이터 조회
-          const data = {
-            responsibilityContent: '테스트 책무',
-            details: [
-              {
-                id: '1',
-                responsibilityDetailContent: '테스트 세부내용',
-                keyManagementTasks: '테스트 관리업무',
-                relatedBasis: '테스트 근거',
-              },
-            ],
-          };
-          setFormData(data);
-        } catch (err) {
-          console.error('책무 조회 실패:', err);
-        } finally {
-          setLoading(false);
+  const getDialogTitle = () => {
+    switch (mode) {
+      case 'create':
+        return '책무 등록';
+      case 'edit':
+        return '책무 수정';
+      case 'view':
+        return '책무 상세조회';
+      default:
+        return '책무';
+    }
+  };
+
+  // 데이터 초기화 및 로드
+  useEffect(() => {
+    console.log(
+      '[ResponsibilityDialog useEffect] open:',
+      open,
+      'mode:',
+      mode,
+      'responsibilityId:',
+      responsibilityId
+    );
+    const fetchDetails = async (id: string) => {
+      console.log('[ResponsibilityDialog] fetchDetails 시작 - id:', id);
+      setLoading(true);
+      setError(null);
+      try {
+        // 응답 데이터의 상세 타입 정의
+        type DetailResponseType = {
+          id: number;
+          responsibilityDetailContent: string;
+          keyManagementTasks: string;
+          relatedBasis: string;
+        };
+        // 전체 응답 데이터 타입 정의
+        type ResponseType = {
+          id: number;
+          responsibilityContent: string;
+          details: DetailResponseType[];
+        };
+
+        console.log('[ResponsibilityDialog] API 호출 시작 - URL:', `/api/responsibilities/${id}`);
+        const response = await apiClient.get<ApiSuccessResponse<ResponseType> | ResponseType>(`/api/responsibilities/${id}`);
+
+        console.log('[ResponsibilityDialog] API 응답:', response);
+
+        // ApiResponse 래퍼 구조인지 확인하여 적절히 처리
+        let fetchedData: ResponseType;
+        if (response && typeof response === 'object' && 'data' in response && 'success' in response) {
+          // ApiResponse 래퍼 구조인 경우
+          const apiResponse = response as ApiSuccessResponse<ResponseType>;
+          if (apiResponse.success && apiResponse.data) {
+            fetchedData = apiResponse.data;
+            console.log('[ResponsibilityDialog] ApiResponse 래퍼에서 데이터 추출:', fetchedData);
+          } else {
+            throw new Error(apiResponse.message || '데이터를 불러오는 데 실패했습니다.');
+          }
+        } else if (response) {
+          // 이미 unwrap된 데이터인 경우
+          fetchedData = response as ResponseType;
+          console.log('[ResponsibilityDialog] 직접 데이터 사용:', fetchedData);
+        } else {
+          throw new Error('데이터를 불러오는 데 실패했습니다.');
         }
-      } else if (mode === 'create') {
-        setFormData({
-          responsibilityContent: '',
-          details: [
-            {
-              id: '1',
-              responsibilityDetailContent: '',
-              keyManagementTasks: '',
-              relatedBasis: '',
-            },
-          ],
-        });
+
+        setResponsibilityContent(fetchedData.responsibilityContent);
+        setDetails(
+          fetchedData.details.map((d: DetailResponseType) => ({
+            id: String(d.id),
+            responsibilityDetailId: String(d.id),
+            responsibilityDetailContent: d.responsibilityDetailContent,
+            keyManagementTasks: d.keyManagementTasks,
+            relatedBasis: d.relatedBasis,
+          }))
+        );
+        console.log('[ResponsibilityDialog] 데이터 설정 완료');
+      } catch (err) {
+        const error = err as Error;
+        setError(error.message || '상세 정보를 불러오는 중 오류가 발생했습니다.');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchResponsibility();
-  }, [responsibilityId, open, mode]);
+    if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
+      console.log('[ResponsibilityDialog useEffect] fetchDetails 호출 조건 만족:', {
+        mode,
+        responsibilityId,
+        open,
+      });
+      fetchDetails(responsibilityId.toString());
+    } else {
+      console.log('[ResponsibilityDialog useEffect] fetchDetails 호출 조건 불만족:', {
+        mode,
+        responsibilityId,
+        open,
+      });
+    }
 
-  // 폼 검증
+    if (open) {
+      setResponsibilityContent('');
+      setDetails([
+        {
+          id: `temp-${Date.now()}`,
+          responsibilityDetailContent: '',
+          keyManagementTasks: '',
+          relatedBasis: '',
+        },
+      ]);
+    }
+  }, [open, mode, responsibilityId]);
+
+  // 상세 항목 추가
+  const addDetail = () => {
+    setDetails(prev => [
+      ...prev,
+      {
+        id: `temp-${Date.now()}`,
+        responsibilityDetailContent: '',
+        keyManagementTasks: '',
+        relatedBasis: '',
+      },
+    ]);
+  };
+
+  // 상세 항목 제거
+  const removeDetail = (id: string) => {
+    setDetails(prev => prev.filter(d => d.id !== id));
+  };
+
+  // 상세 항목 입력 변경
+  const handleDetailChange = (id: string, field: keyof ResponsibilityDetail, value: string) => {
+    setDetails(prev => prev.map(d => (d.id === id ? { ...d, [field]: value } : d)));
+  };
+
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 

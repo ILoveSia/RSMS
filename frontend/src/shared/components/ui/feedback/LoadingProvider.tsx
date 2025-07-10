@@ -88,16 +88,18 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({
 
   // 로딩 진행률 업데이트
   const updateLoadingProgress = useCallback((progress: number, id?: string) => {
-    setLoadingStates(prev => prev.map(state => {
-      if (id) {
-        return state.id === id ? { ...state, progress } : state;
-      } else {
-        // ID가 없으면 가장 최근 로딩 상태 업데이트
-        return prev.length > 0 && state === prev[prev.length - 1]
-          ? { ...state, progress }
-          : state;
-      }
-    }));
+    setLoadingStates(prev =>
+      prev.map(state => {
+        if (id) {
+          return state.id === id ? { ...state, progress } : state;
+        } else {
+          // ID가 없으면 가장 최근 로딩 상태 업데이트
+          return prev.length > 0 && state === prev[prev.length - 1]
+            ? { ...state, progress }
+            : state;
+        }
+      })
+    );
   }, []);
 
   // 모든 로딩 상태 제거
@@ -151,15 +153,15 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({
           gap: 2,
         }}
       >
-        <CircularProgress color="inherit" size={60} />
+        <CircularProgress color='inherit' size={60} />
         {currentLoadingState?.message && (
-          <Typography variant="body1" color="inherit">
+          <Typography variant='body1' color='inherit'>
             {currentLoadingState.message}
           </Typography>
         )}
         {currentLoadingState?.progress !== undefined && (
           <Box sx={{ width: '300px', mt: 2 }}>
-            <Typography variant="caption" color="inherit" textAlign="center" display="block">
+            <Typography variant='caption' color='inherit' textAlign='center' display='block'>
               {Math.round(currentLoadingState.progress)}%
             </Typography>
           </Box>
@@ -229,11 +231,11 @@ export const useApiLoading = () => {
   const { showLoading, hideLoading } = useLoading();
 
   const executeWithLoading = useCallback(
-    async <T>(
+    async function <T>(
       apiCall: () => Promise<T>,
       message?: string,
       onProgress?: (progress: number) => void
-    ): Promise<T> => {
+    ): Promise<T> {
       const loadingId = showLoading(message);
 
       try {

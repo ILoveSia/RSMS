@@ -1,11 +1,9 @@
 import DepartmentSearchPopup, { type Department } from '@/app/components/DepartmentSearchPopup';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/app/components/EmployeeSearchPopup';
 import { Confirm } from '@/shared/components/modal';
-import type { DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Button } from '@/shared/components/ui/button';
-import { ComboBox } from '@/shared/components/ui/form';
+import { Button, DataGrid, Select } from '@/shared/components/ui';
 import { Box } from '@mui/material';
-import { DataGrid, type GridColDef, type GridRenderCellParams, type GridRowSelectionModel } from '@mui/x-data-grid';
+import { type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -324,19 +322,23 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             borderRadius: '4px',
           }}
         >
-          <ComboBox
-            label="원장차수"
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
+          <Select
             value={selectedLedgerOrder}
-            onChange={(value) => setSelectedLedgerOrder(value as string)}
-            options={ledgerOrderOptions}
-            size="small"
-            sx={{ minWidth: '200px' }}  // 너비 조정
+            onChange={value => setSelectedLedgerOrder(value as string)}
+            size='small'
+            sx={{ minWidth: 150, maxWidth: 200 }}
+            options={[
+              { value: '', label: '전체' },
+              ...(ledgerOrderOptions.length > 0
+                ? ledgerOrderOptions.map(option => ({
+                    value: option.value,
+                    label: option.label,
+                  }))
+                : [{ value: '', label: '데이터 로딩 중...', disabled: true }]),
+            ]}
           />
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleSearch}
-          >
+          <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
             조회
           </Button>
           <Button
@@ -346,6 +348,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             onClick={() => {
               /* 차수생성 로직 미구현 */
             }}
+            color='success'
           >
             책무번호생성
           </Button>
@@ -357,6 +360,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
               onClick={() => {
                 /* 확정 로직 미구현 */
               }}
+              color='success'
             >
               확정
             </Button>
@@ -367,6 +371,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
               onClick={() => {
                 /* 확정취소 로직 미구현 */
               }}
+              color='error'
             >
               확정취소
             </Button>
@@ -387,32 +392,38 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = (): React.JSX.Ele
             size="small"
             color="primary"
             onClick={handleCreateClick}
+            color='primary'
             sx={{ mr: 1 }}
           >
             등록
           </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="error"
-            onClick={handleDelete}
-          >
+          <Button variant='contained' size='small' onClick={handleDelete} color='error'>
             삭제
           </Button>
         </Box>
         <Box sx={{ height: '600px', width: '100%' }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
-            rows={rows}
-            columns={positionColumns}
+            data={rows}
+            columns={positionColumns.map(col => ({
+              field: col.field,
+              headerName: col.headerName,
+              width: col.width,
+              flex: col.flex,
+              sortable: col.sortable,
+              align: col.align,
+              renderCell: col.renderCell,
+            }))}
             loading={loading}
-            getRowId={row => row.positionsId}
-            checkboxSelection
-            onRowSelectionModelChange={handleRowSelectionChange}
-            rowSelectionModel={selectedIds}
-            disableRowSelectionOnClick
+            height={error ? 'calc(100% - 30px)' : '100%'}
+            selectable={true}
+            multiSelect={true}
+            selectedRows={selectedIds}
+            onRowSelectionChange={selectedRows => {
+              setSelectedIds(selectedRows.map(id => Number(id)));
+            }}
+            rowIdField='positionsId'
             sx={{
-              height: error ? 'calc(100% - 30px)' : '100%',
               width: '100%',
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary) !important',

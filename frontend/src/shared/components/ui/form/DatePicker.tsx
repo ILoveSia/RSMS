@@ -15,6 +15,10 @@ import {
     useTheme,
 } from '@mui/material';
 import React, { forwardRef, useState } from 'react';
+import type { DatePickerProps as DatePickerPropsType } from './types';
+
+// DatePicker 컴포넌트 자체 Props 타입 정의
+export interface DatePickerProps extends DatePickerPropsType {}
 
 /**
  * DatePicker 컴포넌트

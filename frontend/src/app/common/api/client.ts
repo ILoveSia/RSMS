@@ -39,6 +39,7 @@ export interface ApiError {
 export interface RequestOptions extends RequestInit {
   timeout?: number;
   skipAuth?: boolean;
+  params?: Record<string, string | number>;
 }
 
 /**
@@ -63,12 +64,23 @@ class ApiClient {
   /**
    * API URL 생성
    * @param endpoint - API 엔드포인트
+   * @param params - 쿼리 파라미터
    * @returns 완전한 API URL
    */
-  private createUrl(endpoint: string): string {
+  private createUrl(endpoint: string, params?: Record<string, string | number>): string {
     const cleanBaseUrl = this.baseUrl.replace(/\/$/, '');
     const cleanEndpoint = endpoint.replace(/^\//, '');
-    return `${cleanBaseUrl}/${cleanEndpoint}`;
+    let url = `${cleanBaseUrl}/${cleanEndpoint}`;
+
+    if (params && Object.keys(params).length > 0) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        searchParams.append(key, String(value));
+      });
+      url += `?${searchParams.toString()}`;
+    }
+
+    return url;
   }
 
   /**
@@ -189,25 +201,26 @@ class ApiClient {
    * @returns 응답 데이터
    */
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const url = this.createUrl(endpoint);
+    const { params, ...requestOptions } = options;
+    const url = this.createUrl(endpoint, params);
     const timeout = options.timeout || this.defaultTimeout;
     const controller = this.createAbortController(timeout);
 
-    const requestOptions: RequestInit = {
-      ...options,
-      headers: this.createHeaders(options),
+    const finalRequestOptions: RequestInit = {
+      ...requestOptions,
+      headers: this.createHeaders(requestOptions),
       credentials: 'include', // 세션 쿠키 포함
       signal: controller.signal,
     };
 
     logger.debug('API 요청 시작:', {
-      method: options.method || 'GET',
+      method: requestOptions.method || 'GET',
       url,
-      options: requestOptions,
+      options: finalRequestOptions,
     });
 
     try {
-      const response = await fetch(url, requestOptions);
+      const response = await fetch(url, finalRequestOptions);
       return await this.handleResponse<T>(response);
     } catch (error) {
       this.handleError(error, endpoint);

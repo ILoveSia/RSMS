@@ -1,7 +1,7 @@
 /**
  * 탭 시스템 관련 타입 정의
  */
-import { ComponentType, ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 /**
  * 개별 탭 정보

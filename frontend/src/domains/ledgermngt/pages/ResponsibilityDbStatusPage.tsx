@@ -1,18 +1,10 @@
 /**
  * 책무 DB 현황 페이지 컴포넌트
  */
-import { ErrorDialog } from '@/app/components/ErrorDialog';
-import { Button } from '@/shared/components/ui/button';
-import { ComboBox } from '@/shared/components/ui/form';
-import type { SelectOption } from '@/shared/types/common';
+import { Button, DataGrid, Select } from '@/shared/components/ui';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  Box,
-  InputAdornment,
-  TextField,
-} from '@mui/material';
+import { Box, InputAdornment, TextField } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -222,23 +214,25 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = (
     setDialogOpen(true);
   }, []);
 
-  // '책무' 셀 클릭 시 상세조회 다이얼로그 오픈
-  const handleResponsibilityCellClick = useCallback((responsibilityId: string) => {
-    console.log(
-      '[ResponsibilityDbStatusPage] 책무 셀 클릭 - responsibilityId:',
-      responsibilityId
-    );
-    setSelectedResponsibilityId(Number(responsibilityId));
-    setDialogMode('view');
-    setDialogOpen(true);
-  }, []);
+    // '책무' 셀 클릭 시 상세조회 다이얼로그 오픈 (성능 최적화)
+    const handleResponsibilityCellClick = useCallback((responsibilityId: number) => {
+      console.log(
+        '[ResponsibilityDbStatusPage] 책무 셀 클릭 - responsibilityId:',
+        responsibilityId
+      );
+      // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
+      setSelectedResponsibilityId(responsibilityId);
+      setDialogMode('view');
+      setDialogOpen(true);
+      console.log('[ResponsibilityDbStatusPage] 다이얼로그 상태 업데이트 완료');
+    }, []);
 
-  // 다이얼로그 닫기
-  const handleDialogClose = useCallback(() => {
-    console.log('[ResponsibilityDbStatusPage] 다이얼로그 닫기');
-    setDialogOpen(false);
-    setSelectedResponsibilityId(null);
-  }, []);
+    // 다이얼로그 닫기 (성능 최적화)
+    const handleDialogClose = useCallback(() => {
+      console.log('[ResponsibilityDbStatusPage] 다이얼로그 닫기');
+      setDialogOpen(false);
+      setSelectedResponsibilityId(null);
+    }, []);
 
   // 다이얼로그 저장
   const handleDialogSave = useCallback(() => {
@@ -253,12 +247,87 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = (
     setDialogMode(newMode);
   }, []);
 
-  // 원장차수 변경 핸들러
-  const handleLedgerOrderChange = useCallback((value: SelectOption | string | SelectOption[] | string[] | null) => {
-    if (value && typeof value === 'object' && !Array.isArray(value) && 'value' in value) {
-      setLedgerOrder(value.value);
-    }
-  }, []);
+    // 엑셀 다운로드 핸들러 (성능 최적화)
+    const handleExcelDownload = useCallback(async () => {
+      console.log('[ResponsibilityDbStatusPage] 엑셀 다운로드 시작 - rows 개수:', rows.length);
+
+      if (!rows || rows.length === 0) {
+        setError('엑셀로 내보낼 데이터가 없습니다.');
+        return;
+      }
+
+      try {
+        // ExcelJS 워크북 생성
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('책무 DB 현황');
+
+        // 헤더 설정
+        const headers = [
+          '책무 ID',
+          '책무',
+          '책무 세부내용 ID',
+          '책무 세부내용',
+          '책무이행을 위한 주요 관리업무',
+          '관련 근거',
+          '등록일자',
+          '최종수정일자',
+        ];
+        worksheet.addRow(headers);
+
+        // 헤더 스타일 설정
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFB0C4DE' }, // lightsteelblue
+        };
+
+        // 데이터 추가
+        rows.forEach(row => {
+          worksheet.addRow([
+            row.responsibilityId,
+            row.responsibilityContent,
+            row.responsibilityDetailId,
+            row.responsibilityDetailContent,
+            row.responsibilityMgtSts,
+            row.responsibilityRelEvid,
+            dayjs(row.createdAt).format('YYYY.MM.DD'),
+            dayjs(row.updatedAt).format('YYYY.MM.DD'),
+          ]);
+        });
+
+        // 컬럼 너비 자동 조정
+        worksheet.columns.forEach(column => {
+          column.width = Math.max(column.width || 0, 15);
+        });
+
+        // 파일 생성 및 다운로드
+        const excelBuffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([excelBuffer], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        saveAs(blob, `책무_DB_현황_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+        console.log('[ResponsibilityDbStatusPage] 엑셀 다운로드 완료');
+      } catch (error) {
+        console.error('[ResponsibilityDbStatusPage] 엑셀 다운로드 실패:', error);
+        setError('엑셀 다운로드 중 오류가 발생했습니다.');
+      }
+    }, [rows]);
+
+    // 검색 텍스트 변경 핸들러 (성능 최적화)
+    const handleSearchTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchText(e.target.value);
+    }, []);
+
+    console.log(
+      '[ResponsibilityDbStatusPage] 렌더링 - rows 개수:',
+      rows.length,
+      'loading:',
+      loading,
+      'error:',
+      error
+    );
 
   return (
     <div
@@ -270,119 +339,146 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = (
       </div>
       <div className='responsibility-divider'></div>
 
-      <div className='responsibility-section' style={{ marginTop: '20px' }}>
-        {/* 필터 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          padding: '8px 16px',
-          mb: 2,
-          bgcolor: 'var(--bank-bg-secondary)',
-          borderRadius: 1,
-          border: '1px solid var(--bank-border)',
-          alignItems: 'center'
-        }}>
-          <ComboBox
-            label="원장차수"
-            value={ledgerOrderOptions.find(option => option.value === ledgerOrder) || null}
-            options={ledgerOrderOptions}
-            onChange={handleLedgerOrderChange}
-            size="small"
-            sx={{ minWidth: '200px' }}
-          />
-          <TextField
-            size="small"
-            placeholder="책무 ID 검색"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            sx={{ width: '200px' }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleSearch}
-          >
-            조회
-          </Button>
-        </Box>
-
-        {/* 버튼 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: 1,
-          mb: 1,
-          justifyContent: 'flex-end'
-        }}>
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            onClick={() => {/* TODO: 엑셀 업로드 기능 구현 */}}
-          >
-            엑셀 업로드
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="success"
-            onClick={handleExcelDownload}
-          >
-            엑셀 다운로드
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleCreateClick}
-          >
-            등록
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="error"
-            onClick={() => {/* TODO: 삭제 기능 구현 */}}
-          >
-            삭제
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="warning"
-            onClick={() => {/* TODO: 변경이력 기능 구현 */}}
-          >
-            변경이력
-          </Button>
-        </Box>
-
-        {/* 그리드 영역 */}
-        <Box sx={{ height: 'calc(100vh - 300px)', width: '100%', mt: 1 }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            loading={loading}
-            hideFooterPagination
-            hideFooter
-            disableColumnMenu
-            disableRowSelectionOnClick
-            getRowId={(row) => row.responsibilityId}
+        <div
+          className='responsibility-section'
+          style={{ marginTop: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}
+        >
+          {/* 필터 영역 */}
+          <Box
             sx={{
-              '& .wrap-text': {
-                whiteSpace: 'normal',
-                lineHeight: '1.2',
-                padding: '8px',
-              },
+              display: 'flex',
+              gap: '8px',
+              marginBottom: '16px',
+              alignItems: 'center',
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #e9ecef',
+              padding: '8px 16px',
+              borderRadius: '4px',
             }}
-          />
-        </Box>
+          >
+            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>원장차수</span>
+            <Select
+              value={ledgerOrder}
+              onChange={value => setLedgerOrder(value as string)}
+              size='small'
+              sx={{ minWidth: 120, maxWidth: 180 }}
+              options={[{ value: '2024-001', label: '2024-001(직책확정)' }]}
+            />
+            <span
+              style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
+            >
+              책무 ID
+            </span>
+            <TextField
+              size='small'
+              variant='outlined'
+              placeholder='텍스트 입력'
+              value={searchText}
+              onChange={handleSearchTextChange}
+              sx={{ backgroundColor: 'white' }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position='end'>
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Box sx={{ flexGrow: 1 }} />
+            <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
+              조회
+            </Button>
+          </Box>
 
-        {/* 다이얼로그 */}
+          {/* 버튼 영역 */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+            {/* <Button variant="contained" color="success" size="small" sx={{ mr: 1 }}>엑셀 업로드</Button> */}
+            <Button
+              variant='contained'
+              size='small'
+              color='success'
+              sx={{ mr: 1 }}
+              onClick={handleExcelDownload}
+            >
+              엑셀 다운로드
+            </Button>
+            <Button variant='contained' size='small' color='warning' sx={{ mr: 1 }}>
+              변경 이력
+            </Button>
+            <Button
+              variant='contained'
+              size='small'
+              color='primary'
+              sx={{ mr: 1 }}
+              onClick={handleCreateClick}
+            >
+              등록
+            </Button>
+            <Button variant='contained' size='small' color='error' sx={{ mr: 1 }}>
+              삭제
+            </Button>
+          </Box>
+
+          {/* 데이터 그리드 */}
+          <Box
+            sx={{
+              flex: 1,
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 400,
+            }}
+          >
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <DataGrid
+              className='responsibility-grid'
+              data={rows}
+              columns={columns as any}
+              loading={loading}
+              height='100%'
+              selectable={true}
+              multiSelect={false}
+              selectedRows={selectedResponsibilityId ? [selectedResponsibilityId] : []}
+              onRowSelectionChange={selectedRows => {
+                if (selectedRows.length > 0) {
+                  const selectedRow = rows.find(
+                    row => row.responsibilityDetailId === selectedRows[0]
+                  );
+                  setSelectedResponsibilityId(
+                    selectedRow ? Number(selectedRow.responsibilityId) : null
+                  );
+                } else {
+                  setSelectedResponsibilityId(null);
+                }
+              }}
+              rowIdField='responsibilityDetailId'
+              sx={{
+                flex: 1,
+                minHeight: 400,
+                '& .MuiDataGrid-cell.wrap-text': {
+                  whiteSpace: 'normal',
+                  lineHeight: '1.5 !important',
+                  wordWrap: 'break-word',
+                  py: 1,
+                },
+                '& .MuiDataGrid-columnHeader': {
+                  textAlign: 'center',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+                '& .MuiDataGrid-columnHeaderTitle': {
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                },
+                '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
+                  outline: 'none',
+                },
+              }}
+            />
+          </Box>
+        </div>
         <ResponsibilityDialog
           open={dialogOpen}
           mode={dialogMode}

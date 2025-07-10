@@ -1,6 +1,6 @@
-import { Box, Button, Paper, Typography } from '@mui/material';
+import { Button, DataGrid } from '@/shared/components/ui';
+import { Box, Paper, Typography } from '@mui/material';
 import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
 import React, { useState } from 'react';
 
 // 1. 테스트용 컬럼 정의
@@ -56,20 +56,31 @@ const TestGrid = (): React.JSX.Element => {
 
         {/* 가장 간단한 방법: autoHeight 사용 */}
         <DataGrid
-          rows={rows}
-          columns={columns}
-          checkboxSelection
+          data={rows}
+          columns={columns.map(col => ({
+            field: col.field,
+            headerName: col.headerName,
+            width: col.width,
+            flex: col.flex,
+            sortable: col.sortable,
+            align: col.align,
+            renderCell: col.renderCell,
+          }))}
           autoHeight
-          onRowSelectionModelChange={newSelectionModel => {
-            setSelectionModel(newSelectionModel);
+          selectable={true}
+          multiSelect={true}
+          selectedRows={selectionModel}
+          onRowSelectionChange={selectedRows => {
+            setSelectionModel(selectedRows);
           }}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 10 },
-            },
+          pagination={{
+            page: 1,
+            pageSize: 10,
+            totalItems: rows.length,
+            totalPages: Math.ceil(rows.length / 10),
+            pageSizeOptions: [5, 10, 25],
           }}
-          pageSizeOptions={[5, 10, 25]}
-          disableRowSelectionOnClick
+          rowIdField='id'
           sx={{
             width: '100%',
             border: 1,

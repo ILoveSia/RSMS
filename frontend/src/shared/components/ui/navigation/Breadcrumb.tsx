@@ -1,7 +1,11 @@
 import { NavigateNext as NavigateNextIcon } from '@mui/icons-material';
 import { Box, Breadcrumbs, Link, Typography, useTheme } from '@mui/material';
 import { forwardRef } from 'react';
-import { BreadcrumbItem, BreadcrumbProps } from './types';
+import type { BreadcrumbItem as BreadcrumbItemType, BreadcrumbProps as BreadcrumbPropsType } from './types';
+
+// Breadcrumb 컴포넌트 자체 타입 정의
+export interface BreadcrumbItem extends BreadcrumbItemType {}
+export interface BreadcrumbProps extends BreadcrumbPropsType {}
 
 /**
  * Breadcrumb 컴포넌트

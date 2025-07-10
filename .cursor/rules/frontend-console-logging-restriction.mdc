@@ -1,0 +1,147 @@
+# Frontend Console Logging Restrictions
+
+## 🚫 PROHIBITED CONSOLE METHODS
+
+### ❌ NEVER USE These Console Methods in Frontend Code:
+
+- **`console.log()`** - Prohibited in all frontend code
+- **`console.debug()`** - Prohibited in all frontend code
+
+These methods should **NEVER** appear in production frontend code as they:
+
+- Create performance overhead in production
+- Expose sensitive information in browser console
+- Clutter the browser console with unnecessary output
+- Are not properly managed or filtered
+
+## ✅ ALLOWED CONSOLE METHODS
+
+### Permitted Console Methods (Use Sparingly):
+
+- **`console.error()`** - For critical error logging only
+- **`console.warn()`** - For important warnings only
+- **`console.info()`** - For essential information only (rare cases)
+
+## 🎯 RECOMMENDED ALTERNATIVES
+
+### 1. **Use Proper Logging System**
+
+```typescript
+// ❌ PROHIBITED
+console.log('User logged in:', userData);
+console.debug('API response:', response);
+
+// ✅ RECOMMENDED - Use the logger from environment config
+import { logger } from '@/app/config/environment';
+
+logger.info('User logged in successfully');
+logger.debug('API response received');
+```
+
+### 2. **Development-Only Logging**
+
+```typescript
+// ❌ PROHIBITED
+console.log('Debug info:', debugData);
+
+// ✅ RECOMMENDED - Use logger with environment check
+import { logger, isDevelopment } from '@/app/config/environment';
+
+if (isDevelopment()) {
+  logger.debug('Debug info:', debugData);
+}
+```
+
+### 3. **Error Handling**
+
+```typescript
+// ❌ PROHIBITED
+console.log('Error occurred:', error);
+
+// ✅ RECOMMENDED - Use proper error logging
+import { logger } from '@/app/config/environment';
+
+logger.error('Authentication failed:', error);
+```
+
+### 4. **API Debugging**
+
+```typescript
+// ❌ PROHIBITED
+console.log('API call:', endpoint, params);
+console.debug('Response:', response);
+
+// ✅ RECOMMENDED - Use structured logging
+import { logger } from '@/app/config/environment';
+
+logger.debug('API Request:', {
+  endpoint,
+  method: 'GET',
+  params,
+  timestamp: new Date().toISOString(),
+});
+```
+
+## 🔧 IMPLEMENTATION GUIDELINES
+
+### Before Committing Code:
+
+1. **Search and Remove** all instances of `console.log()` and `console.debug()`
+2. **Replace with Logger** - Use the centralized logging system
+3. **Environment Check** - Ensure debug logs only appear in development
+4. **Code Review** - Verify no console statements remain in production code
+
+### ESLint Configuration:
+
+```json
+{
+  "rules": {
+    "no-console": [
+      "error",
+      {
+        "allow": ["warn", "error", "info"]
+      }
+    ]
+  }
+}
+```
+
+## 📊 MONITORING AND COMPLIANCE
+
+### Pre-deployment Checklist:
+
+- [ ] No `console.log()` statements in frontend code
+- [ ] No `console.debug()` statements in frontend code
+- [ ] All logging uses the centralized logger system
+- [ ] Debug logs are environment-conditional
+- [ ] Error logs use appropriate log levels
+
+### Code Review Requirements:
+
+- **Reject** any pull request containing `console.log()` or `console.debug()`
+- **Require** proper logger usage for all logging needs
+- **Verify** environment-specific logging implementation
+
+## 🚨 EXCEPTIONS
+
+### Rare Acceptable Cases:
+
+- **Temporary debugging** during development (must be removed before commit)
+- **Third-party library debugging** (must be documented and time-limited)
+- **Critical production debugging** (requires team lead approval and immediate removal plan)
+
+### Documentation Required:
+
+- **Reason** for the exception
+- **Timeline** for removal
+- **Approval** from team lead
+- **Tracking** in issue management system
+
+---
+
+**Remember**: Clean, production-ready code should never contain `console.log()` or `console.debug()` statements. Always use the proper logging infrastructure.
+description:
+globs:
+alwaysApply: false
+
+---

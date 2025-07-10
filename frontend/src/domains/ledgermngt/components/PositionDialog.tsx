@@ -12,12 +12,35 @@ import type { MeetingBodySearchResult } from '@/app/components/MeetingBodySearch
 import MeetingBodySearchDialog from '@/app/components/MeetingBodySearchDialog';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import Alert from '@/shared/components/modal/Alert';
-import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
-import RemoveIcon from '@mui/icons-material/Remove';
-import SearchIcon from '@mui/icons-material/Search';
-import { Box, FormControl, IconButton, InputLabel, MenuItem, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import type { EmployeeSearchResult } from '@/domains/common/components/search';
+import {
+  DepartmentSearchPopup,
+  EmployeeSearchPopup,
+  type Department,
+} from '@/domains/common/components/search';
+import { MeetingBodySearchDialog } from '@/domains/common/components/search';
+import type { MeetingBodySearchResult } from '@/domains/common/components/search';
+import { Dialog } from '@/shared/components/modal';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  IconButton,
+  MenuItem,
+  Paper,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+} from '@mui/material';
+import React, { useEffect, useState } from 'react';
 
 // Domain Types
 interface OwnerDept {

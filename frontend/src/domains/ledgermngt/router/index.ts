@@ -115,45 +115,6 @@ const routes: DomainRoute[] = [
       description: '적부구조도 제출 관리 페이지',
     },
   },
-  // 테스트 페이지들 (숨김 메뉴)
-  {
-    path: '/ledgermngt/new-components-test',
-    element: NewComponentsTestPage,
-    meta: {
-      title: '새 컴포넌트 테스트',
-      requiresAuth: true,
-      roles: ['ADMIN'],
-      breadcrumb: ['적부구조 원장 관리', '새 컴포넌트 테스트'],
-      icon: 'Science',
-      description: '새로운 컴포넌트 테스트 페이지',
-      hidden: true,
-    },
-  },
-  {
-    path: '/ledgermngt/position-card-test',
-    element: PositionCardTestPage,
-    meta: {
-      title: '직책 카드 테스트',
-      requiresAuth: true,
-      roles: ['ADMIN'],
-      breadcrumb: ['적부구조 원장 관리', '직책 카드 테스트'],
-      icon: 'Science',
-      description: '직책 카드 컴포넌트 테스트 페이지',
-      hidden: true,
-    },
-  },
-  {
-    path: '/ledgermngt/executive-responsibility',
-    element: ExecutiveResponsibilityStatusPage,
-    meta: {
-      title: '임원별 책무 현황',
-      requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
-      breadcrumb: ['책무구조도 원장 관리', '임원별 책무 현황'],
-      icon: 'Work',
-      description: '임원별 책무 현황 관리 페이지',
-    },
-  },
 ];
 
 export default routes;

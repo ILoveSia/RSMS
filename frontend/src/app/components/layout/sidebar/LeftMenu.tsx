@@ -2,7 +2,7 @@ import { useTabContext } from '@/shared/context/TabContext';
 import { PageComponentMapper } from '@/shared/utils/pageComponentMapper';
 import React, { useEffect, useState } from 'react';
 import '../../../../assets/scss/style.css';
-import { useRouter } from '../../../router';
+
 import { useReduxState } from '../../../store/use-store';
 
 interface Menu {
@@ -46,7 +46,6 @@ interface LeftMenuProps {
 
 const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-  const router = useRouter();
   const { addTab } = useTabContext();
 
   // TabContext 디버깅
