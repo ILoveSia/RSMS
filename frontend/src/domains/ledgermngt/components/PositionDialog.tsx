@@ -6,32 +6,21 @@
  * - SOLID 원칙 준수
  * - 단일 책임 원칙 (SRP)에 따라 컴포넌트 분리
  */
-import type { Department } from '@/app/components/DepartmentSearchPopup';
-import DepartmentSearchPopup from '@/app/components/DepartmentSearchPopup';
-import type { MeetingBodySearchResult } from '@/app/components/MeetingBodySearchDialog';
-import MeetingBodySearchDialog from '@/app/components/MeetingBodySearchDialog';
+import DepartmentSearchPopup, { type Department } from '@/app/components/DepartmentSearchPopup';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import type { EmployeeSearchResult } from '@/domains/common/components/search';
-import {
-  DepartmentSearchPopup,
-  EmployeeSearchPopup,
-  type Department,
-} from '@/domains/common/components/search';
-import { MeetingBodySearchDialog } from '@/domains/common/components/search';
-import type { MeetingBodySearchResult } from '@/domains/common/components/search';
-import { Dialog } from '@/shared/components/modal';
-import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/common/components/search';
+import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
+import { Remove as RemoveIcon } from '@mui/icons-material';
 import {
   Alert,
   Box,
-  Button,
-  CircularProgress,
   FormControl,
   IconButton,
+  InputLabel,
   MenuItem,
-  Paper,
   Select,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -39,8 +28,9 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // Domain Types
 interface OwnerDept {
@@ -264,13 +254,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       <BaseDialog
         open={open}
         mode={mode}
-        title={`직책 ${mode === 'create' ? '등록' : mode === 'edit' ? '수정' : '조회'}`}
+        title={mode === 'create' ? '직책 등록' : mode === 'edit' ? '직책 수정' : '직책 상세'}
         onClose={onClose}
         onSave={handleSave}
         onModeChange={onChangeMode}
-        maxWidth="md"
         loading={loading}
-        disableSave={Object.keys(validationErrors).length > 0}
       >
         <Box component="form" noValidate sx={{ mt: 2 }}>
           {/* 기본 정보 섹션 */}
@@ -349,7 +337,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           onClick={() => setDeptSearchOpen(true)}
                           disabled={loading}
                         >
-                          <SearchIcon />
+                          {/* Assuming SearchIcon is available or will be added */}
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -404,7 +392,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           onClick={handleOpenMeetingSearch}
                           disabled={loading}
                         >
-                          <SearchIcon />
+                          {/* Assuming SearchIcon is available or will be added */}
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -435,12 +423,16 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       />
 
       {/* 성공 알림 */}
-      <Alert
+      <Snackbar
         open={showSuccessAlert}
-        severity="success"
+        autoHideDuration={2000}
         onClose={() => setShowSuccessAlert(false)}
-        message={`직책이 성공적으로 ${mode === 'create' ? '등록' : '수정'}되었습니다.`}
-      />
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity="success" onClose={() => setShowSuccessAlert(false)}>
+          {mode === 'create' ? '등록되었습니다.' : '수정되었습니다.'}
+        </Alert>
+      </Snackbar>
     </>
   );
 };

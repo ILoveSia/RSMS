@@ -11,16 +11,12 @@ import { DataGrid } from '@/shared/components/ui/data-display';
 import { Alert } from '@/shared/components/ui/feedback';
 import type { DataGridColumn } from '@/shared/types/common';
 import {
-  Box,
-  CircularProgress,
-  TextField,
+    Box,
+    CircularProgress,
+    TextField,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-<<<<<<<< HEAD:frontend/src/app/components/MeetingBodySearchDialog.tsx
-import { meetingStatusApi } from '../../domains/ledgermngt/api/meetingStatusApi';
-========
 import { meetingStatusApi } from '../../../ledgermngt/api/meetingStatusApi';
->>>>>>>> main:frontend/src/domains/common/components/search/MeetingBodySearchDialog.tsx
 
 export interface MeetingBodySearchDialogProps {
   open: boolean;

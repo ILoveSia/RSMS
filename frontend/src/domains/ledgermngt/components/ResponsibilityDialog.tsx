@@ -1,12 +1,13 @@
 /**
  * 책무 등록/수정/조회 다이얼로그 컴포넌트
  */
+import { apiClient } from '@/app/common/api/client';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Box, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
 interface ApiSuccessResponse<T> {
@@ -25,8 +26,8 @@ export interface ResponsibilityData {
 
 // 책무 상세 데이터 타입
 export interface ResponsibilityDetail {
-  id?: string; // 프론트엔드에서 사용하는 임시 ID
-  responsibilityDetailId?: string; // 백엔드 ID
+  id: string; // 프론트엔드에서 사용하는 임시 ID (required)
+  responsibilityDetailId?: string; // 백엔드 ID (optional)
   responsibilityDetailContent: string;
   keyManagementTasks: string;
   relatedBasis: string;
@@ -68,6 +69,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [error, setError] = useState<string | null>(null);
 
   const getDialogTitle = () => {
     switch (mode) {
@@ -135,16 +137,16 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           throw new Error('데이터를 불러오는 데 실패했습니다.');
         }
 
-        setResponsibilityContent(fetchedData.responsibilityContent);
-        setDetails(
-          fetchedData.details.map((d: DetailResponseType) => ({
+        setFormData({
+          responsibilityContent: fetchedData.responsibilityContent,
+          details: fetchedData.details.map((d: DetailResponseType) => ({
             id: String(d.id),
             responsibilityDetailId: String(d.id),
             responsibilityDetailContent: d.responsibilityDetailContent,
             keyManagementTasks: d.keyManagementTasks,
             relatedBasis: d.relatedBasis,
-          }))
-        );
+          })),
+        });
         console.log('[ResponsibilityDialog] 데이터 설정 완료');
       } catch (err) {
         const error = err as Error;
@@ -162,48 +164,45 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         open,
       });
       fetchDetails(responsibilityId.toString());
-    } else {
-      console.log('[ResponsibilityDialog useEffect] fetchDetails 호출 조건 불만족:', {
-        mode,
-        responsibilityId,
-        open,
+    } else if (open && mode === 'create') {
+      console.log('[ResponsibilityDialog useEffect] 새로운 폼 초기화');
+      setFormData({
+        responsibilityContent: '',
+        details: [
+          {
+            id: `temp-${Date.now()}`,
+            responsibilityDetailContent: '',
+            keyManagementTasks: '',
+            relatedBasis: '',
+          },
+        ],
       });
     }
+  }, [open, mode, responsibilityId]);
 
-    if (open) {
-      setResponsibilityContent('');
-      setDetails([
+  // 세부내용 추가
+  const addDetail = () => {
+    setFormData(prev => ({
+      ...prev,
+      details: [
+        ...prev.details,
         {
           id: `temp-${Date.now()}`,
           responsibilityDetailContent: '',
           keyManagementTasks: '',
           relatedBasis: '',
         },
-      ]);
-    }
-  }, [open, mode, responsibilityId]);
-
-  // 상세 항목 추가
-  const addDetail = () => {
-    setDetails(prev => [
-      ...prev,
-      {
-        id: `temp-${Date.now()}`,
-        responsibilityDetailContent: '',
-        keyManagementTasks: '',
-        relatedBasis: '',
-      },
-    ]);
+      ],
+    }));
   };
 
-  // 상세 항목 제거
+  // 세부내용 삭제
   const removeDetail = (id: string) => {
-    setDetails(prev => prev.filter(d => d.id !== id));
-  };
-
-  // 상세 항목 입력 변경
-  const handleDetailChange = (id: string, field: keyof ResponsibilityDetail, value: string) => {
-    setDetails(prev => prev.map(d => (d.id === id ? { ...d, [field]: value } : d)));
+    if (formData.details.length === 1) return;
+    setFormData(prev => ({
+      ...prev,
+      details: prev.details.filter(detail => detail.id !== id),
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -267,31 +266,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       details: prev.details.map(detail =>
         detail.id === id ? { ...detail, [field]: value } : detail
       ),
-    }));
-  };
-
-  // 세부내용 추가
-  const addDetail = () => {
-    setFormData(prev => ({
-      ...prev,
-      details: [
-        ...prev.details,
-        {
-          id: String(prev.details.length + 1),
-          responsibilityDetailContent: '',
-          keyManagementTasks: '',
-          relatedBasis: '',
-        },
-      ],
-    }));
-  };
-
-  // 세부내용 삭제
-  const removeDetail = (id: string) => {
-    if (formData.details.length === 1) return;
-    setFormData(prev => ({
-      ...prev,
-      details: prev.details.filter(detail => detail.id !== id),
     }));
   };
 
@@ -364,9 +338,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                           fullWidth
                           multiline
                           rows={2}
-                          value={detail.responsibilityDetailContent}
+                          value={detail.responsibilityDetailContent || ''}
                           onChange={(e) =>
-                            handleDetailChange(detail.id, 'responsibilityDetailContent', e.target.value)
+                            handleDetailChange(detail.id || '', 'responsibilityDetailContent', e.target.value)
                           }
                           disabled={mode === 'view'}
                           error={!!validationErrors[`detail_${detail.id}_content`]}
@@ -379,9 +353,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                           fullWidth
                           multiline
                           rows={2}
-                          value={detail.keyManagementTasks}
+                          value={detail.keyManagementTasks || ''}
                           onChange={(e) =>
-                            handleDetailChange(detail.id, 'keyManagementTasks', e.target.value)
+                            handleDetailChange(detail.id || '', 'keyManagementTasks', e.target.value)
                           }
                           disabled={mode === 'view'}
                           error={!!validationErrors[`detail_${detail.id}_tasks`]}
@@ -394,9 +368,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                           fullWidth
                           multiline
                           rows={2}
-                          value={detail.relatedBasis}
+                          value={detail.relatedBasis || ''}
                           onChange={(e) =>
-                            handleDetailChange(detail.id, 'relatedBasis', e.target.value)
+                            handleDetailChange(detail.id || '', 'relatedBasis', e.target.value)
                           }
                           disabled={mode === 'view'}
                           error={!!validationErrors[`detail_${detail.id}_basis`]}

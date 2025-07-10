@@ -11,8 +11,6 @@ const PositionStatusPage = React.lazy(() => import('../pages/PositionStatusPage'
 const ResponsibilityDbStatusPage = React.lazy(() => import('../pages/ResponsibilityDbStatusPage'));
 const PositionResponsibilityStatusPage = React.lazy(() => import('../pages/PositionResponsibilityStatusPage'));
 const TestGrid = React.lazy(() => import('../pages/TestGrid'));
-const NewComponentsTestPage = React.lazy(() => import('../pages/NewComponentsTestPage'));
-const PositionCardTestPage = React.lazy(() => import('../pages/PositionCardTestPage'));
 const StructureSubmissionStatusPage = React.lazy(() => import('../pages/StructureSubmissionStatusPage'));
 const ExecutiveStatusPage = React.lazy(() => import('../pages/ExecutiveStatusPage'));
 const ExecutiveResponsibilityStatusPage = React.lazy(() => import('../pages/ExecutiveResponsibilityStatusPage'));

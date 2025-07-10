@@ -4,10 +4,11 @@
 import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
-import { Dialog } from '@/shared/components/modal';
+import type { DialogMode } from '@/shared/components/modal/BaseDialog';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button, Select } from '@/shared/components/ui';
 import { Alert, Box, CircularProgress, TextField } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 
 interface IMeetingBodyDialogProps {
@@ -67,52 +68,35 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
     setValidationErrors({});
   }, [meetingBody, open]);
 
-  const handleInputChange = (field: keyof MeetingBody, value: string) => {
+  // 입력값 변경 핸들러 (TextField와 직접 값 변경 모두 지원)
+  const handleInputChange = (
+    field: keyof MeetingBody,
+    valueOrEvent: string | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { value: string } }
+  ) => {
+    const value = typeof valueOrEvent === 'string' ? valueOrEvent : valueOrEvent.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
+
     // 값이 입력되면 해당 필드의 에러 상태를 제거
     if (value) {
       setValidationErrors(prev => ({ ...prev, [field]: false }));
     }
   };
-  // 입력값 변경 핸들러 (TextField용)
-  const handleInputChange =
-    (field: keyof FormData) =>
-    (
-      event:
-        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-        | { target: { value: string } }
-    ) => {
-      const value = event.target.value;
-      setFormData(prev => ({
-        ...prev,
-        [field]: value,
-      }));
-
-      // 입력 시 해당 필드의 검증 에러 제거
-      if (validationErrors[field]) {
-        setValidationErrors(prev => ({
-          ...prev,
-          [field]: '',
-        }));
-      }
-    };
 
   // Select 컴포넌트용 변경 핸들러
-  const handleSelectChange =
-    (field: keyof FormData) => (value: string | number | string[] | number[]) => {
-      setFormData(prev => ({
-        ...prev,
-        [field]: value as string,
-      }));
+  const handleSelectChange = (field: keyof MeetingBody) => (value: string | number | string[] | number[]) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value as string,
+    }));
 
-      // 입력 시 해당 필드의 검증 에러 제거
-      if (validationErrors[field]) {
-        setValidationErrors(prev => ({
-          ...prev,
-          [field]: '',
-        }));
-      }
-    };
+    // 입력 시 해당 필드의 검증 에러 제거
+    if (validationErrors[field]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [field]: false,
+      }));
+    }
+  };
 
   // 폼 유효성 검사
   const validateForm = useCallback((): boolean => {
@@ -226,7 +210,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
                 onChange={handleSelectChange('gubun')}
                 disabled={mode === 'view'}
                 error={!!validationErrors.gubun}
-                helperText={validationErrors.gubun}
+                helperText={validationErrors.gubun ? '필수 입력 항목입니다.' : ''}
                 fullWidth
                 sx={
                   mode === 'view'
@@ -249,7 +233,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
                 onChange={handleSelectChange('meetingPeriod')}
                 disabled={mode === 'view'}
                 error={!!validationErrors.meetingPeriod}
-                helperText={validationErrors.meetingPeriod}
+                helperText={validationErrors.meetingPeriod ? '필수 입력 항목입니다.' : ''}
                 fullWidth
                 sx={
                   mode === 'view'
@@ -277,6 +261,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
             disabled={mode === 'view'}
             placeholder="회의체명을 입력하세요"
             error={validationErrors.meetingName}
+            helperText={validationErrors.meetingName ? '필수 입력 항목입니다.' : ''}
           />
 
           {/* 세 번째 행: 주요 심의·의결사항 */}
@@ -316,14 +301,15 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
           </Box>
         ) */}
       </BaseDialog>
-
-      <Alert
-        open={showSuccessAlert}
-        message={mode === 'create' ? '회의체가 등록되었습니다.' : '회의체가 수정되었습니다.'}
-        severity="success"
-        autoHideDuration={2000}
-        onClose={() => setShowSuccessAlert(false)}
-      />
+      {showSuccessAlert && (
+        <Alert
+          severity="success"
+          sx={{ position: 'fixed', bottom: 16, right: 16 }}
+          onClose={() => setShowSuccessAlert(false)}
+        >
+          {mode === 'create' ? '등록되었습니다.' : '수정되었습니다.'}
+        </Alert>
+      )}
     </>
   );
 };
