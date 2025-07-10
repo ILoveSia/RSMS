@@ -566,6 +566,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             onClick={handleDelete}
             color="error"
             disabled={selectedPlanIds.length === 0 || isLoading}
+            style={{ color: 'white' }}
           >
             삭제
           </Button>

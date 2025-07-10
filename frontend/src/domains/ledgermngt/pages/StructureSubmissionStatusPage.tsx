@@ -500,6 +500,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             disabled={!selectedHistoryIds.length || isLoading}
             color="success"
             sx={{ mr: 1 }}
+            style={{ color: 'white' }}
           >
             수정
           </Button>
@@ -509,6 +510,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             onClick={handleDelete}
             disabled={!selectedHistoryIds.length || isLoading}
             color="primary"
+            style={{ color: 'white' }}
           >
             삭제
           </Button>
