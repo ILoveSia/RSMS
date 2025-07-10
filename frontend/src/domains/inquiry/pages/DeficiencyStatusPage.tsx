@@ -7,7 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Modal } from '@/shared/components/ui/feedback';
 import { Select } from '@/shared/components/ui/form';
 import { Box, Typography } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRowId } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -31,7 +31,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const [error, setError] = useState<string | null>(null);
   const [inspectionRound, setInspectionRound] = useState<string>('2024-001');
   const [departmentFilter, setDepartmentFilter] = useState<string>('전체');
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<GridRowId[]>([]);
 
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -309,8 +309,11 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             getRowId={(row: DeficiencyRow) => row.deficiencyId}
             checkboxSelection
             disableRowSelectionOnClick
+            disableMultipleRowSelection={true}
             onRowSelectionModelChange={(newSelection) => {
-              setSelectedIds(newSelection as number[]);
+              // 단일 선택만 허용하므로 마지막 선택된 항목만 사용
+              const selectedId = newSelection[newSelection.length - 1];
+              setSelectedIds(selectedId ? [selectedId] : []);
             }}
             initialState={{
               pagination: {
