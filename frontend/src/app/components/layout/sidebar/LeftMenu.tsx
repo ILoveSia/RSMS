@@ -60,19 +60,13 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
   // 컴포넌트 마운트 시 localStorage에서 메뉴 복원
   useEffect(() => {
-    // console.log('🔄 [LeftMenu] 컴포넌트 마운트');
-    // console.log('🔄 [LeftMenu] loginData:', loginData);
-    // console.log('🔄 [LeftMenu] menuData:', menuData);
 
     // localStorage에서 메뉴 복원 시도
     const savedMenus = localStorage.getItem('accessibleMenus');
-    // console.log('🔍 [LeftMenu] localStorage 확인:', savedMenus ? ' 데이터 있음' : '데이터 없음');
 
     if (savedMenus) {
       try {
         const parsedMenus = JSON.parse(savedMenus);
-        // console.log('🔄 [LeftMenu] localStorage에서 메뉴 복원 시도:', parsedMenus.length, '개');
-        // console.log('🔍 [LeftMenu] 파싱된 메뉴 원본 데이터:', parsedMenus);
 
         if (Array.isArray(parsedMenus) && parsedMenus.length > 0) {
           const menuMap = new Map<number, Menu>();
@@ -107,8 +101,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
               return converted;
             });
 
-          // console.log('🔍 [LeftMenu] 최종 변환된 메뉴들:', convertedMenus);
-          // console.log('🔍 [LeftMenu] setMenuItems 호출 전 - 현재 menuItems 길이:', menuItems.length);
 
           setMenuItems(convertedMenus);
           setIsMenuLoaded(true);
@@ -163,10 +155,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
       const pageInfo = PageComponentMapper.getPageInfo(menu.menuUrl);
       const PageComponent = PageComponentMapper.getComponent(menu.menuUrl);
 
-      console.log('📄 [LeftMenu] 페이지 정보:', pageInfo);
-      console.log('🧩 [LeftMenu] 컴포넌트:', PageComponent);
-      console.log('🧩 [LeftMenu] 컴포넌트 타입:', typeof PageComponent);
-
       if (!pageInfo || !PageComponent) {
         console.error('❌ [LeftMenu] 페이지 정보 또는 컴포넌트를 찾을 수 없음');
         return;
@@ -181,14 +169,12 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
           closable: true,
           icon: pageInfo.icon,
         });
-        console.log('✅ 탭 추가 성공');
 
         // 이벤트 버블링 방지
         event?.stopPropagation();
       } catch (error) {
         console.error('❌ 탭 추가 실패:', error);
       }
-      console.log('=== 메뉴 클릭 디버깅 종료 ===');
     };
 
     return {
@@ -203,12 +189,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
   // menuStore의 accessibleMenus 데이터를 메뉴 아이템으로 변환
   useEffect(() => {
-    // console.log('🔄 [LeftMenu] useEffect 실행');
-    // console.log('🔄 [LeftMenu] menuData 값:', menuData);
-    // console.log('🔄 [LeftMenu] menuData.data 값:', menuData?.data);
-    // console.log('🔄 [LeftMenu] menuData.data 타입:', typeof menuData?.data);
-    // console.log('🔄 [LeftMenu] menuData.data 배열 여부:', Array.isArray(menuData?.data));
-    // console.log('🔄 [LeftMenu] menuData.data 길이:', menuData?.data?.length);
 
     if (menuData?.data && menuData.data.length > 0) {
       // 계층형 구조 구성: 부모-자식 관계 설정

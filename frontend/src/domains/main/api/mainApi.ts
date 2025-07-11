@@ -12,15 +12,12 @@ export const mainApi = {
    */
   getRecentQnaList: async (limit: number = 5): Promise<QnaListResponseDto[]> => {
     try {
-      console.log(`[mainApi] getRecentQnaList 호출 - limit: ${limit}`);
 
       const response = await apiClient.get<QnaListResponseDto[]>(`/qna/recent?limit=${limit}`);
 
-      console.log('[mainApi] getRecentQnaList 응답:', response);
 
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
       const result = response || [];
-      console.log('[mainApi] getRecentQnaList 결과:', result);
 
       return result;
     } catch (error) {
@@ -35,17 +32,14 @@ export const mainApi = {
    */
   getRecentCaseStudies: async (limit: number = 5): Promise<CaseStudyDto[]> => {
     try {
-      console.log(`[mainApi] getRecentCaseStudies 호출 - limit: ${limit}`);
 
       const response = await apiClient.get<CaseStudyDto[]>(
         `/api/case-studies/recent?limit=${limit}`
       );
 
-      console.log('[mainApi] getRecentCaseStudies 응답:', response);
 
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
       const result = response || [];
-      console.log('[mainApi] getRecentCaseStudies 결과:', result);
 
       return result;
     } catch (error) {
@@ -59,12 +53,10 @@ export const mainApi = {
    */
   getDashboardStats: async (): Promise<any> => {
     try {
-      console.log('[mainApi] getDashboardStats 호출');
 
       // 향후 대시보드 통계 API 구현 시 사용
       const response = await apiClient.get('/api/dashboard/stats');
 
-      console.log('[mainApi] getDashboardStats 응답:', response);
       return response;
     } catch (error) {
       console.error('[mainApi] getDashboardStats 에러:', error);
