@@ -70,8 +70,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           user: user,
           loading: false,
         });
-
-        console.log('✅ [AuthContext] 인증 상태 설정 완료:', user);
       } else {
         console.log('❌ [AuthContext] sessionStorage에 사용자 정보 없음');
         setAuthState({
@@ -104,7 +102,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       loading: false,
     });
 
-    console.log('✅ [AuthContext] 인증 상태 업데이트 완료:', userWithRoles);
   };
 
   // 로그인 함수 (기존 로직 유지 - 테스트용)

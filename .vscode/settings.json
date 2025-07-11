@@ -104,7 +104,7 @@
     "**/*.log": true,
     "**/coverage": true
   },
-  "workbench.iconTheme": "vscode-icons",
+  "workbench.iconTheme": "material-icon-theme",
   "workbench.colorTheme": "Default Dark+",
   "workbench.editor.enablePreview": false,
   "workbench.editor.closeEmptyGroups": false,

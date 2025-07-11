@@ -210,7 +210,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         setExpandedItems([convertedMenus[0].title]);
       }
 
-      // console.log('✅ [LeftMenu] 메뉴 아이템 변환 완료:', convertedMenus);
     } else {
       // localStorage에서 복원한 메뉴가 있다면 유지, 없다면 빈 배열로 설정
       // isMenuLoaded가 true라면 이미 localStorage 복원이 완료된 상태

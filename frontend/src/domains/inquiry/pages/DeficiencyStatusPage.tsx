@@ -164,7 +164,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
 
   // 개선계획 셀 클릭 핸들러
   const handleDeficiencyClick = (deficiencyId: number) => {
-    console.log('미흡상황 상세조회:', deficiencyId);
     // TODO: 상세조회 다이얼로그 구현
   };
 
@@ -175,7 +174,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       setErrorDialogOpen(true);
       return;
     }
-    console.log('개선계획 변경:', selectedIds);
     // TODO: 개선계획 변경 다이얼로그 구현
   };
 
@@ -186,7 +184,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       setErrorDialogOpen(true);
       return;
     }
-    console.log('이행결과 작성:', selectedIds);
     // TODO: 이행결과 작성 다이얼로그 구현
   };
 
@@ -197,7 +194,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       setErrorDialogOpen(true);
       return;
     }
-    console.log('승인하기:', selectedIds);
     // TODO: 승인 다이얼로그 구현
   };
 
@@ -317,13 +313,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             error={error}
             onRowSelectionChange={(selectedIds: (string | number)[], selectedData: DeficiencyRow[]) => {
               setSelectedIds(selectedIds.map(id => Number(id)));
-            }}
-            pagination={{
-              page: 1,
-              pageSize: 10,
-              totalItems: rows.length,
-              onPageChange: () => {},
-              onPageSizeChange: () => {}
             }}
           />
         </Box>

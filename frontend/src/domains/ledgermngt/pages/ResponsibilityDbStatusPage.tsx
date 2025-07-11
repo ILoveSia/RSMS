@@ -47,14 +47,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
   // 책무 목록 조회 (성능 최적화)
   const fetchResponsibilities = useCallback(async (searchId?: string) => {
-    console.log('[ResponsibilityDbStatusPage] fetchResponsibilities 호출 - searchId:', searchId);
     setLoading(true);
     setError(null);
 
     try {
       const data = await responsibilityApi.getStatusList(searchId);
-      console.log('[ResponsibilityDbStatusPage] 책무 데이터 로드 완료:', data);
-      setRows(data);
     } catch (err) {
       console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
       const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';
@@ -65,7 +62,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
   }, []);
 
   useEffect(() => {
-    console.log('[ResponsibilityDbStatusPage] 컴포넌트 마운트 - 초기 데이터 로드');
     fetchResponsibilities();
   }, [fetchResponsibilities]);
 
@@ -211,13 +207,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
   // 조회 버튼 클릭 핸들러
   const handleSearch = useCallback(() => {
-    console.log('[ResponsibilityDbStatusPage] 검색 버튼 클릭 - searchText:', searchText);
     fetchResponsibilities(searchText);
   }, [searchText, fetchResponsibilities]);
 
   // 등록 버튼 클릭 핸들러
   const handleCreateClick = useCallback(() => {
-    console.log('[ResponsibilityDbStatusPage] 등록 버튼 클릭');
     setSelectedResponsibilityId(null);
     setDialogMode('create');
     setDialogOpen(true);
@@ -225,34 +219,26 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // '책무' 셀 클릭 시 상세조회 다이얼로그 오픈 (성능 최적화)
     const handleResponsibilityCellClick = useCallback((responsibilityId: string) => {
-      console.log(
-        '[ResponsibilityDbStatusPage] 책무 셀 클릭 - responsibilityId:',
-        responsibilityId
-      );
       // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
       setSelectedResponsibilityId(Number(responsibilityId));
       setDialogMode('view');
       setDialogOpen(true);
-      console.log('[ResponsibilityDbStatusPage] 다이얼로그 상태 업데이트 완료');
     }, []);
 
     // 다이얼로그 닫기 (성능 최적화)
     const handleDialogClose = useCallback(() => {
-      console.log('[ResponsibilityDbStatusPage] 다이얼로그 닫기');
       setDialogOpen(false);
       setSelectedResponsibilityId(null);
     }, []);
 
   // 다이얼로그 저장
   const handleDialogSave = useCallback(() => {
-    console.log('[ResponsibilityDbStatusPage] 다이얼로그 저장');
     handleDialogClose();
     fetchResponsibilities(); // 목록 새로고침
   }, [handleDialogClose, fetchResponsibilities]);
 
   // 다이얼로그 모드 변경
   const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view') => {
-    console.log('[ResponsibilityDbStatusPage] 다이얼로그 모드 변경:', newMode);
     setDialogMode(newMode);
   }, []);
 
@@ -260,15 +246,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const handleSearchTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchText(e.target.value);
     }, []);
-
-    console.log(
-      '[ResponsibilityDbStatusPage] 렌더링 - rows 개수:',
-      rows.length,
-      'loading:',
-      loading,
-      'error:',
-      error
-    );
 
   return (
     <PageContainer>

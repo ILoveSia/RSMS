@@ -148,12 +148,10 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
   // 공통코드 조회 함수
   const loadCommonCodes = async () => {
     try {
-      console.log('🔍 [공통코드] 공통코드 조회 시작');
 
       const allCodesResult = await apiClient.get<ApiResponse<CommonCode[]> | CommonCode[]>(
         '/api/common-codes'
       );
-      console.log('✅ [공통코드] 모든 공통코드 조회 성공:', allCodesResult);
 
       // ApiResponse 래퍼 구조인지 확인하여 적절히 처리
       let commonCodesData: CommonCode[];
@@ -175,7 +173,6 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
       setAllCodes(commonCodesData);
       localStorage.setItem('commonCodes', JSON.stringify(commonCodesData));
-      console.log('✅ [localStorage] 공통코드 데이터 저장 완료');
     } catch (error) {
       console.error('❌ [공통코드] 공통코드 조회 실패:', error);
     }
@@ -184,10 +181,8 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
   // 메뉴 조회 함수
   const loadAccessibleMenus = async () => {
     try {
-      console.log('🔍 [메뉴] 접근 가능한 메뉴 조회 시작');
 
       const menuResult = await apiClient.get<unknown>('/menus/accessible?role=USER');
-      console.log('✅ [메뉴] 접근 가능한 메뉴 조회 성공:', menuResult);
 
       if (Array.isArray(menuResult) && menuResult.length > 0) {
         const convertedMenus = menuResult.map((menu: Menu) => ({
@@ -241,7 +236,6 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
     };
 
     try {
-      console.log('🔍 [API] 로그인 API 호출 시작:', { userid });
 
       const response = await apiClient.post<ApiResponse<LoginResponseData> | LoginResponseData>(
         '/auth/login',

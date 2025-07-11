@@ -171,11 +171,9 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
         params.append('deptCd', searchConditions.deptCd.trim());
       }
 
-      console.log('사원 검색 API 호출:', params.toString());
 
       const response = await apiClient.get<UserResponse[]>(`/users/employees?${params.toString()}`);
 
-      console.log('사원 검색 응답:', response);
 
       if (response && Array.isArray(response)) {
         const transformedEmployees: EmployeeSearchResult[] = await Promise.all(
