@@ -40,7 +40,14 @@ const tabReducer = (state: TabManagerState, action: TabAction): TabManagerState 
       const { activate = true, ...tabData } = action.payload;
 
       // 동일한 path의 탭이 이미 존재하는지 확인
-      const existingTab = state.tabs.find(tab => tab.path === tabData.path);
+      // 루트 경로('/')와 '/main' 경로를 동일하게 처리
+      const normalizedPath = tabData.path === '/' ? '/main' : tabData.path;
+      const existingTab = state.tabs.find(tab =>
+        tab.path === normalizedPath ||
+        (normalizedPath === '/main' && tab.path === '/') ||
+        (tab.path === '/main' && normalizedPath === '/')
+      );
+
       if (existingTab) {
         // 기존 탭을 활성화하고 lastActiveAt 업데이트
         return {
@@ -79,7 +86,8 @@ const tabReducer = (state: TabManagerState, action: TabAction): TabManagerState 
       // 새 탭 추가 (홈 탭의 경우 고정 ID 사용)
       const newTab: Tab = {
         ...tabData,
-        id: tabData.path === '/main' ? 'home' : uuidv4(),
+        // 루트 경로('/')와 '/main' 경로를 동일하게 처리
+        id: normalizedPath === '/main' || tabData.path === '/' ? 'home' : uuidv4(),
         createdAt: new Date(),
         lastActiveAt: new Date(),
       };

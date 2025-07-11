@@ -69,14 +69,14 @@ const ComingSoonPage: React.FC<{ title?: string }> = ({ title }) => (
 
 // 페이지 컴포넌트 매핑 설정
 const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
-  // 루트 경로
+  // 루트 경로와 메인 경로를 동일한 컴포넌트로 매핑
   '/': {
     component: () => import('@/domains/main/pages/MainPage'),
     title: '메인',
     icon: 'home',
   },
 
-  // 메인 페이지
+  // 메인 페이지 (루트 경로와 동일)
   '/main': {
     component: () => import('@/domains/main/pages/MainPage'),
     title: '메인',

@@ -223,9 +223,8 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
       }}
     >
       <PageHeader
-        title=' [100] 회의체 현황'
+        title='메인 페이지'
         icon={<GroupsIcon />}
-        description='회의체별 현황 및 주요 심의·의결사항을 조회하고 관리합니다.'
         elevation={false}
         sx={{
           position: 'relative',
