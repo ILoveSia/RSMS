@@ -11,9 +11,9 @@ import { DataGrid } from '@/shared/components/ui/data-display';
 import { Alert } from '@/shared/components/ui/feedback';
 import type { DataGridColumn } from '@/shared/types/common';
 import {
-    Box,
-    CircularProgress,
-    TextField,
+  Box,
+  CircularProgress,
+  TextField,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { meetingStatusApi } from '../../../ledgermngt/api/meetingStatusApi';
@@ -93,10 +93,6 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
       foundCode = codes.find(
         c => c.groupCode === possibleGroup && c.code === code && c.useYn === 'Y'
       );
-      if (foundCode) {
-        console.log(`✅ 코드명 발견: ${possibleGroup}.${code} => ${foundCode.codeName}`);
-        break;
-      }
     }
 
     if (!foundCode) {
@@ -146,13 +142,11 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
       // 전체 회의체 목록 조회 API 호출
       const meetingBodyList: MeetingBody[] = await meetingStatusApi.getAll();
 
-      console.log('🔍 API 응답 원본 데이터:', meetingBodyList);
 
       // API 응답을 MeetingBodySearchResult 형태로 변환 (공통코드명 사용)
       const apiMeetingBodies: MeetingBodySearchResult[] = meetingBodyList
         .filter(meeting => !excludeIds.includes(meeting.meetingBodyId)) // 제외할 ID 필터링
         .map(meeting => {
-          console.log(`🔍 변환 중인 회의체:`, meeting);
 
           const periodName = getCodeName('PID03', meeting.meetingPeriod || '');
           const gubunName = getCodeName('GUBUN01', meeting.gubun || '');
@@ -170,7 +164,6 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
       setMeetingBodies(apiMeetingBodies);
       setFilteredMeetingBodies(apiMeetingBodies);
 
-      console.log('✅ 회의체 목록 로드 완료:', apiMeetingBodies.length, '개');
     } catch (err) {
       console.error('❌ 회의체 목록 로드 실패:', err);
       setError('회의체 목록을 불러오는데 실패했습니다.');
@@ -266,7 +259,6 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
       </>
     );
   };
-
   return (
     <Dialog open={open} title={title} maxWidth='md' onClose={onClose} actions={renderActions()}>
       <Box sx={{ mt: 2, minHeight: 400 }}>
@@ -310,8 +302,6 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
             onRowSelectionChange={handleMeetingBodySelect}
             selectedRows={selectedMeetingBody ? [selectedMeetingBody.id] : []}
             density='compact'
-            searchable={false}
-            toolbar={false}
             hideFooterPagination
             disableColumnMenu
             disableColumnFilter

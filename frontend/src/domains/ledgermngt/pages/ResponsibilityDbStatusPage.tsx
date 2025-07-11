@@ -376,7 +376,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
-            minHeight: 400,
           }}
         >
           {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -385,7 +384,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             data={rows}
             columns={columns as any}
             loading={loading}
-            height="100%"
             selectable={true}
           />
         </Box>

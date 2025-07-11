@@ -2,9 +2,11 @@
  * 임원 현황 페이지
  * 책무구조 원장 관리 - 임원 현황
  */
+import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import type { SelectChangeEvent } from '@mui/material';
 import {
@@ -14,8 +16,6 @@ import {
   Select,
   Snackbar
 } from '@mui/material';
-import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -159,7 +159,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     });
   }, []);
 
-  const executiveColumns: GridColDef[] = [
+  const executiveColumns: DataGridColumn<ExecutiveStatusRow>[] = [
     {
       field: 'positionName',
       headerName: '직책',
@@ -167,16 +167,16 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       flex: 1,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => (
+      renderCell: ({ row }) => (
         <span
           style={{
             color: '#1976d2',
             cursor: 'pointer',
             textDecoration: 'underline'
           }}
-          onClick={() => handleExecutiveDetail(params.row)}
+          onClick={() => handleExecutiveDetail(row)}
         >
-          {params.value}
+          {row.positionName}
         </span>
       ),
     },
@@ -203,9 +203,9 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       flex: 1,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => {
-        if (params.value) {
-          const date = new Date(params.value);
+      renderCell: ({ value }) => {
+        if (value && typeof value === 'string') {
+          const date = new Date(value);
           return date.toLocaleDateString('ko-KR');
         }
         return '';
@@ -218,12 +218,12 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       flex: 1,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => (
+      renderCell: ({ value }) => (
         <span style={{
-          color: params.value ? '#dc3545' : '#28a745',
+          color: value ? '#dc3545' : '#28a745',
           fontWeight: 'bold'
         }}>
-          {params.value ? '있음' : '없음'}
+          {value ? '있음' : '없음'}
         </span>
       )
     },
@@ -234,12 +234,12 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       flex: 2,
       align: 'left',
       headerAlign: 'center',
-      renderCell: (params) => (
+      renderCell: ({ value }) => (
         <span style={{
-          color: params.value ? '#1976d2' : '#6c757d',
-          fontStyle: params.value ? 'normal' : 'italic'
+          color: value ? '#1976d2' : '#6c757d',
+          fontStyle: value ? 'normal' : 'italic'
         }}>
-          {params.value || '해당없음'}
+          {value || '해당없음'}
         </span>
       )
     }
@@ -319,12 +319,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   };
 
   // DataGrid 체크박스 선택 핸들러
-  const handleRowSelectionModelChange = (newSelection: GridRowSelectionModel) => {
-    if (Array.isArray(newSelection)) {
-      setSelectedIds(newSelection.map(Number));
-    } else {
-      setSelectedIds([]);
-    }
+  const handleRowSelectionModelChange = (selectedRows: (string | number)[], selectedData: ExecutiveStatusRow[]) => {
+    setSelectedIds(selectedRows.map(Number));
   };
 
   // 엑셀 업로드
@@ -513,15 +509,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         {/* 데이터 그리드 */}
         <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
           <DataGrid
-            rows={rows}
+            data={rows}
             columns={executiveColumns}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
             loading={loading}
-            pageSizeOptions={[20, 50, 100]}
-            checkboxSelection
-            disableRowSelectionOnClick
-            onRowSelectionModelChange={handleRowSelectionModelChange}
+            error={error}
+            selectable
+            multiSelect
+            onRowSelectionChange={handleRowSelectionModelChange}
+            rowIdField="id"
             sx={{
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary)',

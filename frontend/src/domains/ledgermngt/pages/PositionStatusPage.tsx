@@ -429,7 +429,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             삭제
           </Button>
         </Box>
-        <Box sx={{ height: '600px', width: '100%' }}>
+        <Box sx={{width: '100%' }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
             data={rows}
@@ -443,7 +443,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               renderCell: col.renderCell,
             }))}
             loading={loading}
-            height={error ? 'calc(100% - 30px)' : '100%'}
             selectable={true}
             multiSelect={true}
             selectedRows={selectedIds}

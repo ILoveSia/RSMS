@@ -3,20 +3,19 @@
  * TestGrid.tsx를 대체하는 실제 업무 페이지
  */
 import { Box, Chip } from '@mui/material';
-import type { GridCallbackDetails, GridPaginationModel, GridRowSelectionModel } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import type { GridColDef } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
 
 interface IPositionResponsibilityStatusPageProps {
@@ -104,7 +103,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [positionFilter, setPositionFilter] = useState<string>('전체');
 
   // 선택된 행
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -116,11 +115,12 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [errorMessage, setErrorMessage] = useState('');
 
   // 페이징 상태
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 20,
+  const [pageInfo, setPageInfo] = useState({
+    page: 1,
+    size: 20,
+    totalElements: 0,
+    totalPages: 0
   });
-  const [totalCount, setTotalCount] = useState(0);
 
   // 데이터 로드 함수
   const fetchData = useCallback(async () => {
@@ -136,12 +136,16 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       });
 
       // 페이지네이션 처리
-      const start = paginationModel.page * paginationModel.pageSize;
-      const end = start + paginationModel.pageSize;
+      const start = (pageInfo.page - 1) * pageInfo.size;
+      const end = start + pageInfo.size;
       const paginatedData = filteredData.slice(start, end);
 
       setRows(paginatedData);
-      setTotalCount(filteredData.length);
+      setPageInfo(prev => ({
+        ...prev,
+        totalElements: filteredData.length,
+        totalPages: Math.ceil(filteredData.length / pageInfo.size)
+      }));
     } catch (err) {
       console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
@@ -149,28 +153,28 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     } finally {
       setLoading(false);
     }
-  }, [ledgerOrderFilter, positionFilter, paginationModel]);
+  }, [ledgerOrderFilter, positionFilter, pageInfo.page, pageInfo.size]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   // 컬럼 정의
-  const columns: GridColDef<PositionResponsibility>[] = [
+  const columns: DataGridColumn<PositionResponsibility>[] = [
     {
       field: 'classification',
       headerName: '구분',
       width: 80,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => (
+      renderCell: ({ value }) => (
         <Chip
-          label={params.value}
+          label={value}
           size="small"
           color={
-            params.value === '핵심' ? 'error' :
-            params.value === '중요' ? 'warning' :
-            params.value === '일반' ? 'default' : 'default'
+            value === '핵심' ? 'error' :
+            value === '중요' ? 'warning' :
+            value === '일반' ? 'default' : 'default'
           }
         />
       )
@@ -188,33 +192,33 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       width: 150,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => (
+      renderCell: ({ value, row }) => (
         <span
           style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
           onClick={(e) => {
             e.stopPropagation();
-            handleViewDetail(params.row);
+            handleViewDetail(row);
           }}
         >
-          {params.value}
+          {value}
         </span>
       )
     },
     {
       field: 'responsibilityOverview',
       headerName: '책무 개요',
+      width: 300,
       flex: 1,
-      minWidth: 300,
       align: 'left',
       headerAlign: 'center',
-      renderCell: (params) => (
+      renderCell: ({ value }) => (
         <Box sx={{
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           maxWidth: '100%'
         }}>
-          {params.value || '미작성'}
+          {value || '미작성'}
         </Box>
       )
     },
@@ -295,11 +299,8 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   };
 
   // 행 선택 핸들러
-  const handleRowSelectionModelChange = (
-    rowSelectionModel: GridRowSelectionModel,
-    details: GridCallbackDetails
-  ) => {
-    setSelectedIds(rowSelectionModel.map(id => Number(id)));
+  const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedData: PositionResponsibility[]) => {
+    setSelectedIds(selectedRowIds.map(String));
   };
 
   // 오류 다이얼로그 닫기
@@ -440,28 +441,16 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
         {/* 그리드 영역 */}
         <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-          <DataGrid
-            rows={rows}
+          <DataGrid<PositionResponsibility>
+            data={rows}
             columns={columns}
             loading={loading}
-            checkboxSelection
-            disableRowSelectionOnClick
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[10, 20, 50]}
-            rowCount={totalCount}
-            rowSelectionModel={selectedIds}
-            onRowSelectionModelChange={handleRowSelectionModelChange}
-            sx={{
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'var(--bank-primary-bg) !important',
-                fontWeight: 'bold',
-                color: 'var(--bank-text-primary)',
-              },
-              '& .MuiDataGrid-row': {
-                cursor: 'pointer',
-              },
-            }}
+            error={error}
+            selectable
+            multiSelect
+            selectedRows={selectedIds}
+            onRowSelectionChange={handleRowSelectionChange}
+            rowIdField="id"
           />
         </Box>
       </PageContent>

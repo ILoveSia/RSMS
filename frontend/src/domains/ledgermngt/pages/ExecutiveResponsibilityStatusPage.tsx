@@ -5,14 +5,14 @@
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { SelectOption } from '@/shared/types/common';
+import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box, Chip } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
 interface IExecutiveResponsibilityStatusPageProps {
@@ -53,7 +53,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   ];
 
   // 테이블 컬럼 정의
-  const columns: GridColDef[] = [
+  const columns: DataGridColumn<ExecutiveResponsibilityRow>[] = [
     {
       field: 'executiveName',
       headerName: '임원명',
@@ -85,7 +85,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => `${params.value}개`
+      renderCell: ({ value }) => `${value}개`
     },
     {
       field: 'mainCount',
@@ -94,7 +94,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => `${params.value}개`
+      renderCell: ({ value }) => `${value}개`
     },
     {
       field: 'subCount',
@@ -103,7 +103,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => `${params.value}개`
+      renderCell: ({ value }) => `${value}개`
     },
     {
       field: 'status',
@@ -112,10 +112,10 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params) => {
+      renderCell: ({ value }) => {
         let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
-        switch (params.value) {
+        switch (value) {
           case '검토중':
             color = 'warning';
             break;
@@ -131,7 +131,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
         return (
           <Chip
-            label={params.value}
+            label={value}
             color={color}
             size="small"
           />
@@ -241,6 +241,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           minHeight: 0,
           position: 'relative',
           py: 1,
+          height: 'calc(100vh - 64px)' // 헤더 높이를 제외한 전체 높이
         }}
       >
         {/* 필터 영역 */}
@@ -281,32 +282,23 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         </Box>
 
         {/* 데이터 그리드 */}
-        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+        <Box sx={{
+          flex: 1,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          position: 'relative',
+        }}>
           <DataGrid
-            rows={rows}
+            data={rows}
             columns={columns}
             loading={isLoading}
+            error={null}
+            rowIdField="id"
             disableRowSelectionOnClick
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'var(--bank-bg-secondary)',
-                fontWeight: 'bold',
-              },
-              '& .MuiDataGrid-cell:focus': {
-                outline: 'none',
-              },
-            }}
-            localeText={{
-              noRowsLabel: '데이터가 없습니다.',
-              columnMenuLabel: '메뉴',
-              columnMenuShowColumns: '열 표시',
-              columnMenuFilter: '필터',
-              columnMenuHideColumn: '열 숨기기',
-              columnMenuUnsort: '정렬 해제',
-              columnMenuSortAsc: '오름차순 정렬',
-              columnMenuSortDesc: '내림차순 정렬',
-            }}
+            noDataMessage="데이터가 없습니다."
           />
         </Box>
       </PageContent>

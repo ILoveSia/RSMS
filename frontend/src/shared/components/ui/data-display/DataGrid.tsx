@@ -26,9 +26,8 @@ import {
   InputLabel,
   MenuItem,
   Pagination,
-  Paper,
   Select,
-  Typography,
+  Typography
 } from '@mui/material';
 import type {
   GridColDef,
@@ -40,7 +39,7 @@ import type {
 } from '@mui/x-data-grid';
 import { DataGrid as MuiDataGrid } from '@mui/x-data-grid';
 // import { koKR } from '@mui/x-data-grid/locales';
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 
 export interface DataGridProps<T = any> extends BaseComponentProps {
   // 데이터 관련
@@ -70,6 +69,7 @@ export interface DataGridProps<T = any> extends BaseComponentProps {
   maxHeight?: number | string;
   autoHeight?: boolean;
   density?: 'compact' | 'standard' | 'comfortable';
+  outline?: boolean;
 
   // 기능 설정
   sortable?: boolean;
@@ -152,8 +152,8 @@ const DataGrid = <T extends Record<string, any>>({
   noDataMessage = '표시할 데이터가 없습니다.',
   rowIdField = 'id' as keyof T,
   virtualization = true,
-  disableColumnMenu = true, // 기본값을 true로 변경
-  disableColumnFilter = true, // 기본값을 true로 변경
+  disableColumnMenu = true,
+  disableColumnFilter = true,
   disableColumnSort = false,
   disableRowSelectionOnClick = false,
   hideFooter = false,
@@ -165,34 +165,56 @@ const DataGrid = <T extends Record<string, any>>({
   sx,
   ...props
 }: DataGridProps<T>) => {
-  // 상태 관리
-  const [sortModel, setSortModel] = React.useState<GridSortModel>([]);
-  const [filterModel, setFilterModel] = React.useState<GridFilterModel>({ items: [] });
-  const [currentPage, setCurrentPage] = React.useState(pagination?.page || 1);
-  const [pageSize, setPageSize] = React.useState(pagination?.pageSize || 10);
+  // 내부 상태 관리
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortModel, setSortModel] = useState<GridSortModel>([]);
+  const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
+
+  // 기본 페이지네이션 설정
+  const defaultPagination = useMemo(() => ({
+    page,
+    pageSize,
+    pageSizeOptions: [5, 10, 20, 30],
+    totalItems: data.length,
+    totalPages: Math.ceil(data.length / pageSize),
+    onPageChange: (newPage: number) => setPage(newPage),
+    onPageSizeChange: (newPageSize: number) => {
+      setPageSize(newPageSize);
+      setPage(1);
+    }
+  }), [data.length, page, pageSize]);
+
+  // 실제 사용할 페이지네이션 설정
+  const paginationConfig = pagination || defaultPagination;
+
+  // 페이지네이션된 데이터 계산
+  const paginatedData = useMemo(() => {
+    if (serverSide || pagination) return data;
+
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return data.slice(start, end);
+  }, [data, page, pageSize, serverSide, pagination]);
 
   // 컬럼 변환
-  const muiColumns = React.useMemo(() => convertColumnsToMuiFormat(columns), [columns]);
+  const muiColumns = useMemo(() => convertColumnsToMuiFormat(columns), [columns]);
 
   // 행 데이터에 ID 추가
-  const processedData = React.useMemo(() => {
-    return data.map((row, index) => ({
+  const processedData = useMemo(() => {
+    return paginatedData.map((row, index) => ({
       ...row,
       _gridId: row[rowIdField] ?? index,
     }));
-  }, [data, rowIdField]);
+  }, [paginatedData, rowIdField]);
 
   // 이벤트 핸들러
   const handleRowClick: GridEventListener<'rowClick'> = params => {
-    if (onRowClick) {
-      onRowClick(params.row, params);
-    }
+    onRowClick?.(params.row, params);
   };
 
   const handleRowDoubleClick: GridEventListener<'rowDoubleClick'> = params => {
-    if (onRowDoubleClick) {
-      onRowDoubleClick(params.row, params);
-    }
+    onRowDoubleClick?.(params.row, params);
   };
 
   const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
@@ -213,22 +235,22 @@ const DataGrid = <T extends Record<string, any>>({
   };
 
   // 페이지네이션 핸들러
-  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
-    setCurrentPage(page);
-    pagination?.onPageChange?.(page);
+  const handlePageChange = (_: React.ChangeEvent<unknown>, newPage: number) => {
+    setPage(newPage);
+    paginationConfig.onPageChange?.(newPage);
   };
 
   const handlePageSizeChange = (event: any) => {
-    const newPageSize = event.target.value;
+    const newPageSize = Number(event.target.value);
     setPageSize(newPageSize);
-    pagination?.onPageSizeChange?.(newPageSize);
+    paginationConfig.onPageSizeChange?.(newPageSize);
   };
 
   // 커스텀 페이지네이션 컴포넌트
   const CustomPagination = () => {
-    if (!pagination || hideFooter || hideFooterPagination) return null;
+    if (hideFooter || hideFooterPagination) return null;
 
-    const { totalItems = 0, totalPages = 0, pageSizeOptions = [5, 10, 25, 50] } = pagination;
+    const { totalItems = 0, totalPages = 0, pageSizeOptions = [5, 10, 20, 30] } = paginationConfig;
 
     return (
       <Box
@@ -237,159 +259,106 @@ const DataGrid = <T extends Record<string, any>>({
           justifyContent: 'space-between',
           alignItems: 'center',
           p: 2,
-          borderTop: 1,
-          borderColor: 'divider',
+          backgroundColor: 'background.paper',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <FormControl size='small' sx={{ minWidth: 120 }}>
+          <FormControl size='small' sx={{ minWidth: 120, '& .MuiOutlinedInput-notchedOutline': { borderWidth: '1px' } }}>
             <InputLabel>페이지 크기</InputLabel>
             <Select value={pageSize} label='페이지 크기' onChange={handlePageSizeChange}>
               {pageSizeOptions.map(size => (
                 <MenuItem key={size} value={size}>
-                  {size}개
+                  {size}개씩 보기
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-
           <Typography variant='body2' color='text.secondary'>
-            전체 {totalItems}개 중 {(currentPage - 1) * pageSize + 1}-
-            {Math.min(currentPage * pageSize, totalItems)}개
+            총 {totalItems}개 항목
           </Typography>
         </Box>
-
         <Pagination
           count={totalPages}
-          page={currentPage}
+          page={page}
           onChange={handlePageChange}
           color='primary'
           size='small'
-          showFirstButton
-          showLastButton
         />
       </Box>
     );
   };
 
-  // 에러 상태
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity='error'>{error}</Alert>
-      </Box>
-    );
-  }
-
-  // 로딩 상태
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: typeof height === 'number' ? height : 200,
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 1,
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // 데이터 없음 상태
-  if (!data.length) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: typeof height === 'number' ? height : 200,
-          border: 1,
-          borderColor: 'divider',
-          borderRadius: 1,
-        }}
-      >
-        <Typography variant='body1' color='text.secondary'>
-          {noDataMessage}
-        </Typography>
-      </Box>
-    );
-  }
-
   return (
-    <Paper
-      className={className}
-      style={style}
+    <Box
       sx={{
+        width: '100%',
         height: autoHeight ? 'auto' : height,
         maxHeight,
         display: 'flex',
         flexDirection: 'column',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 1,
+        overflow: 'hidden',
         ...sx,
       }}
+      className={className}
+      style={style}
       id={id}
       data-testid={dataTestId}
-      {...props}
     >
-      {/* 최상단 구분선 */}
-      <Box
-        sx={{
-          borderTop: 1,
-          borderColor: 'divider',
-        }}
-      />
-
-      <MuiDataGrid
-        rows={processedData}
-        columns={muiColumns}
-        getRowId={row => row._gridId}
-        loading={loading}
-        checkboxSelection={selectable}
-        disableRowSelectionOnClick={disableRowSelectionOnClick || !selectable}
-        rowSelection={multiSelect}
-        rowSelectionModel={selectedRows}
-        sortModel={sortModel}
-        filterModel={filterModel}
-        density={density}
-        autoHeight={autoHeight}
-        disableColumnMenu={disableColumnMenu}
-        disableColumnFilter={disableColumnFilter}
-        disableColumnSorting={disableColumnSort}
-        hideFooter={hideFooter || !!pagination}
-        hideFooterPagination={hideFooterPagination}
-        onRowClick={handleRowClick}
-        onRowDoubleClick={handleRowDoubleClick}
-        onRowSelectionModelChange={handleSelectionChange}
-        onSortModelChange={handleSortModelChange}
-        onFilterModelChange={handleFilterModelChange}
-        slots={{
-          pagination: CustomPagination,
-        }}
-        sx={{
-          border: 'none',
-          '& .MuiDataGrid-main': {
-            borderRight: '1px solid rgba(224, 224, 224, 1)',
-            borderLeft: '1px solid rgba(224, 224, 224, 1)',
-          },
-          '& .MuiDataGrid-row:hover': {
-            backgroundColor: 'rgba(25, 118, 210, 0.04)',
-          },
-          '& .MuiDataGrid-row.Mui-selected': {
-            backgroundColor: 'rgba(25, 118, 210, 0.08)',
-            '&:hover': {
-              backgroundColor: 'rgba(25, 118, 210, 0.12)',
-            },
-          },
-        }}
-      />
-
-      <CustomPagination />
-    </Paper>
+      {error ? (
+        <Alert severity='error' sx={{ m: 2 }}>
+          {error}
+        </Alert>
+      ) : loading ? (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          <Box sx={{ flex: 1, minHeight: 0 }}>
+            <MuiDataGrid
+              rows={processedData}
+              columns={muiColumns}
+              getRowId={row => row._gridId}
+              checkboxSelection={selectable}
+              disableRowSelectionOnClick={disableRowSelectionOnClick}
+              disableMultipleRowSelection={!multiSelect}
+              rowSelectionModel={selectedRows}
+              onRowClick={handleRowClick}
+              onRowDoubleClick={handleRowDoubleClick}
+              onRowSelectionModelChange={handleSelectionChange}
+              sortModel={sortModel}
+              onSortModelChange={handleSortModelChange}
+              filterModel={filterModel}
+              onFilterModelChange={handleFilterModelChange}
+              density={density}
+              disableColumnMenu={disableColumnMenu}
+              disableColumnFilter={disableColumnFilter}
+              disableColumnSorting={disableColumnSort}
+              hideFooter
+              hideFooterPagination
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-cell:focus': {
+                  outline: 'none',
+                },
+              }}
+              {...props}
+            />
+          </Box>
+          <CustomPagination />
+        </>
+      )}
+    </Box>
   );
 };
 

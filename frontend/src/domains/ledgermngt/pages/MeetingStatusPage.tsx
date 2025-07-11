@@ -472,13 +472,15 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             overflow: 'hidden',
             minHeight: 0, // flex item이 축소될 수 있도록 설정
             position: 'relative',
+            // pb: 2,
           }}
         >
           <DataGrid<MeetingBody>
+
             data={meetingBodies}
             columns={meetingColumns}
             loading={loading}
-            height={500} // 명확한 픽셀 높이 설정
+            outline={false}
             selectable
             multiSelect
             selectedRows={selectedIds}
@@ -486,17 +488,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
               setSelectedIds(selectedRowIds.map(id => String(id)));
             }}
             rowIdField='meetingBodyId'
-            pagination={{
-              page: pageInfo.page + 1, // DataGrid는 1-based pagination
-              pageSize: pageInfo.size,
-              totalItems: pageInfo.totalElements,
-              onPageChange: page => {
-                setPageInfo(prev => ({ ...prev, page: page - 1 })); // 0-based로 변환
-              },
-              onPageSizeChange: pageSize => {
-                setPageInfo(prev => ({ ...prev, size: pageSize, page: 0 }));
-              },
-            }}
+
             serverSide
           />
         </Box>
