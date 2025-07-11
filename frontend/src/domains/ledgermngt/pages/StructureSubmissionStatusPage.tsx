@@ -2,11 +2,9 @@
  * 책무구조도 제출 관리 페이지
  * 책무구조 원장 관리 - 적부구조도 제출 관리
  */
-import { Box, Chip, Typography } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import React, { useCallback, useRef, useState } from 'react';
 
-import type { EmployeeSearchResult } from '@/app/components/EmployeeSearchPopup';
-import EmployeeSearchPopup from '@/app/components/EmployeeSearchPopup';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
@@ -17,6 +15,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
+import { StructureSubmissionStatusDialog } from '../components';
 
 interface IStructureSubmissionStatusPageProps {
   className?: string;
@@ -43,9 +42,6 @@ interface RegistrationData {
   remarks: SelectOption | null;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx'];
-
 const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProps> = (): React.JSX.Element => {
   // 기간 선택 상태
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -66,23 +62,11 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   // 등록 모드
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
 
-  // 등록 폼 데이터
-  const [registrationData, setRegistrationData] = useState<RegistrationData>({
-    historyCode: null,
-    executiveName: null,
-    position: null,
-    submissionDate: new Date(),
-    attachmentFile: '',
-    remarks: null
-  });
-
   // 에러 다이얼로그 상태
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
-  // 직원 검색 팝업 상태
-  const [employeePopupOpen, setEmployeePopupOpen] = useState(false);
-
+  // 파일 입력 참조
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 로딩 상태
@@ -183,18 +167,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
     setSelectedHistoryIds(selectedRows.map(id => Number(id)));
   };
 
-  // ComboBox 값 변경 핸들러
-  const handleComboBoxChange = (
-    field: keyof RegistrationData,
-    value: SelectOption | null,
-    setData: React.Dispatch<React.SetStateAction<RegistrationData>>
-  ) => {
-    setData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
   // 행 클릭 핸들러
   const handleHistoryRowClick = (row: SubmissionHistoryRow) => {
     if (isRegistrationMode) {
@@ -205,112 +177,10 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   // 등록 모드 전환
   const handleRegistrationModeToggle = () => {
     setIsRegistrationMode(!isRegistrationMode);
-    if (!isRegistrationMode) {
-      setRegistrationData({
-        historyCode: null,
-        executiveName: null,
-        position: null,
-        submissionDate: new Date(),
-        attachmentFile: '',
-        remarks: null
-      });
-
-      // 등록 폼으로 스크롤
-      setTimeout(() => {
-        const formSection = document.getElementById('submission-form-section');
-        if (formSection) {
-          formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    }
-  };
-
-  // 옵션 데이터
-  const historyCodeOptions: SelectOption[] = [
-    { value: 'SUB001', label: 'SUB001' },
-    { value: 'SUB002', label: 'SUB002' },
-    { value: 'SUB003', label: 'SUB003' },
-  ];
-
-  const positionOptions: SelectOption[] = [
-    { value: '부장', label: '부장' },
-    { value: '차장', label: '차장' },
-    { value: '과장', label: '과장' },
-  ];
-
-  // 파일 선택 핸들러
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // 파일 크기 검증
-    if (file.size > MAX_FILE_SIZE) {
-      setErrorMessage('파일 크기는 10MB를 초과할 수 없습니다.');
-      setErrorDialogOpen(true);
-      return;
-    }
-
-    // 파일 타입 검증
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
-      setErrorMessage('허용된 파일 형식은 PDF, DOC, DOCX입니다.');
-      setErrorDialogOpen(true);
-      return;
-    }
-
-    const setData = setRegistrationData;
-    setData(prev => ({
-      ...prev,
-      attachmentFile: file.name
-    }));
-  };
-
-  // 직원 선택 핸들러
-  const handleEmployeeSelect = (employee: EmployeeSearchResult | EmployeeSearchResult[]) => {
-    if (!Array.isArray(employee)) {
-      setRegistrationData(prev => ({
-        ...prev,
-        executiveName: { value: employee.username, label: employee.username },
-        position: { value: employee.jobTitleCd, label: employee.jobTitleCd }
-      }));
-      setEmployeePopupOpen(false);
-    }
-  };
-
-  // 폼 유효성 검사
-  const validateForm = (data: RegistrationData): boolean => {
-    if (!data.historyCode) {
-      setErrorMessage('제출이력 코드를 선택해주세요.');
-      setErrorDialogOpen(true);
-      return false;
-    }
-
-    if (!data.executiveName) {
-      setErrorMessage('제출 대상 임원을 선택해주세요.');
-      setErrorDialogOpen(true);
-      return false;
-    }
-
-    if (!data.position) {
-      setErrorMessage('직책을 선택해주세요.');
-      setErrorDialogOpen(true);
-      return false;
-    }
-
-    if (!data.attachmentFile) {
-      setErrorMessage('책무구조도 파일을 첨부해주세요.');
-      setErrorDialogOpen(true);
-      return false;
-    }
-
-    return true;
   };
 
   // 제출 이력 등록
-  const handleSubmit = async () => {
-    const data = registrationData;
-    if (!validateForm(data)) return;
-
+  const handleSubmit = async (data: RegistrationData): Promise<void> => {
     try {
       setIsLoading(true);
       const formData = new FormData();
@@ -479,7 +349,12 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
         </Box>
 
         {/* 데이터 그리드 */}
-        <Box sx={{ height: 400, width: '100%' }}>
+        <Box sx={{
+            flex: 1,
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
           <DataGrid
             data={historyRows}
             columns={columns}
@@ -487,183 +362,17 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             error={null}
             onRowClick={handleHistoryRowClick}
             onRowSelectionChange={handleHistoryRowSelectionModelChange}
-            pagination={{
-              page: 1,
-              pageSize: 10,
-              totalItems: historyRows.length,
-              onPageChange: () => {},
-              onPageSizeChange: () => {}
-            }}
           />
         </Box>
 
-        {/* 등록 폼 영역 */}
+        {/* 등록 폼 팝업 */}
         {isRegistrationMode && (
-          <Box
-            id="submission-form-section"
-            sx={{
-              marginTop: '20px',
-              backgroundColor: 'var(--bank-bg-secondary)',
-              border: '1px solid var(--bank-border)',
-              borderRadius: '4px',
-              padding: '16px'
-            }}
-          >
-            <Typography variant="h6" sx={{
-              fontWeight: 'bold',
-              marginBottom: '16px',
-              fontSize: '0.95rem',
-              color: 'var(--bank-text-primary)'
-            }}>
-              책무구조도 제출 등록
-            </Typography>
-
-            {/* 기존 폼 필드들 */}
-            <Box sx={{
-              border: '1px solid var(--bank-border)',
-              borderRadius: '4px',
-              backgroundColor: '#ffffff',
-              padding: '16px',
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr',
-              gap: '16px',
-              alignItems: 'center'
-            }}>
-              {/* 제출이력 코드 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                제출이력 코드
-              </Typography>
-              <ComboBox
-                value={registrationData.historyCode}
-                onChange={(value) => handleComboBoxChange(
-                  'historyCode',
-                  value as SelectOption | null,
-                  setRegistrationData
-                )}
-                options={historyCodeOptions}
-                placeholder="제출이력 코드를 선택하세요"
-                size="small"
-              />
-
-              {/* 제출 대상 임원 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                제출 대상 임원
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <ComboBox
-                  value={registrationData.executiveName}
-                  onChange={(value) => handleComboBoxChange(
-                    'executiveName',
-                    value as SelectOption | null,
-                    setRegistrationData
-                  )}
-                  options={[]}
-                  placeholder="제출 대상 임원을 선택하세요"
-                  size="small"
-                  disabled={true}
-                  sx={{ minWidth: '300px' }}
-                />
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => setEmployeePopupOpen(true)}
-                >
-                  검색
-                </Button>
-              </Box>
-
-              {/* 직책 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                제출 대상 임원 직책
-              </Typography>
-              <ComboBox
-                value={registrationData.position}
-                onChange={(value) => handleComboBoxChange(
-                  'position',
-                  value as SelectOption | null,
-                  setRegistrationData
-                )}
-                options={positionOptions}
-                placeholder="제출 대상 임원 직책을 입력하세요"
-                size="small"
-                disabled={true}
-              />
-
-              {/* 책무구조도 제출일 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                책무구조도 제출일
-              </Typography>
-              <DatePicker
-                value={registrationData.submissionDate}
-                onChange={(date) => {
-                  setRegistrationData(prev => ({ ...prev, submissionDate: date || new Date() }));
-                }}
-                size="small"
-              />
-
-              {/* 책무구조도 첨부 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                책무구조도 첨부
-              </Typography>
-              <Box>
-                <Typography sx={{ mb: 1 }}>첨부파일</Typography>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    hidden
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleFileChange}
-                  />
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    파일 선택
-                  </Button>
-                </Box>
-              </Box>
-
-              {/* 비고 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                비고
-              </Typography>
-              <ComboBox
-                value={registrationData.remarks}
-                onChange={(value) => handleComboBoxChange(
-                  'remarks',
-                  value as SelectOption | null,
-                  setRegistrationData
-                )}
-                options={[]}
-                placeholder="비고를 입력하세요"
-                size="small"
-              />
-            </Box>
-
-            {/* 저장/취소 버튼 */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 1 }}>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleSubmit}
-                disabled={isLoading}
-                color="success"
-              >
-                등록
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleRegistrationModeToggle}
-                disabled={isLoading}
-                color="primary"
-              >
-                취소
-              </Button>
-            </Box>
-          </Box>
+          <StructureSubmissionStatusDialog
+            open={isRegistrationMode}
+            onClose={handleRegistrationModeToggle}
+            onSubmit={handleSubmit}
+            loading={isLoading}
+          />
         )}
 
         {/* 에러 다이얼로그 */}
@@ -671,13 +380,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           open={errorDialogOpen}
           errorMessage={errorMessage}
           onClose={() => setErrorDialogOpen(false)}
-        />
-
-        {/* 직원 검색 팝업 */}
-        <EmployeeSearchPopup
-          open={employeePopupOpen}
-          onClose={() => setEmployeePopupOpen(false)}
-          onSelect={handleEmployeeSelect}
         />
       </PageContent>
     </PageContainer>

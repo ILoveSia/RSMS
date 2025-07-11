@@ -457,7 +457,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>직무번호</span>
           <ComboBox
-            value={ledgerOrderFilter}
+              value={ledgerOrderFilter}
             options={ledgerOrderOptions}
             onChange={(value) => setLedgerOrderFilter(value as string)}
             size="small"
