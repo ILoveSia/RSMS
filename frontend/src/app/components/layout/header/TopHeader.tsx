@@ -19,15 +19,12 @@ interface LoginUser {
 }
 
 const TopHeader: React.FC<TopHeaderProps> = ({ className = '', style }) => {
-  console.log('📱 [TopHeader] 렌더링 시작:', { className });
 
   const navigate = useNavigate();
   const { setActiveTab, addTab } = useTabContext();
 
   // Redux Store에서 사용자 정보 가져오기
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
-
-  console.log('📱 [TopHeader] Redux loginData:', loginData);
 
   const handleTitleClick = () => {
     // 홈 탭으로 이동
@@ -48,7 +45,6 @@ const TopHeader: React.FC<TopHeaderProps> = ({ className = '', style }) => {
     // sessionStorage에서 사용자 정보 삭제
     sessionStorage.removeItem('user');
 
-    console.log('🔄 [TopHeader] 로그아웃 - localStorage 및 sessionStorage 데이터 삭제');
 
     // 로그인 페이지로 이동
     navigate('/login');

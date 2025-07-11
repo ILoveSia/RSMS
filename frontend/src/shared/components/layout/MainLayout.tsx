@@ -65,19 +65,9 @@ const MainLayout: IComponent<IMainLayoutProps> = ({
 }: IMainLayoutProps): React.JSX.Element => {
   const { authState } = useAuth();
 
-  console.log('🏠 [MainLayout] 렌더링 시작:', {
-    className,
-    isAuthenticated: authState.isAuthenticated,
-    userRoles: authState.user?.roles,
-    user: authState.user,
-    loading: authState.loading,
-  });
-  console.log('🏠 [MainLayout] TopHeader:', TopHeader);
-  console.log('🏠 [MainLayout] LeftMenu:', LeftMenu);
 
   // 인증 상태 로딩 중일 때
   if (authState.loading) {
-    console.log('⏳ [MainLayout] 인증 상태 로딩 중...');
     return (
       <div style={{
         display: 'flex',

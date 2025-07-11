@@ -100,10 +100,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
           setMenuItems(convertedMenus);
           setIsMenuLoaded(true);
 
-          // 상태 업데이트 확인을 위한 타이머
-          setTimeout(() => {
-            console.log('🔍 [LeftMenu] setMenuItems 호출 후 100ms - 상태 확인 필요');
-          }, 100);
 
           if (convertedMenus.length > 0) {
             setExpandedItems([convertedMenus[0].title]);
@@ -216,12 +212,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
       // console.log('✅ [LeftMenu] 메뉴 아이템 변환 완료:', convertedMenus);
     } else {
-      console.log('⚠️ [LeftMenu] menuStore에 메뉴 데이터가 없습니다.');
-      console.log('🔍 [LeftMenu] menuData 상태:', {
-        hasMenuData: !!menuData,
-        hasMenuDataData: !!menuData?.data,
-        menuCount: menuData?.data?.length || 0,
-      });
       // localStorage에서 복원한 메뉴가 있다면 유지, 없다면 빈 배열로 설정
       // isMenuLoaded가 true라면 이미 localStorage 복원이 완료된 상태
       if (!isMenuLoaded) {

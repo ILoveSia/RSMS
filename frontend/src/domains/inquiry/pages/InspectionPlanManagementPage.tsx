@@ -61,7 +61,6 @@ const initialEditData: RegistrationData = {
 };
 
 const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps> = React.memo((): React.JSX.Element => {
-
   // 기간 선택 상태
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -78,22 +77,9 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
   const [planRows, setPlanRows] = useState<InspectionPlanRow[]>([]);
   const [selectedPlanIds, setSelectedPlanIds] = useState<number[]>([]);
 
-  // 선택된 상세 정보
-  const [selectedPlanDetail, setSelectedPlanDetail] = useState<InspectionPlanRow | null>(null);
-
   // 등록/수정 모드
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-
-  // 상세 정보 영역으로 스크롤하는 useEffect 추가
-  useEffect(() => {
-    if (selectedPlanDetail && !isRegistrationMode && !isEditMode) {
-      const detailSection = document.getElementById('detail-section');
-      if (detailSection) {
-        detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  }, [selectedPlanDetail, isRegistrationMode, isEditMode]);
 
   // 등록 폼 데이터
   const [registrationData, setRegistrationData] = useState<RegistrationData>(initialRegistrationData);
@@ -261,80 +247,14 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
     }
   ];
 
-  // 행 클릭 핸들러
-  const handlePlanRowClick = (row: InspectionPlanRow) => {
-    // 등록 모드일 때는 등록 모드를 취소하고 상세 표시
-    if (isRegistrationMode) {
-      setIsRegistrationMode(false);
-      setRegistrationData(initialRegistrationData);
-    }
-
-    // 수정 모드일 때는 그대로 리턴 (수정 중인 내용 보호)
-    if (isEditMode) {
-      return;
-    }
-
-    setSelectedPlanDetail(row);
-    setEditData({
-      planCode: row.planCode,
-      roundName: row.roundName,
-      inspectionStartDate: new Date(row.inspectionPeriod.split(' ~ ')[0]),
-      inspectionEndDate: new Date(row.inspectionPeriod.split(' ~ ')[1]),
-      inspectionTarget: { value: row.inspectionTarget, label: row.inspectionTarget },
-      remarks: row.remarks || ''
-    });
-  };
-
-  // 상세 정보 데이터
-  const [detailData, setDetailData] = useState<RegistrationData>(initialEditData);
-
-  // 행 선택 핸들러
-  const handleRowClick = (params: any) => {
-    const row = params.row;
-    if (isEditMode) {
-      setIsEditMode(false);
-      setEditData(initialEditData);
-    }
-    if (isRegistrationMode) {
-      setIsRegistrationMode(false);
-      setRegistrationData(initialRegistrationData);
-    }
-    setSelectedPlanDetail(row);
-    setDetailData({
-      planCode: row.planCode,
-      roundName: row.roundName,
-      inspectionStartDate: new Date(row.inspectionPeriod.split(' ~ ')[0]),
-      inspectionEndDate: new Date(row.inspectionPeriod.split(' ~ ')[1]),
-      inspectionTarget: { value: row.inspectionTarget, label: row.inspectionTarget },
-      remarks: row.remarks || ''
-    });
-  };
-
   // 등록 모드 전환
   const handleRegistrationModeToggle = () => {
-    // 등록 모드로 전환할 때
+    setIsRegistrationMode(!isRegistrationMode);
     if (!isRegistrationMode) {
-      // 기존 상태 초기화
-      setIsRegistrationMode(true);
       setIsEditMode(false);
-      setSelectedPlanDetail(null);
       setSelectedPlanIds([]);
-
-      // 수정 중이든 아니든 모든 폼 데이터 초기화
       setRegistrationData(initialRegistrationData);
       setEditData(initialEditData);
-
-      // 등록 폼으로 스크롤
-      setTimeout(() => {
-        const registrationSection = document.getElementById('registration-section');
-        if (registrationSection) {
-          registrationSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    } else {
-      // 등록 모드 취소할 때
-      setIsRegistrationMode(false);
-      setRegistrationData(initialRegistrationData);
     }
   };
 
@@ -344,8 +264,6 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
     if (!isEditMode) {
       setRegistrationData(initialRegistrationData);
       setIsRegistrationMode(false);
-    } else {
-      setSelectedPlanDetail(null); // 수정 모드 진입 시 선택된 행 상세 정보 초기화
     }
   };
 
@@ -507,7 +425,6 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
   };
 
   return (
-
     <PageContainer
     sx={{
       flex: 1,
@@ -625,7 +542,6 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             selectable
             multiSelect
             selectedRows={selectedPlanIds}
-            onRowClick={(row) => handleRowClick(row as InspectionPlanRow)}
             onRowSelectionChange={(newSelection) => {
               setSelectedPlanIds(newSelection as number[]);
             }}
@@ -637,101 +553,6 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             noDataMessage="데이터가 없습니다."
           />
         </Box>
-
-        {/* 선택된 행 상세 정보 */}
-        {selectedPlanDetail && !isRegistrationMode && !isEditMode && (
-          <Box
-            id="detail-section"
-            sx={{
-              marginTop: '20px',
-              backgroundColor: 'var(--bank-bg-secondary)',
-              border: '1px solid var(--bank-border)',
-              borderRadius: '4px',
-              padding: '16px'
-            }}
-          >
-            <Typography variant="h6" sx={{
-              fontWeight: 'bold',
-              marginBottom: '16px',
-              fontSize: '0.95rem',
-              color: 'var(--bank-text-primary)'
-            }}>
-              점검 계획 상세 정보
-            </Typography>
-
-            <Box sx={{
-              border: '1px solid var(--bank-border)',
-              borderRadius: '4px',
-              backgroundColor: '#ffffff',
-              padding: '16px',
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr',
-              gap: '16px',
-              alignItems: 'center'
-            }}>
-              {/* 점검 계획 코드 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                점검계획 코드
-              </Typography>
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                {selectedPlanDetail.planCode}
-              </Typography>
-
-              {/* 점검 회차명 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                점검 회차명
-              </Typography>
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                {selectedPlanDetail.roundName}
-              </Typography>
-
-              {/* 점검 기간 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                점검 기간
-              </Typography>
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                {selectedPlanDetail.inspectionPeriod}
-              </Typography>
-
-              {/* 점검 대상 선정 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                점검 대상 선정
-              </Typography>
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                {selectedPlanDetail.inspectionTarget}
-              </Typography>
-
-              {/* 비고 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                비고
-              </Typography>
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-secondary)', minHeight: '32px', display: 'flex', alignItems: 'center' }}>
-                {selectedPlanDetail.remarks || '-'}
-              </Typography>
-            </Box>
-            {/* 상세 하단 수정 버튼 */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: 2 }}>
-              <Button
-                variant="contained"
-                size="small"
-                color="primary"
-                onClick={() => {
-                  setIsEditMode(true);
-                  setEditData({
-                    planCode: selectedPlanDetail.planCode,
-                    roundName: selectedPlanDetail.roundName,
-                    inspectionStartDate: new Date(selectedPlanDetail.inspectionPeriod.split(' ~ ')[0]),
-                    inspectionEndDate: new Date(selectedPlanDetail.inspectionPeriod.split(' ~ ')[1]),
-                    inspectionTarget: { value: selectedPlanDetail.inspectionTarget, label: selectedPlanDetail.inspectionTarget },
-                    remarks: selectedPlanDetail.remarks || ''
-                  });
-                }}
-              >
-                수정
-              </Button>
-            </Box>
-          </Box>
-        )}
 
         {/* 등록 폼 */}
         {isRegistrationMode && (

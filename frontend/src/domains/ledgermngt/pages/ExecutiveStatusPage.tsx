@@ -326,6 +326,11 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setSelectedIds(selectedRows.map(Number));
   };
 
+  // 행 클릭 핸들러
+  const handleRowClick = (row: ExecutiveStatusRow) => {
+    handleExecutiveDetail(row);
+  };
+
   // 엑셀 업로드
   const handleExcelUpload = () => {
     const input = document.createElement('input');
@@ -504,16 +509,27 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
         {/* 데이터 그리드 */}
         <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-          <DataGrid
+          <DataGrid<ExecutiveStatusRow>
             data={rows}
             columns={executiveColumns}
             loading={loading}
             error={error}
             selectable
             multiSelect
-            onRowSelectionChange={handleRowSelectionModelChange}
+            onRowClick={handleRowClick}
+            onRowSelectionChange={(selectedRows: (string | number)[], selectedData: ExecutiveStatusRow[]) => {
+              setSelectedIds(selectedRows.map(Number));
+            }}
             rowIdField="id"
+            autoHeight
+            disableColumnMenu
+            disableColumnFilter
+            disableRowSelectionOnClick={false}
             sx={{
+              border: 'none',
+              '& .MuiDataGrid-cell:focus': {
+                outline: 'none'
+              },
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary)',
                 fontWeight: 'bold',

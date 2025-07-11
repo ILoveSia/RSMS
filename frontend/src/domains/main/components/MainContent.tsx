@@ -113,13 +113,6 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
     [showError, showSuccess]
   );
 
-  // 컴포넌트 마운트 디버깅
-  useEffect(() => {
-    console.log('[MainContent] 컴포넌트가 마운트되었습니다.');
-    return () => {
-      console.log('[MainContent] 컴포넌트가 언마운트되었습니다.');
-    };
-  }, []);
 
 
   // Q&A 데이터 로드
