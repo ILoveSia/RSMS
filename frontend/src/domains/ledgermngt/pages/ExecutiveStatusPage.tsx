@@ -6,14 +6,10 @@ import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn } from '@/shared/types/common';
+import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import type { SelectChangeEvent } from '@mui/material';
 import {
   Box,
-  FormControl,
-  MenuItem,
-  Select,
   Snackbar
 } from '@mui/material';
 import ExcelJS from 'exceljs';
@@ -24,6 +20,7 @@ import ExecutiveDetailDialog from '../../../app/components/ExecutiveDetailDialog
 import '../../../assets/scss/style.css';
 import { Button } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
+import { ComboBox } from '../../../shared/components/ui/form';
 
 interface IExecutiveStatusPageProps {
   className?: string;
@@ -246,8 +243,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   ];
 
   // 필터 변경 핸들러
-  const handleLedgerOrderChange = (event: SelectChangeEvent<string>) => {
-    setLedgerOrderFilter(event.target.value);
+  const handleLedgerOrderChange = (value: string | SelectOption | SelectOption[] | string[] | null) => {
+    if (typeof value === 'string') {
+      setLedgerOrderFilter(value);
+    } else if (value && !Array.isArray(value) && 'value' in value) {
+      setLedgerOrderFilter(String(value.value));
+    } else {
+      setLedgerOrderFilter('전체');
+    }
   };
 
   // 임원 저장 핸들러 (등록/수정 공통)
@@ -447,21 +450,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
-          <FormControl size="small" sx={{ minWidth: '200px' }}>
-            <Select
-              value={ledgerOrderFilter}
-              onChange={handleLedgerOrderChange}
-              displayEmpty
-              inputProps={{ 'aria-label': '원장차수' }}
-            >
-              <MenuItem value="전체">전체</MenuItem>
-              {ledgerOrderOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>직무번호</span>
+          <ComboBox
+            value={ledgerOrderFilter}
+            options={ledgerOrderOptions}
+            onChange={(value) => setLedgerOrderFilter(value as string)}
+            size="small"
+            sx={{ minWidth: '200px' }}
+          />
           <Button
             variant="contained"
             color="primary"

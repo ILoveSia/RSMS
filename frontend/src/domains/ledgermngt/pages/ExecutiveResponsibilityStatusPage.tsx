@@ -30,7 +30,11 @@ interface ExecutiveResponsibilityRow {
   status: string;           // 상태
   lastUpdateDate: string;   // 최종 수정일
 }
-
+  const ledgerOrderOptions: SelectOption[] = [
+    { value: '2024-001', label: '2024-001' },
+    { value: '2024-002', label: '2024-002' },
+    { value: '2024-003', label: '2024-003' }
+  ];
 const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatusPageProps> = () => {
   // 상태 관리
   const [selectedRound, setSelectedRound] = useState<SelectOption | null>(null);
@@ -255,19 +259,20 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
-            value={selectedRound}
-            onChange={(value) => setSelectedRound(value as SelectOption)}
-            options={roundOptions}
-            placeholder="원장 차수 선택"
+            options={ledgerOrderOptions}
+            onChange={value => setSelectedRound(value as SelectOption)}
             size="small"
-            sx={{ minWidth: '200px' }}
+            sx={{ width: '130px' }}
           />
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>
+            직책
+          </span>
           <ComboBox
             value={selectedPosition}
             onChange={(value) => setSelectedPosition(value as SelectOption)}
             options={positionOptions}
-            placeholder="직책 선택"
             size="small"
             sx={{ minWidth: '200px' }}
           />

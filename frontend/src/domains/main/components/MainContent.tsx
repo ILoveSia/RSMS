@@ -3,6 +3,7 @@ import type { QnaListResponseDto } from '@/app/types/qna';
 import { Dialog } from '@/shared/components/modal';
 import type { ServerDataGridApi, ServerRequest } from '@/shared/components/ui/data-display';
 import { ServerDataGrid } from '@/shared/components/ui/data-display';
+import InfoCard from '@/shared/components/ui/data-display/InfoCard';
 import { Alert, Loading, useToastHelpers } from '@/shared/components/ui/feedback';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -209,6 +210,15 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
   const handleConceptDialogOpen = useCallback(() => setIsConceptDialogOpen(true), []);
   const handleConceptDialogClose = useCallback(() => setIsConceptDialogOpen(false), []);
 
+  // 문서 스택 컴포넌트
+  const DocumentStack = () => (
+    <div className='document-stack'>
+      <div className='document-page'></div>
+      <div className='document-page'></div>
+      <div className='document-page'></div>
+    </div>
+  );
+
   return (
     <PageContainer
       sx={{
@@ -216,7 +226,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'clip',
       }}
     >
       <PageHeader
@@ -228,6 +238,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
           position: 'relative',
           zIndex: 1,
           flexShrink: 0,
+          overflowY:'clip',
         }}
       />
       <PageContent
@@ -243,86 +254,27 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
           overflowX: 'hidden'
         }}
       >
-     
-
+        <div className='responsibility-section'>
+          <InfoCard
+            title='책무구조도의 기본 개념'
+            contentTitle='책무구조도 무엇인가요?'
+            contentDescription={`임원 직책별로 부여된 구체적인 내용으로 기업의 문서(책무구조)에서 임원의 직책별 책무를 도식화한 문서(책무구조도)를 작성하여 이사회 직책을 거쳐 금융당국에 제출`}
+            contentImage={<DocumentStack />}
+            onClick={handleConceptDialogOpen}
+          />
+          <InfoCard
+            title='금융당국 · 협회 등 자료'
+            contentTitle='책무구조도 등 제재 지침·법령 해설서'
+            contentDescription={`임원 책무에 대한 부서장 내부통제 점검으로서 내부통제 이행점검 점검항목을 이행하지 않은 경우지로 내부통제 Checklist와는 다른 점검항목을 점검하는 것이 목적`}
+            contentImage={<DocumentStack />}
+            onClick={handleDialogOpen}
+          />
+        </div>
         {/* 메인 콘텐츠 영역 */}
         <div className='responsibility-main'>
           {/* 상단 섹션 */}
           <div className='responsibility-section'>
             {/* 책무구조도의 기본 개념 */}
-            <div
-              className='responsibility-card'
-              onClick={handleConceptDialogOpen}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className='responsibility-card__header'>
-                <div className='responsibility-card__arrow'>
-                  <svg viewBox='0 0 24 24' fill='currentColor'>
-                    <path d='M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z' />
-                  </svg>
-                </div>
-                <h3 className='responsibility-card__title'>책무구조도의 기본 개념</h3>
-              </div>
-              <div className='responsibility-card__content'>
-                <div className='responsibility-card__image'>
-                  <div className='document-stack'>
-                    <div className='document-page'></div>
-                    <div className='document-page'></div>
-                    <div className='document-page'></div>
-                  </div>
-                </div>
-                <div className='responsibility-card__text'>
-                  <h4>책무구조도 무엇인가요?</h4>
-                  <p>
-                    임원 직책별로 부여된 구체적인 내용으로
-                    <br />
-                    기업의 문서(책무구조)에서 임원의
-                    <br />
-                    직책별 책무를 도식화한
-                    <br />
-                    문서(책무구조도)를 작성하여 이사회
-                    <br />
-                    직책을 거쳐 금융당국에 제출
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 금융당국 · 협회 등 자료료 */}
-            <div
-              className='responsibility-card'
-              onClick={handleDialogOpen}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className='responsibility-card__header'>
-                <div className='responsibility-card__arrow'>
-                  <svg viewBox='0 0 24 24' fill='currentColor'>
-                    <path d='M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z' />
-                  </svg>
-                </div>
-                <h3 className='responsibility-card__title'>금융당국 · 협회 등 자료</h3>
-              </div>
-              <div className='responsibility-card__content'>
-                <div className='responsibility-card__image'>
-                  <div className='document-stack'>
-                    <div className='document-page'></div>
-                    <div className='document-page'></div>
-                  </div>
-                </div>
-                <div className='responsibility-card__text'>
-                  <h4>책무구조도 등 제재 지침·법령 해설서</h4>
-                  <p>
-                    임원 책무에 대한 부서장 내부통제
-                    <br />
-                    점검으로서 내부통제
-                    <br />
-                    이행점검 점검항목을 이행하지 않은 경우지로
-                    <br />
-                    내부통제 Checklist와는
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Q&A 섹션 */}

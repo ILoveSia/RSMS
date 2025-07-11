@@ -550,7 +550,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
           alignItems: 'center'
         }}>
           <ComboBox
-            label="원장차수"
+            label="직무번호"
             value={ledgerOrder}
             options={ledgerOrderOptions}
             onChange={(value) => setLedgerOrder(value as string)}

@@ -78,6 +78,7 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, className = '' }) =>
               justifyContent: 'center',
               height: '100%',
               flexDirection: 'column',
+
               gap: 2,
             }}
           >

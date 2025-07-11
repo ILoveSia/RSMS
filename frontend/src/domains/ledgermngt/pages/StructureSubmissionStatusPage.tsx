@@ -420,13 +420,12 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
-            label="원장차수"
-            value={ledgerOrder}
             options={ledgerOrderOptions}
-            onChange={(value) => setLedgerOrder(value as string)}
+            onChange={value => setLedgerOrder(value as string)}
             size="small"
-            sx={{ minWidth: '200px' }}
+            sx={{ width: '130px' }}
           />
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <DatePicker

@@ -33,7 +33,11 @@ interface PositionResponsibility {
   createdAt: string;
   updatedAt: string;
 }
-
+const ledgerOrderFilterOptions: Selection[] = [
+    { value: '2024-001', label: '2024-001' },
+    { value: '2024-002', label: '2024-002' },
+    { value: '2024-003', label: '2024-003' }
+  ];
 // 테스트 데이터
 const mockData: PositionResponsibility[] = [
   {
@@ -354,21 +358,15 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
-            label="원장차수"
-            value={ledgerOrderFilter}
-            options={[
-              { value: '전체', label: '전체' },
-              { value: '1차', label: '1차' },
-              { value: '2차', label: '2차' },
-              { value: '3차', label: '3차' }
-            ]}
-            onChange={(value) => setLedgerOrderFilter(value as string)}
+            options={ledgerOrderFilterOptions}
+            onChange={value => setLedgerOrderFilter(value as string)}
             size="small"
-            sx={{ minWidth: '200px' }}
+            sx={{ width: '130px' }}
           />
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333',marginLeft: '16px'  }}>직책</span>
           <ComboBox
-            label="직책"
             value={positionFilter}
             options={[
               { value: '전체', label: '전체' },

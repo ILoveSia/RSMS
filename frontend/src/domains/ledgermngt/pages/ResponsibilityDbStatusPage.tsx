@@ -16,7 +16,7 @@ import PageContent from '../../../shared/components/ui/layout/PageContent';
 import PageHeader from '../../../shared/components/ui/layout/PageHeader';
 import { responsibilityApi, type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
-
+import { ComboBox } from '../../../shared/components/ui/form';
 interface SelectOption {
   value: string;
   label: string;
@@ -309,13 +309,12 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             borderRadius: '4px',
           }}
         >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>원장차수</span>
-          <Select
-            value={ledgerOrder}
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
+          <ComboBox
+            options={ledgerOrderOptions}
             onChange={value => setLedgerOrder(value as string)}
             size="small"
-            sx={{ minWidth: 120, maxWidth: 180 }}
-            options={[{ value: '2024-001', label: '2024-001(직책확정)' }]}
+            sx={{ width: '130px' }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>
             책무 ID

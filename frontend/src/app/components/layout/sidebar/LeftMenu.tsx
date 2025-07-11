@@ -128,20 +128,12 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   // Menu 데이터를 MenuItemProps로 변환하는 함수
   const convertMenuToMenuItem = (menu: Menu): MenuItemProps => {
     const handleMenuClick = () => {
-      console.log('=== 메뉴 클릭 디버깅 시작 ===');
-      console.log('메뉴 정보:', {
-        name: menu.menuName,
-        url: menu.menuUrl,
-        id: menu.id,
-        level: menu.menuLevel
-      });
 
       if (!menu.menuUrl) {
         console.log('❌ 메뉴 URL이 없음:', menu.menuName);
         return;
       }
 
-      console.log('🔍 [LeftMenu] 메뉴 클릭:', menu.menuUrl);
 
       // PageComponentMapper에서 컴포넌트 정보 가져오기
       const pageInfo = PageComponentMapper.getPageInfo(menu.menuUrl);
