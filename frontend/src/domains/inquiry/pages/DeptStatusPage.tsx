@@ -248,13 +248,6 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             columns={columns}
             loading={isLoading}
             error={null}
-            pagination={{
-              page: 1,
-              pageSize: 10,
-              totalItems: rows.length,
-              onPageChange: () => {},
-              onPageSizeChange: () => {}
-            }}
           />
         </Box>
 

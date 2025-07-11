@@ -266,9 +266,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             size="small"
             sx={{ width: '130px' }}
           />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>
-            직책
-          </span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
           <ComboBox
             value={selectedPosition}
             onChange={(value) => setSelectedPosition(value as SelectOption)}

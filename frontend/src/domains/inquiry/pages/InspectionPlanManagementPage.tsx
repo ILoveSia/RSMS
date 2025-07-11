@@ -464,11 +464,11 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
-            label="직무번호"
             value={ledgerOrder}
-            options={ledgerOrderOptions}
             onChange={(value) => setLedgerOrder(value as string)}
+            options={ledgerOrderOptions}
             size="small"
             sx={{ minWidth: '200px' }}
           />
