@@ -13,31 +13,24 @@ import React, { ComponentType, Suspense, isValidElement } from 'react';
 const TabContent: React.FC<TabContentProps> = ({ activeTab, className = '' }) => {
   // 컴포넌트 렌더링 헬퍼 함수
   const renderTabComponent = (component: ComponentType<any> | React.ReactNode) => {
-    console.log('🎨 [TabContent] 컴포넌트 렌더링:', component);
-    console.log('🎨 [TabContent] 컴포넌트 타입:', typeof component);
-
     // 이미 렌더링된 React 요소인지 확인
     if (isValidElement(component)) {
-      console.log('✅ [TabContent] React 요소로 렌더링');
       return component;
     }
 
     // lazy 컴포넌트인지 확인
     if (component && typeof component === 'object' && '$$typeof' in component) {
-      console.log('✅ [TabContent] Lazy 컴포넌트로 렌더링');
       const LazyComponent = component as ComponentType<any>;
       return <LazyComponent />;
     }
 
     // 일반 함수 컴포넌트인지 확인
     if (typeof component === 'function') {
-      console.log('✅ [TabContent] 함수 컴포넌트로 렌더링');
       const Component = component as ComponentType<any>;
       return <Component />;
     }
 
     // 그 외의 경우 (문자열, 숫자 등)
-    console.log('⚠️ [TabContent] 기타 타입으로 렌더링:', component);
     return <Typography>{String(component)}</Typography>;
   };
 
@@ -62,8 +55,6 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, className = '' }) =>
       </Box>
     );
   }
-
-  console.log('🎯 [TabContent] 활성 탭:', activeTab);
 
   return (
     <Box

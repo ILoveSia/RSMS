@@ -79,12 +79,9 @@ export const useReduxState = <T = unknown>(statePath: string) => {
   const pathArray = statePath.split('/');
 
   const data = useSelector((rootState: unknown) => {
-    console.log('🔍 [useReduxState] rootState:', rootState);
-    console.log('🔍 [useReduxState] pathArray:', pathArray);
 
     let current = rootState;
     for (const key of pathArray) {
-      console.log(`🔍 [useReduxState] 현재 키: ${key}, 현재 값:`, current);
       if (current && typeof current === 'object' && key in current) {
         current = (current as Record<string, unknown>)[key];
       } else {
@@ -93,12 +90,10 @@ export const useReduxState = <T = unknown>(statePath: string) => {
       }
     }
 
-    console.log('🔍 [useReduxState] 최종 결과:', current);
 
     // 스토어 구조가 {data, loading, error} 형태인 경우 data 필드만 반환
     if (current && typeof current === 'object' && 'data' in current) {
       const stateObj = current as { data: T; loading: boolean; error: string | null };
-      console.log('🔍 [useReduxState] data 필드 추출:', stateObj.data);
       return stateObj.data;
     }
 
@@ -124,7 +119,6 @@ export const useReduxState = <T = unknown>(statePath: string) => {
       actionType = `${pathArray.join('/')}/setData`;
     }
 
-    console.log('📤 [useReduxState] dispatch 액션:', actionType, newData);
 
     dispatch({
       type: actionType,

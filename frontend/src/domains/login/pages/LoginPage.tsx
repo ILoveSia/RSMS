@@ -135,17 +135,14 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
   // 로그인 데이터 변경 시 console에 출력
   useEffect(() => {
-    console.log('🔄 [Redux Store] loginData 변경:', loginData);
   }, [loginData]);
 
   // 메뉴 데이터 변경 시 console에 출력
   useEffect(() => {
-    console.log('🔄 [Redux Store] menuData 변경:', menuData);
   }, [menuData]);
 
   // 공통코드 데이터 변경 시 console에 출력
   useEffect(() => {
-    console.log('🔄 [Redux Store] allCodes 변경:', allCodes);
   }, [allCodes]);
 
   // 공통코드 조회 함수
@@ -215,7 +212,6 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         setMenuData(convertedMenus);
         localStorage.setItem('accessibleMenus', JSON.stringify(convertedMenus));
 
-        console.log('✅ [Redux Store] 메뉴 데이터 저장 완료 - 메뉴 개수:', convertedMenus.length);
       } else {
         console.log('⚠️ [메뉴] 접근 가능한 메뉴가 없습니다.');
         setMenuData([]);
