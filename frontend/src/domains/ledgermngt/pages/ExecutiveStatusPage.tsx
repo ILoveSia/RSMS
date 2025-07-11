@@ -525,23 +525,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             disableColumnMenu
             disableColumnFilter
             disableRowSelectionOnClick={false}
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-cell:focus': {
-                outline: 'none'
-              },
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'var(--bank-bg-secondary)',
-                fontWeight: 'bold',
-                fontSize: '0.85rem',
-              },
-              '& .MuiDataGrid-cell': {
-                fontSize: '0.85rem',
-              },
-              '& .MuiDataGrid-row:hover': {
-                backgroundColor: 'var(--bank-bg-hover)',
-              },
-            }}
           />
         </Box>
 
