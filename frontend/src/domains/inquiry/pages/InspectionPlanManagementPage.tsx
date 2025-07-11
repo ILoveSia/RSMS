@@ -4,15 +4,15 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
+import { DataGrid } from '@/shared/components/ui/';
 import { Button } from '@/shared/components/ui/button';
 import { ComboBox, DatePicker } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { SelectOption } from '@/shared/types/common';
+import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box, Chip, TextField, Typography } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
 interface IInspectionPlanManagementPageProps {
@@ -61,7 +61,6 @@ const initialEditData: RegistrationData = {
 };
 
 const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps> = React.memo((): React.JSX.Element => {
-  console.log('🏗️ [InspectionPlanManagementPage] 컴포넌트 렌더링 시작');
 
   // 기간 선택 상태
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -175,7 +174,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
   }, [fetchInspectionPlans]);
 
   // 점검 계획 테이블 컬럼
-  const planColumns: GridColDef[] = [
+  const planColumns: DataGridColumn<InspectionPlanRow>[] = [
     {
       field: 'planCode',
       headerName: '점검계획 코드',
@@ -207,7 +206,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       minWidth: 150,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params: any) => `${params.value}개`
+      renderCell: ({ value }) => `${value}개`
     },
     {
       field: 'isModified',
@@ -216,10 +215,10 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params: any) => (
+      renderCell: ({ value }) => (
         <Chip
-          label={params.value ? '수정' : '미수정'}
-          color={params.value ? 'warning' : 'success'}
+          label={value ? '수정' : '미수정'}
+          color={value ? 'warning' : 'success'}
           size="small"
         />
       )
@@ -231,10 +230,10 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       minWidth: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: (params: any) => {
+      renderCell: ({ value }) => {
         let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
 
-        switch (params.value) {
+        switch (value) {
           case '계획':
             color = 'info';
             break;
@@ -253,7 +252,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
 
         return (
           <Chip
-            label={params.value}
+            label={value}
             color={color}
             size="small"
           />
@@ -435,7 +434,6 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
 
     try {
       setIsLoading(true);
-      console.log('등록 데이터:', registrationData);
       // 실제 등록 API 호출 구현
 
       setIsRegistrationMode(false);
@@ -621,32 +619,22 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
           marginBottom: '20px'
         }}>
           <DataGrid
-            rows={planRows}
+            data={planRows}
             columns={planColumns}
             loading={isLoading}
-            checkboxSelection
-            disableRowSelectionOnClick
-            autoHeight
-            onRowClick={handleRowClick}
-            onRowSelectionModelChange={(newSelection) => {
+            selectable
+            multiSelect
+            selectedRows={selectedPlanIds}
+            onRowClick={(row) => handleRowClick(row as InspectionPlanRow)}
+            onRowSelectionChange={(newSelection) => {
               setSelectedPlanIds(newSelection as number[]);
             }}
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-cell:focus': {
-                outline: 'none'
-              }
-            }}
-            localeText={{
-              noRowsLabel: '데이터가 없습니다.',
-              columnMenuLabel: '메뉴',
-              columnMenuShowColumns: '열 표시',
-              columnMenuFilter: '필터',
-              columnMenuHideColumn: '열 숨기기',
-              columnMenuUnsort: '정렬 해제',
-              columnMenuSortAsc: '오름차순 정렬',
-              columnMenuSortDesc: '내림차순 정렬',
-            }}
+            rowIdField="id"
+            height={400}
+            disableColumnMenu
+            disableColumnFilter
+            disableRowSelectionOnClick={false}
+            noDataMessage="데이터가 없습니다."
           />
         </Box>
 
