@@ -215,19 +215,19 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>점검회차</span>
           <ComboBox
             value={selectedRound}
             onChange={(value) => setSelectedRound(value as SelectOption)}
             options={roundOptions}
-            placeholder="점검 회차 선택"
             size="small"
             sx={{ minWidth: '200px' }}
           />
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
           <ComboBox
             value={selectedDepartment}
             onChange={(value) => setSelectedDepartment(value as SelectOption)}
             options={departmentOptions}
-            placeholder="부서 선택"
             size="small"
             sx={{ minWidth: '200px' }}
           />
@@ -248,6 +248,8 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             columns={columns}
             loading={isLoading}
             error={null}
+            // selectable={true}
+            // multiSelect={true}
           />
         </Box>
 

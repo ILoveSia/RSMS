@@ -455,7 +455,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>직무번호</span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
               value={ledgerOrderFilter}
             options={ledgerOrderOptions}
@@ -505,6 +505,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             등록
           </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleCreateExecutive}
+          >
+            변경 이력
+          </Button>
         </Box>
 
         {/* 데이터 그리드 */}
@@ -515,16 +523,13 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             loading={loading}
             error={error}
             selectable
-            multiSelect
-            onRowClick={handleRowClick}
+            multiSelect={false}
+            selectedRows={selectedIds}
+            // onRowClick={handleRowClick}
             onRowSelectionChange={(selectedRows: (string | number)[], selectedData: ExecutiveStatusRow[]) => {
               setSelectedIds(selectedRows.map(Number));
             }}
             rowIdField="id"
-            autoHeight
-            disableColumnMenu
-            disableColumnFilter
-            disableRowSelectionOnClick={false}
           />
         </Box>
 

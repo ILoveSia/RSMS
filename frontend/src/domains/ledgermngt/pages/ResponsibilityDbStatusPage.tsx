@@ -1,7 +1,7 @@
 /**
  * 책무 DB 현황 페이지 컴포넌트
  */
-import { Button, DataGrid, Select } from '@/shared/components/ui';
+import { Button, DataGrid } from '@/shared/components/ui';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, InputAdornment, TextField } from '@mui/material';
@@ -11,12 +11,12 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../../assets/scss/style.css';
+import { ComboBox } from '../../../shared/components/ui/form';
 import PageContainer from '../../../shared/components/ui/layout/PageContainer';
 import PageContent from '../../../shared/components/ui/layout/PageContent';
 import PageHeader from '../../../shared/components/ui/layout/PageHeader';
 import { responsibilityApi, type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
-import { ComboBox } from '../../../shared/components/ui/form';
 interface SelectOption {
   value: string;
   label: string;
@@ -288,6 +288,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
+            value={ledgerOrder}
             options={ledgerOrderOptions}
             onChange={value => setLedgerOrder(value as string)}
             size="small"

@@ -245,16 +245,17 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>점검회차</span>
           <ComboBox
-            label="점검회차"
+
             value={inspectionRound}
             onChange={(value) => setInspectionRound(value as string)}
             options={inspectionRoundOptions}
             size="small"
             sx={{ minWidth: '200px' }}
           />
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
           <ComboBox
-            label="부서"
             value={departmentFilter}
             onChange={(value) => setDepartmentFilter(value as string)}
             options={departmentOptions}
@@ -311,6 +312,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             columns={columns}
             loading={loading}
             error={error}
+            selectable={true}
             onRowSelectionChange={(selectedIds: (string | number)[], selectedData: DeficiencyRow[]) => {
               setSelectedIds(selectedIds.map(id => Number(id)));
             }}
