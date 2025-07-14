@@ -515,6 +515,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
               label="시작일"
               value={startDate}
               onChange={setStartDate}
+              maxDate={endDate ?? undefined}
               size="small"
               sx={{ width: '200px' }}
             />
@@ -522,6 +523,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             <DatePicker
               label="종료일"
               value={endDate}
+              minDate={startDate ?? undefined}
               onChange={setEndDate}
               size="small"
               sx={{ width: '200px' }}

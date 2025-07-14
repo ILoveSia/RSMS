@@ -54,7 +54,14 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
     date: Date | null
   ) => {
     if (date) {
-      setRegistrationData(prev => ({ ...prev, [field]: date }));
+      setRegistrationData(prev => {
+        // 시작일 변경 시 종료일이 더 이전이면 종료일을 시작일로 맞춤
+        if (field === 'inspectionStartDate') {
+          const newEndDate = prev.inspectionEndDate && date > prev.inspectionEndDate ? date : prev.inspectionEndDate;
+          return { ...prev, inspectionStartDate: date, inspectionEndDate: newEndDate };
+        }
+        return { ...prev, [field]: date };
+      });
       setValidationErrors(prev => ({ ...prev, [field]: false }));
     }
   };
@@ -85,6 +92,14 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
     if (!registrationData.inspectionStartDate) errors.inspectionStartDate = true;
     if (!registrationData.inspectionEndDate) errors.inspectionEndDate = true;
     if (!registrationData.inspectionTarget) errors.inspectionTarget = true;
+    // 시작일 > 종료일인 경우 에러
+    if (
+      registrationData.inspectionStartDate &&
+      registrationData.inspectionEndDate &&
+      registrationData.inspectionStartDate > registrationData.inspectionEndDate
+    ) {
+      errors.inspectionEndDate = true;
+    }
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   }, [registrationData]);
@@ -136,6 +151,7 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
             size="small"
             sx={{ flex: 1 }}
             label="종료일"
+            minDate={registrationData.inspectionStartDate}
             error={!!validationErrors.inspectionEndDate}
             helperText={validationErrors.inspectionEndDate ? '필수' : ''}
             disabled={mode === 'view'}
