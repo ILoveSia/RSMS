@@ -1,11 +1,9 @@
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import ComboBox from '@/shared/components/ui/form/ComboBox';
 import DatePicker from '@/shared/components/ui/form/DatePicker';
 import type { SelectOption } from '@/shared/types/common';
-import { Box,  TextField, Typography } from '@mui/material';
-import React from 'react';
-import { Button } from '@/shared/components/ui/button';
+import { Box, TextField, Typography } from '@mui/material';
+import React, { useEffect } from 'react';
 
 export interface RegistrationData {
   planCode: string;
@@ -18,9 +16,10 @@ export interface RegistrationData {
 
 interface InspectionPlanManagementDialogProps {
   open: boolean;
-  mode?: DialogMode; // 기본값 'create'로 처리
+  mode: DialogMode; // 필수
   onClose: () => void;
-  onSubmit: () => void;
+  onSave: () => void;
+  onModeChange: (mode: DialogMode) => void;
   loading: boolean;
   registrationData: RegistrationData;
   setRegistrationData: React.Dispatch<React.SetStateAction<RegistrationData>>;
@@ -29,9 +28,10 @@ interface InspectionPlanManagementDialogProps {
 
 const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogProps> = ({
   open,
-  mode = 'create',
+  mode,
   onClose,
-  onSubmit,
+  onSave,
+  onModeChange,
   loading,
   registrationData,
   setRegistrationData,
@@ -40,6 +40,9 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
   // 필수 입력 검증 상태
   const [validationErrors, setValidationErrors] = React.useState<Record<string, boolean>>({});
 
+  const handleModeChange = (mode: DialogMode) => {
+    onModeChange(mode);
+  };
   // 입력 핸들러
   const handleTextFieldChange = (
     field: keyof RegistrationData,
@@ -58,7 +61,18 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
       setValidationErrors(prev => ({ ...prev, [field]: false }));
     }
   };
-
+  useEffect(() => {
+    if (mode === 'create') {
+      setRegistrationData({
+        planCode: '',
+        roundName: '',
+        inspectionStartDate: new Date(),
+        inspectionEndDate: new Date(),
+        inspectionTarget: null,
+        remarks: '',
+      });
+    }
+  }, [mode]);
   const handleComboBoxChange = (
     field: keyof RegistrationData,
     value: SelectOption | null
@@ -78,25 +92,17 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
     return Object.keys(errors).length === 0;
   }, [registrationData]);
 
-  // onSubmit 전에 validateForm을 호출하도록 부모에서 연결 필요
+  // onSave에서 validateForm을 호출하도록 부모에서 연결 필요
 
   return (
     <BaseDialog
       open={open}
       mode={mode}
       onClose={onClose}
-      title="점검 계획 등록"
+      onSave={onSave}
+      onModeChange={onModeChange}
+      title={mode === 'create' ? '점검 계획 등록' : mode === 'edit' ? '점검 계획 수정' : '점검 계획 상세'}
       loading={loading}
-      customActions={
-        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-          <Button variant="contained" size="small" onClick={onSubmit} color="primary" disabled={loading}>
-            등록
-          </Button>
-          <Button variant="outlined" size="small" onClick={onClose} disabled={loading}>
-            취소
-          </Button>
-        </Box>
-      }
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* 점검 회차 */}
@@ -110,6 +116,7 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
             error={!!validationErrors.roundName}
             helperText={validationErrors.roundName ? '필수 입력 항목입니다.' : ''}
             placeholder="점검 회차를 입력하세요"
+            disabled={mode === 'view'}
           />
         </Box>
 
@@ -123,6 +130,7 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
             label="시작일"
             error={!!validationErrors.inspectionStartDate}
             helperText={validationErrors.inspectionStartDate ? '필수' : ''}
+            disabled={mode === 'view'}
           />
           <Typography>~</Typography>
           <DatePicker
@@ -133,18 +141,20 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
             label="종료일"
             error={!!validationErrors.inspectionEndDate}
             helperText={validationErrors.inspectionEndDate ? '필수' : ''}
+            disabled={mode === 'view'}
           />
         </Box>
-
+        {/* 점검 대상 선정(예시) */}
+        {/*
         <Button variant="contained" size="small"
-        onClick={() => {
-          console.log('점검 대상 선정');
-        }}
-        color="primary" disabled={loading}
-         sx={{ width: '15%' }}>
+          onClick={() => {
+            console.log('점검 대상 선정');
+          }}
+          color="primary" disabled={loading}
+          sx={{ width: '15%' }}>
           점검 대상 선정
         </Button>
-
+        */}
         {/* 비고 */}
         <TextField
           fullWidth
@@ -155,6 +165,7 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
           multiline
           rows={3}
           placeholder="비고를 입력하세요"
+          disabled={mode === 'view'}
         />
       </Box>
     </BaseDialog>

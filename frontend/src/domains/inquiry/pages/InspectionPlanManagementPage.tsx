@@ -12,7 +12,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Chip, TextField, Typography } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import InspectionPlanManagementDialog from '../components/InspectionPlanManagementDialog';
 interface IInspectionPlanManagementPageProps {
@@ -49,7 +49,7 @@ const initialRegistrationData: RegistrationData = {
   inspectionTarget: null,
   remarks: ''
 };
-
+type DialogMode = 'create' | 'edit' | 'view';
 // 초기 수정 데이터
 const initialEditData: RegistrationData = {
   planCode: '',
@@ -78,9 +78,9 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
   const [selectedPlanIds, setSelectedPlanIds] = useState<number[]>([]);
 
   // 등록/수정 모드
-  const [isRegistrationMode, setIsRegistrationMode] = useState(false);
+  const [dialogMode, setDialogMode] = useState<DialogMode>('create');
   const [isEditMode, setIsEditMode] = useState(false);
-
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   // 등록 폼 데이터
   const [registrationData, setRegistrationData] = useState<RegistrationData>(initialRegistrationData);
 
@@ -168,6 +168,17 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       minWidth: 150,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <span
+          style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
+          onClick={e => {
+            e.stopPropagation();
+            handleRowClick(value as string);
+          }}
+        >
+          {value}
+        </span>
+      )
     },
     {
       field: 'roundName',
@@ -246,14 +257,44 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       }
     }
   ];
-
   // 등록 모드 전환
   const handleRegistrationModeToggle = () => {
-    setIsRegistrationMode(!isRegistrationMode);
-    // setIsEditMode(false);
-    setSelectedPlanIds([]);
+    setIsDialogOpen(!isDialogOpen);
+    setDialogMode('create');
     setRegistrationData(initialRegistrationData);
+    setSelectedPlanIds([]);
     setEditData(initialEditData);
+  };
+  // 상세(뷰) 모드 전환
+  const handleRowClick = (planCode: string) => {
+    setSelectedPlanIds([Number(planCode)]);
+    setDialogMode('view');
+    setIsDialogOpen(true);
+    // 상세 데이터 로딩 및 registrationData 세팅 필요시 추가
+  };
+
+  // 모드 변경 핸들러 (수정/취소/저장 등)
+  const handleDialogModeChange = (mode: DialogMode) => {
+    setDialogMode(mode);
+  };
+
+  // 저장 핸들러 (등록/수정 공통)
+  const handleDialogSave = async () => {
+    // 등록/수정 분기 및 유효성 검사 등 구현
+    // 예시: 등록
+    if (!validateForm(registrationData)) return;
+    setIsLoading(true);
+    try {
+      // 등록/수정 API 호출
+      setRegistrationData(initialRegistrationData);
+      setIsDialogOpen(false);
+      await fetchInspectionPlans();
+    } catch (err) {
+      setErrorMessage('저장에 실패했습니다.');
+      setErrorDialogOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 수정 모드 전환
@@ -261,7 +302,7 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
     setIsEditMode(!isEditMode);
     if (!isEditMode) {
       setRegistrationData(initialRegistrationData);
-      setIsRegistrationMode(false);
+      setDialogMode('create');
     }
   };
 
@@ -352,7 +393,6 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
       setIsLoading(true);
       // 실제 등록 API 호출 구현
 
-      setIsRegistrationMode(false);
       setRegistrationData(initialRegistrationData);
 
       await fetchInspectionPlans();
@@ -550,152 +590,19 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             disableRowSelectionOnClick={false}
             noDataMessage="데이터가 없습니다."
           />
-        <InspectionPlanManagementDialog
-          open={isRegistrationMode}
-          onClose={handleRegistrationModeToggle}
-          onSubmit={handleSubmit}
-          loading={isLoading}
-          registrationData={registrationData}
-          setRegistrationData={setRegistrationData}
-          inspectionTargetOptions={inspectionTargetOptions}
-        />
+          <InspectionPlanManagementDialog
+            open={isDialogOpen}
+            mode={dialogMode}
+            onClose={handleRegistrationModeToggle}
+            onSave={handleDialogSave}
+            onModeChange={handleDialogModeChange}
+            loading={isLoading}
+            registrationData={registrationData}
+            setRegistrationData={setRegistrationData}
+            inspectionTargetOptions={inspectionTargetOptions}
+          />
         </Box>
 
-        {/* 수정 폼 */}
-        {isEditMode && (
-          <Box sx={{
-            marginTop: '20px',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            borderRadius: '4px',
-            padding: '16px'
-          }}>
-            <Typography variant="h6" sx={{
-              fontWeight: 'bold',
-              marginBottom: '16px',
-              fontSize: '0.95rem',
-              color: 'var(--bank-text-primary)'
-            }}>
-              점검 계획 수정
-            </Typography>
-
-            <Box sx={{
-              border: '1px solid var(--bank-border)',
-              borderRadius: '4px',
-              backgroundColor: '#ffffff',
-              padding: '16px',
-              display: 'grid',
-              gridTemplateColumns: 'auto 1fr',
-              gap: '16px',
-              alignItems: 'center'
-            }}>
-              {/* 점검 계획 코드 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                점검 계획 코드
-              </Typography>
-              <TextField
-                value={editData.planCode}
-                disabled
-                size="small"
-                fullWidth
-              />
-
-              {/* 점검 회차명 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                점검 회차명
-              </Typography>
-              <TextField
-                value={editData.roundName}
-                onChange={(e) => setEditData(prev => ({ ...prev, roundName: e.target.value }))}
-                placeholder="점검 회차명을 입력하세요"
-                size="small"
-                fullWidth
-              />
-
-              {/* 점검 기간 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                점검 기간
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <DatePicker
-                  value={editData.inspectionStartDate}
-                  onChange={(date) => handleDateChange('inspectionStartDate', date, setEditData)}
-                  size="small"
-                  sx={{
-                    '& .MuiInputBase-root': {
-                      height: '40px'
-                    }
-                  }}
-                />
-                <Typography>~</Typography>
-                <DatePicker
-                  value={editData.inspectionEndDate}
-                  onChange={(date) => handleDateChange('inspectionEndDate', date, setEditData)}
-                  size="small"
-                  sx={{
-                    '& .MuiInputBase-root': {
-                      height: '40px'
-                    }
-                  }}
-                />
-              </Box>
-
-              {/* 점검 대상 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                점검 대상
-              </Typography>
-              <ComboBox
-                value={editData.inspectionTarget}
-                onChange={(value) => handleComboBoxChange(
-                  'inspectionTarget',
-                  value as SelectOption | null,
-                  setEditData
-                )}
-                options={inspectionTargetOptions}
-                placeholder="점검 대상을 선택하세요"
-                size="small"
-              />
-
-              {/* 비고 */}
-              <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-                비고
-              </Typography>
-              <TextField
-                value={editData.remarks}
-                onChange={(e) => setEditData(prev => ({ ...prev, remarks: e.target.value }))}
-                placeholder="비고를 입력하세요"
-                size="small"
-                fullWidth
-              />
-            </Box>
-
-            {/* 저장/취소 버튼 */}
-            <Box sx={{
-              display: 'flex',
-              gap: 1,
-              justifyContent: 'flex-end',
-              marginTop: '16px'
-            }}>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleUpdate}
-                color="primary"
-                disabled={isLoading}
-              >
-                수정
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleEditModeToggle}
-                disabled={isLoading}
-              >
-                취소
-              </Button>
-            </Box>
-          </Box>
-        )}
 
       {/* 에러 다이얼로그 */}
       <ErrorDialog
