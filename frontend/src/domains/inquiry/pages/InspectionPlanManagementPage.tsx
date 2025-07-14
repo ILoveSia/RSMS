@@ -14,7 +14,7 @@ import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box, Chip, TextField, Typography } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-
+import InspectionPlanManagementDialog from '../components/InspectionPlanManagementDialog';
 interface IInspectionPlanManagementPageProps {
   className?: string;
 }
@@ -552,8 +552,16 @@ const InspectionPlanManagementPage: React.FC<IInspectionPlanManagementPageProps>
             disableRowSelectionOnClick={false}
             noDataMessage="데이터가 없습니다."
           />
+        <InspectionPlanManagementDialog
+          open={isRegistrationMode}
+          onClose={handleRegistrationModeToggle}
+          onSubmit={handleSubmit}
+          loading={isLoading}
+          registrationData={registrationData}
+          setRegistrationData={setRegistrationData}
+          inspectionTargetOptions={inspectionTargetOptions}
+        />
         </Box>
-
         {/* 등록 폼 */}
         {isRegistrationMode && (
           <Box
