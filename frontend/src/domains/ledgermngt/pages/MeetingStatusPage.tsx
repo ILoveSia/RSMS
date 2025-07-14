@@ -59,7 +59,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
   const [meetingBodies, setMeetingBodies] = useState<MeetingBody[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [filterDivision, setFilterDivision] = useState<string>('전체');
+  const [filterDivision, setFilterDivision] = useState<string>('');
 
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');

@@ -103,8 +103,8 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [error, setError] = useState<string | null>(null);
 
   // 필터 상태
-  const [ledgerOrderFilter, setLedgerOrderFilter] = useState<string>('전체');
-  const [positionFilter, setPositionFilter] = useState<string>('전체');
+  const [ledgerOrderFilter, setLedgerOrderFilter] = useState<string>('');
+  const [positionFilter, setPositionFilter] = useState<string>('');
 
   // 선택된 행
   const [selectedIds, setSelectedIds] = useState<number[]>([]);

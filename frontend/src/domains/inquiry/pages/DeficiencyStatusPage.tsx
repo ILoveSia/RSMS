@@ -35,7 +35,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inspectionRound, setInspectionRound] = useState<string>('2024-001');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('전체');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // 오류 다이얼로그 상태

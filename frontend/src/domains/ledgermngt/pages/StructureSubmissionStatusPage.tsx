@@ -302,12 +302,14 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               label="시작일"
               value={startDate}
               onChange={setStartDate}
+              maxDate={endDate ?? undefined}
               size="small"
               sx={{ width: '200px' }}
             />
             <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
             <DatePicker
               label="종료일"
+              minDate={startDate ?? undefined}
               value={endDate}
               onChange={setEndDate}
               size="small"
