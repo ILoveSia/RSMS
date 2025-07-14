@@ -11,7 +11,8 @@ import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/common/components/search';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Remove as RemoveIcon } from '@mui/icons-material';
+import { Remove as RemoveIcon, Search as SearchIcon } from '@mui/icons-material';
+import ComboBox from '@/shared/components/ui/form/ComboBox';
 import {
   Alert,
   Box,
@@ -276,19 +277,18 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               disabled={mode === 'view'}
             />
             <FormControl fullWidth error={!!validationErrors.writeDeptCd}>
-              <InputLabel>작성부서</InputLabel>
-              <Select
-                value={formData.writeDeptCd}
-                onChange={(e) => handleInputChange('writeDeptCd', e.target.value)}
+              <ComboBox
+                options={getFilteredCodes('DEPT_CD')}
+                // value={formData.writeDeptCd}
+                onChange={(e) => handleInputChange('writeDeptCd', e as string)}
                 label="작성부서"
                 disabled={mode === 'view'}
-              >
-                {getFilteredCodes('DEPT_CD').map((code) => (
+              />
+                {/* {getFilteredCodes('DEPT_CD').map((code) => (
                   <MenuItem key={code.value} value={code.value}>
                     {code.label}
                   </MenuItem>
-                ))}
-              </Select>
+                ))} */}
             </FormControl>
           </Box>
 
@@ -337,7 +337,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           onClick={() => setDeptSearchOpen(true)}
                           disabled={loading}
                         >
-                          {/* Assuming SearchIcon is available or will be added */}
+                          <SearchIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -392,7 +392,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           onClick={handleOpenMeetingSearch}
                           disabled={loading}
                         >
-                          {/* Assuming SearchIcon is available or will be added */}
+                          <SearchIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>

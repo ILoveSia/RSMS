@@ -40,9 +40,6 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
   // 필수 입력 검증 상태
   const [validationErrors, setValidationErrors] = React.useState<Record<string, boolean>>({});
 
-  const handleModeChange = (mode: DialogMode) => {
-    onModeChange(mode);
-  };
   // 입력 핸들러
   const handleTextFieldChange = (
     field: keyof RegistrationData,
@@ -144,17 +141,6 @@ const InspectionPlanManagementDialog: React.FC<InspectionPlanManagementDialogPro
             disabled={mode === 'view'}
           />
         </Box>
-        {/* 점검 대상 선정(예시) */}
-        {/*
-        <Button variant="contained" size="small"
-          onClick={() => {
-            console.log('점검 대상 선정');
-          }}
-          color="primary" disabled={loading}
-          sx={{ width: '15%' }}>
-          점검 대상 선정
-        </Button>
-        */}
         {/* 비고 */}
         <TextField
           fullWidth
