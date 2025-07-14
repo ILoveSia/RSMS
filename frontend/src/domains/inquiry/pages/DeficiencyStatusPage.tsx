@@ -312,6 +312,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             columns={columns}
             loading={loading}
             error={error}
+            selectedRows={selectedIds}
             selectable={true}
             onRowSelectionChange={(selectedIds: (string | number)[], selectedData: DeficiencyRow[]) => {
               setSelectedIds(selectedIds.map(id => Number(id)));
