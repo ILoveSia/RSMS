@@ -28,11 +28,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   Typography
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-
+import TextField from '@/shared/components/ui/data-display/textfield';
 // Domain Types
 interface OwnerDept {
   id: string;

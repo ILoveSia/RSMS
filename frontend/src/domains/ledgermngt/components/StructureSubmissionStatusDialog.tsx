@@ -10,7 +10,7 @@ import { ComboBox, DatePicker } from '@/shared/components/ui/form';
 import type { SelectOption } from '@/shared/types/common';
 import { Box, Typography } from '@mui/material';
 import React, { useRef, useState } from 'react';
-
+import TextField from '@/shared/components/ui/data-display/textfield';
 interface RegistrationData {
   historyCode: SelectOption | null;
   executiveName: SelectOption | null;
@@ -184,7 +184,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
       }
     >
       <Box sx={{
-        
+
         backgroundColor: '#ffffff',
         padding: '16px',
         display: 'grid',
@@ -289,13 +289,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
           비고
         </Typography>
-        <ComboBox
-          value={registrationData.remarks}
-          onChange={(value) => handleComboBoxChange(
-            'remarks',
-            value as SelectOption | null
-          )}
-          options={[]}
+        <TextField
           placeholder="비고를 입력하세요"
           size="small"
         />

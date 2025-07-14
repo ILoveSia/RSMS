@@ -2,9 +2,9 @@ import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import DatePicker from '@/shared/components/ui/form/DatePicker';
 import type { SelectOption } from '@/shared/types/common';
-import { Box, TextField, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React, { useEffect } from 'react';
-
+import TextField from '@/shared/components/ui/data-display/textfield';
 export interface RegistrationData {
   planCode: string;
   roundName: string;

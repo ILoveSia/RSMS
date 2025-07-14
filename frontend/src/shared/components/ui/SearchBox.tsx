@@ -3,7 +3,8 @@ import {
   FilterList as FilterIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
-import { Box, Chip, IconButton, InputAdornment, Stack, TextField } from '@mui/material';
+import { Box, Chip, IconButton, InputAdornment, Stack } from '@mui/material';
+import TextField from '@/shared/components/ui/data-display/textfield';
 import React, { useCallback, useState } from 'react';
 
 interface SearchFilter {

@@ -15,7 +15,8 @@
  * ```
  */
 import type { FormComponentProps, SelectOption, Size } from '@/shared/types/common';
-import { Autocomplete, Box, Chip, CircularProgress, TextField } from '@mui/material';
+import { Autocomplete, Box, Chip, CircularProgress } from '@mui/material';
+import TextField from '@/shared/components/ui/data-display/textfield';
 import type { AutocompleteProps } from '@mui/material/Autocomplete';
 import React from 'react';
 

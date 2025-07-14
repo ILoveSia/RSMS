@@ -3,14 +3,13 @@
  */
 export { default as DataGrid } from './DataGrid';
 export type { DataGridProps } from './DataGrid';
-
 export { default as ServerDataGrid } from './ServerDataGrid';
 export type {
-  ServerResponse,
-  ServerRequest,
   ServerDataGridApi,
-  ServerDataGridProps
+  ServerDataGridProps, ServerRequest, ServerResponse
 } from './ServerDataGrid';
+export { default as TextField } from './textfield';
+export type { TextFieldProps } from './textfield';
 
 export { default as Badge } from './Badge';
 export { default as Chip } from './Chip';

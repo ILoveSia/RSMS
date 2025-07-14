@@ -7,7 +7,8 @@ import type { CommonCode } from '@/app/types/common';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button, Select } from '@/shared/components/ui';
-import { Alert, Box, CircularProgress, TextField } from '@mui/material';
+import TextField from '@/shared/components/ui/data-display/TextField';
+import { Alert, Box, CircularProgress } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 

@@ -2,7 +2,8 @@ import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Box, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
+import TextField from '@/shared/components/ui/data-display/textfield';
+import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
 interface ExecutiveDetailDialogProps {
