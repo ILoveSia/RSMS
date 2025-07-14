@@ -17,7 +17,7 @@ import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
-
+import type { SelectOption } from '@/shared/types/common';
 interface IPositionResponsibilityStatusPageProps {
   className?: string;
 }
@@ -33,7 +33,7 @@ interface PositionResponsibility {
   createdAt: string;
   updatedAt: string;
 }
-const ledgerOrderFilterOptions: Selection[] = [
+const ledgerOrderFilterOptions: SelectOption[] = [
     { value: '2024-001', label: '2024-001' },
     { value: '2024-002', label: '2024-002' },
     { value: '2024-003', label: '2024-003' }
@@ -107,7 +107,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [positionFilter, setPositionFilter] = useState<string>('전체');
 
   // 선택된 행
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -304,7 +304,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
   // 행 선택 핸들러
   const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedData: PositionResponsibility[]) => {
-    setSelectedIds(selectedRowIds.map(String));
+    setSelectedIds(selectedRowIds.map(Number));
   };
 
   // 오류 다이얼로그 닫기
@@ -360,6 +360,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
+            value={ledgerOrderFilter}
             options={ledgerOrderFilterOptions}
             onChange={value => setLedgerOrderFilter(value as string)}
             size="small"
@@ -445,9 +446,11 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             loading={loading}
             error={error}
             selectable
-            multiSelect
+            multiSelect={false}
             selectedRows={selectedIds}
-            onRowSelectionChange={handleRowSelectionChange}
+            onRowSelectionChange={(selectedRows: (string | number)[], selectedData: PositionResponsibility[]) => {
+              setSelectedIds(selectedRows.map(Number));
+            }}
             rowIdField="id"
           />
         </Box>
