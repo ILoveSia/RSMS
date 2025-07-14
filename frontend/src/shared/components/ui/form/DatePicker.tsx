@@ -1,18 +1,18 @@
-import type { DatePickerProps } from '@/shared/components/ui/form/types';
+// import type { DatePickerProps } from '@/shared/components/ui/form/types';
 import {
-    CalendarToday as CalendarIcon,
-    ChevronLeft as ChevronLeftIcon,
-    ChevronRight as ChevronRightIcon,
+  CalendarToday as CalendarIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import {
-    Box,
-    IconButton,
-    InputAdornment,
-    Paper,
-    Popover,
-    TextField,
-    Typography,
-    useTheme,
+  Box,
+  IconButton,
+  InputAdornment,
+  Paper,
+  Popover,
+  TextField,
+  Typography,
+  useTheme,
 } from '@mui/material';
 import React, { forwardRef, useState } from 'react';
 import type { DatePickerProps as DatePickerPropsType } from './types';
@@ -154,49 +154,39 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         const isToday = date.toDateString() === new Date().toDateString();
         const isDisabled = isDateDisabled(date);
 
-        if (showDaysOutsideCurrentMonth || isCurrentMonth) {
-          days.push(
-            <Box
-              key={i}
+        days.push(
+          <Box
+            key={i}
+            sx={{
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: isDisabled ? 'default' : 'pointer',
+              borderRadius: 1,
+              color: isCurrentMonth ? 'text.primary' : 'text.disabled',
+              backgroundColor: isSelected ? 'primary.main' : 'transparent',
+              ...(isToday && !isSelected ? { border: `1px solid ${theme.palette.primary.main}` } : {}),
+              ...(isDisabled ? { color: 'text.disabled', backgroundColor: 'transparent' } : {}),
+              ...(isDisabled
+                ? {}
+                : !isSelected
+                  ? { '&:hover': { backgroundColor: 'action.hover' } }
+                  : {}),
+            }}
+            onClick={() => !isDisabled && handleDateSelect(date)}
+          >
+            <Typography
+              variant='body2'
               sx={{
-                width: 36,
-                height: 36,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: isDisabled ? 'default' : 'pointer',
-                borderRadius: 1,
-                color: isCurrentMonth ? 'text.primary' : 'text.disabled',
-                backgroundColor: isSelected ? 'primary.main' : 'transparent',
-                '&:hover': !isDisabled &&
-                  !isSelected && {
-                    backgroundColor: 'action.hover',
-                  },
-                ...(isToday &&
-                  !isSelected && {
-                    border: `1px solid ${theme.palette.primary.main}`,
-                  }),
-                ...(isDisabled && {
-                  color: 'text.disabled',
-                  backgroundColor: 'transparent',
-                }),
+                color: isSelected ? 'primary.contrastText' : 'inherit',
               }}
-              onClick={() => !isDisabled && handleDateSelect(date)}
             >
-              <Typography
-                variant='body2'
-                sx={{
-                  color: isSelected ? 'primary.contrastText' : 'inherit',
-                }}
-              >
-                {date.getDate()}
-              </Typography>
-            </Box>
-          );
-        } else {
-          days.push(<Box key={i} sx={{ width: 36, height: 36 }} />);
-        }
-
+              {date.getDate()}
+            </Typography>
+          </Box>
+        );
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
@@ -214,8 +204,14 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     const inputField = (
       <TextField
         ref={ref}
-        value={formatDate(value)}
+        value={formatDate(value ?? null)}
         label={label}
+        inputProps={{
+          readOnly: true,
+        }}
+        InputLabelProps={{
+          shrink: true,
+        }}
         placeholder={placeholder}
         error={error}
         helperText={helperText}
@@ -224,11 +220,8 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         fullWidth={fullWidth}
         variant={variant}
         size={size}
-        readOnly
-        onClick={handleInputClick}
-        className={className}
-        sx={sx}
         InputProps={{
+          readOnly: true,
           endAdornment: (
             <InputAdornment position='end'>
               <IconButton onClick={handleInputClick} disabled={disabled}>
@@ -237,13 +230,16 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
             </InputAdornment>
           ),
         }}
+        onClick={handleInputClick}
+        className={className}
+        sx={{ ...sx, cursor: 'pointer', '& input': { cursor: 'pointer' } }}
         {...props}
       />
     );
 
     if (renderInput) {
       return renderInput({
-        value: formatDate(value),
+        value: formatDate(value ?? null),
         onClick: handleInputClick,
         disabled,
         error,
