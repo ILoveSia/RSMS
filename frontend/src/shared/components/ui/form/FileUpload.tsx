@@ -1,26 +1,26 @@
-import type { FileUploadProps } from '@/shared/components/ui/form/types';
+// import type { FileUploadProps } from '@/shared/components/ui/form/types';
 import {
-    CloudUpload as CloudUploadIcon,
-    Delete as DeleteIcon,
-    Description as DocumentIcon,
-    InsertDriveFile as FileIcon,
-    Image as ImageIcon,
-    PictureAsPdf as PdfIcon,
+  CloudUpload as CloudUploadIcon,
+  Delete as DeleteIcon,
+  Description as DocumentIcon,
+  InsertDriveFile as FileIcon,
+  Image as ImageIcon,
+  PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
 import {
-    Alert,
-    Box,
-    Button,
-    Chip,
-    IconButton,
-    LinearProgress,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    ListItemText,
-    Paper,
-    Typography,
-    useTheme,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  IconButton,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemSecondaryAction,
+  ListItemText,
+  Paper,
+  Typography,
+  useTheme,
 } from '@mui/material';
 import React, { forwardRef, useCallback, useRef, useState } from 'react';
 import type { FileUploadProps as FileUploadPropsType } from './types';
@@ -281,7 +281,6 @@ const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
     // 드롭존 렌더링
     const renderDropzone = () => (
       <Paper
-        ref={ref}
         variant='outlined'
         className={className}
         sx={{
@@ -291,10 +290,14 @@ const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
           border: `2px dashed ${dragOver ? theme.palette.primary.main : theme.palette.divider}`,
           backgroundColor: dragOver ? theme.palette.action.hover : 'transparent',
           transition: 'all 0.2s ease',
-          '&:hover': !disabled && {
-            borderColor: theme.palette.primary.main,
-            backgroundColor: theme.palette.action.hover,
-          },
+          ...(disabled
+            ? {}
+            : {
+                '&:hover': {
+                  borderColor: theme.palette.primary.main,
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }),
           ...sx,
         }}
         onDragOver={handleDragOver}
@@ -324,14 +327,13 @@ const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
     // 버튼 렌더링
     const renderButton = () => (
       <Button
-        ref={ref}
         variant='outlined'
         startIcon={<CloudUploadIcon />}
         onClick={handleInputClick}
         disabled={disabled || loading}
         fullWidth={fullWidth}
         className={className}
-        sx={sx}
+        sx={{ ...sx }}
         {...props}
       >
         {buttonText}
