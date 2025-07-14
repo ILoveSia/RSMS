@@ -199,7 +199,12 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
       <TextField
         {...params}
         label={label}
-        sx={{ cursor: 'pointer', '& input': { cursor: 'pointer' } }}
+        sx={{
+          cursor: 'pointer',
+          '& input': { cursor: 'pointer' },
+          '& .MuiOutlinedInput-root': { cursor: 'pointer' },
+          '& .MuiInputBase-root': { cursor: 'pointer' },
+        }}
         placeholder={placeholder}
         error={error}
         helperText={helperText}
