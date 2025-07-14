@@ -10,7 +10,7 @@ export const meetingStatusApi = {
    */
   search: async (params: MeetingBodySearchRequest): Promise<PageableResponse<MeetingBody>> => {
     const queryParams = new URLSearchParams();
-
+   
     if (params.gubun) queryParams.append('gubun', params.gubun);
     if (params.meetingName) queryParams.append('meetingName', params.meetingName);
     if (params.meetingPeriod) queryParams.append('meetingPeriod', params.meetingPeriod);

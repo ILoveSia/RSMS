@@ -8,7 +8,7 @@ import type { CommonCode } from '@/app/types/common';
 import { Confirm } from '@/shared/components/modal';
 import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { Select } from '@/shared/components/ui/form';
+import { ComboBox, Select } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -402,24 +402,16 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
           >
             구분:
           </Box>
-          <Select
-            size='small'
+
+          <ComboBox
             value={filterDivision}
-            onChange={value => setFilterDivision(value as string)}
-            options={[
-              { value: '전체', label: '전체' },
-              ...getMeetingBodyCodes().map(code => ({
-                value: code.code,
-                label: code.codeName,
-              })),
-            ]}
-            sx={{
-              minWidth: 140,
-              maxWidth: 180,
-              '& .MuiSelect-select': {
-                py: 0.5,
-              },
-            }}
+            options={getMeetingBodyCodes().map(code => ({
+              value: code.code,
+              label: code.codeName,
+            }))}
+            onChange={option => setFilterDivision(option?.value as string)}
+            size='small'
+            sx={{width: 140}}
           />
           <Button
             variant='contained'
@@ -481,7 +473,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             columns={meetingColumns}
             loading={loading}
             outline={false}
-            selectable
+            selectable={true}
             multiSelect
             selectedRows={selectedIds}
             onRowSelectionChange={selectedRowIds => {
