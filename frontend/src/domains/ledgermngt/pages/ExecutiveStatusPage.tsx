@@ -2,6 +2,7 @@
  * 임원 현황 페이지
  * 책무구조 원장 관리 - 임원 현황
  */
+import apiClient from '@/app/common/api/client'; // axios 인스턴스 등
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -21,6 +22,34 @@ import '../../../assets/scss/style.css';
 import { Button } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
+
+export interface ExecOfficer {
+  id: number;
+  positionName: string;
+  executiveName: string;
+  jobTitle: string;
+  appointmentDate: string;
+  hasConcurrentPosition: boolean;
+  concurrentDetails: string;
+}
+
+const execOfficerApi = {
+  getAll: async (): Promise<ExecOfficer[]> => {
+    const response = await apiClient.get<ExecOfficer[]>('/execofficer');
+    return response;
+  },
+  create: async (data: Omit<ExecOfficer, 'id'>): Promise<ExecOfficer> => {
+    const response = await apiClient.post<ExecOfficer>('/execofficer', data);
+    return response;
+  },
+  update: async (id: number, data: Omit<ExecOfficer, 'id'>): Promise<ExecOfficer> => {
+    const response = await apiClient.put<ExecOfficer>(`/execofficer/${id}`, data);
+    return response;
+  },
+  delete: async (id: number): Promise<void> => {
+    await apiClient.delete(`/execofficer/${id}`);
+  }
+};
 
 interface IExecutiveStatusPageProps {
   className?: string;
@@ -73,77 +102,16 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setLoading(true);
     setError(null);
     try {
-      // TODO: 실제 API 엔드포인트로 변경 필요
-      // const response = await apiClient.get<ApiResponse<ExecutiveStatusRow[]>>('/executives/status-list');
-
-      // 임시 테스트 데이터
-      const testData: ExecutiveStatusRow[] = [
-        {
-          id: 1,
-          positionName: '대표이사',
-          executiveName: '김대표',
-          jobTitle: 'CEO',
-          appointmentDate: '2024-01-15',
-          hasConcurrentPosition: true,
-          concurrentDetails: '이사회 의장'
-        },
-        {
-          id: 2,
-          positionName: '리스크관리부장',
-          executiveName: '이부장',
-          jobTitle: '상무이사',
-          appointmentDate: '2024-02-01',
-          hasConcurrentPosition: false,
-          concurrentDetails: ''
-        },
-        {
-          id: 3,
-          positionName: '준법지원부장',
-          executiveName: '박부장',
-          jobTitle: '상무이사',
-          appointmentDate: '2024-01-20',
-          hasConcurrentPosition: true,
-          concurrentDetails: '컴플라이언스위원회 위원장'
-        },
-        {
-          id: 4,
-          positionName: '내부통제부장',
-          executiveName: '최부장',
-          jobTitle: '이사',
-          appointmentDate: '2024-03-01',
-          hasConcurrentPosition: false,
-          concurrentDetails: ''
-        },
-        {
-          id: 5,
-          positionName: '감사부장',
-          executiveName: '정부장',
-          jobTitle: '이사',
-          appointmentDate: '2024-02-15',
-          hasConcurrentPosition: true,
-          concurrentDetails: '감사위원회 위원'
-        }
-      ];
-
-      // 필터링 적용
-      let filteredData = testData;
-
-      if (ledgerOrderFilter !== '전체') {
-        // 원장차수 필터링 로직 (실제 구현 시 필요)
-        filteredData = filteredData.filter(item => true); // 임시
-      }
-
-      setRows(filteredData);
+      const data = await execOfficerApi.getAll();
+      setRows(data);
     } catch (err) {
-      const errorMsg = '임원 현황 데이터를 불러오는 데 실패했습니다.';
-      setError(errorMsg);
-      setErrorMessage(errorMsg);
+      setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
+      setErrorMessage('임원 현황 데이터를 불러오는 데 실패했습니다.');
       setErrorDialogOpen(true);
-      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [ledgerOrderFilter]);
+  }, []);
 
   useEffect(() => {
     fetchExecutiveStatus();
@@ -258,44 +226,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     try {
       if (data.id) {
         // 수정
-        // TODO: 실제 API 호출로 변경
-        // const response = await apiClient.put(`/executives/${data.id}`, data);
-        console.log('수정할 데이터:', data);
-
-        // 임시로 성공 처리
-        const updatedRows = rows.map(row =>
-          row.id === data.id ? { ...data } : row
-        );
-        setRows(updatedRows);
+        await execOfficerApi.update(data.id, data);
         setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
       } else {
         // 등록
-        // TODO: 실제 API 호출로 변경
-        // const response = await apiClient.post('/executives', data);
-        console.log('등록할 데이터:', data);
-
-        // 임시로 성공 처리
-        const newExecutive = {
-          ...data,
-          id: rows.length + 1 // 임시 ID 생성
-        };
-        setRows([...rows, newExecutive]);
+        await execOfficerApi.create(data);
         setSuccessMessage('임원 정보가 성공적으로 등록되었습니다.');
       }
-
-      // 성공 메시지 표시
+      await fetchExecutiveStatus();
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
-
-      // 다이얼로그 닫기
-      if (data.id) {
-        setDialogOpen(false);
-      } else {
-        setDialogOpen(false);
-      }
-
+      setDialogOpen(false);
     } catch (error) {
-      console.error('임원 저장 오류:', error);
       setErrorMessage('임원 정보 저장 중 오류가 발생했습니다.');
       setErrorDialogOpen(true);
     }

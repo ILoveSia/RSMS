@@ -132,7 +132,7 @@ public class SecurityConfig {
             ).permitAll()
 
             // 모든 API 엔드포인트는 인증 필요 (일반화)
-            .requestMatchers("/api/**").authenticated()
+            // .requestMatchers("/api/execofficer").permitAll()
 
             // 관리자 권한이 필요한 경로
             .requestMatchers("/auth/sessions/count").hasRole("ADMIN")

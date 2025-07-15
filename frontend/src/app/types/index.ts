@@ -30,7 +30,19 @@ export interface MeetingBody {
   createdAt: string;
   updatedAt: string;
 }
-
+export interface ExecOfficer {
+  execofficerId: number;
+  emp_id: string;
+  execofficer_dt: string;
+  dual_yn:string;
+  dual_details:string;
+  positions_id:number;
+  approval_id:number;
+  ledger_order:string;
+  order_status:string;
+  created_id:string;
+  updated_id:string;
+}
 export interface MeetingBodySearchRequest {
   gubun?: string;
   meetingName?: string;

@@ -74,6 +74,7 @@ public class PositionServiceImpl implements PositionService {
 
         List<LedgerOrderSelectDto> result = new ArrayList<>();
         for (Object[] row : rows) {
+            log.info("Query Result Row: {}", (Object) row);
             String title = (String) row[0];
             String statusName = (String) row[1];
             String label = title + (statusName != null ? " (" + statusName + ")" : "");

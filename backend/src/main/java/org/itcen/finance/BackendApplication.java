@@ -29,7 +29,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
                         "org.itcen.domain.qna.repository",
                         "org.itcen.domain.responsibility.repository",
                         "org.itcen.domain.user.repository",
-                        "org.itcen.auth.repository"})
+                        "org.itcen.auth.repository",
+                        "org.itcen.domain.execofficer.repository"})
 @EntityScan(basePackages = {"org.itcen.domain.departments.entity",
                            "org.itcen.domain.common.entity",
                            "org.itcen.domain.casestudy.entity",
@@ -40,7 +41,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
                            "org.itcen.domain.responsibility.entity",
                            "org.itcen.domain.user.entity",
                            "org.itcen.auth.domain",
-                           "org.itcen.auth.domain.permission"})
+                           "org.itcen.auth.domain.permission",
+                           "org.itcen.domain.execofficer.entity"})
 // @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 3600) // H2 프로파일에서는 비활성화
 public class BackendApplication {
 

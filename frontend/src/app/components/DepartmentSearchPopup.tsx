@@ -151,7 +151,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
     try {
       const apiDepartments = await DepartmentApi.getActive();
       const convertedDepartments = apiDepartments.map(convertApiDepartmentToComponent);
-
+      console.log(convertedDepartments,"convertedDepartments 12341234");
       setDepartments(convertedDepartments);
       setFilteredDepartments(convertedDepartments);
     } catch (err) {
@@ -374,7 +374,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
           color="primary"
           disabled={selectedRows.length === 0}
         >
-          선택 ({selectedRows.length})
+          선택 {/*({selectedRows.length})*/}
         </Button>
         <Button onClick={onClose}>
           취소

@@ -184,6 +184,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   };
 
   const handleCreateClick = () => {
+    console.log('handleCreateClick');
     setSelectedPositionId(null);
     setPositionDialogMode('create');
     setPositionDialogOpen(true);

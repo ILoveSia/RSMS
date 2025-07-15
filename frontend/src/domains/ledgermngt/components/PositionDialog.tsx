@@ -11,16 +11,12 @@ import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/common/components/search';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import { Remove as RemoveIcon, Search as SearchIcon } from '@mui/icons-material';
-import ComboBox from '@/shared/components/ui/form/ComboBox';
 import {
   Alert,
   Box,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
   Snackbar,
   Table,
   TableBody,
@@ -31,7 +27,6 @@ import {
   Typography
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-import TextField from '@/shared/components/ui/data-display/textfield';
 // Domain Types
 interface OwnerDept {
   id: string;
@@ -47,7 +42,8 @@ interface MainMeeting {
 
 interface FormData {
   positionName: string;
-  writeDeptCd: string;
+  writeDeptCd: string;      // 부서코드(실제 저장용)
+  writeDeptNm?: string;     // 부서명(화면 표시용, optional)
   ownerDepts: OwnerDept[];
   mainMeetings: MainMeeting[];
 }
@@ -83,14 +79,14 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
   // Popup States
   const [deptSearchOpen, setDeptSearchOpen] = useState(false);
-  const [currentOwnerDeptId, setCurrentOwnerDeptId] = useState<string | null>(null);
+  const [deptSearchTarget, setDeptSearchTarget] = useState<'write' | 'owner' | null>(null);
   // 회의체 검색 다이얼로그 상태
   const [meetingSearchOpen, setMeetingSearchOpen] = useState(false);
 
   // Common Code Management
   const { data: commonCodeState } = useReduxState<{ data: CommonCode[] }>('codeStore/allCodes');
   const commonCodes = commonCodeState?.data ?? [];
-
+  // console.log(mode);
   // Common Code Filter
   const getFilteredCodes = useCallback((groupCode: string) => {
     if (!Array.isArray(commonCodes)) {
@@ -149,20 +145,24 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     const errors: Record<string, string> = {};
 
     if (!formData.positionName.trim()) {
+      console.log("직책명")
       errors.positionName = '직책명을 입력해주세요.';
     }
     if (!formData.writeDeptCd) {
+      console.log("작성부서")
       errors.writeDeptCd = '작성부서를 선택해주세요.';
     }
 
     formData.ownerDepts.forEach((dept, index) => {
       if (!dept.deptCode) {
+        console.log("소관부서")
         errors[`ownerDept_${index}`] = '소관부서를 선택해주세요.';
       }
     });
 
     formData.mainMeetings.forEach((meeting, index) => {
       if (!meeting.meetingCode) {
+        console.log("주관회의체")
         errors[`mainMeeting_${index}`] = '주관회의체를 선택해주세요.';
       }
     });
@@ -173,7 +173,17 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
   // Event Handlers
   const handleDepartmentSelect = useCallback((selectedDept: Department | Department[]) => {
-    if (!Array.isArray(selectedDept)) {
+    if (deptSearchTarget === 'write') {
+      // 작성부서에 반영
+      const dept = Array.isArray(selectedDept) ? selectedDept[0] : selectedDept;
+      setFormData(prev => ({
+        ...prev,
+        writeDeptCd: dept.deptCode,
+        writeDeptNm: dept.deptName,
+      }));
+    } else if (deptSearchTarget === 'owner') {
+      // 소관부서에 추가
+      const dept = Array.isArray(selectedDept) ? selectedDept[0] : selectedDept;
       const newId = String(formData.ownerDepts.length + 1);
       setFormData(prev => ({
         ...prev,
@@ -181,15 +191,15 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           ...prev.ownerDepts,
           {
             id: newId,
-            deptCode: selectedDept.deptCode,
-            deptName: selectedDept.deptName
+            deptCode: dept.deptCode,
+            deptName: dept.deptName
           }
         ],
       }));
     }
     setDeptSearchOpen(false);
-    setCurrentOwnerDeptId(null);
-  }, [formData.ownerDepts.length]);
+    setDeptSearchTarget(null);
+  }, [deptSearchTarget, formData.ownerDepts.length]);
 
   // 회의체 검색 다이얼로그 열기
   const handleOpenMeetingSearch = () => {
@@ -209,13 +219,29 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     setMeetingSearchOpen(false);
   };
 
+  const handleWriteDeptSelect = useCallback((selectedDept: Department | Department[]) => {
+    const dept = Array.isArray(selectedDept) ? selectedDept[0] : selectedDept;
+    setFormData(prev => ({
+      ...prev,
+      writeDeptCd: dept.deptCode,
+      writeDeptNm: dept.deptName,
+    }));
+    setDeptSearchOpen(false);
+  }, []);
+
   const handleSave = useCallback(async () => {
     if (!validateForm()) return;
 
     try {
       setLoading(true);
-      await onSave();
-      setShowSuccessAlert(true);
+      console.log(mode,"12341234");
+    //   if (mode === 'create') {
+    //   await positionApi.create(formData); // 등록 API 호출
+    // } else if (mode === 'edit' && positionId) {
+    //   await positionApi.update(positionId, formData); // 수정 API 호출
+    // }
+    setShowSuccessAlert(true);
+    onSave();
       setTimeout(() => {
         setShowSuccessAlert(false);
         onClose();
@@ -257,6 +283,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         title={mode === 'create' ? '직책 등록' : mode === 'edit' ? '직책 수정' : '직책 상세'}
         onClose={onClose}
         onSave={handleSave}
+
         onModeChange={onChangeMode}
         loading={loading}
       >
@@ -275,20 +302,19 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               helperText={validationErrors.positionName}
               disabled={mode === 'view'}
             />
-            <FormControl fullWidth error={!!validationErrors.writeDeptCd}>
-              <ComboBox
-                options={getFilteredCodes('DEPT_CD')}
-                // value={formData.writeDeptCd}
-                onChange={(e) => handleInputChange('writeDeptCd', e as string)}
+            <Box  sx={{ display: 'flex', alignItems: 'center', float: 'left' }}>
+              <TextField
+                fullWidth
                 label="작성부서"
-                disabled={mode === 'view'}
+                disabled={true}
+                value={formData.writeDeptNm || ''}
+                error={!!validationErrors.writeDeptCd}
+                sx={{ width: '80%' }}
               />
-                {/* {getFilteredCodes('DEPT_CD').map((code) => (
-                  <MenuItem key={code.value} value={code.value}>
-                    {code.label}
-                  </MenuItem>
-                ))} */}
-            </FormControl>
+              <IconButton sx={{ marginLeft: '40px' }} onClick={() => { setDeptSearchTarget('write'); setDeptSearchOpen(true); }}>
+                <SearchIcon />
+              </IconButton>
+            </Box>
           </Box>
 
           {/* 소관부서 섹션 */}
@@ -333,7 +359,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell align="center">
                         <IconButton
                           size="small"
-                          onClick={() => setDeptSearchOpen(true)}
+                          onClick={() => { setDeptSearchTarget('owner'); setDeptSearchOpen(true); }}
                           disabled={loading}
                         >
                           <SearchIcon />
@@ -406,10 +432,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       {/* 부서 검색 팝업 */}
       <DepartmentSearchPopup
         open={deptSearchOpen}
-        onClose={() => {
-          setDeptSearchOpen(false);
-          setCurrentOwnerDeptId(null);
-        }}
+        onClose={() => { setDeptSearchOpen(false); setDeptSearchTarget(null); }}
         onSelect={handleDepartmentSelect}
       />
 
