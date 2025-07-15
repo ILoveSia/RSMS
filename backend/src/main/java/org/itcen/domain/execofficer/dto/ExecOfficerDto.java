@@ -19,4 +19,6 @@ public class ExecOfficerDto {
     private String updatedId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String positionNameMapped;
+    private String userName;
 }

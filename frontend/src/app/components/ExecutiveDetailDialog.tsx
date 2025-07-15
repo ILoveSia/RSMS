@@ -2,24 +2,28 @@ import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
-import TextField from '@/shared/components/ui/data-display/textfield';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
 interface ExecutiveDetailDialogProps {
+  mode: DialogMode;
   open: boolean;
   onClose: () => void;
   executive: any | null;
   onSave: (data: any) => void;
+  onChangeMode: (mode: DialogMode) => void;
 }
 
 const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   open,
   onClose,
   executive,
+  onChangeMode,
+  mode,
   onSave,
 }) => {
-  const [mode, setMode] = useState<DialogMode>('view');
+  // const [mode, setMode] = useState<DialogMode>('view');
   const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +103,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         title={mode === 'create' ? '임원 등록' : mode === 'edit' ? '임원 수정' : '임원 상세'}
         onClose={onClose}
         onSave={handleSave}
-        onModeChange={setMode}
+        onModeChange={onChangeMode}
         disableSave={!isFormValid() || loading}
         loading={loading}
       >

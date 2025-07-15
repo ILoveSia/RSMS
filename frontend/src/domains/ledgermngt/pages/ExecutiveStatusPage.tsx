@@ -24,13 +24,20 @@ import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
 
 export interface ExecOfficer {
-  id: number;
-  positionName: string;
-  executiveName: string;
-  jobTitle: string;
-  appointmentDate: string;
-  hasConcurrentPosition: boolean;
-  concurrentDetails: string;
+  positionNameMapped?: string; // 새로 추가될 필드
+  // execofficerId: number;
+  empId: string;
+  execofficerDt: string;
+  dualYn: string;
+  dualDetails: string;
+  // positionsId: number;
+  // approvalId: number;
+  // ledgerOrder: string;
+  // orderStatus: string;
+  // createdId: string;
+  // updatedId: string;
+  // createdAt: string; // 또는 Date 타입
+  // updatedAt: string; // 또는 Date 타입
 }
 
 const execOfficerApi = {
@@ -38,11 +45,11 @@ const execOfficerApi = {
     const response = await apiClient.get<ExecOfficer[]>('/execofficer');
     return response;
   },
-  create: async (data: Omit<ExecOfficer, 'id'>): Promise<ExecOfficer> => {
+  create: async (data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
     const response = await apiClient.post<ExecOfficer>('/execofficer', data);
     return response;
   },
-  update: async (id: number, data: Omit<ExecOfficer, 'id'>): Promise<ExecOfficer> => {
+  update: async (id: number, data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
     const response = await apiClient.put<ExecOfficer>(`/execofficer/${id}`, data);
     return response;
   },
@@ -56,13 +63,26 @@ interface IExecutiveStatusPageProps {
 }
 
 interface ExecutiveStatusRow {
-  id: number;
-  positionName: string;      // 직책
-  executiveName: string;     // 성명
-  jobTitle: string;          // 직위
-  appointmentDate: string;   // 현 직책 부여일
-  hasConcurrentPosition: boolean; // 겸직여부
-  concurrentDetails: string;  // 겸직사항
+  positionNameMapped?: string; // 새로 추가될 필드
+  // execofficerId: number;
+  empId: string;
+  execofficerDt: string;
+  dualYn: string;
+  dualDetails: string;
+  // execofficerId: number;
+  // empId: string;
+  // execofficerDt: string;
+  // dualYn: string;
+  // dualDetails: string;
+  // positionsId: number;
+  // approvalId: number;
+  // ledgerOrder: string;
+  // orderStatus: string;
+  // createdId: string;
+  // updatedId: string;
+  // createdAt: string;
+  // updatedAt: string;
+  // positionNameMapped: string; // 새로 추가될 필드
 }
 
 const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.Element => {
@@ -103,7 +123,13 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setError(null);
     try {
       const data = await execOfficerApi.getAll();
-      setRows(data);
+      // ExecOfficer[] → ExecutiveStatusRow[] 변환 (positionNameMapped의 undefined 방지)
+      const mappedRows: ExecutiveStatusRow[] = data.map((item) => ({
+        ...item,
+        positionNameMapped: item.positionNameMapped ?? '', // undefined 방지
+      }));
+      console.log(mappedRows);
+      setRows(mappedRows);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
       setErrorMessage('임원 현황 데이터를 불러오는 데 실패했습니다.');
@@ -126,58 +152,34 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   const executiveColumns: DataGridColumn<ExecutiveStatusRow>[] = [
     {
-      field: 'positionName',
-      headerName: '직책',
+      field: 'positionNameMapped',
+      headerName: '직책명',
       width: 200,
+      renderCell: ({ value }) => value || '해당없음',
       flex: 1,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ row }) => (
-        <span
-          style={{
-            color: '#1976d2',
-            cursor: 'pointer',
-            textDecoration: 'underline'
-          }}
-          onClick={() => handleExecutiveDetail(row)}
-        >
-          {row.positionName}
-        </span>
-      ),
     },
     {
-      field: 'executiveName',
-      headerName: '성명',
+      field: 'empId',
+      headerName: '사번',
+      width: 120,
+      renderCell: ({ value }) => value || '해당없음',
+      flex: 1,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'execofficerDt',
+      headerName: '임원선임일',
       width: 150,
       flex: 1,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ value }) => value || '해당없음',
     },
     {
-      field: 'jobTitle',
-      headerName: '직위',
-      width: 150,
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'appointmentDate',
-      headerName: '현 직책 부여일',
-      width: 180,
-      flex: 1,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: ({ value }) => {
-        if (value && typeof value === 'string') {
-          const date = new Date(value);
-          return date.toLocaleDateString('ko-KR');
-        }
-        return '';
-      }
-    },
-    {
-      field: 'hasConcurrentPosition',
+      field: 'dualYn',
       headerName: '겸직여부',
       width: 120,
       flex: 1,
@@ -185,15 +187,15 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <span style={{
-          color: value ? '#dc3545' : '#28a745',
+          color: value === 'Y' ? '#dc3545' : '#28a745',
           fontWeight: 'bold'
         }}>
-          {value ? '있음' : '없음'}
+          {value === 'Y' ? '있음' : value || '해당없음'}
         </span>
       )
     },
     {
-      field: 'concurrentDetails',
+      field: 'dualDetails',
       headerName: '겸직사항',
       width: 300,
       flex: 2,
@@ -224,9 +226,9 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // 임원 저장 핸들러 (등록/수정 공통)
   const handleSaveExecutive = async (data: any) => {
     try {
-      if (data.id) {
+      if (data.execofficerId) {
         // 수정
-        await execOfficerApi.update(data.id, data);
+        await execOfficerApi.update(data.execofficerId, data);
         setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
       } else {
         // 등록
@@ -304,7 +306,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       const worksheet = workbook.addWorksheet('임원현황');
 
       // 헤더 설정
-      const headers = ['직책', '성명', '직위', '현 직책 부여일', '겸직여부', '겸직사항'];
+      const headers = ['직책', '사원ID', '임원선임일', '겸직여부', '겸직사항'];
       worksheet.addRow(headers);
 
       // 헤더 스타일 설정
@@ -318,12 +320,11 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       // 데이터 추가
       rows.forEach(row => {
         worksheet.addRow([
-          row.positionName,
-          row.executiveName,
-          row.jobTitle,
-          new Date(row.appointmentDate).toLocaleDateString('ko-KR'),
-          row.hasConcurrentPosition ? '있음' : '없음',
-          row.concurrentDetails || '해당없음'
+          row.positionNameMapped,
+          row.empId,
+          row.execofficerDt,
+          row.dualYn === 'Y' ? '있음' : '없음',
+          row.dualDetails || '해당없음'
         ]);
       });
 
@@ -451,7 +452,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             variant="contained"
             color="primary"
             size="small"
-            onClick={handleCreateExecutive}
+            // onClick={handleCreateExecutive}
           >
             변경 이력
           </Button>
@@ -471,7 +472,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             onRowSelectionChange={(selectedRows: (string | number)[], selectedData: ExecutiveStatusRow[]) => {
               setSelectedIds(selectedRows.map(Number));
             }}
-            rowIdField="id"
+            rowIdField="positionNameMapped"
+            // getRowId={row => row.positionNameMapped ?? `positions_${row.positionsId}`}
           />
         </Box>
 
@@ -495,7 +497,9 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         />
 
         <ExecutiveDetailDialog
+          mode={dialogMode}
           open={dialogOpen}
+          onChangeMode={setDialogMode}
           onClose={handleCloseDialog}
           executive={selectedExecutive}
           onSave={handleSaveExecutive}
