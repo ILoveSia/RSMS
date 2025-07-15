@@ -22,10 +22,10 @@ import org.springframework.stereotype.Repository;
 public interface PositionRepository extends JpaRepository<Position, Long> {
 
     /**
-     * 원장차수+진행상태 목록 조회 (중복 제거)
+     * 원장차수 목록 조회 (중복 제거)
      */
-    @Query("SELECT DISTINCT p.ledgerOrder AS ledgerOrder, p.orderStatus AS orderStatus FROM Position p WHERE p.ledgerOrder IS NOT NULL ORDER BY p.ledgerOrder DESC")
-    List<Object[]> findDistinctLedgerOrdersWithStatus();
+    @Query("SELECT DISTINCT p.ledgerOrder FROM Position p WHERE p.ledgerOrder IS NOT NULL ORDER BY p.ledgerOrder DESC")
+    List<String> findDistinctLedgerOrders();
 
     /**
      * 원장차수로 직책 목록 조회

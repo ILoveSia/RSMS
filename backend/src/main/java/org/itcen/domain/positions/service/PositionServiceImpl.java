@@ -48,9 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional(readOnly = true)
 public class PositionServiceImpl implements PositionService {
 
-    private static final String LEDGER_STATUS_GROUP_CODE = "LEDGER_STATUS"; // 공통코드 그룹코드 예시
-
-
     private final PositionRepository positionRepository;
     private final PositionOwnerDeptRepository positionOwnerDeptRepository;
     private final PositionMeetingRepository positionMeetingRepository;
@@ -66,7 +63,7 @@ public class PositionServiceImpl implements PositionService {
     @Override
     @Transactional(readOnly = true)
     public List<LedgerOrderSelectDto> getLedgerOrderSelectList() {
-        // 주입받은 EntityManager를 바로 사용합니다.
+        // 원장차수+진행상태 목록 조회 (ledger_orders 테이블 사용)
         List<Object[]> rows = em.createNativeQuery("SELECT lo.ledger_orders_title, cc.code_name "
                 + "FROM ledger_orders lo "
                 + "LEFT JOIN common_code cc ON cc.group_code = 'ORDER_STATUS' AND cc.code = lo.ledger_orders_status_cd "
@@ -77,10 +74,8 @@ public class PositionServiceImpl implements PositionService {
             String title = (String) row[0];
             String statusName = (String) row[1];
             String label = title + (statusName != null ? " (" + statusName + ")" : "");
-            // LedgerOrderSelectDto 생성자에 맞게 수정 필요
             result.add(new LedgerOrderSelectDto(title, label));
         }
-        // em.close()를 호출하지 않습니다. 스프링이 트랜잭션 범위에 맞춰 자동으로 관리합니다.
         return result;
     }
 

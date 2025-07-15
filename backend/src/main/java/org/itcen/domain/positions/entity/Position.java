@@ -10,9 +10,9 @@ import org.itcen.common.entity.BaseTimeEntity;
 
 /**
  * 직책 엔티티
- * 
+ *
  * 직책 정보를 저장하는 메인 엔티티입니다.
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: 직책 데이터 저장만 담당
  * - Open/Closed: 새로운 필드 추가 시 확장 가능
@@ -57,14 +57,8 @@ public class Position extends BaseTimeEntity {
     private String confirmGubunCd;
 
     /**
-     * 원장차수 진행상태 코드
-     */
-    @Column(name = "order_status", length = 20)
-    private String orderStatus;
-
-    /**
      * 책무기술서 작성 부서코드
      */
     @Column(name = "write_dept_cd", length = 10)
     private String writeDeptCd;
-} 
+}

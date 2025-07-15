@@ -9,7 +9,6 @@ CREATE TABLE public.positions (
 	ledger_order varchar(100) NULL,    -- 원장차수
 	positions_nm varchar(200) NULL,    -- 직책명
 	approval_id int8 NULL,             -- 결재ID
-	order_status varchar(20) NULL,     -- 책무상태코드
 	write_dept_cd varchar(10) NULL,    -- 작성부서코드
   date_expired date DEFAULT '9999-12-31'::date NULL, -- 만료일
 	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 생성일시
@@ -19,7 +18,6 @@ CREATE TABLE public.positions (
 	CONSTRAINT positions_pkey PRIMARY KEY (positions_id)
 );
 CREATE INDEX idx_positions_ledger_order ON public.positions USING btree (ledger_order);
-CREATE INDEX idx_positions_order_status ON public.positions USING btree (order_status);
 CREATE INDEX idx_positions_write_dept_cd ON public.positions USING btree (write_dept_cd);
 
 -- Table Triggers

@@ -9,7 +9,6 @@ CREATE TABLE public.responsibility (
 	responsibility_content text NULL,    -- 책무내용
   ledger_order varchar(100) NULL,      -- 원장차수
 	approval_id int8 NULL,               -- 결재ID
-	order_status varchar(20) NULL,      -- 책무상태코드
   date_expired date DEFAULT '9999-12-31'::date NULL, -- 만료일
 	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 생성일시
 	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 수정일시

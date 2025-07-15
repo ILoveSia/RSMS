@@ -10,7 +10,6 @@ CREATE TABLE public.role_resp_status (
 	role_summ varchar(100) NULL,            -- 책무개요
 	role_start_dt varchar(8) NULL,          -- 책무분배일
 	ledger_order varchar(100) NULL,         -- 책무번호
-	order_status varchar(20) NULL,          -- 책무상태코드
   approval_id int8 NULL,                   -- 결재ID
 	positions_id int8 NOT NULL,             --직책ID
 	responsibility_id int8 NOT NULL,         --책무ID
