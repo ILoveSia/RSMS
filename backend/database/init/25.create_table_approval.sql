@@ -6,18 +6,18 @@
 -- 결재 테이블
 
 CREATE TABLE public.approval (
-	approval_id serial4 NOT NULL,
-	task_id varchar(100) NOT NULL,
-	requester_id varchar(100) NOT NULL,
-	approver_id varchar(100) NULL,
-	appr_stat_cd varchar(20) NULL,
-	request_datetime timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
-	approval_datetime timestamptz NULL,
-	"comments" text NULL,
-	created_id varchar(100) NULL,
-	updated_id varchar(100) NULL,
-	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
-	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
+	approval_id serial4 NOT NULL,       -- 결재ID
+	task_id varchar(100) NOT NULL,      -- 관련 업무 ID (어떤 업무에 대한 결재인지 식별)
+	requester_id varchar(100) NOT NULL, -- 결재 요청자 ID
+	approver_id varchar(100) NULL,     -- 결재자 ID
+	appr_stat_cd varchar(20) NULL,     -- 결재 상태 코드
+	request_datetime timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 결재 요청 일시
+	approval_datetime timestamptz NULL, -- 결재 완료 일시
+	"comments" text NULL,               -- 결재 메모
+	created_id varchar(100) NULL,        -- 생성자 ID
+	updated_id varchar(100) NULL,        -- 수정자 ID
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 생성일시
+	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 수정일시
 	CONSTRAINT approval_pkey PRIMARY KEY (approval_id)
 );
 

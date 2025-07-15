@@ -18,11 +18,9 @@ import org.itcen.domain.positions.dto.PositionStatusProjection;
 import org.itcen.domain.positions.dto.PositionUpdateRequestDto;
 import org.itcen.domain.positions.entity.Position;
 import org.itcen.domain.positions.entity.PositionAdmin;
-import org.itcen.domain.positions.entity.PositionHist;
 import org.itcen.domain.positions.entity.PositionMeeting;
 import org.itcen.domain.positions.entity.PositionOwnerDept;
 import org.itcen.domain.positions.repository.PositionAdminRepository;
-import org.itcen.domain.positions.repository.PositionHistRepository;
 import org.itcen.domain.positions.repository.PositionMeetingRepository;
 import org.itcen.domain.positions.repository.PositionOwnerDeptRepository;
 import org.itcen.domain.positions.repository.PositionRepository;
@@ -54,7 +52,6 @@ public class PositionServiceImpl implements PositionService {
 
 
     private final PositionRepository positionRepository;
-    private final PositionHistRepository positionHistRepository;
     private final PositionOwnerDeptRepository positionOwnerDeptRepository;
     private final PositionMeetingRepository positionMeetingRepository;
     private final PositionAdminRepository positionAdminRepository;
@@ -98,10 +95,7 @@ public class PositionServiceImpl implements PositionService {
         Position savedPosition = positionRepository.save(position);
         Long positionId = savedPosition.getPositionsId();
 
-        // 2. 직책 이력(PositionHist) 정보 저장
-        savePositionHist(savedPosition, "C");
-
-        // 3. 소관 부서(PositionOwnerDept) 정보 저장
+        // 2. 소관 부서(PositionOwnerDept) 정보 저장
         if (createRequestDto.getOwnerDeptCds() != null) {
             createRequestDto.getOwnerDeptCds().forEach(deptCd -> {
                 PositionOwnerDept ownerDept = PositionOwnerDept.builder().positionsId(positionId)
@@ -143,10 +137,7 @@ public class PositionServiceImpl implements PositionService {
         position.setWriteDeptCd(updateRequestDto.getWriteDeptCd());
         positionRepository.save(position);
 
-        // 3. 직책 이력(PositionHist) 정보 저장
-        savePositionHist(position, "U"); // "U" for Update
-
-        // 4. 소관부서 정보 업데이트 (Diff Update)
+        // 3. 소관부서 정보 업데이트 (Diff Update)
         updateOwnerDepts(position, updateRequestDto.getOwnerDeptCds());
 
         // 5. 주관회의체 정보 업데이트 (Diff Update)
@@ -333,28 +324,12 @@ public class PositionServiceImpl implements PositionService {
     @Transactional
     public void deleteBulk(List<Long> positionsIds) {
         for (Long id : positionsIds) {
-            // 1. 삭제 전 히스토리 저장
-            Position position = positionRepository.findById(id).orElse(null);
-            if (position != null) {
-                savePositionHist(position, "D");
-            }
-            // 2. 하위 테이블부터 삭제
+            // 1. 하위 테이블부터 삭제
             positionAdminRepository.deleteByPositionsId(id);
             positionOwnerDeptRepository.deleteByPositionsId(id);
             positionMeetingRepository.deleteByPositionsId(id);
-            // 3. 본 테이블 삭제
+            // 2. 본 테이블 삭제
             positionRepository.deleteById(id);
         }
-    }
-
-    // ... 기존 savePositionHist
-    private void savePositionHist(Position position, String historyGubun) {
-        PositionHist hist = PositionHist.builder().positionsId(position.getPositionsId())
-                .positionsNm(position.getPositionsNm()).ledgerOrder(position.getLedgerOrder())
-                .confirmGubunCd(position.getConfirmGubunCd()).writeDeptCd(position.getWriteDeptCd())
-                .createdAt(position.getCreatedAt()).updatedAt(position.getUpdatedAt())
-                .createdId(position.getCreatedId()).updatedId(position.getUpdatedId())
-                .historyGubun(historyGubun).build();
-        positionHistRepository.save(hist);
     }
 }
