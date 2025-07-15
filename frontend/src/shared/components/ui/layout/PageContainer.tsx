@@ -17,6 +17,8 @@ interface PageContainerProps {
   sx?: SxProps<Theme>;
   /** 최대 너비 설정 */
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
+  /** 너비 설정 */
+  width?: number | string;
 }
 
 /**
@@ -34,9 +36,10 @@ interface PageContainerProps {
  */
 export const PageContainer: React.FC<PageContainerProps> = ({
   children,
+  width = '100%',
   fullWidth = false,
   disablePadding = false,
-  maxWidth = 'xl',
+  maxWidth = '100%',
   sx,
 }) => {
   const [isInTab, setIsInTab] = useState(false);
