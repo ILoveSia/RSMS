@@ -14,7 +14,7 @@ CREATE TABLE public.hod_ic_item (
     role_type_cd                varchar(10)             NULL,                   --직무구분코드 (COM_ROLE_TYPE, UNI_ROLE_TYPE)
     dept_cd                     varchar(10)             NULL,                   --부서코드
     ic_task                     varchar(1000)           NULL,                   --내부통제업무
-    measure_id                  varchar(100)            NULL,                   --조치활동ID
+    measure_id                  varchar(100)            NULL,                   --조치활동ID 삭제예정
     measure_desc                varchar(1000)           NULL,                   --조치활동내용
     measure_type                varchar(1000)           NULL,                   --조치유형
     period_cd                   varchar(10)             NULL,                   --주기 (PERIOD)
