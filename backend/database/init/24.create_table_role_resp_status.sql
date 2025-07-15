@@ -14,6 +14,7 @@ CREATE TABLE public.role_resp_status (
   approval_id int8 NULL,                   -- 결재ID
 	positions_id int8 NOT NULL,             --직책ID
 	responsibility_id int8 NOT NULL,         --책무ID
+  date_expired date DEFAULT '9999-12-31'::date NULL, -- 만료일
 	created_id varchar(100) NULL,            -- 생성자 ID
 	updated_id varchar(100) NULL,            -- 수정자 ID
 	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 생성일시

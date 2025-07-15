@@ -5,10 +5,10 @@
 -- DROP TABLE public.positions_meeting;
 
 CREATE TABLE public.positions_meeting (
-	positions_meeting_id bigserial NOT NULL,
-	positions_id int8 NOT NULL,
-	meeting_body_id varchar(100) NULL,
-	created_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	positions_meeting_id bigserial NOT NULL, -- 직책회의ID
+	positions_id int8 NOT NULL,             -- 직책ID
+	meeting_body_id varchar(100) NULL,      -- 회의체ID
+	created_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 생성일시
 	updated_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	created_id varchar(100) NULL,
 	updated_id varchar(100) NULL,
