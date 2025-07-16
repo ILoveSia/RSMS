@@ -3,12 +3,14 @@ import type { CommonCode } from '@/app/types/common';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import { Box, FormControl, IconButton, InputLabel, MenuItem, Select } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-
+import { DatePicker } from '../../../shared/components';
 interface ExecutiveDetailDialogProps {
   mode: DialogMode;
   open: boolean;
+  positionName: string;
   onClose: () => void;
   executive: any | null;
   onSave: (data: any) => void;
@@ -22,6 +24,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   onChangeMode,
   mode,
   onSave,
+  positionName,
 }) => {
   // const [mode, setMode] = useState<DialogMode>('view');
   const [formData, setFormData] = useState<any>({});
@@ -56,13 +59,17 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   };
 
   useEffect(() => {
+    console.log(executive);
     if (executive && open) {
       setFormData(executive);
     } else {
       setFormData({});
     }
+    // if(positionName&&open) {
+    //   setFormData(positionName);
+    // }
     setError(null);
-  }, [executive, open]);
+  }, [executive, open, positionName]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -111,58 +118,39 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
           {/* 첫 번째 행: 직책, 직위 */}
           <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl fullWidth>
-              <InputLabel required>직책</InputLabel>
-              <Select
-                value={formData.positionName || ''}
-                onChange={e => handleInputChange('positionName', e.target.value)}
-                disabled={mode === 'view'}
-                label="직책"
-              >
-                <MenuItem value="">선택하세요</MenuItem>
-                {getPositionCodes().map(code => (
-                  <MenuItem key={code.code} value={code.code}>
-                    {code.codeName}
-                  </MenuItem>
-                ))}
-              </Select>
+              <TextField label="직책"
+              value={formData.positionNameMapped || ''}
+              disabled={true}
+              />
             </FormControl>
-            <FormControl fullWidth>
-              <InputLabel required>직위</InputLabel>
-              <Select
-                value={formData.jobTitle || ''}
-                onChange={e => handleInputChange('jobTitle', e.target.value)}
-                disabled={mode === 'view'}
-                label="직위"
-              >
-                <MenuItem value="">선택하세요</MenuItem>
-                {getJobTitleCodes().map(code => (
-                  <MenuItem key={code.code} value={code.code}>
-                    {code.codeName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-
-          {/* 두 번째 행: 성명, 현 직책 부여일 */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField
+              <TextField
               fullWidth
               required
               label="성명"
               value={formData.executiveName || ''}
               onChange={e => handleInputChange('executiveName', e.target.value)}
-              disabled={mode === 'view'}
-            />
-            <TextField
-              fullWidth
-              required
+              disabled={true}
+              />
+              <IconButton>
+                <SearchIcon />
+              </IconButton>
+
+          </Box>
+
+          {/* 두 번째 행: 성명, 현 직책 부여일 */}
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField label="직위" value={formData.jobTitle || ''}
+            disabled={true}
+            sx={{ width: '50%' }}/>
+            <DatePicker
               label="현 직책 부여일"
-              type="date"
-              value={formData.appointmentDate || ''}
-              onChange={e => handleInputChange('appointmentDate', e.target.value)}
-              disabled={mode === 'view'}
-              InputLabelProps={{ shrink: true }}
+              value={formData.appointmentDate }
+              onChange={(date) => {
+                // setFormData(prev => ({ ...prev, appointmentDate: date || new Date() }));
+              }}
+              // disabled={mode === 'view'}
+              // sx={{ width: '50%' }}
+              // InputLabelProps={{ shrink: true }}
             />
           </Box>
 
