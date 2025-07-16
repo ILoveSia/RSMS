@@ -17,7 +17,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import ErrorDialog from '../../../app/components/ErrorDialog';
-import ExecutiveDetailDialog from '../../../app/components/ExecutiveDetailDialog';
+import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
 import '../../../assets/scss/style.css';
 import { Button } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
@@ -69,6 +69,7 @@ interface ExecutiveStatusRow {
   execofficerDt: string;
   dualYn: string;
   dualDetails: string;
+  // positionName: string;
   // execofficerId: number;
   // empId: string;
   // execofficerDt: string;
@@ -82,7 +83,6 @@ interface ExecutiveStatusRow {
   // updatedId: string;
   // createdAt: string;
   // updatedAt: string;
-  // positionNameMapped: string; // 새로 추가될 필드
 }
 
 const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.Element => {
@@ -155,7 +155,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       field: 'positionNameMapped',
       headerName: '직책명',
       width: 200,
-      renderCell: ({ value }) => value || '해당없음',
+      renderCell: ({ value, row }) => (
+        <span
+          style={{
+            color: '#1976d2',
+            cursor: 'pointer',
+            textDecoration: 'underline'
+          }}
+          onClick={() => handleExecutiveDetail(row)}
+        >
+          {value || '해당없음'}
+        </span>
+      ),
       flex: 1,
       align: 'center',
       headerAlign: 'center',
@@ -440,14 +451,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 다운로드
           </Button>
-          <Button
+          {/*<Button
             variant="contained"
             color="primary"
             size="small"
             onClick={handleCreateExecutive}
           >
             등록
-          </Button>
+          </Button>*/}
           <Button
             variant="contained"
             color="primary"
@@ -499,9 +510,11 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         <ExecutiveDetailDialog
           mode={dialogMode}
           open={dialogOpen}
+          // title={dialogMode === 'create' ? '임원 등록' : '임원 상세'}
           onChangeMode={setDialogMode}
           onClose={handleCloseDialog}
           executive={selectedExecutive}
+
           onSave={handleSaveExecutive}
         />
       </PageContent>
