@@ -1,10 +1,7 @@
 /**
  * 직책 등록/수정/조회 다이얼로그 컴포넌트
  */
-import apiClient from '@/app/common/api/client';
-import type { Department } from '@/app/components/DepartmentSearchPopup';
-import DepartmentSearchPopup from '@/app/components/DepartmentSearchPopup';
-import EmployeeSearchPopup from '@/app/components/EmployeeSearchPopup';
+import { DepartmentSearchPopup, type Department } from '@/domains/common/components/search';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import type { EmployeeSearchResult } from '@/domains/common/components/search';

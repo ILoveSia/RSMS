@@ -1,8 +1,7 @@
 /**
  * 책무구조도 제출 등록/수정/조회 다이얼로그 컴포넌트
  */
-import type { EmployeeSearchResult } from '@/app/components/EmployeeSearchPopup';
-import EmployeeSearchPopup from '@/app/components/EmployeeSearchPopup';
+import { EmployeeSearchPopup, type EmployeeSearchResult } from '@/domains/common/components/search';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';

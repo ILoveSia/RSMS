@@ -2,9 +2,7 @@
  * 공통 팝업 사용 예시 페이지
  * 부서검색 팝업과 사원검색 팝업의 사용법을 보여줍니다.
  */
-import DepartmentSearchPopup from '@/app/components/DepartmentSearchPopup';
-import type { Department, EmployeeSearchResult } from '@/domains/common/components/search';
-import { EmployeeSearchPopup } from '@/domains/common/components/search';
+import { DepartmentSearchPopup, type Department, EmployeeSearchPopup, type EmployeeSearchResult } from '@/domains/common/components/search';
 import { Box, Button, Chip, Grid, Paper, Stack, TextField, Typography } from '@mui/material';
 import React, { useState } from 'react';
 
