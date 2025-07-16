@@ -55,6 +55,7 @@ public class ExecOfficerService {
                 dto.setUpdatedId((String) row[11]);
                 dto.setCreatedAt(row[12] != null ? toLocalDateTime(row[12]) : null);
                 dto.setUpdatedAt(row[13] != null ? toLocalDateTime(row[13]) : null);
+                // dto.setUserName((String) row[14]);
                 return dto;
             } catch (Exception e) {
                 log.error("Error processing row: {}", row, e);
@@ -62,6 +63,11 @@ public class ExecOfficerService {
             }
         }).filter(java.util.Objects::nonNull) // Filter out nulls
         .collect(Collectors.toList());
+    }
+    public ExecOfficerDto getnameById(Long id) {
+        ExecOfficer entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("임원을 찾을 수 없습니다."));
+        return toDto(entity);
     }
 
     public ExecOfficerDto create(ExecOfficerDto dto) {

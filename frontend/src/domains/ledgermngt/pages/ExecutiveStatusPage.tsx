@@ -17,11 +17,11 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import ErrorDialog from '../../../app/components/ErrorDialog';
-import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
 import '../../../assets/scss/style.css';
 import { Button } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
+import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
 
 export interface ExecOfficer {
   positionNameMapped?: string; // 새로 추가될 필드
@@ -30,6 +30,7 @@ export interface ExecOfficer {
   execofficerDt: string;
   dualYn: string;
   dualDetails: string;
+  userName: string;
   // positionsId: number;
   // approvalId: number;
   // ledgerOrder: string;
@@ -55,6 +56,10 @@ const execOfficerApi = {
   },
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/execofficer/${id}`);
+  },
+  getnameById: async (id: number): Promise<ExecOfficer> => {
+    const response = await apiClient.get<ExecOfficer>(`/execofficer/${id}`);
+    return response;
   }
 };
 
@@ -69,6 +74,7 @@ interface ExecutiveStatusRow {
   execofficerDt: string;
   dualYn: string;
   dualDetails: string;
+  userName: string;
   // positionName: string;
   // execofficerId: number;
   // empId: string;
@@ -123,6 +129,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setError(null);
     try {
       const data = await execOfficerApi.getAll();
+      // const empname = await execOfficerApi.getnameById(data.empId);
       // ExecOfficer[] → ExecutiveStatusRow[] 변환 (positionNameMapped의 undefined 방지)
       const mappedRows: ExecutiveStatusRow[] = data.map((item) => ({
         ...item,
@@ -173,13 +180,22 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     },
     {
       field: 'empId',
-      headerName: '사번',
+      headerName: '성명 ',
       width: 120,
       renderCell: ({ value }) => value || '해당없음',
       flex: 1,
       align: 'center',
       headerAlign: 'center',
     },
+    // {
+    //   field: 'empId',
+    //   headerName: '직위',
+    //   width: 120,
+    //   renderCell: ({ value }) => value || '해당없음',
+    //   flex: 1,
+    //   align: 'center',
+    //   headerAlign: 'center',
+    // },
     {
       field: 'execofficerDt',
       headerName: '임원선임일',
@@ -265,6 +281,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   // 임원 상세 정보 핸들러
   const handleExecutiveDetail = (executive: ExecutiveStatusRow) => {
+    console.log(executive);
     setSelectedExecutive(executive);
     setDialogMode('view');
     setDialogOpen(true);
@@ -451,14 +468,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 다운로드
           </Button>
-          {/*<Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={handleCreateExecutive}
-          >
-            등록
-          </Button>*/}
           <Button
             variant="contained"
             color="primary"
@@ -484,7 +493,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
               setSelectedIds(selectedRows.map(Number));
             }}
             rowIdField="positionNameMapped"
-            // getRowId={row => row.positionNameMapped ?? `positions_${row.positionsId}`}
           />
         </Box>
 
@@ -510,7 +518,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         <ExecutiveDetailDialog
           mode={dialogMode}
           open={dialogOpen}
-          // title={dialogMode === 'create' ? '임원 등록' : '임원 상세'}
           onChangeMode={setDialogMode}
           onClose={handleCloseDialog}
           executive={selectedExecutive}

@@ -32,6 +32,10 @@ const execOfficerApi = {
   },
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/execofficer/${id}`);
+  },
+  getnameById: async (id: number): Promise<ExecOfficer> => {
+    const response = await apiClient.get<ExecOfficer>(`/execofficer/${id}`);
+    return response;
   }
 };
 
