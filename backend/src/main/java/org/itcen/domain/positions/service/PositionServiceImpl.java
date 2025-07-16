@@ -85,7 +85,7 @@ public class PositionServiceImpl implements PositionService {
     public Long createPosition(PositionCreateRequestDto createRequestDto) {
         // 1. 직책(Position) 정보 저장d
         Position position = Position.builder().ledgerOrder(createRequestDto.getLedgerOrder())
-                .positionsNm(createRequestDto.getPositionsNm())
+                .positionsNm(createRequestDto.getPositionName())
                 .confirmGubunCd(createRequestDto.getConfirmGubunCd())
                 .writeDeptCd(createRequestDto.getWriteDeptCd()).build();
         Position savedPosition = positionRepository.save(position);

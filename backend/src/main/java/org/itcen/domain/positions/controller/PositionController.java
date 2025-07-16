@@ -60,7 +60,7 @@ public class PositionController {
     @PostMapping
     public ResponseEntity<ApiResponse<PositionDetailDto>> createPosition(
             @Valid @RequestBody PositionCreateRequestDto createRequestDto) {
-        log.info("직책 생성 API 호출: {}", createRequestDto.getPositionsNm());
+        log.info("직책 생성 API 호출: {}", createRequestDto);
         Long positionId = positionService.createPosition(createRequestDto);
         PositionDetailDto detail = positionService.getPositionDetail(positionId);
         return ResponseEntity.status(HttpStatus.CREATED)

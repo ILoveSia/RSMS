@@ -10,9 +10,9 @@ import java.util.List;
 
 /**
  * 직책 생성 요청 DTO
- * 
+ *
  * 직책 생성 시 필요한 정보를 전송하기 위한 DTO입니다.
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: 직책 생성 요청 데이터 전송만 담당
  * - Open/Closed: 새로운 필드 추가 시 확장 가능
@@ -35,7 +35,7 @@ public class PositionCreateRequestDto {
      * 직책명
      */
     @Size(max = 200, message = "직책명은 200자를 초과할 수 없습니다.")
-    private String positionsNm;
+    private String positionName;
 
     /**
      * 확정구분코드
@@ -63,4 +63,4 @@ public class PositionCreateRequestDto {
      * 관리자 ID 목록
      */
     private List<String> adminIds;
-} 
+}
