@@ -13,9 +13,9 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Q&A 목록 조회 응답 DTO
- * 
+ *
  * Q&A 목록 화면에서 필요한 정보만 포함하여 성능을 최적화합니다.
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: Q&A 목록 데이터 전송만 담당
  * - Open/Closed: 새로운 필드 추가 시 확장 가능
@@ -87,11 +87,6 @@ public class QnaListResponseDto {
     private Integer viewCount;
 
     /**
-     * 첨부파일 개수
-     */
-    private Integer attachmentCount;
-
-    /**
      * 생성일시
      */
     private LocalDateTime createdAt;
@@ -113,13 +108,13 @@ public class QnaListResponseDto {
 
     /**
      * Entity로부터 DTO를 생성하는 정적 팩토리 메서드
-     * 
+     *
      * @param qna Q&A 엔티티
      * @return QnaListResponseDto
      */
     public static QnaListResponseDto from(Qna qna) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-        
+
         return QnaListResponseDto.builder()
                 .id(qna.getId())
                 .department(qna.getDepartment())
@@ -133,7 +128,6 @@ public class QnaListResponseDto {
                 .category(qna.getCategory())
                 .isPublic(qna.getIsPublic())
                 .viewCount(qna.getViewCount())
-                .attachmentCount(qna.getAttachments() != null ? qna.getAttachments().size() : 0)
                 .createdAt(qna.getCreatedAt())
                 .createdAtFormatted(qna.getCreatedAt() != null ? qna.getCreatedAt().format(formatter) : "")
                 .answeredAt(qna.getAnsweredAt())
@@ -143,7 +137,7 @@ public class QnaListResponseDto {
 
     /**
      * 답변 완료 여부를 확인하는 메서드
-     * 
+     *
      * @return 답변 완료 여부
      */
     public boolean isAnswered() {
@@ -152,7 +146,7 @@ public class QnaListResponseDto {
 
     /**
      * 답변 대기 여부를 확인하는 메서드
-     * 
+     *
      * @return 답변 대기 여부
      */
     public boolean isPending() {
@@ -161,7 +155,7 @@ public class QnaListResponseDto {
 
     /**
      * 높은 우선순위 여부를 확인하는 메서드
-     * 
+     *
      * @return 높은 우선순위 여부
      */
     public boolean isHighPriority() {

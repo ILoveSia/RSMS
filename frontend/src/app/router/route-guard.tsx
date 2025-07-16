@@ -20,6 +20,10 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
   const location = useLocation();
   const { authState, hasAnyRole } = useAuth();
 
+  // 개발 모드에서 인증 체크 건너뛰기 옵션 (필요시 true로 변경)
+  const SKIP_AUTH_IN_DEV = false;
+  const isDevelopment = import.meta.env.MODE === 'development';
+
   // 디버깅 로그 추가
   console.log('🛡️ [RouteGuard] 권한 체크 시작:', {
     path: location.pathname,
@@ -28,7 +32,14 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
     isAuthenticated: authState.isAuthenticated,
     userRoles: authState.user?.roles,
     loading: authState.loading,
+    skipAuthInDev: SKIP_AUTH_IN_DEV && isDevelopment,
   });
+
+  // 개발 모드에서 인증 체크 건너뛰기
+  if (SKIP_AUTH_IN_DEV && isDevelopment && meta?.requiresAuth) {
+    console.log('🚀 [RouteGuard] 개발 모드 - 인증 체크 건너뛰기');
+    return <>{children}</>;
+  }
 
   // 로딩 중인 경우
   if (authState.loading) {
@@ -63,7 +74,7 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
   if (meta?.requiresAuth === false) {
     // 이미 인증된 사용자가 로그인 페이지에 접근하면 메인으로 리다이렉트
     if (location.pathname === '/login' && authState.isAuthenticated) {
-      return <Navigate to='/' replace />;
+      return <Navigate to='/main' replace />;
     }
     return <>{children}</>;
   }

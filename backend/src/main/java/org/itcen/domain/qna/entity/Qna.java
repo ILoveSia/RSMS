@@ -8,14 +8,12 @@ import lombok.NoArgsConstructor;
 import org.itcen.common.entity.BaseEntity;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Q&A 엔티티
- * 
+ *
  * 질문과 답변 정보를 관리하는 엔티티입니다.
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: Q&A 정보만 담당
  * - Open/Closed: 새로운 필드 추가 시 확장 가능
@@ -129,15 +127,8 @@ public class Qna extends BaseEntity {
     private LocalDateTime answeredAt;
 
     /**
-     * 첨부파일 목록 (일대다 관계)
-     */
-    @OneToMany(mappedBy = "qna", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<QnaAttachment> attachments = new ArrayList<>();
-
-    /**
      * 답변을 등록하는 메서드
-     * 
+     *
      * @param answererId 답변자 ID
      * @param answererName 답변자 이름
      * @param answerContent 답변 내용
@@ -165,28 +156,8 @@ public class Qna extends BaseEntity {
     }
 
     /**
-     * 첨부파일을 추가하는 메서드
-     * 
-     * @param attachment 첨부파일
-     */
-    public void addAttachment(QnaAttachment attachment) {
-        this.attachments.add(attachment);
-        attachment.setQna(this);
-    }
-
-    /**
-     * 첨부파일을 제거하는 메서드
-     * 
-     * @param attachment 첨부파일
-     */
-    public void removeAttachment(QnaAttachment attachment) {
-        this.attachments.remove(attachment);
-        attachment.setQna(null);
-    }
-
-    /**
      * 답변 완료 여부를 확인하는 메서드
-     * 
+     *
      * @return 답변 완료 여부
      */
     public boolean isAnswered() {
@@ -195,7 +166,7 @@ public class Qna extends BaseEntity {
 
     /**
      * Q&A 종료 여부를 확인하는 메서드
-     * 
+     *
      * @return Q&A 종료 여부
      */
     public boolean isClosed() {
@@ -204,7 +175,7 @@ public class Qna extends BaseEntity {
 
     /**
      * Q&A 대기 상태 여부를 확인하는 메서드
-     * 
+     *
      * @return Q&A 대기 상태 여부
      */
     public boolean isPending() {

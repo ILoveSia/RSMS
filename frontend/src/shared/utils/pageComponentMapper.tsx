@@ -137,8 +137,7 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'analytics',
   },
   '/ledger/internal-control': {
-    component: () =>
-      Promise.resolve({ default: () => <ComingSoonPage title='부서장 내부통제 항목 현황' /> }),
+    component: () => import('@/domains/ledgermngt/pages/HodICitemStatusPage'),
     title: '부서장 내부통제 항목 현황',
     icon: 'network_node',
   },
@@ -221,7 +220,9 @@ export class PageComponentMapper {
     const mapping = PAGE_COMPONENT_MAPPING[path];
 
     if (!mapping) {
-      console.error(`❌ [PageComponentMapper] 경로에 해당하는 컴포넌트를 찾을 수 없습니다: ${path}`);
+      console.error(
+        `❌ [PageComponentMapper] 경로에 해당하는 컴포넌트를 찾을 수 없습니다: ${path}`
+      );
       return ErrorPage;
     }
 

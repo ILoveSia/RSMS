@@ -1,5 +1,7 @@
 import DepartmentSearchPopup, { type Department } from '@/app/components/DepartmentSearchPopup';
-import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/app/components/EmployeeSearchPopup';
+import EmployeeSearchPopup, {
+  type EmployeeSearchResult,
+} from '@/app/components/EmployeeSearchPopup';
 import { Confirm } from '@/shared/components/modal';
 import { Button, DataGrid, Select } from '@/shared/components/ui';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -136,7 +138,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       align: 'center',
       headerAlign: 'center',
       flex: 2,
-      renderCell: params => params.value || '-'
+      renderCell: params => params.value || '-',
     },
     {
       field: 'writeDeptNm',
@@ -322,9 +324,9 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       }}
     >
       <PageHeader
-        title="[200] 직책 현황"
+        title='[200] 직책 현황'
         icon={<GroupsIcon />}
-        description="직책별 현황을 조회하고 관리합니다."
+        description='직책별 현황을 조회하고 관리합니다.'
         elevation={false}
         sx={{
           position: 'relative',
@@ -375,9 +377,9 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             조회
           </Button>
           <Button
-            variant="contained"
-            size="small"
-            color="success"
+            variant='contained'
+            size='small'
+            color='success'
             onClick={() => {
               /* 차수생성 로직 미구현 */
             }}
@@ -386,9 +388,9 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <Button
-              variant="contained"
-              size="small"
-              color="success"
+              variant='contained'
+              size='small'
+              color='success'
               onClick={() => {
                 /* 확정 로직 미구현 */
               }}
@@ -396,9 +398,9 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               확정
             </Button>
             <Button
-              variant="contained"
-              size="small"
-              color="error"
+              variant='contained'
+              size='small'
+              color='error'
               onClick={() => {
                 /* 확정취소 로직 미구현 */
               }}
@@ -409,18 +411,18 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
           <Button
-            variant="contained"
-            size="small"
-            color="success"
+            variant='contained'
+            size='small'
+            color='success'
             onClick={handleExcelDownload}
             sx={{ mr: 1 }}
           >
             엑셀 다운로드
           </Button>
           <Button
-            variant="contained"
-            size="small"
-            color="primary"
+            variant='contained'
+            size='small'
+            color='primary'
             onClick={handleCreateClick}
             sx={{ mr: 1 }}
           >
@@ -430,7 +432,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             삭제
           </Button>
         </Box>
-        <Box sx={{width: '100%' }}>
+        <Box sx={{ width: '100%' }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
             data={rows}
@@ -477,13 +479,13 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
         onClose={() => setDepartmentSearchOpen(false)}
         onSelect={handleDepartmentSelect}
         multiSelect={false}
-        title="책무기술서 작성 부서 선택"
+        title='책무기술서 작성 부서 선택'
       />
       <EmployeeSearchPopup
         open={employeeSearchOpen}
         onClose={() => setEmployeeSearchOpen(false)}
         onSelect={handleEmployeeSelect}
-        title="관리자 선택"
+        title='관리자 선택'
       />
       <Confirm
         open={confirmOpen}
