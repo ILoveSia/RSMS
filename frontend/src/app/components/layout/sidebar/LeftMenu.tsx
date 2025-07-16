@@ -1,3 +1,4 @@
+import { useAuth } from '@/shared/context/AuthContext';
 import { useTabContext } from '@/shared/context/TabContext';
 import { PageComponentMapper } from '@/shared/utils/pageComponentMapper';
 import React, { useEffect, useState } from 'react';
@@ -47,6 +48,7 @@ interface LeftMenuProps {
 const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const { addTab } = useTabContext();
+  const { authState } = useAuth();
 
   // TabContext 디버깅
 
@@ -59,6 +61,17 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
   // 컴포넌트 마운트 시 localStorage에서 메뉴 복원
   useEffect(() => {
+    // AuthContext가 아직 로딩 중이면 메뉴 복원을 대기
+    if (authState.loading) {
+      console.log('⏳ [LeftMenu] AuthContext 로딩 중 - 메뉴 복원 대기');
+      return;
+    }
+
+    // 인증되지 않은 경우 메뉴 복원하지 않음
+    if (!authState.isAuthenticated) {
+      console.log('❌ [LeftMenu] 인증되지 않음 - 메뉴 복원 스킵');
+      return;
+    }
 
     // localStorage에서 메뉴 복원 시도
     const savedMenus = localStorage.getItem('accessibleMenus');
@@ -96,24 +109,29 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
               return converted;
             });
 
+          console.log(
+            '✅ [LeftMenu] localStorage에서 메뉴 복원 완료:',
+            convertedMenus.length,
+            '개'
+          );
 
           setMenuItems(convertedMenus);
           setIsMenuLoaded(true);
 
-
           if (convertedMenus.length > 0) {
             setExpandedItems([convertedMenus[0].title]);
           }
-
         } else {
+          console.log('ℹ️ [LeftMenu] localStorage에 유효한 메뉴 데이터 없음');
         }
       } catch (error) {
         console.error('❌ [LeftMenu] localStorage 메뉴 복원 실패:', error);
         localStorage.removeItem('accessibleMenus'); // 잘못된 데이터 제거
       }
     } else {
+      console.log('ℹ️ [LeftMenu] localStorage에 메뉴 데이터 없음');
     }
-  }, []);
+  }, [authState.loading, authState.isAuthenticated]); // authState 의존성 추가
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
@@ -124,12 +142,10 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   // Menu 데이터를 MenuItemProps로 변환하는 함수
   const convertMenuToMenuItem = (menu: Menu): MenuItemProps => {
     const handleMenuClick = () => {
-
       if (!menu.menuUrl) {
         console.log('❌ 메뉴 URL이 없음:', menu.menuName);
         return;
       }
-
 
       // PageComponentMapper에서 컴포넌트 정보 가져오기
       const pageInfo = PageComponentMapper.getPageInfo(menu.menuUrl);
@@ -169,7 +185,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
   // menuStore의 accessibleMenus 데이터를 메뉴 아이템으로 변환
   useEffect(() => {
-
     if (menuData?.data && menuData.data.length > 0) {
       // 계층형 구조 구성: 부모-자식 관계 설정
       const menuMap = new Map<number, Menu>();
@@ -202,6 +217,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         .sort((a, b) => a.sortOrder - b.sortOrder) // 정렬 순서 적용
         .map(menu => convertMenuToMenuItem(menu));
 
+      console.log('✅ [LeftMenu] Redux store에서 메뉴 데이터 로드:', convertedMenus.length, '개');
       setMenuItems(convertedMenus);
       setIsMenuLoaded(true);
 
@@ -209,14 +225,16 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
       if (convertedMenus.length > 0) {
         setExpandedItems([convertedMenus[0].title]);
       }
-
     } else {
       // localStorage에서 복원한 메뉴가 있다면 유지, 없다면 빈 배열로 설정
       // isMenuLoaded가 true라면 이미 localStorage 복원이 완료된 상태
       if (!isMenuLoaded) {
+        console.log('ℹ️ [LeftMenu] Redux store에 메뉴 데이터 없음 - localStorage 복원 대기 중');
       } else if (menuItems.length === 0) {
+        console.log('⚠️ [LeftMenu] 메뉴 데이터 없음 - 빈 배열로 설정');
         setMenuItems([]);
       } else {
+        console.log('ℹ️ [LeftMenu] 기존 localStorage 복원 메뉴 유지');
       }
     }
   }, [menuData]);
@@ -280,10 +298,20 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     );
   };
 
-  // 메뉴가 없을 때 표시할 내용
+  // 인증 상태 로딩 중
+  if (authState.loading) {
+    return (
+      <div className={`left-menu ${className}`}>
+        <div className='left-menu__empty'>
+          <p>메뉴를 로드하는 중...</p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!loginData) {
-    console.log('⚠️ [LeftMenu] 로그인 데이터 없음 - 로그인 필요 메시지 표시');
+  // 메뉴가 없을 때 표시할 내용
+  if (!authState.isAuthenticated) {
+    console.log('⚠️ [LeftMenu] 인증되지 않음 - 로그인 필요 메시지 표시');
     return (
       <div className={`left-menu ${className}`}>
         <div className='left-menu__empty'>
@@ -304,7 +332,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     );
   }
 
-
+  console.log('🎯 [LeftMenu] 메뉴 렌더링:', menuItems.length, '개 메뉴');
 
   return (
     <div className={`left-menu ${className}`}>

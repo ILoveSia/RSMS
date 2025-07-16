@@ -7,18 +7,6 @@ const MainLayout = React.lazy(() => import('@/shared/components/layout/MainLayou
 // 메인 도메인 라우트 정의
 const mainRoutes: DomainRoute[] = [
   {
-    path: '/',
-    element: MainLayout,
-    meta: {
-      title: '메인',
-      requiresAuth: true,
-      roles: ['USER', 'ADMIN', 'user', 'admin'],
-      breadcrumb: ['메인'],
-      icon: 'Dashboard',
-      description: '시스템 메인 대시보드',
-    },
-  },
-  {
     path: '/main',
     element: MainLayout,
     meta: {
