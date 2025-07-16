@@ -5,13 +5,13 @@
 -- DROP TABLE public.positions_admin;
 
 CREATE TABLE public.positions_admin (
-	positions_admin_seq bigserial NOT NULL,
-	positions_id int8 NOT NULL,
-	positions_admin_id varchar(100) NULL,
-	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
-	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
-	created_id varchar(100) NULL,
-	updated_id varchar(100) NULL,
+	positions_admin_seq bigserial NOT NULL, -- 직책관리자ID
+	positions_id int8 NOT NULL,             -- 직책ID
+	positions_admin_id varchar(100) NULL,   -- 관리자ID (사원아이디)
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 생성일시
+	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 수정일시
+	created_id varchar(100) NULL, -- 생성자 ID
+	updated_id varchar(100) NULL, -- 수정자 ID
 	CONSTRAINT positions_admin_pkey PRIMARY KEY (positions_admin_seq),
 	CONSTRAINT fk_positions_admin_positions FOREIGN KEY (positions_id) REFERENCES public.positions(positions_id) ON DELETE CASCADE
 );

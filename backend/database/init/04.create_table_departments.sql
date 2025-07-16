@@ -5,13 +5,13 @@
 -- DROP TABLE public.departments;
 
 CREATE TABLE public.departments (
-	department_id varchar(20) NOT NULL,
-	department_name varchar(100) NOT NULL,
-	use_yn varchar(1) DEFAULT 'Y'::character varying NOT NULL,
-	created_id varchar(100) NULL,
-	updated_id varchar(100) NULL,
-	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	department_id varchar(20) NOT NULL, -- 부서ID
+	department_name varchar(100) NOT NULL, -- 부서명
+	use_yn varchar(1) DEFAULT 'Y'::character varying NOT NULL, -- 사용여부
+	created_id varchar(100) NULL, -- 생성자 ID
+	updated_id varchar(100) NULL, -- 수정자 ID
+	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 생성일시
+	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 수정일시
 	CONSTRAINT departments_department_name_key UNIQUE (department_name),
 	CONSTRAINT departments_pkey PRIMARY KEY (department_id)
 );

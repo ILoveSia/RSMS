@@ -10,7 +10,7 @@ CREATE TABLE public.execofficer (
     positions_id            int8                    NOT NULL,               -- 직책ID
     approval_id             int8                    NULL,                   -- 결재ID
     ledger_order            varchar(100) NULL,                              -- 원장차수
-    order_status            varchar(20)             NULL,                   -- 책무상태코드
+    date_expired            date DEFAULT '9999-12-31'::date NULL,           -- 만료일
     created_id              VARCHAR(100)            NULL,
     updated_id              VARCHAR(100)            NULL,
     created_at              timestamptz DEFAULT CURRENT_TIMESTAMP NULL,      -- 레코드 생성일
