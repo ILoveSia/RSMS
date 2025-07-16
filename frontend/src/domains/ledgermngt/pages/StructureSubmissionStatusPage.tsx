@@ -2,9 +2,6 @@
  * 책무구조도 제출 관리 페이지
  * 책무구조 원장 관리 - 적부구조도 제출 관리
  */
-import { Box, Chip } from '@mui/material';
-import React, { useCallback, useRef, useState } from 'react';
-
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
@@ -15,31 +12,18 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
+import { Box, Chip } from '@mui/material';
+import React, { useCallback, useRef, useState } from 'react';
+import type { RegistrationData, SubmissionHistoryRow } from '../api/SubmissionStatusApi';
+import {
+  deleteSubmissionHistory,
+  fetchSubmissionHistory,
+  submitSubmissionHistory,
+} from '../api/SubmissionStatusApi';
 import { StructureSubmissionStatusDialog } from '../components';
 
 interface IStructureSubmissionStatusPageProps {
   className?: string;
-}
-
-interface SubmissionHistoryRow {
-  id: number;
-  historyCode: string;           // 제출이력 코드
-  executiveName: string;         // 제출 대상 임원
-  position: string;              // 직책
-  submissionDate: string;        // 책무구조도 제출일
-  isModified: boolean;           // 수정여부
-  modificationDate?: string;     // 수정일
-  attachmentFile?: string;       // 책무구조도 첨부
-  remarks?: string;              // 비고
-}
-
-interface RegistrationData {
-  historyCode: SelectOption | null;
-  executiveName: SelectOption | null;
-  position: SelectOption | null;
-  submissionDate: Date;
-  attachmentFile: string;
-  remarks: SelectOption | null;
 }
 
 const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProps> = (): React.JSX.Element => {
@@ -124,32 +108,10 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   ];
 
   // 제출 이력 조회
-  const fetchSubmissionHistory = useCallback(async () => {
+  const handleFetchSubmissionHistory = useCallback(async () => {
     try {
       setIsLoading(true);
-      const queryParams = new URLSearchParams();
-      if (startDate) {
-        queryParams.append('startDate', startDate.toISOString().split('T')[0]);
-      }
-      if (endDate) {
-        queryParams.append('endDate', endDate.toISOString().split('T')[0]);
-      }
-      if (ledgerOrder) {
-        queryParams.append('ledgerOrder', ledgerOrder);
-      }
-
-      const response = await fetch(`/api/submission-history?${queryParams.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('제출 이력 조회에 실패했습니다.');
-      }
-
-      const data = await response.json();
+      const data = await fetchSubmissionHistory(startDate, endDate, ledgerOrder);
       setHistoryRows(data);
     } catch (error) {
       setErrorMessage('제출 이력 조회 중 오류가 발생했습니다.');
@@ -183,41 +145,13 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   const handleSubmit = async (data: RegistrationData): Promise<void> => {
     try {
       setIsLoading(true);
-      const formData = new FormData();
-
-      // null 체크 후 문자열로 변환
-      if (data.historyCode?.value) {
-        formData.append('historyCode', String(data.historyCode.value));
-      }
-      if (data.executiveName?.value) {
-        formData.append('executiveName', String(data.executiveName.value));
-      }
-      if (data.position?.value) {
-        formData.append('position', String(data.position.value));
-      }
-
-      formData.append('submissionDate', data.submissionDate.toISOString().split('T')[0]);
-
+      let file: File | undefined = undefined;
       if (fileInputRef.current?.files?.[0]) {
-        formData.append('file', fileInputRef.current.files[0]);
+        file = fileInputRef.current.files[0];
       }
-
-      if (data.remarks?.value) {
-        formData.append('remarks', String(data.remarks.value));
-      }
-
-      const response = await fetch('/api/submission-history', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('제출 이력 등록에 실패했습니다.');
-      }
-
-      // 성공 후 초기화
+      await submitSubmissionHistory(data, file);
       handleRegistrationModeToggle();
-      fetchSubmissionHistory();
+      handleFetchSubmissionHistory();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
       setErrorDialogOpen(true);
@@ -236,22 +170,9 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
 
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/submission-history`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ids: selectedHistoryIds,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('제출 이력 삭제에 실패했습니다.');
-      }
-
+      await deleteSubmissionHistory(selectedHistoryIds);
       setSelectedHistoryIds([]);
-      fetchSubmissionHistory();
+      handleFetchSubmissionHistory();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
       setErrorDialogOpen(true);
@@ -319,7 +240,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           <Button
             variant="contained"
             size="small"
-            onClick={fetchSubmissionHistory}
+            onClick={handleFetchSubmissionHistory}
             color="primary"
           >
             조회

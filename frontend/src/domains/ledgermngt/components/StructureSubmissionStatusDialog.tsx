@@ -10,7 +10,7 @@ import { ComboBox, DatePicker } from '@/shared/components/ui/form';
 import type { SelectOption } from '@/shared/types/common';
 import { Box, Typography } from '@mui/material';
 import React, { useRef, useState } from 'react';
-import TextField from '@/shared/components/ui/data-display/textfield';
+import TextField from '@/shared/components/ui/data-display/TextField';
 interface RegistrationData {
   historyCode: SelectOption | null;
   executiveName: SelectOption | null;
@@ -124,11 +124,11 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
       return false;
     }
 
-    if (!data.attachmentFile) {
-      setErrorMessage('책무구조도 파일을 첨부해주세요.');
-      setErrorDialogOpen(true);
-      return false;
-    }
+    // if (!data.attachmentFile) {
+    //   setErrorMessage('책무구조도 파일을 첨부해주세요.');
+    //   setErrorDialogOpen(true);
+    //   return false;
+    // }
 
     return true;
   };
