@@ -6,17 +6,13 @@ import apiClient from '@/app/common/api/client';
 import DepartmentApi from '@/domains/common/api/departmentApi';
 import { Dialog } from '@/shared/components/modal';
 import { Button } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
+import type { DataGridColumn } from '@/shared/types/common';
 import {
   Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
+  TextField
 } from '@mui/material';
+import type { GridRowParams } from '@mui/x-data-grid';
 import React, { useEffect, useState } from 'react';
 
 export interface EmployeeSearchPopupProps {
@@ -24,6 +20,7 @@ export interface EmployeeSearchPopupProps {
   onClose: () => void;
   onSelect?: (employee: EmployeeSearchResult) => void;
   title?: string;
+  selectedEmployee?: EmployeeSearchResult;
 }
 
 export interface EmployeeSearchResult {
@@ -264,6 +261,12 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     );
   };
 
+  // DataGrid 컬럼 정의
+  const columns: DataGridColumn<EmployeeSearchResult>[] = [
+    { field: 'num', headerName: '사번', width: 100 },
+    { field: 'username', headerName: '성명', width: 120 },
+  ];
+
   return (
     <Dialog
       open={open}
@@ -314,52 +317,23 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
         {/* 에러 메시지 */}
         {error && <Box sx={{ mb: 2, color: 'error.main', fontSize: '0.875rem' }}>{error}</Box>}
 
-        {/* 검색 결과 테이블 */}
-        <TableContainer component={Paper} sx={{ flexGrow: 1, mb: 2 }}>
-          <Table stickyHeader size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell>사번</TableCell>
-                <TableCell>성명</TableCell>
-                <TableCell>직급</TableCell>
-                <TableCell>부서</TableCell>
-                <TableCell>이메일</TableCell>
-                <TableCell>연락처</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {employees.map(emp => (
-                <TableRow
-                  key={emp.id}
-                  onClick={() => handleEmployeeSelect(emp)}
-                  selected={selectedEmployee?.id === emp.id}
-                  sx={{
-                    cursor: 'pointer',
-                    '&:hover': { backgroundColor: 'action.hover' },
-                  }}
-                >
-                  <TableCell>{emp.num || ''}</TableCell>
-                  <TableCell>{emp.username || ''}</TableCell>
-                  <TableCell>{getCodeName('JOB_RANK', emp.jobRankCd) || ''}</TableCell>
-                  <TableCell>
-                    {typeof emp.deptName === 'string' ? emp.deptName : emp.deptCd || ''}
-                  </TableCell>
-                  <TableCell>{emp.email || ''}</TableCell>
-                  <TableCell>{emp.mobile || ''}</TableCell>
-                </TableRow>
-              ))}
-              {employees.length === 0 && !loading && (
-                <TableRow>
-                  <TableCell colSpan={6} align='center'>
-                    검색 결과가 없습니다.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        {/* 하단 액션 버튼 제거 */}
+        {/* DataGrid로 사원 목록 표시 */}
+        <Box sx={{ flexGrow: 1, mb: 2 }}>
+          <DataGrid<EmployeeSearchResult>
+            data={employees}
+            columns={columns}
+            loading={loading}
+            error={error || undefined}
+            onRowClick={(row: EmployeeSearchResult, _event: GridRowParams) => handleEmployeeSelect(row)}
+            selectedRows={selectedEmployee ? [selectedEmployee.id] : []}
+            noDataMessage={'검색 결과가 없습니다.'}
+            height={'100%'}
+            sx={{
+              cursor: 'pointer',
+              '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' },
+            }}
+          />
+        </Box>
       </Box>
     </Dialog>
   );
