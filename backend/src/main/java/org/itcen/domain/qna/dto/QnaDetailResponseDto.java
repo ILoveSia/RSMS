@@ -10,14 +10,12 @@ import org.itcen.domain.qna.entity.QnaStatus;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Q&A 상세 조회 응답 DTO
- * 
+ *
  * Q&A 상세 화면에서 필요한 모든 정보를 포함합니다.
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: Q&A 상세 데이터 전송만 담당
  * - Open/Closed: 새로운 필드 추가 시 확장 가능
@@ -109,11 +107,6 @@ public class QnaDetailResponseDto {
     private Integer viewCount;
 
     /**
-     * 첨부파일 목록
-     */
-    private List<QnaAttachmentResponseDto> attachments;
-
-    /**
      * 생성일시
      */
     private LocalDateTime createdAt;
@@ -155,13 +148,13 @@ public class QnaDetailResponseDto {
 
     /**
      * Entity로부터 DTO를 생성하는 정적 팩토리 메서드
-     * 
+     *
      * @param qna Q&A 엔티티
      * @return QnaDetailResponseDto
      */
     public static QnaDetailResponseDto from(Qna qna) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
-        
+
         return QnaDetailResponseDto.builder()
                 .id(qna.getId())
                 .department(qna.getDepartment())
@@ -179,10 +172,6 @@ public class QnaDetailResponseDto {
                 .category(qna.getCategory())
                 .isPublic(qna.getIsPublic())
                 .viewCount(qna.getViewCount())
-                .attachments(qna.getAttachments() != null ? 
-                    qna.getAttachments().stream()
-                        .map(QnaAttachmentResponseDto::from)
-                        .collect(Collectors.toList()) : List.of())
                 .createdAt(qna.getCreatedAt())
                 .createdAtFormatted(qna.getCreatedAt() != null ? qna.getCreatedAt().format(formatter) : "")
                 .updatedAt(qna.getUpdatedAt())
@@ -196,7 +185,7 @@ public class QnaDetailResponseDto {
 
     /**
      * 답변 완료 여부를 확인하는 메서드
-     * 
+     *
      * @return 답변 완료 여부
      */
     public boolean isAnswered() {
@@ -205,7 +194,7 @@ public class QnaDetailResponseDto {
 
     /**
      * 답변 대기 여부를 확인하는 메서드
-     * 
+     *
      * @return 답변 대기 여부
      */
     public boolean isPending() {
@@ -214,7 +203,7 @@ public class QnaDetailResponseDto {
 
     /**
      * 수정 가능 여부를 확인하는 메서드
-     * 
+     *
      * @param currentUserId 현재 사용자 ID
      * @return 수정 가능 여부
      */
@@ -224,7 +213,7 @@ public class QnaDetailResponseDto {
 
     /**
      * 답변 가능 여부를 확인하는 메서드
-     * 
+     *
      * @return 답변 가능 여부
      */
     public boolean isAnswerable() {
