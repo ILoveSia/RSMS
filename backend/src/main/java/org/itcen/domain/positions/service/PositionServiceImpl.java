@@ -83,7 +83,7 @@ public class PositionServiceImpl implements PositionService {
     @Override
     @Transactional
     public Long createPosition(PositionCreateRequestDto createRequestDto) {
-        // 1. 직책(Position) 정보 저장
+        // 1. 직책(Position) 정보 저장d
         Position position = Position.builder().ledgerOrder(createRequestDto.getLedgerOrder())
                 .positionsNm(createRequestDto.getPositionsNm())
                 .confirmGubunCd(createRequestDto.getConfirmGubunCd())
@@ -125,6 +125,8 @@ public class PositionServiceImpl implements PositionService {
     @Transactional
     public Long updatePosition(Long positionId, PositionUpdateRequestDto updateRequestDto) {
         // 1. 기존 직책 정보 조회
+        System.out.println("createRequestDto12341234");
+        System.out.println(updateRequestDto.getPositionName());
         Position position = positionRepository.findById(positionId).orElseThrow(
                 () -> new BusinessException("해당 직책을 찾을 수 없습니다.", "POSITION_NOT_FOUND"));
 
@@ -311,9 +313,15 @@ public class PositionServiceImpl implements PositionService {
                             .empName(user.getUsername()).position(positionName).build();
                 }).collect(Collectors.toList());
 
-        return PositionDetailDto.builder().positionsId(position.getPositionsId())
-                .positionName(position.getPositionsNm()).writeDeptCd(position.getWriteDeptCd())
-                .ownerDepts(ownerDepts).meetings(meetings).managers(managers).build();
+        return PositionDetailDto.builder()
+                .positionsId(position.getPositionsId())
+                // 엔티티의 positionsNm(직책명)을 DTO의 positionName에 매핑
+                .positionName(position.getPositionsNm())
+                .writeDeptCd(position.getWriteDeptCd())
+                .ownerDepts(ownerDepts)
+                .meetings(meetings)
+                .managers(managers)
+                .build();
     }
 
     @Override

@@ -1,60 +1,95 @@
 /**
  * 직책 등록/수정/조회 다이얼로그 컴포넌트
- *
- * @description
- * - DDD 패턴을 따른 도메인 중심 설계
- * - SOLID 원칙 준수
- * - 단일 책임 원칙 (SRP)에 따라 컴포넌트 분리
  */
-import DepartmentSearchPopup, { type Department } from '@/app/components/DepartmentSearchPopup';
+import apiClient from '@/app/common/api/client';
+import type { Department } from '@/app/components/DepartmentSearchPopup';
+import DepartmentSearchPopup from '@/app/components/DepartmentSearchPopup';
+import EmployeeSearchPopup from '@/app/components/EmployeeSearchPopup';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/common/components/search';
-import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
-import TextField from '@/shared/components/ui/data-display/TextField';
-import { Remove as RemoveIcon, Search as SearchIcon } from '@mui/icons-material';
+import type { EmployeeSearchResult } from '@/domains/common/components/search';
+import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/meeting/components';
+import { Dialog } from '@/shared/components/modal';
+import Button from '@/shared/components/ui/button/Button';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 import {
   Alert,
   Box,
+  CircularProgress,
+  FormControl,
   IconButton,
-  Snackbar,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Typography
+  TextField,
 } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
-// Domain Types
+import React, { useEffect, useState } from 'react';
+
+// 백엔드 ApiResponse<T> DTO에 대응하는 타입
+interface ApiSuccessResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export interface PositionData {
+  positionsId: string;
+  ledgerOrder: string;
+  positionName: string;
+  writeDeptCd: string;
+  confirmGubunCd: string;
+  ownerDepts: Array<{ deptCode: string; deptName: string }>;
+  meetings: Array<{
+    meetingBodyId: string;
+    meetingBodyName: string;
+    memberGubun: string;
+    meetingPeriod: string;
+    deliberationContent: string;
+  }>;
+  managers: Array<{ empNo: string; empName: string; position: string }>;
+}
+
+export interface PositionDialogProps {
+  open: boolean;
+  mode: 'create' | 'edit' | 'view';
+  positionId?: number | null;
+  onClose: () => void;
+  onSave?: (position: PositionData) => void;
+  onChangeMode?: (newMode: 'create' | 'edit' | 'view') => void;
+}
+
+interface FormData {
+  positionName: string;
+  writeDeptCd: string;
+}
+
 interface OwnerDept {
   id: string;
   deptCode: string;
   deptName: string;
 }
 
-interface MainMeeting {
+interface MeetingData {
   id: string;
-  meetingCode: string;
-  meetingName: string;
+  meetingBodyId: string;
+  meetingBodyName: string;
+  memberGubun: string;
+  meetingPeriod: string;
+  deliberationContent: string;
 }
 
-interface FormData {
-  positionName: string;
-  writeDeptCd: string;      // 부서코드(실제 저장용)
-  writeDeptNm?: string;     // 부서명(화면 표시용, optional)
-  ownerDepts: OwnerDept[];
-  mainMeetings: MainMeeting[];
-}
-
-interface PositionDialogProps {
-  open: boolean;
-  mode: DialogMode;
-  positionId: number | null;
-  onClose: () => void;
-  onSave: () => void;
-  onChangeMode: (mode: DialogMode) => void;
+interface ManagerData {
+  id: string;
+  empNo: string;
+  empName: string;
+  position: string;
 }
 
 const PositionDialog: React.FC<PositionDialogProps> = ({
@@ -65,397 +100,864 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   onSave,
   onChangeMode,
 }) => {
-  // State Management
+  // 공통코드 Store에서 데이터 가져오기
+  const { data: allCodes, setData: setAllCodes } = useReduxState<
+    { data: CommonCode[] } | CommonCode[]
+  >('codeStore/allCodes');
+
+  // 공통코드 배열 추출 함수
+  const getCodesArray = (): CommonCode[] => {
+    if (!allCodes) return [];
+    if (Array.isArray(allCodes)) {
+      return allCodes;
+    }
+    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
+      return allCodes.data;
+    }
+    return [];
+  };
+
+  // 공통코드 헬퍼 함수
+  const getDeptCodes = () => {
+    const codes = getCodesArray();
+    return codes
+      .filter(code => code.groupCode === 'DEPT' && code.useYn === 'Y')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  };
+
+  const getMebGubunCodes = () => {
+    const codes = getCodesArray();
+    return codes
+      .filter(code => code.groupCode === 'MEB_GUBUN' && code.useYn === 'Y')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  };
+
   const [formData, setFormData] = useState<FormData>({
     positionName: '',
     writeDeptCd: '',
-    ownerDepts: [],
-    mainMeetings: [],
   });
 
-  const [loading, setLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  // 소관부서 목록
+  const [ownerDepts, setOwnerDepts] = useState<OwnerDept[]>([
+    { id: '1', deptCode: '', deptName: '' },
+  ]);
 
-  // Popup States
-  const [deptSearchOpen, setDeptSearchOpen] = useState(false);
-  const [deptSearchTarget, setDeptSearchTarget] = useState<'write' | 'owner' | null>(null);
+  // 주관회의체 목록
+  const [meetings, setMeetings] = useState<MeetingData[]>([
+    {
+      id: '1',
+      meetingBodyId: '',
+      meetingBodyName: '',
+      memberGubun: '',
+      meetingPeriod: '',
+      deliberationContent: '',
+    },
+  ]);
+
+  // 책무기술서 작성 관리자 목록
+  const [managers, setManagers] = useState<ManagerData[]>([
+    { id: '1', empNo: '', empName: '', position: '' },
+  ]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
   // 회의체 검색 다이얼로그 상태
   const [meetingSearchOpen, setMeetingSearchOpen] = useState(false);
+  const [currentMeetingId, setCurrentMeetingId] = useState<string>('');
 
-  // Common Code Management
-  const { data: commonCodeState } = useReduxState<{ data: CommonCode[] }>('codeStore/allCodes');
-  const commonCodes = commonCodeState?.data ?? [];
-  // console.log(mode);
-  // Common Code Filter
-  const getFilteredCodes = useCallback((groupCode: string) => {
-    if (!Array.isArray(commonCodes)) {
-      console.warn('commonCodes is not an array:', commonCodes);
-      return [];
+  // 사원 검색 다이얼로그 상태
+  const [employeeSearchOpen, setEmployeeSearchOpen] = useState(false);
+  const [currentManagerId, setCurrentManagerId] = useState<string>('');
+
+  // 부서 검색 다이얼로그 상태
+  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+  const [currentOwnerDeptId, setCurrentOwnerDeptId] = useState<string>('');
+
+  // 다이얼로그 제목 설정
+  const getDialogTitle = () => {
+    switch (mode) {
+      case 'create':
+        return '직책 등록';
+      case 'edit':
+        return '직책 수정';
+      case 'view':
+        return '직책 상세조회';
+      default:
+        return '직책';
     }
+  };
 
-    return commonCodes
-      .filter(code => code.groupCode === groupCode && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map(code => ({
-        value: code.code,
-        label: code.codeName,
-      }));
-  }, [commonCodes]);
-
-  // Reset form when mode changes to create
+  // 컴포넌트 마운트 시 localStorage에서 공통코드 복원
   useEffect(() => {
-    if (mode === 'create') {
-      setFormData({
-        positionName: '',
-        writeDeptCd: '',
-        ownerDepts: [],
-        mainMeetings: [],
-      });
+    const storedCommonCodes = localStorage.getItem('commonCodes');
+
+    if (
+      storedCommonCodes &&
+      (!allCodes ||
+        (Array.isArray(allCodes) && allCodes.length === 0) ||
+        (typeof allCodes === 'object' &&
+          'data' in allCodes &&
+          (!allCodes.data || allCodes.data.length === 0)))
+    ) {
+      try {
+        const parsedCodes = JSON.parse(storedCommonCodes);
+        setAllCodes(parsedCodes);
+      } catch (error) {
+        console.error('localStorage 공통코드 복원 실패:', error);
+        localStorage.removeItem('commonCodes');
+      }
     }
-  }, [mode]);
+  }, [allCodes, setAllCodes]);
 
-  // Data Fetching
+  // 폼 데이터 초기화 및 상세 데이터 로드
   useEffect(() => {
-    const fetchPosition = async () => {
-      if (positionId && open && mode !== 'create') {
-        try {
-          setLoading(true);
-          // TODO: API 호출로 직책 데이터 조회
-          const mockData = {
-            positionName: '테스트 직책',
-            writeDeptCd: 'DEPT001',
-            ownerDepts: [{ id: '1', deptCode: 'DEPT002', deptName: '테스트 부서' }],
-            mainMeetings: [{ id: '1', meetingCode: 'MEET001', meetingName: '테스트 회의체' }],
-          };
-          setFormData(mockData);
-        } catch (err) {
-          console.error('직책 조회 실패:', err);
-        } finally {
-          setLoading(false);
+    const fetchPositionDetails = async (id: number) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const positionData: PositionData = await apiClient.get(`/positions/${id}`);
+        console.log(positionData, "test 1");
+        if (positionData) {
+          console.log(positionData, "test 2");
+          setFormData({
+            positionName: positionData.positionName || '',
+            writeDeptCd: positionData.writeDeptCd || '',
+          });
+          console.log("test 3");
+          const ownerDeptsData = positionData.ownerDepts || [];
+          const meetingsData = positionData.meetings || [];
+          const managersData = positionData.managers || [];
+
+          setOwnerDepts(
+            ownerDeptsData.length > 0
+              ? ownerDeptsData.map((d: any, i: any) => ({ id: String(i + 1), ...d }))
+              : [{ id: '1', deptCode: '', deptName: '' }]
+          );
+          setMeetings(
+            meetingsData.length > 0
+              ? meetingsData.map((m: any, i: any) => ({
+                  id: String(i + 1),
+                  ...m,
+                  memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
+                }))
+              : [
+                  {
+                    id: '1',
+                    meetingBodyId: '',
+                    meetingBodyName: '',
+                    memberGubun: '',
+                    meetingPeriod: '',
+                    deliberationContent: '',
+                  },
+                ]
+          );
+          setManagers(
+            managersData.length > 0
+              ? managersData.map((m: any, i: any) => ({ id: String(i + 1), ...m }))
+              : [{ id: '1', empNo: '', empName: '', position: '' }]
+          );
+        } else {
+          setError('상세 정보를 불러오는데 실패했습니다.');
         }
+      } catch (err) {
+        setError('상세 정보를 불러오는 중 오류가 발생했습니다.');
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchPosition();
-  }, [positionId, open, mode]);
+    if (open) {
+      setError(null);
+      setValidationErrors({});
 
-  // Form Validation
-  const validateForm = useCallback((): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!formData.positionName.trim()) {
-      console.log("직책명")
-      errors.positionName = '직책명을 입력해주세요.';
-    }
-    if (!formData.writeDeptCd) {
-      console.log("작성부서")
-      errors.writeDeptCd = '작성부서를 선택해주세요.';
-    }
-
-    formData.ownerDepts.forEach((dept, index) => {
-      if (!dept.deptCode) {
-        console.log("소관부서")
-        errors[`ownerDept_${index}`] = '소관부서를 선택해주세요.';
-      }
-    });
-
-    formData.mainMeetings.forEach((meeting, index) => {
-      if (!meeting.meetingCode) {
-        console.log("주관회의체")
-        errors[`mainMeeting_${index}`] = '주관회의체를 선택해주세요.';
-      }
-    });
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  }, [formData]);
-
-  // Event Handlers
-  const handleDepartmentSelect = useCallback((selectedDept: Department | Department[]) => {
-    if (deptSearchTarget === 'write') {
-      // 작성부서에 반영
-      const dept = Array.isArray(selectedDept) ? selectedDept[0] : selectedDept;
-      setFormData(prev => ({
-        ...prev,
-        writeDeptCd: dept.deptCode,
-        writeDeptNm: dept.deptName,
-      }));
-    } else if (deptSearchTarget === 'owner') {
-      // 소관부서에 추가
-      const dept = Array.isArray(selectedDept) ? selectedDept[0] : selectedDept;
-      const newId = String(formData.ownerDepts.length + 1);
-      setFormData(prev => ({
-        ...prev,
-        ownerDepts: [
-          ...prev.ownerDepts,
+      if ((mode === 'edit' || mode === 'view') && positionId) {
+        fetchPositionDetails(positionId);
+      } else {
+        // create 모드
+        setFormData({
+          positionName: '',
+          writeDeptCd: '',
+        });
+        setOwnerDepts([{ id: '1', deptCode: '', deptName: '' }]);
+        setMeetings([
           {
-            id: newId,
-            deptCode: dept.deptCode,
-            deptName: dept.deptName
-          }
-        ],
-      }));
+            id: '1',
+            meetingBodyId: '',
+            meetingBodyName: '',
+            memberGubun: '',
+            meetingPeriod: '',
+            deliberationContent: '',
+          },
+        ]);
+        setManagers([{ id: '1', empNo: '', empName: '', position: '' }]);
+      }
     }
-    setDeptSearchOpen(false);
-    setDeptSearchTarget(null);
-  }, [deptSearchTarget, formData.ownerDepts.length]);
+  }, [open, mode, positionId]);
 
-  // 회의체 검색 다이얼로그 열기
-  const handleOpenMeetingSearch = () => {
+  // 입력값 변경 핸들러
+  const handleInputChange =
+    (field: keyof FormData) =>
+    (
+      event:
+        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        | { target: { value: string } }
+    ) => {
+      const value = event.target.value;
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+      }));
+
+      if (validationErrors[field]) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [field]: '',
+        }));
+      }
+    };
+
+  // 소관부서 추가
+  const addOwnerDept = () => {
+    const newId = Date.now().toString();
+    setOwnerDepts(prev => [...prev, { id: newId, deptCode: '', deptName: '' }]);
+  };
+
+  // 소관부서 삭제
+  const removeOwnerDept = (id: string) => {
+    if (ownerDepts.length > 1) {
+      setOwnerDepts(prev => prev.filter(dept => dept.id !== id));
+    }
+  };
+
+  // 회의체 추가
+  const addMeeting = () => {
+    const newId = Date.now().toString();
+    setMeetings(prev => [
+      ...prev,
+      {
+        id: newId,
+        meetingBodyId: '',
+        meetingBodyName: '',
+        memberGubun: '',
+        meetingPeriod: '',
+        deliberationContent: '',
+      },
+    ]);
+  };
+
+  // 회의체 삭제
+  const removeMeeting = (id: string) => {
+    if (meetings.length > 1) {
+      setMeetings(prev => prev.filter(meeting => meeting.id !== id));
+    }
+  };
+
+  // 회의체 변경
+  const handleMeetingChange = (id: string, field: keyof MeetingData, value: string) => {
+    setMeetings(prev =>
+      prev.map(meeting =>
+        meeting.id === id
+          ? {
+              ...meeting,
+              [field]: value,
+            }
+          : meeting
+      )
+    );
+  };
+
+  // 회의체 검색 팝업 열기
+  const handleMeetingSearchClick = (id: string) => {
+    setCurrentMeetingId(id);
     setMeetingSearchOpen(true);
   };
 
-  // 회의체 선택 처리
-  const handleMeetingSelect = (meeting: MeetingBodySearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      mainMeetings: [...(prev.mainMeetings || []), {
-        id: meeting.id,
-        meetingCode: meeting.code,
-        meetingName: meeting.name
-      }],
-    }));
+  // 회의체 검색 팝업 닫기
+  const handleMeetingSearchClose = () => {
     setMeetingSearchOpen(false);
+    setCurrentMeetingId('');
   };
 
-  const handleWriteDeptSelect = useCallback((selectedDept: Department | Department[]) => {
-    const dept = Array.isArray(selectedDept) ? selectedDept[0] : selectedDept;
-    setFormData(prev => ({
-      ...prev,
-      writeDeptCd: dept.deptCode,
-      writeDeptNm: dept.deptName,
-    }));
-    setDeptSearchOpen(false);
-  }, []);
+  // 회의체 선택 완료
+  const handleMeetingBodySelect = (selectedMeeting: MeetingBodySearchResult) => {
+    if (currentMeetingId) {
+      setMeetings(prev =>
+        prev.map(meeting =>
+          meeting.id === currentMeetingId
+            ? {
+                ...meeting,
+                meetingBodyId: selectedMeeting.id,
+                meetingBodyName: selectedMeeting.name,
+                meetingPeriod: selectedMeeting.period || '',
+                deliberationContent: selectedMeeting.content || '',
+              }
+            : meeting
+        )
+      );
+    }
+    handleMeetingSearchClose();
+  };
 
-  const handleSave = useCallback(async () => {
-    if (!validateForm()) return;
+  // 관리자 추가
+  const addManager = () => {
+    const newId = Date.now().toString();
+    setManagers(prev => [...prev, { id: newId, empNo: '', empName: '', position: '' }]);
+  };
+
+  // 관리자 삭제
+  const removeManager = (id: string) => {
+    if (managers.length > 1) {
+      setManagers(prev => prev.filter(manager => manager.id !== id));
+    }
+  };
+
+  // 관리자 변경
+  const handleManagerChange = (id: string, field: keyof ManagerData, value: string) => {
+    setManagers(prev =>
+      prev.map(manager => (manager.id === id ? { ...manager, [field]: value } : manager))
+    );
+  };
+
+  // 사원 검색 팝업 열기
+  const handleEmployeeSearch = (id: string) => {
+    setCurrentManagerId(id);
+    setEmployeeSearchOpen(true);
+  };
+
+  // 사원 검색 팝업 닫기
+  const handleEmployeeSearchClose = () => {
+    setEmployeeSearchOpen(false);
+    setCurrentManagerId('');
+  };
+
+  // 사원 선택 완료
+  const handleEmployeeSelect = (selectedEmployee: EmployeeSearchResult) => {
+    if (currentManagerId) {
+      setManagers(prev =>
+        prev.map(manager =>
+          manager.id === currentManagerId
+            ? {
+                ...manager,
+                empNo: selectedEmployee.num,
+                empName: selectedEmployee.username,
+                position: selectedEmployee.jobRankCd,
+              }
+            : manager
+        )
+      );
+    }
+    handleEmployeeSearchClose();
+  };
+
+  // 부서 검색 팝업 열기
+  const handleDepartmentSearchClick = (id: string) => {
+    setCurrentOwnerDeptId(id);
+    setDepartmentSearchOpen(true);
+  };
+
+  // 부서 검색 팝업 닫기
+  const handleDepartmentSearchClose = () => {
+    setDepartmentSearchOpen(false);
+    setCurrentOwnerDeptId('');
+  };
+
+  // 부서 선택 완료
+  const handleDepartmentSelect = (departments: Department | Department[]) => {
+    if (currentOwnerDeptId) {
+      // 단일 선택이므로 첫 번째 요소 또는 단일 객체 사용
+      const selectedDepartment = Array.isArray(departments) ? departments[0] : departments;
+
+      if (selectedDepartment) {
+        setOwnerDepts(prev =>
+          prev.map(dept =>
+            dept.id === currentOwnerDeptId
+              ? {
+                  ...dept,
+                  deptCode: selectedDepartment.deptCode,
+                  deptName: selectedDepartment.deptName,
+                }
+              : dept
+          )
+        );
+      }
+    }
+    handleDepartmentSearchClose();
+  };
+
+  // 폼 검증
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.positionName.trim()) {
+      errors.positionName = '직책명을 입력해주세요.';
+    }
+
+    if (!formData.writeDeptCd.trim()) {
+      errors.writeDeptCd = '작성부서를 선택해주세요.';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // 저장 핸들러
+  const handleSave = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const positionRequestData = {
+      positionName: formData.positionName,
+      writeDeptCd: formData.writeDeptCd,
+      ownerDeptCds: ownerDepts.map(d => d.deptCode).filter(Boolean),
+      meetingBodyIds: meetings.map(m => m.meetingBodyId).filter(Boolean),
+      adminIds: managers.map(m => m.empNo).filter(Boolean),
+    };
 
     try {
-      setLoading(true);
-      console.log(mode,"12341234");
-    //   if (mode === 'create') {
-    //   await positionApi.create(formData); // 등록 API 호출
-    // } else if (mode === 'edit' && positionId) {
-    //   await positionApi.update(positionId, formData); // 수정 API 호출
-    // }
-    setShowSuccessAlert(true);
-    onSave();
-      setTimeout(() => {
-        setShowSuccessAlert(false);
-        onClose();
-      }, 2000);
-    } catch (err) {
-      console.error('직책 저장 실패:', err);
+      let response: PositionData;
+      console.log(positionRequestData,mode,"test 4")
+      if (mode === 'create') {
+        response = await apiClient.post('/positions', positionRequestData);
+      } else {
+        response = await apiClient.put(`/positions/${positionId}`, positionRequestData);
+      }
+      console.log(response,"test 5")
+      if (onSave) {
+        onSave(response); // ← 백엔드 응답 객체를 넘김
+      }
+      onClose();
+    }
+     catch (err) {
+      setError('저장 중 오류가 발생했습니다.');
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [validateForm, onSave, onClose]);
+  };
 
-  // Input Handler
-  const handleInputChange = useCallback((field: keyof FormData, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  }, []);
+  // 수정 모드로 전환 핸들러
+  const handleEditMode = () => {
+    if (onChangeMode) {
+      onChangeMode('edit');
+    }
+  };
 
-  const handleRemoveOwnerDept = useCallback((id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      ownerDepts: prev.ownerDepts.filter(dept => dept.id !== id),
-    }));
-  }, []);
+  // 다이얼로그 액션 버튼
+  const renderActions = () => {
+    if (mode === 'view') {
+      return (
+        <>
+          <Button onClick={onClose} variant='outlined'>
+            닫기
+          </Button>
+          <Button
+            onClick={handleEditMode}
+            variant='contained'
+            sx={{
+              backgroundColor: 'var(--bank-warning)',
+              '&:hover': { backgroundColor: 'var(--bank-warning-dark)' },
+            }}
+          >
+            수정
+          </Button>
+        </>
+      );
+    }
 
-  const handleRemoveMainMeeting = useCallback((id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      mainMeetings: prev.mainMeetings.filter(meeting => meeting.id !== id),
-    }));
-  }, []);
+    return (
+      <>
+        <Button onClick={onClose} variant='outlined' disabled={loading}>
+          취소
+        </Button>
+        <Button
+          onClick={handleSave}
+          variant='contained'
+          disabled={loading}
+          startIcon={loading ? <CircularProgress size={20} /> : null}
+        >
+          {mode === 'create' ? '등록' : '저장'}
+        </Button>
+      </>
+    );
+  };
 
   return (
-    <>
-      <BaseDialog
-        open={open}
-        mode={mode}
-        title={mode === 'create' ? '직책 등록' : mode === 'edit' ? '직책 수정' : '직책 상세'}
-        onClose={onClose}
-        onSave={handleSave}
+    <Dialog
+      open={open}
+      title={getDialogTitle()}
+      maxWidth='lg'
+      onClose={onClose}
+      disableBackdropClick={loading}
+      actions={renderActions()}
+    >
+      <Box sx={{ mt: 2 }}>
+        {error && (
+          <Alert severity='error' sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-        onModeChange={onChangeMode}
-        loading={loading}
-      >
-        <Box component="form" noValidate sx={{ mt: 2 }}>
-          {/* 기본 정보 섹션 */}
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
-            기본 정보
-          </Typography>
-          <Box sx={{ display: 'grid', gap: 2, mb: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* 직책 */}
+          <Box>
+            <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>직책</Box>
             <TextField
               fullWidth
-              label="직책명"
+              label='직책명 *'
               value={formData.positionName}
-              onChange={(e) => handleInputChange('positionName', e.target.value)}
+              onChange={handleInputChange('positionName')}
               error={!!validationErrors.positionName}
               helperText={validationErrors.positionName}
               disabled={mode === 'view'}
+              placeholder='직책명을 입력하세요'
             />
-            <Box  sx={{ display: 'flex', alignItems: 'center', float: 'left' }}>
-              <TextField
-                fullWidth
-                label="작성부서"
-                disabled={true}
-                value={formData.writeDeptNm || ''}
-                error={!!validationErrors.writeDeptCd}
-                sx={{ width: '80%' }}
-              />
-              <IconButton sx={{ marginLeft: '40px' }} onClick={() => { setDeptSearchTarget('write'); setDeptSearchOpen(true); }}>
-                <SearchIcon />
-              </IconButton>
-            </Box>
           </Box>
 
-          {/* 소관부서 섹션 */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
-              소관부서
-            </Typography>
-            <TableContainer>
-              <Table size="small">
+          {/* 책무기술서 작성 부서 */}
+          <Box>
+            <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>책무기술서 작성 부서</Box>
+            <FormControl fullWidth error={!!validationErrors.writeDeptCd}>
+              <InputLabel>작성부서 *</InputLabel>
+              <Select
+                value={formData.writeDeptCd}
+                label='작성부서 *'
+                onChange={handleInputChange('writeDeptCd')}
+                disabled={mode === 'view'}
+              >
+                <MenuItem value=''>선택하세요</MenuItem>
+                {getDeptCodes().map(code => (
+                  <MenuItem key={code.code} value={code.code}>
+                    {code.codeName}
+                  </MenuItem>
+                ))}
+              </Select>
+              {validationErrors.writeDeptCd && (
+                <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
+                  {validationErrors.writeDeptCd}
+                </Box>
+              )}
+            </FormControl>
+          </Box>
+
+          {/* 소관부서 */}
+          <Box>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+            >
+              <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>소관부서</Box>
+              {mode !== 'view' && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  startIcon={<AddIcon />}
+                  onClick={addOwnerDept}
+                  sx={{ minWidth: 'auto' }}
+                >
+                  추가
+                </Button>
+              )}
+            </Box>
+            <TableContainer component={Paper} variant='outlined'>
+              <Table size='small'>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>부서코드</TableCell>
-                    <TableCell>부서명</TableCell>
-                    <TableCell align="center" width={100}>
-                      관리
-                    </TableCell>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold', width: 430 }}>부서코드</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>부서명</TableCell>
+                    {mode !== 'view' && (
+                      <TableCell sx={{ fontWeight: 'bold', width: 80 }}>작업</TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {formData.ownerDepts.map((dept) => (
+                  {ownerDepts.map(dept => (
                     <TableRow key={dept.id}>
-                      <TableCell>{dept.deptCode || '-'}</TableCell>
-                      <TableCell>{dept.deptName || '-'}</TableCell>
-                      <TableCell align="center">
-                        {mode !== 'view' && (
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <TextField
+                            fullWidth
+                            size='small'
+                            value={dept.deptCode}
+                            disabled
+                            placeholder='부서를 선택하세요'
+                          />
+                          {mode !== 'view' && (
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              onClick={() => handleDepartmentSearchClick(dept.id)}
+                              sx={{ minWidth: 80, fontSize: '0.75rem' }}
+                            >
+                              검색
+                            </Button>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={dept.deptName}
+                          disabled
+                          placeholder='부서를 선택하면 자동 입력됩니다'
+                        />
+                      </TableCell>
+                      {mode !== 'view' && (
+                        <TableCell>
                           <IconButton
-                            size="small"
-                            onClick={() => handleRemoveOwnerDept(dept.id)}
-                            disabled={loading}
+                            size='small'
+                            onClick={() => removeOwnerDept(dept.id)}
+                            disabled={ownerDepts.length === 1}
+                            color='error'
                           >
                             <RemoveIcon />
                           </IconButton>
-                        )}
-                      </TableCell>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
-                  {mode !== 'view' && (
-                    <TableRow>
-                      <TableCell colSpan={2} align="center" sx={{ color: 'text.secondary' }}>
-                        새 부서를 추가하려면 검색 버튼을 클릭하세요
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={() => { setDeptSearchTarget('owner'); setDeptSearchOpen(true); }}
-                          disabled={loading}
-                        >
-                          <SearchIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </TableContainer>
           </Box>
 
-          {/* 주관회의체 섹션 */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
-              주관회의체
-            </Typography>
-            <TableContainer>
-              <Table size="small">
+          {/* 주관회의체 */}
+          <Box>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+            >
+              <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>주관회의체</Box>
+              {mode !== 'view' && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  startIcon={<AddIcon />}
+                  onClick={addMeeting}
+                  sx={{ minWidth: 'auto' }}
+                >
+                  추가
+                </Button>
+              )}
+            </Box>
+            <TableContainer component={Paper} variant='outlined'>
+              <Table size='small'>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>회의체 코드</TableCell>
-                    <TableCell>회의체명</TableCell>
-                    <TableCell align="center" width={100}>
-                      관리
-                    </TableCell>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold' }}>회의체</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>위원장/위원</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>개최주기</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>주요 심의·의결사항</TableCell>
+                    {mode !== 'view' && (
+                      <TableCell sx={{ fontWeight: 'bold', width: 80 }}>작업</TableCell>
+                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {formData.mainMeetings.map((meeting) => (
+                  {meetings.map(meeting => (
                     <TableRow key={meeting.id}>
-                      <TableCell>{meeting.meetingCode || '-'}</TableCell>
-                      <TableCell>{meeting.meetingName || '-'}</TableCell>
-                      <TableCell align="center">
-                        {mode !== 'view' && (
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <TextField
+                            fullWidth
+                            size='small'
+                            value={meeting.meetingBodyName}
+                            onChange={e =>
+                              handleMeetingChange(meeting.id, 'meetingBodyName', e.target.value)
+                            }
+                            disabled={mode === 'view'}
+                            placeholder='회의체명을 입력하세요'
+                          />
+                          {mode !== 'view' && (
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              onClick={() => handleMeetingSearchClick(meeting.id)}
+                              sx={{ minWidth: 80, fontSize: '0.75rem' }}
+                            >
+                              검색
+                            </Button>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <FormControl fullWidth size='small'>
+                          <Select
+                            value={meeting.memberGubun}
+                            onChange={e =>
+                              handleMeetingChange(meeting.id, 'memberGubun', e.target.value)
+                            }
+                            disabled={mode === 'view'}
+                            displayEmpty
+                          >
+                            <MenuItem value=''>선택하세요</MenuItem>
+                            {getMebGubunCodes().map(code => (
+                              <MenuItem key={code.code} value={code.code}>
+                                {code.codeName}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </TableCell>
+                      <TableCell sx={{ width: 120 }}>
+                        <TextField
+                          size='small'
+                          value={meeting.meetingPeriod}
+                          disabled
+                          placeholder='자동 입력'
+                          sx={{ width: 100 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={meeting.deliberationContent}
+                          disabled
+                          placeholder='자동 입력'
+                        />
+                      </TableCell>
+                      {mode !== 'view' && (
+                        <TableCell>
                           <IconButton
-                            size="small"
-                            onClick={() => handleRemoveMainMeeting(meeting.id)}
-                            disabled={loading}
+                            size='small'
+                            onClick={() => removeMeeting(meeting.id)}
+                            disabled={meetings.length === 1}
+                            color='error'
                           >
                             <RemoveIcon />
                           </IconButton>
-                        )}
-                      </TableCell>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
-                  {mode !== 'view' && (
-                    <TableRow>
-                      <TableCell colSpan={2} align="center" sx={{ color: 'text.secondary' }}>
-                        새 회의체를 추가하려면 검색 버튼을 클릭하세요
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+
+          {/* 책무기술서 작성 관리자 */}
+          <Box>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+            >
+              <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>책무기술서 작성 관리자</Box>
+              {mode !== 'view' && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  startIcon={<AddIcon />}
+                  onClick={addManager}
+                  sx={{ minWidth: 'auto' }}
+                >
+                  추가
+                </Button>
+              )}
+            </Box>
+            <TableContainer component={Paper} variant='outlined'>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold' }}>사번</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>성명</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>직급</TableCell>
+                    {mode !== 'view' && (
+                      <TableCell sx={{ fontWeight: 'bold', width: 80 }}>작업</TableCell>
+                    )}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {managers.map(manager => (
+                    <TableRow key={manager.id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <TextField
+                            fullWidth
+                            size='small'
+                            value={manager.empNo}
+                            onChange={e => handleManagerChange(manager.id, 'empNo', e.target.value)}
+                            disabled={mode === 'view'}
+                            placeholder='사번을 입력하세요'
+                          />
+                          {mode !== 'view' && (
+                            <Button
+                              size='small'
+                              variant='outlined'
+                              onClick={() => handleEmployeeSearch(manager.id)}
+                              sx={{ minWidth: 80, fontSize: '0.75rem' }}
+                            >
+                              검색
+                            </Button>
+                          )}
+                        </Box>
                       </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={handleOpenMeetingSearch}
-                          disabled={loading}
-                        >
-                          <SearchIcon />
-                        </IconButton>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={manager.empName}
+                          disabled
+                          placeholder='자동 입력'
+                        />
                       </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={manager.position}
+                          disabled
+                          placeholder='자동 입력'
+                        />
+                      </TableCell>
+                      {mode !== 'view' && (
+                        <TableCell>
+                          <IconButton
+                            size='small'
+                            onClick={() => removeManager(manager.id)}
+                            disabled={managers.length === 1}
+                            color='error'
+                          >
+                            <RemoveIcon />
+                          </IconButton>
+                        </TableCell>
+                      )}
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
           </Box>
         </Box>
-      </BaseDialog>
+      </Box>
 
-      {/* 부서 검색 팝업 */}
+      {/* 부서 검색 다이얼로그 */}
       <DepartmentSearchPopup
-        open={deptSearchOpen}
-        onClose={() => { setDeptSearchOpen(false); setDeptSearchTarget(null); }}
+        open={departmentSearchOpen}
+        onClose={handleDepartmentSearchClose}
         onSelect={handleDepartmentSelect}
+        title='소관부서 검색'
+        multiSelect={false}
       />
 
-      {/* 회의체 검색 팝업 */}
+      {/* 회의체 검색 다이얼로그 */}
       <MeetingBodySearchDialog
         open={meetingSearchOpen}
-        onClose={() => setMeetingSearchOpen(false)}
-        onSelect={handleMeetingSelect}
-        excludeIds={formData.mainMeetings?.map(meeting => meeting.id) || []}
+        onClose={handleMeetingSearchClose}
+        onSelect={handleMeetingBodySelect}
       />
 
-      {/* 성공 알림 */}
-      <Snackbar
-        open={showSuccessAlert}
-        autoHideDuration={2000}
-        onClose={() => setShowSuccessAlert(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity="success" onClose={() => setShowSuccessAlert(false)}>
-          {mode === 'create' ? '등록되었습니다.' : '수정되었습니다.'}
-        </Alert>
-      </Snackbar>
-    </>
+      {/* 사원 검색 다이얼로그 */}
+      <EmployeeSearchPopup
+        open={employeeSearchOpen}
+        onClose={handleEmployeeSearchClose}
+        onSelect={handleEmployeeSelect}
+      />
+    </Dialog>
   );
 };
 

@@ -50,4 +50,4 @@ public class PositionDetailDto {
         private String empName;
         private String position;
     }
-} 
+}
