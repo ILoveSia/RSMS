@@ -5,29 +5,13 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, FormControl, InputLabel, MenuItem, type SelectChangeEvent } from '@mui/material';
-import React, { useCallback, useState } from 'react';
+import { Box } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
+import { hodICItemApi, type HodICItemRow } from '../api/hodIcItemApi';
+import HodICItemDialog from '../components/HodICItemDialog';
 
 interface IHodICitemStatusPageProps {
   className?: string;
-}
-
-// 부서장 내부통제 항목 데이터 타입
-interface HodICItemRow {
-  id: number;
-  division: string; // 구분
-  responsibilityId: string; //책무ID
-  responsibilityContent: string; // 책무내용
-  detailClassificationId: string; // 세부분류ID
-  initialValue: string; // 초기값
-  initialAssessmentValue: string; // 초사값
-  number: number; // 수자
-  lastYearValue: string; // 전년도가
-  lastYearPrice: string; // 전년 시가
-  lastYearReflection: string; // 전년 반영
-  legalPeriod: string; // 공법기간
-  finalPrice: string; // 최종 시가
-  remarks: string; // 비고
 }
 
 const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.Element => {
@@ -37,68 +21,17 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<HodICItemRow[]>([]);
 
+  // 다이얼로그 상태
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
+  const [selectedItemId, setSelectedItemId] = useState<number | undefined>();
+
   // 원장차수 옵션 데이터 (실제로는 API에서 가져와야 함)
-  const ledgerOrderOptions: SelectOption[] = [
-    { value: '2024-001-01', label: '2024-001-01(부서장)' },
-    { value: '2024-002-01', label: '2024-002-01(진행중)' },
-    { value: '2024-003-01', label: '2024-003-01(완료)' },
-  ];
+  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<
+    Array<{ value: string; label: string }>
+  >([]);
 
-  // 샘플 데이터 (실제로는 API에서 가져와야 함)
-  const sampleData: HodICItemRow[] = [
-    {
-      id: 1,
-      division: '금융',
-      responsibilityContent:
-        '중간광역자금중개업체 운영에 관한 규정에 따라 중간광역자금중개업체를 적절하게 관리감독하고 있는지 점검',
-      detailClassificationId: 'xxx',
-      initialValue: '신용위치',
-      initialAssessmentValue: '수시',
-      number: 1,
-      lastYearValue: '중간광역자금중개업체: 제3조 중간광역자금중개업체',
-      lastYearPrice: '12월',
-      lastYearReflection:
-        '1. 당금 및 중간 관리 중간광역자금중개업체를 확정하여 중간광역자금중개업체를 관제한다.',
-      legalPeriod: '2024.01~05',
-      finalPrice: 'xxx',
-      remarks: '',
-    },
-    {
-      id: 2,
-      division: '금융',
-      responsibilityContent: '보관업무 관련 상당 전문성 등 검토',
-      detailClassificationId: 'xxx',
-      initialValue: '보관(중앙)',
-      initialAssessmentValue: '분',
-      number: 2,
-      lastYearValue:
-        '보관과 관련된 지위 등에 관한 주의사항을 검토하고, 매2년마다 보관업무를 재검토 또한',
-      lastYearPrice: '1년',
-      lastYearReflection:
-        '1. 영업일 및 종금 직업정령의 지침 및 종금정보를 검금정하여 2. 당금 및 당정으로 투자정책 동향 등을 중신 영업정하지 않는 경우는 적금공정으로 시행',
-      legalPeriod: '2024.01~05',
-      finalPrice: 'xxx',
-      remarks: '',
-    },
-    {
-      id: 3,
-      division: '중간광역',
-      responsibilityContent: '영업정지처분이 가능한 중간 교육',
-      detailClassificationId: 'xxx',
-      initialValue: '중간광역자금과 불등 관리 지침',
-      initialAssessmentValue: '수시',
-      number: 3,
-      lastYearValue: '중간광역교육, 능력 관리 기대',
-      lastYearPrice: '1, 4, 7, 10월',
-      lastYearReflection:
-        '1. 영업일 및 종금 직업정령의 지침 및 종금정보를 검금정하여 지침 방식을 시행한 경우 시행',
-      legalPeriod: '2024.01~05',
-      finalPrice: 'xxx',
-      remarks: '',
-    },
-  ];
-
-  // 컬럼 정의 - 이미지의 헤더와 일치하도록 구성
+  // 컬럼 정의 - API 응답 구조에 맞게 수정
   const columns: DataGridColumn<HodICItemRow>[] = [
     {
       field: 'responsibilityId',
@@ -110,112 +43,132 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     {
       field: 'responsibilityContent',
       headerName: '책무내용',
-      width: 100,
+      width: 200,
       flex: 1,
       align: 'left',
       headerAlign: 'center',
     },
     {
-      field: 'detailClassificationId',
+      field: 'deptCd',
       headerName: '부서명',
-      width: 80,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'initialValue',
+      field: 'fieldTypeCd',
       headerName: '항목구분',
-      width: 80,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'initialAssessmentValue',
-      headerName: '직무구분',
-      width: 80,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'number',
-      headerName: '내부통제 업무',
-      width: 80,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'lastYearValue',
-      headerName: '조치활동',
       width: 100,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'roleTypeCd',
+      headerName: '직무구분',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'icTask',
+      headerName: '내부통제 업무',
+      width: 150,
       align: 'left',
       headerAlign: 'center',
     },
     {
-      field: 'lastYearPrice',
+      field: 'measureDesc',
+      headerName: '조치활동',
+      width: 150,
+      align: 'left',
+      headerAlign: 'center',
+    },
+    {
+      field: 'measureType',
       headerName: '조치유형',
-      width: 80,
+      width: 100,
       align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'lastYearReflection',
+      field: 'periodCd',
       headerName: '주기',
       width: 80,
-      flex: 1,
-      align: 'left',
+      align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'legalPeriod',
+      field: 'supportDoc',
       headerName: '관련근거',
-      width: 80,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'finalPrice',
+      field: 'checkPeriod',
       headerName: '점검시기',
-      width: 80,
+      width: 100,
       align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'remarks',
+      field: 'checkWay',
       headerName: '점검방법',
-      width: 80,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'remarks',
+      field: 'createdAt',
       headerName: '등록일자',
-      width: 80,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderCell: params => {
+        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+      },
     },
     {
-      field: 'remarks',
+      field: 'updatedAt',
       headerName: '최종수정일자',
-      width: 80,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderCell: params => {
+        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+      },
     },
   ];
 
-  const handleSearch = useCallback(() => {
+  // 초기 데이터 로드
+  useEffect(() => {
+    handleSearch();
+  }, []);
+
+  const handleSearch = useCallback(async () => {
     setLoading(true);
     setError(null);
-    // 여기서 실제 API 호출
-    setTimeout(() => {
-      try {
-        setRows(sampleData);
-      } catch {
-        setError('데이터를 불러오는 중 오류가 발생했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    }, 1000);
+
+    try {
+      const data = await hodICItemApi.getHodICItemStatusList(selectedLedgerOrder || undefined);
+      setRows(data);
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   }, [selectedLedgerOrder]);
+
+  // 원장차수 목록 조회
+  const fetchLedgerOrders = useCallback(async () => {
+    try {
+      const data = await positionApi.getLedgerOrderSelectList();
+      setLedgerOrderOptions(data);
+    } catch (err: unknown) {
+      console.error('원장차수 목록 조회 실패:', err);
+    }
+  }, []);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
@@ -223,24 +176,55 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   }, [rows]);
 
   const handleCreateClick = useCallback(() => {
-    // 등록 로직
-    console.log('등록');
+    setDialogMode('create');
+    setSelectedItemId(undefined);
+    setDialogOpen(true);
   }, []);
 
-  const handleDelete = useCallback(() => {
+  const handleRowDoubleClick = useCallback((row: HodICItemRow) => {
+    setDialogMode('view');
+    setSelectedItemId(row.hodIcItemId);
+    setDialogOpen(true);
+  }, []);
+
+  const handleDelete = useCallback(async () => {
     if (selectedIds.length === 0) {
       alert('삭제할 항목을 선택해주세요.');
       return;
     }
-    if (confirm(`선택한 ${selectedIds.length}개 항목을 삭제하시겠습니까?`)) {
-      // 삭제 로직
-      console.log('삭제:', selectedIds);
-    }
-  }, [selectedIds]);
 
-  const handleLedgerOrderChange = useCallback((event: SelectChangeEvent<string>) => {
-    setSelectedLedgerOrder(event.target.value);
+    if (!confirm(`선택한 ${selectedIds.length}개 항목을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      if (selectedIds.length === 1) {
+        await hodICItemApi.deleteHodICItem(selectedIds[0]);
+      } else {
+        await hodICItemApi.deleteMultipleHodICItems(selectedIds);
+      }
+
+      alert('삭제가 완료되었습니다.');
+      setSelectedIds([]);
+      await handleSearch(); // 데이터 새로고침
+    } catch (err) {
+      console.error('Failed to delete items:', err);
+      alert('삭제 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedIds, handleSearch]);
+
+  const handleDialogClose = useCallback(() => {
+    setDialogOpen(false);
+    setSelectedItemId(undefined);
   }, []);
+
+  const handleDialogSuccess = useCallback(async () => {
+    await handleSearch(); // 데이터 새로고침
+  }, [handleSearch]);
 
   return (
     <PageContainer
@@ -288,21 +272,34 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
           }}
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <FormControl size='small' sx={{ minWidth: 200 }}>
-            <InputLabel>전체</InputLabel>
-            <Select value={selectedLedgerOrder} onChange={handleLedgerOrderChange} label='전체'>
-              <MenuItem value=''>전체</MenuItem>
-              {ledgerOrderOptions.map(option => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Select
+            value={selectedLedgerOrder}
+            onChange={value => setSelectedLedgerOrder(value as string)}
+            size='small'
+            sx={{ minWidth: 150, maxWidth: 200 }}
+            options={[
+              { value: '', label: '전체' },
+              ...(ledgerOrderOptions.length > 0
+                ? ledgerOrderOptions.map(option => ({
+                    value: option.value,
+                    label: option.label,
+                  }))
+                : [{ value: '', label: '데이터 로딩 중...', disabled: true }]),
+            ]}
+          />
           <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
             조회
           </Button>
-
+          <Button
+            variant='contained'
+            size='small'
+            color='success'
+            onClick={() => {
+              /* 차수생성 로직 미구현 */
+            }}
+          >
+            책무번호생성
+          </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <Button
               variant='contained'
@@ -361,7 +358,8 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             onRowSelectionChange={selectedRows => {
               setSelectedIds(selectedRows.map(id => Number(id)));
             }}
-            rowIdField='id'
+            onRowDoubleClick={handleRowDoubleClick}
+            rowIdField='hodIcItemId'
             sx={{
               width: '100%',
               height: '100%',
@@ -376,6 +374,15 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
           />
         </Box>
       </PageContent>
+
+      {/* 다이얼로그 */}
+      <HodICItemDialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        mode={dialogMode}
+        itemId={selectedItemId}
+        onSuccess={handleDialogSuccess}
+      />
     </PageContainer>
   );
 };
