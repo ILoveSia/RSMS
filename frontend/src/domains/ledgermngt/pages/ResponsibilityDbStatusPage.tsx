@@ -129,14 +129,14 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
   // 컬럼 정의 (성능 최적화)
   const columns: GridColDef<ResponsibilityRow>[] = useMemo(
     () => [
-      {
-        field: 'responsibilityId',
-        headerName: '책무 ID',
-        width: 100,
-        sortable: false,
-        align: 'center',
-        cellClassName: 'wrap-text',
-      },
+      // {
+      //   field: 'responsibilityId',
+      //   headerName: '책무 ID',
+      //   width: 100,
+      //   sortable: false,
+      //   align: 'center',
+      //   cellClassName: 'wrap-text',
+      // },
       {
         field: 'responsibilityContent',
         headerName: '책무',
@@ -161,12 +161,12 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           </span>
         ),
       },
-      {
-        field: 'responsibilityDetailId',
-        headerName: '책무 세부내용 ID',
-        width: 150,
-        cellClassName: 'wrap-text',
-      },
+      // {
+      //   field: 'responsibilityDetailId',
+      //   headerName: '책무 세부내용 ID',
+      //   width: 150,
+      //   cellClassName: 'wrap-text',
+      // },
       {
         field: 'responsibilityDetailContent',
         headerName: '책무 세부내용',
@@ -236,6 +236,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
   // 다이얼로그 저장
   const handleDialogSave = useCallback(() => {
+
     handleDialogClose();
     fetchResponsibilities(); // 목록 새로고침
   }, [handleDialogClose, fetchResponsibilities]);

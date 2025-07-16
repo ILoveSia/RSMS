@@ -22,6 +22,8 @@ public class ResponsibilityController {
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createResponsibility(@RequestBody ResponsibilityCreateRequestDto requestDto) {
         try {
+            System.out.println("requestDto12341234");
+            System.out.println(requestDto);
             Responsibility createdResponsibility = responsibilityService.createResponsibility(requestDto);
             return ResponseEntity.ok(ApiResponse.success(createdResponsibility.getId()));
         } catch (Exception e) {
@@ -53,10 +55,12 @@ public class ResponsibilityController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Long>> updateResponsibility(@PathVariable Long id, @RequestBody ResponsibilityCreateRequestDto requestDto) {
         try {
+            System.out.println("requestDto23452345");
+            System.out.println(requestDto);
             Responsibility updatedResponsibility = responsibilityService.updateResponsibility(id, requestDto);
             return ResponseEntity.ok(ApiResponse.success(updatedResponsibility.getId()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("책무 수정에 실패했습니다: " + e.getMessage()));
         }
     }
-} 
+}

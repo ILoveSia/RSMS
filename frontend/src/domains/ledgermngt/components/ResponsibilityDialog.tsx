@@ -4,11 +4,11 @@
 import { apiClient } from '@/app/common/api/client';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Box, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import TextField from '@/shared/components/ui/data-display/textfield';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
 interface ApiSuccessResponse<T> {
@@ -233,18 +233,33 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     if (!validateForm()) {
       return;
     }
-
+    const responsibilityRequestData = {
+        responsibilityContent: formData.responsibilityContent,
+        details: formData.details.map(d => ({
+          responsibilityDetailContent: d.responsibilityDetailContent,
+          keyManagementTasks: d.keyManagementTasks,
+          relatedBasis: d.relatedBasis,
+        })),
+    };
+    console.log("responsibilityRequestData",responsibilityRequestData);
     try {
       setLoading(true);
       // TODO: API 호출로 책무 저장
+      let response: ResponsibilityData;
+      if(mode === 'create'){
+        console.log("test 12341234");
+        response = await apiClient.post('/api/responsibilities', responsibilityRequestData);
+        console.log("test 23452345");
+      }else{
+        response = await apiClient.put(`/api/responsibilities/${responsibilityId}`, responsibilityRequestData);
+      }
+      // const response = await apiClient.post('/responsibilities', formData);
+      console.log("response",response);
+
       await onSave();
 
       setShowSuccessAlert(true);
       onClose();
-
-      setTimeout(() => {
-        setShowSuccessAlert(false);
-      }, 2000);
     } catch (err) {
       console.error('책무 저장 실패:', err);
     } finally {
