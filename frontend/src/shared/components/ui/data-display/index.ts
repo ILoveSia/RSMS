@@ -8,8 +8,8 @@ export type {
   ServerDataGridApi,
   ServerDataGridProps, ServerRequest, ServerResponse
 } from './ServerDataGrid';
-export { default as TextField } from './textfield';
-export type { TextFieldProps } from './textfield';
+export { default as TextField } from './TextField';
+export type { TextFieldProps } from './TextField';
 
 export { default as Badge } from './Badge';
 export { default as Chip } from './Chip';

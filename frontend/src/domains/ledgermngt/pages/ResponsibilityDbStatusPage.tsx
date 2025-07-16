@@ -53,6 +53,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     try {
       const data = await responsibilityApi.getStatusList(searchId);
+      setRows(data);
+      console.log(data,"test 1");
     } catch (err) {
       console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
       const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';

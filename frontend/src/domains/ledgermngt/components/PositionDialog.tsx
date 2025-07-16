@@ -28,8 +28,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
 } from '@mui/material';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import React, { useEffect, useState } from 'react';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
@@ -554,9 +554,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     if (mode === 'view') {
       return (
         <>
-          <Button onClick={onClose} variant='outlined'>
-            닫기
-          </Button>
           <Button
             onClick={handleEditMode}
             variant='contained'
@@ -566,6 +563,9 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
             }}
           >
             수정
+          </Button>
+          <Button onClick={onClose} variant='outlined'>
+            닫기
           </Button>
         </>
       );
@@ -607,7 +607,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {/* 직책 */}
           <Box>
-            <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>직책</Box>
             <TextField
               fullWidth
               label='직책명 *'
@@ -622,7 +621,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
           {/* 책무기술서 작성 부서 */}
           <Box>
-            <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>책무기술서 작성 부서</Box>
             <FormControl fullWidth error={!!validationErrors.writeDeptCd}>
               <InputLabel>작성부서 *</InputLabel>
               <Select
