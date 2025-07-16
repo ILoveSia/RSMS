@@ -6,7 +6,7 @@
  * - SOLID 원칙 준수
  * - 단일 책임 원칙 (SRP)에 따라 컴포넌트 분리
  */
-import DepartmentSearchPopup, { type Department } from '@/app/components/DepartmentSearchPopup';
+import { DepartmentSearchPopup, type Department } from '@/domains/common/components/search';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/common/components/search';

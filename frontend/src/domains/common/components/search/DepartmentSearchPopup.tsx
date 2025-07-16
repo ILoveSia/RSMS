@@ -11,13 +11,15 @@ import SearchIcon from '@mui/icons-material/Search';
 import {
   Alert,
   Box,
-  CircularProgress, Dialog, DialogActions,
+  CircularProgress,
+  Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
   InputAdornment,
   TextField,
-  Typography
+  Typography,
 } from '@mui/material';
 import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
@@ -222,43 +224,26 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
     onClose();
   };
 
-  // 액션 버튼들
-  const renderActions = () => (
-    <>
-      <Button
-        onClick={handleSelectComplete}
-        variant='contained'
-        color='primary'
-        disabled={selectedRows.length === 0}
-      >
-        선택 ({selectedRows.length})
-      </Button>
-      <Button onClick={onClose}>
-        취소
-      </Button>
-    </>
-  );
-
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth='lg'
       fullWidth
-      aria-labelledby="department-search-dialog-title"
+      aria-labelledby='department-search-dialog-title'
     >
-      <DialogTitle id="department-search-dialog-title">
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+      <DialogTitle id='department-search-dialog-title'>
+        <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
           {title}
         </Typography>
         <IconButton
-          aria-label="close"
+          aria-label='close'
           onClick={onClose}
           sx={{
             position: 'absolute',
             right: 8,
             top: 8,
-            color: (theme) => theme.palette.grey[500],
+            color: theme => theme.palette.grey[500],
           }}
         >
           <CloseIcon />
@@ -270,32 +255,27 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
           <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
             <TextField
               fullWidth
-              size="small"
-              placeholder="부서코드, 부서명으로 검색"
+              size='small'
+              placeholder='부서코드, 부서명으로 검색'
               value={searchKeyword}
               onChange={e => setSearchKeyword(e.target.value)}
               onKeyPress={e => e.key === 'Enter' && handleSearch()}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <SearchIcon />
                   </InputAdornment>
                 ),
               }}
             />
-            <Button
-              onClick={handleSearch}
-              variant="contained"
-              color="secondary"
-              size="medium"
-            >
+            <Button onClick={handleSearch} variant='contained' color='secondary' size='medium'>
               검색
             </Button>
           </Box>
 
           {/* 안내 메시지 */}
           <Box sx={{ mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant='body2' color='text.secondary'>
               {multiSelect
                 ? '체크박스를 선택하여 여러 부서를 선택할 수 있습니다.'
                 : '행을 더블클릭하거나 선택 후 "선택" 버튼을 클릭하세요.'}
@@ -304,7 +284,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
 
           {/* 에러 메시지 */}
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity='error' sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
@@ -361,7 +341,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
 
           {/* 결과 개수 */}
           <Box sx={{ mt: 1, textAlign: 'right' }}>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant='caption' color='text.secondary'>
               총 {filteredDepartments.length}건
             </Typography>
           </Box>
@@ -370,15 +350,13 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
       <DialogActions>
         <Button
           onClick={handleSelectComplete}
-          variant="contained"
-          color="primary"
+          variant='contained'
+          color='primary'
           disabled={selectedRows.length === 0}
         >
           선택 ({selectedRows.length})
         </Button>
-        <Button onClick={onClose}>
-          취소
-        </Button>
+        <Button onClick={onClose}>취소</Button>
       </DialogActions>
     </Dialog>
   );
