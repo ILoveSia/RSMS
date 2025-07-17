@@ -1,15 +1,15 @@
-import apiClient from '@/app/common/api/client';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import type { EmployeeSearchResult } from '@/domains/common/components/search/';
 import EmployeeSearchpopup from '@/domains/common/components/search/EmployeeSearchPopup';
+import execOfficerApi from '@/domains/ledgermngt/api/executivestatusApi';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import type { DataGridColumn } from '@/shared/types/common';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
+  CircularProgress,
   FormControl,
   FormControlLabel,
   IconButton,
@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { DatePicker } from '../../../shared/components';
+import apiClient from '../../../app/common/api/client';
 
 interface ExecutiveDetailDialogProps {
   mode: DialogMode;
@@ -51,6 +52,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [employeeSearchPopupOpen, setEmployeeSearchPopupOpen] = useState(false);
+  const [positionDetailsLoading, setPositionDetailsLoading] = useState(false);
+
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
 
@@ -62,48 +65,56 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     return [];
   };
 
-  // 공통코드 헬퍼 함수
-  const getPositionCodes = () => {
-    const codes = getCodesArray();
-    return codes
-      .filter(code => code.groupCode === 'POSITION' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
-  };
-  const departColumns: DataGridColumn<any>[] = [
-    {
-      field: 'deptCd',
-      headerName: '부서코드',
-      width: 200,
-    },
-    {
-      field: 'deptName',
-      headerName: '부서명',
-      width: 200,
-    },
-  ];
-  const getJobTitleCodes = () => {
-    const codes = getCodesArray();
-    return codes
-      .filter(code => code.groupCode === 'JOB_TITLE' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+  // 공통코드 헬퍼 함수는 필요할 때 구현
+
+  // 직책 ID로 직책 상세 정보 조회
+  const fetchPositionDetails = async (positionId: number) => {
+    try {
+      setPositionDetailsLoading(true);
+      console.log('직책 상세 정보 조회 시작:', positionId);
+
+      const positionDetails = await execOfficerApi.getPositionDetails(positionId);
+      console.log('직책 상세 정보 조회 결과:', positionDetails);
+
+      // 조회된 데이터 설정
+      if (positionDetails) {
+        setFormData(prev => ({
+          ...prev,
+          ownerDepts: positionDetails.ownerDepts || [],
+          meetings: positionDetails.meetings || []
+        }));
+      }
+
+      return positionDetails;
+    } catch (error) {
+      console.error('직책 상세 정보 조회 실패:', error);
+      setError('직책 상세 정보를 불러yee.u패했습니다.');
+      return null;
+    } finally {
+      setPositionDetailsLoading(false);
+    }
   };
 
   useEffect(() => {
-    console.log(executive);
+    console.log('Executive 데이터:', executive);
     if (executive && open) {
       setFormData(executive);
+
+      // 직책 ID가 있으면 직책 상세 정보 조회
+      if (executive.positionsId) {
+        console.log('직책 ID 확인:', executive.positionsId);
+        fetchPositionDetails(executive.positionsId);
+      }
     } else {
       setFormData({});
     }
-    // if(positionName&&open) {
-    //   setFormData(positionName);
-    // }
     setError(null);
   }, [executive, open]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
+
   const handleEmployeeSelect = useCallback(async (employee: EmployeeSearchResult) => {
     setLoading(true);
     try {
@@ -115,14 +126,23 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         executiveName: employee.username, // 성명 자동 입력
       }));
 
+      // 백엔드에 해당 API가 구현되어 있지 않으므로 임시로 빈 배열 설정
+      // 실제 구현 시에는 백엔드에 API를 추가하고 아래 주석 처리된 코드를 사용해야 함
+      setFormData((prev: any) => ({
+        ...prev,
+        ownerDepts: [],
+        meetings: []
+      }));
+      const response=await apiClient.get('/positions/employee/${employee.')
+      /*
       // 사용자 ID로 소관부서와 주관회의체 데이터 조회
       if (employee.id) {
         try {
           // 소관부서 데이터 조회 (positions_owner_dept 테이블)
-          const ownerDeptsResponse = await apiClient.get(`/api/positions/employee/${employee.id}/owner-departments`);
+          const ownerDeptsResponse = await apiClient.get(`/positions/employee/${employee.id}/owner-departments`);
 
           // 주관회의체 데이터 조회 (positions_meeting 테이블)
-          const meetingsResponse = await apiClient.get(`/api/positions/employee/${employee.id}/meetings`);
+          const meetingsResponse = await apiClient.get(`/positions/employee/${employee.id}/meetings`);
 
           // 조회된 데이터 설정
           setFormData((prev: any) => ({
@@ -132,9 +152,9 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
           }));
         } catch (error) {
           console.error('소관부서/주관회의체 데이터 조회 실패:', error);
-          // 에러가 발생해도 사용자 선택은 유지
         }
       }
+      */
     } catch (error) {
       console.error('사용자 선택 처리 중 오류 발생:', error);
     } finally {
@@ -142,40 +162,24 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       setEmployeeSearchPopupOpen(false);
     }
   }, []);
-  const handleSave = () => {
+
+  const handleSave = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // onSave 함수가 Promise를 반환하는지 확인하고 적절히 처리
-      const result = onSave(formData);
-      if (result instanceof Promise) {
-        result
-          .then(() => {
-            setShowSuccessAlert(true);
-            setTimeout(() => {
-              setShowSuccessAlert(false);
-              onClose();
-            }, 1000);
-          })
-          .catch((err) => {
-            console.error('임원 정보 저장 실패:', err);
-            setError('임원 정보 저장에 실패했습니다.');
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      } else {
-        setShowSuccessAlert(true);
-        setTimeout(() => {
-          setShowSuccessAlert(false);
-          onClose();
-        }, 1000);
-        setLoading(false);
-      }
+      // onSave 함수 호출
+      await onSave(formData);
+
+      setShowSuccessAlert(true);
+      setTimeout(() => {
+        setShowSuccessAlert(false);
+        onClose();
+      }, 1000);
     } catch (err) {
       console.error('임원 정보 저장 실패:', err);
       setError('임원 정보 저장에 실패했습니다.');
+    } finally {
       setLoading(false);
     }
   };
@@ -210,55 +214,52 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
           <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl fullWidth>
               <TextField label="직책"
-              value={formData.positionNameMapped || ''}
-              disabled={mode === 'view'}
+                value={formData.positionNameMapped || ''}
+                disabled={mode === 'view'}
               />
             </FormControl>
-              <TextField
+            <TextField
               fullWidth
               required
               label="성명"
               value={formData.empId || ''}
               onChange={e => handleInputChange('executiveName', e.target.value)}
               disabled={mode === 'view'}
-              />
-              {mode !== 'view' && (
-                <IconButton>
-                  <SearchIcon onClick={handleSearchEmployee}/>
-                </IconButton>
-              )}
+            />
+            {mode !== 'view' && (
+              <IconButton onClick={handleSearchEmployee}>
+                <SearchIcon />
+              </IconButton>
+            )}
 
           </Box>
 
           {/* 두 번째 행: 성명, 현 직책 부여일 */}
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField label="직위" value={ ''}
-            disabled={true}
-            sx={{ width: '50%' }}/>
+            <TextField label="직위" value={''}
+              disabled={true}
+              sx={{ width: '50%' }} />
             <DatePicker
               label="현 직책 부여일"
-              value={formData.appointmentDate }
+              value={formData.appointmentDate}
               disabled={mode === 'view'}
               onChange={(date) => {
                 setFormData((prev: any) => ({ ...prev, appointmentDate: date || new Date() }));
               }}
-              // disabled={mode === 'view'}
-              // sx={{ width: '50%' }}
-              // InputLabelProps={{ shrink: true }}
             />
           </Box>
 
           {/* 세 번째 행: 겸직여부 */}
           <Box sx={{ display: 'flex', gap: 2 }}>
-              <RadioGroup
-                row
-                value={formData.hasConcurrentPosition ? 'Y' : 'N'}
-                onChange={e => handleInputChange('hasConcurrentPosition', (e as React.ChangeEvent<HTMLInputElement>).target.value === 'Y')}
-                name="hasConcurrentPosition"
-              >
-                <FormControlLabel value="N" control={<Radio />} label="없음" disabled={mode === 'view'} />
-                <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={mode === 'view'} />
-              </RadioGroup>
+            <RadioGroup
+              row
+              value={formData.hasConcurrentPosition ? 'Y' : 'N'}
+              onChange={e => handleInputChange('hasConcurrentPosition', (e as React.ChangeEvent<HTMLInputElement>).target.value === 'Y')}
+              name="hasConcurrentPosition"
+            >
+              <FormControlLabel value="N" control={<Radio />} label="없음" disabled={mode === 'view'} />
+              <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={mode === 'view'} />
+            </RadioGroup>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
                 fullWidth
@@ -268,12 +269,14 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               />
             </Box>
           </Box>
+
           {/* 소관부서 */}
           <Box>
             <Box
               sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
             >
               <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>소관부서</Box>
+              {positionDetailsLoading && <CircularProgress size={20} />}
             </Box>
             <TableContainer component={Paper} variant='outlined'>
               <Table size='small'>
@@ -284,7 +287,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(formData.ownerDepts || []).map((dept, index) => (
+                  {(formData.ownerDepts || []).map((dept: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>
                         <TextField
@@ -309,7 +312,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                   {(!formData.ownerDepts || formData.ownerDepts.length === 0) && (
                     <TableRow>
                       <TableCell colSpan={2} align="center">
-                        소관부서 정보가 없습니다.
+                        {positionDetailsLoading ? '소관부서 정보를 불러오는 중...' : '소관부서 정보가 없습니다.'}
                       </TableCell>
                     </TableRow>
                   )}
@@ -324,6 +327,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
             >
               <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>주관회의체</Box>
+              {positionDetailsLoading && <CircularProgress size={20} />}
             </Box>
             <TableContainer component={Paper} variant='outlined'>
               <Table size='small'>
@@ -336,7 +340,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(formData.meetings || []).map((meeting, index) => (
+                  {(formData.meetings || []).map((meeting: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>
                         <TextField
@@ -379,7 +383,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                   {(!formData.meetings || formData.meetings.length === 0) && (
                     <TableRow>
                       <TableCell colSpan={4} align="center">
-                        주관회의체 정보가 없습니다.
+                        {positionDetailsLoading ? '주관회의체 정보를 불러오는 중...' : '주관회의체 정보가 없습니다.'}
                       </TableCell>
                     </TableRow>
                   )}

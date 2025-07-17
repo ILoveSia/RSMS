@@ -75,13 +75,13 @@ interface ExecutiveStatusRow {
   dualYn: string;
   dualDetails: string;
   userName: string;
+  positionsId?: number; // 직책 ID 추가
   // positionName: string;
   // execofficerId: number;
   // empId: string;
   // execofficerDt: string;
   // dualYn: string;
   // dualDetails: string;
-  // positionsId: number;
   // approvalId: number;
   // ledgerOrder: string;
   // orderStatus: string;
@@ -117,12 +117,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // 성공 알림 상태
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-
-  // 페이징 상태는 현재 사용되지 않음
-  // const [paginationModel, setPaginationModel] = useState({
-  //   page: 0,
-  //   pageSize: 20,
-  // });
 
   const fetchExecutiveStatus = useCallback(async () => {
     setLoading(true);
@@ -281,7 +275,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   // 임원 상세 정보 핸들러
   const handleExecutiveDetail = (executive: ExecutiveStatusRow) => {
-    console.log(executive);
+    console.log('선택된 임원 정보:', executive);
+    console.log('직책 ID:', executive.positionsId);
     setSelectedExecutive(executive);
     setDialogMode('view');
     setDialogOpen(true);
@@ -428,7 +423,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
-              value={ledgerOrderFilter}
+            value={ledgerOrderFilter}
             options={ledgerOrderOptions}
             onChange={(value) => setLedgerOrderFilter(value as string)}
             size="small"

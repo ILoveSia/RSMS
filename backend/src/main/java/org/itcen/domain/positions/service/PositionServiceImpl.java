@@ -13,6 +13,7 @@ import org.itcen.domain.meeting.repository.MeetingBodyRepository;
 import org.itcen.domain.positions.dto.LedgerOrderSelectDto;
 import org.itcen.domain.positions.dto.PositionCreateRequestDto;
 import org.itcen.domain.positions.dto.PositionDetailDto;
+import org.itcen.domain.positions.dto.PositionMeetingDto;
 import org.itcen.domain.positions.dto.PositionStatusDto;
 import org.itcen.domain.positions.dto.PositionStatusProjection;
 import org.itcen.domain.positions.dto.PositionUpdateRequestDto;
@@ -313,15 +314,10 @@ public class PositionServiceImpl implements PositionService {
                             .empName(user.getUsername()).position(positionName).build();
                 }).collect(Collectors.toList());
 
-        return PositionDetailDto.builder()
-                .positionsId(position.getPositionsId())
+        return PositionDetailDto.builder().positionsId(position.getPositionsId())
                 // 엔티티의 positionsNm(직책명)을 DTO의 positionName에 매핑
-                .positionName(position.getPositionsNm())
-                .writeDeptCd(position.getWriteDeptCd())
-                .ownerDepts(ownerDepts)
-                .meetings(meetings)
-                .managers(managers)
-                .build();
+                .positionName(position.getPositionsNm()).writeDeptCd(position.getWriteDeptCd())
+                .ownerDepts(ownerDepts).meetings(meetings).managers(managers).build();
     }
 
     @Override
@@ -335,5 +331,36 @@ public class PositionServiceImpl implements PositionService {
             // 2. 본 테이블 삭제
             positionRepository.deleteById(id);
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PositionMeetingDto> getPositionMeetings(Long id) {
+        log.info("직책별 회의체 목록 조회 서비스 호출: 12341234id={}", id);
+
+        // 직책 존재 여부 확인
+        Position position = positionRepository.findById(id).orElseThrow(
+                () -> new BusinessException("해당 직책을 찾을 수 없습니다.", "POSITION_NOT_FOUND"));
+
+        // 직책에 연결된 회의체 목록 조회
+        List<PositionMeeting> positionMeetings =
+                positionMeetingRepository.findByPosition_PositionsId(id);
+
+        // PositionMeeting 엔티티를 DTO로 변환
+        return positionMeetings.stream().map(pm -> {
+            // 회의체 정보 조회
+            MeetingBody meetingBody =
+                    meetingBodyRepository.findById(pm.getMeetingBodyId()).orElse(new MeetingBody());
+
+            return PositionMeetingDto.builder()
+                    .positionsMeetingId(pm.getPositionsMeetingId().intValue())
+                    .positionsId(pm.getPositionsId()).meetingBodyId(pm.getMeetingBodyId())
+                    .meetingBodyName(meetingBody.getMeetingName())
+                    .memberGubun(meetingBody.getGubun())
+                    .meetingPeriod(meetingBody.getMeetingPeriod())
+                    .deliberationContent(meetingBody.getContent()).createdAt(pm.getCreatedAt())
+                    .updatedAt(pm.getUpdatedAt()).createdId(pm.getCreatedId())
+                    .updatedId(pm.getUpdatedId()).build();
+        }).collect(Collectors.toList());
     }
 }
