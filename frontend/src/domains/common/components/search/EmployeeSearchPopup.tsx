@@ -222,7 +222,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     };
 
   // 엔터키 검색
-  const handleKeyPress = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
       handleSearch();
     }
@@ -273,7 +273,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
               label='성명'
               value={searchConditions.username}
               onChange={handleSearchConditionChange('username')}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               size='small'
               sx={{ minWidth: 120 }}
             />
@@ -281,7 +281,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
               label='사번'
               value={searchConditions.num}
               onChange={handleSearchConditionChange('num')}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               size='small'
               sx={{ minWidth: 120 }}
             />
@@ -289,7 +289,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
               label='부서코드'
               value={searchConditions.deptCd}
               onChange={handleSearchConditionChange('deptCd')}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               size='small'
               sx={{ minWidth: 120 }}
             />

@@ -118,11 +118,11 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 페이징 상태
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 20,
-  });
+  // 페이징 상태는 현재 사용되지 않음
+  // const [paginationModel, setPaginationModel] = useState({
+  //   page: 0,
+  //   pageSize: 20,
+  // });
 
   const fetchExecutiveStatus = useCallback(async () => {
     setLoading(true);
@@ -239,7 +239,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     }
   ];
 
-  // 필터 변경 핸들러
+  // 필터 변경 핸들러 - ComboBox의 onChange에서 직접 사용하므로 삭제하지 않음
   const handleLedgerOrderChange = (value: string | SelectOption | SelectOption[] | string[] | null) => {
     if (typeof value === 'string') {
       setLedgerOrderFilter(value);
@@ -294,7 +294,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   };
 
   // DataGrid 체크박스 선택 핸들러
-  const handleRowSelectionModelChange = (selectedRows: (string | number)[], selectedData: ExecutiveStatusRow[]) => {
+  const handleRowSelectionModelChange = (selectedRows: (string | number)[]) => {
     setSelectedIds(selectedRows.map(Number));
   };
 
@@ -472,9 +472,9 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             variant="contained"
             color="primary"
             size="small"
-            // onClick={handleCreateExecutive}
+            onClick={handleCreateExecutive}
           >
-            변경 이력
+            임원 등록
           </Button>
         </Box>
 
@@ -489,9 +489,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             multiSelect={false}
             selectedRows={selectedIds}
             // onRowClick={handleRowClick}
-            onRowSelectionChange={(selectedRows: (string | number)[], selectedData: ExecutiveStatusRow[]) => {
-              setSelectedIds(selectedRows.map(Number));
-            }}
+            onRowSelectionChange={handleRowSelectionModelChange}
             rowIdField="positionNameMapped"
           />
         </Box>

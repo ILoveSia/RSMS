@@ -1,16 +1,30 @@
-import type { EmployeeSearchResult } from '@/domains/common/components/search/';
-import EmployeeSearchpopup from '@/domains/common/components/search/EmployeeSearchPopup';
+import apiClient from '@/app/common/api/client';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
+import type { EmployeeSearchResult } from '@/domains/common/components/search/';
+import EmployeeSearchpopup from '@/domains/common/components/search/EmployeeSearchPopup';
 import Alert from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
+import type { DataGridColumn } from '@/shared/types/common';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, FormControl, FormControlLabel, IconButton, Radio, RadioGroup } from '@mui/material';
+import {
+  Box,
+  FormControl,
+  FormControlLabel,
+  IconButton,
+  Paper,
+  Radio,
+  RadioGroup,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
+} from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { DatePicker } from '../../../shared/components';
-import DataGrid from '@/shared/components/ui/data-display/DataGrid';
-import type { DataGridColumn } from '@/shared/types/common';
 
 interface ExecutiveDetailDialogProps {
   mode: DialogMode;
@@ -90,28 +104,78 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [field]: value }));
   };
-  const handleEmployeeSelect = useCallback((employee: EmployeeSearchResult) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      employee,
-      executiveName: employee.username, // 성명 자동 입력
-    }));
-    setEmployeeSearchPopupOpen(false);
+  const handleEmployeeSelect = useCallback(async (employee: EmployeeSearchResult) => {
+    setLoading(true);
+    try {
+      // 사용자 정보 설정
+      setFormData((prev: any) => ({
+        ...prev,
+        employee,
+        empId: employee.num,
+        executiveName: employee.username, // 성명 자동 입력
+      }));
+
+      // 사용자 ID로 소관부서와 주관회의체 데이터 조회
+      if (employee.id) {
+        try {
+          // 소관부서 데이터 조회 (positions_owner_dept 테이블)
+          const ownerDeptsResponse = await apiClient.get(`/api/positions/employee/${employee.id}/owner-departments`);
+
+          // 주관회의체 데이터 조회 (positions_meeting 테이블)
+          const meetingsResponse = await apiClient.get(`/api/positions/employee/${employee.id}/meetings`);
+
+          // 조회된 데이터 설정
+          setFormData((prev: any) => ({
+            ...prev,
+            ownerDepts: ownerDeptsResponse || [],
+            meetings: meetingsResponse || []
+          }));
+        } catch (error) {
+          console.error('소관부서/주관회의체 데이터 조회 실패:', error);
+          // 에러가 발생해도 사용자 선택은 유지
+        }
+      }
+    } catch (error) {
+      console.error('사용자 선택 처리 중 오류 발생:', error);
+    } finally {
+      setLoading(false);
+      setEmployeeSearchPopupOpen(false);
+    }
   }, []);
-  const handleSave = async () => {
+  const handleSave = () => {
     try {
       setLoading(true);
       setError(null);
-      await onSave(formData);
-      setShowSuccessAlert(true);
-      setTimeout(() => {
-        setShowSuccessAlert(false);
-        onClose();
-      }, 1000);
+
+      // onSave 함수가 Promise를 반환하는지 확인하고 적절히 처리
+      const result = onSave(formData);
+      if (result instanceof Promise) {
+        result
+          .then(() => {
+            setShowSuccessAlert(true);
+            setTimeout(() => {
+              setShowSuccessAlert(false);
+              onClose();
+            }, 1000);
+          })
+          .catch((err) => {
+            console.error('임원 정보 저장 실패:', err);
+            setError('임원 정보 저장에 실패했습니다.');
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      } else {
+        setShowSuccessAlert(true);
+        setTimeout(() => {
+          setShowSuccessAlert(false);
+          onClose();
+        }, 1000);
+        setLoading(false);
+      }
     } catch (err) {
       console.error('임원 정보 저장 실패:', err);
       setError('임원 정보 저장에 실패했습니다.');
-    } finally {
       setLoading(false);
     }
   };
@@ -204,10 +268,125 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               />
             </Box>
           </Box>
-          <DataGrid
-            columns={departColumns}
-            rows={formData.departments || []}
-          />
+          {/* 소관부서 */}
+          <Box>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+            >
+              <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>소관부서</Box>
+            </Box>
+            <TableContainer component={Paper} variant='outlined'>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold', width: 430 }}>부서코드</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>부서명</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(formData.ownerDepts || []).map((dept, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={dept.deptCode || ''}
+                          disabled
+                          placeholder='부서코드'
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={dept.deptName || ''}
+                          disabled
+                          placeholder='부서명'
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!formData.ownerDepts || formData.ownerDepts.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={2} align="center">
+                        소관부서 정보가 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+
+          {/* 주관회의체 */}
+          <Box>
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+            >
+              <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>주관회의체</Box>
+            </Box>
+            <TableContainer component={Paper} variant='outlined'>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell sx={{ fontWeight: 'bold' }}>회의체</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>위원장/위원</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>개최주기</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>주요 심의·의결사항</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(formData.meetings || []).map((meeting, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={meeting.meetingBodyName || ''}
+                          disabled
+                          placeholder='회의체명'
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={meeting.memberGubun || ''}
+                          disabled
+                          placeholder='위원장/위원'
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={meeting.meetingPeriod || ''}
+                          disabled
+                          placeholder='개최주기'
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          fullWidth
+                          size='small'
+                          value={meeting.deliberationContent || ''}
+                          disabled
+                          placeholder='주요 심의·의결사항'
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {(!formData.meetings || formData.meetings.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">
+                        주관회의체 정보가 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
 
         </Box>
 
