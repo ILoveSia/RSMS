@@ -1,16 +1,11 @@
 package org.itcen.domain.hodicitem.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 /**
- * 부서장 내부통제 항목 현황 Projection DTO
+ * 부서장 내부통제 항목 현황 Projection 인터페이스
  *
- * JOIN 쿼리 결과를 담는 DTO입니다.
+ * JOIN 쿼리 결과를 담는 Projection 인터페이스입니다.
  * hod_ic_item, responsibility, ledger_orders, approval 테이블의 정보를 포함합니다.
  *
  * SOLID 원칙:
@@ -18,94 +13,90 @@ import java.time.LocalDateTime;
  * - Open/Closed: 새로운 필드 추가 시 확장 가능
  * - Interface Segregation: 필요한 데이터만 포함
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class HodICItemStatusProjection {
+public interface HodICItemStatusProjection {
 
     /**
      * 부서장 내부통제 항목 ID
      */
-    private Long hodIcItemId;
+    Long getHodIcItemId();
 
     /**
      * 책무 ID
      */
-    private Long responsibilityId;
+    Long getResponsibilityId();
 
     /**
      * 책무 내용
      */
-    private String responsibilityContent;
+    String getResponsibilityContent();
 
     /**
      * 부서명
      */
-    private String deptCd;
+    String getDeptCd();
 
     /**
      * 항목구분
      */
-    private String fieldTypeCd;
+    String getFieldTypeCd();
 
     /**
      * 직무구분
      */
-    private String roleTypeCd;
+    String getRoleTypeCd();
 
     /**
      * 내부통제 업무
      */
-    private String icTask;
+    String getIcTask();
 
     /**
      * 조치활동
      */
-    private String measureDesc;
+    String getMeasureDesc();
 
     /**
      * 조치유형
      */
-    private String measureType;
+    String getMeasureType();
 
     /**
      * 주기
      */
-    private String periodCd;
+    String getPeriodCd();
 
     /**
      * 관련근거
      */
-    private String supportDoc;
+    String getSupportDoc();
 
     /**
      * 점검시기
      */
-    private String checkPeriod;
+    String getCheckPeriod();
 
     /**
      * 점검방법
      */
-    private String checkWay;
+    String getCheckWay();
 
     /**
      * 등록일자
      */
-    private LocalDateTime createdAt;
+    LocalDateTime getCreatedAt();
 
     /**
      * 최종수정일자
      */
-    private LocalDateTime updatedAt;
+    LocalDateTime getUpdatedAt();
 
     /**
      * 결재상태
      */
-    private String approvalStatus;
+    String getApprovalStatus();
 
     /**
      * 책무번호(원장차수)
      */
-    private String ledgerOrder;
+    String getLedgerOrder();
 }

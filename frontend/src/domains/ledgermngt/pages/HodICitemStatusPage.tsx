@@ -179,6 +179,12 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     setDialogOpen(true);
   }, []);
 
+  const handleRowClick = useCallback((row: HodICItemRow) => {
+    setDialogMode('view');
+    setSelectedItemId(row.hodIcItemId);
+    setDialogOpen(true);
+  }, []);
+
   const handleDelete = useCallback(async () => {
     if (selectedIds.length === 0) {
       alert('삭제할 항목을 선택해주세요.');
@@ -331,6 +337,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             onRowSelectionChange={selectedRows => {
               setSelectedIds(selectedRows.map(id => Number(id)));
             }}
+            onRowClick={handleRowClick}
             onRowDoubleClick={handleRowDoubleClick}
             rowIdField='hodIcItemId'
             sx={{

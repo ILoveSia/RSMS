@@ -16,3 +16,7 @@ export type {
   MeetingBodySearchDialogProps,
   MeetingBodySearchResult,
 } from './MeetingBodySearchDialog';
+
+// 책무 검색 팝업
+export { default as ResponsibilitySearchPopup } from './ResponsibilitySearchPopup';
+export type { ResponsibilitySearchResult, ResponsibilitySearchPopupProps } from './ResponsibilitySearchPopup';

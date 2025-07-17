@@ -25,23 +25,23 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
      */
     @Query(value = """
                 SELECT
-                    h.hod_ic_item_id as hodIcItemId,
-                    r.responsibility_id as responsibilityId,
-                    r.responsibility_content as responsibilityContent,
-                    h.dept_cd as deptCd,
-                    h.field_type_cd as fieldTypeCd,
-                    h.role_type_cd as roleTypeCd,
-                    h.ic_task as icTask,
-                    h.measure_desc as measureDesc,
-                    h.measure_type as measureType,
-                    h.period_cd as periodCd,
-                    h.support_doc as supportDoc,
-                    h.check_period as checkPeriod,
-                    h.check_way as checkWay,
-                    h.created_at as createdAt,
-                    h.updated_at as updatedAt,
-                    COALESCE(a.appr_stat_cd, 'NONE') as approvalStatus,
-                    h.ledger_order as ledgerOrder
+                    h.hod_ic_item_id as "hodIcItemId",
+                    r.responsibility_id as "responsibilityId",
+                    r.responsibility_content as "responsibilityContent",
+                    h.dept_cd as "deptCd",
+                    h.field_type_cd as "fieldTypeCd",
+                    h.role_type_cd as "roleTypeCd",
+                    h.ic_task as "icTask",
+                    h.measure_desc as "measureDesc",
+                    h.measure_type as "measureType",
+                    h.period_cd as "periodCd",
+                    h.support_doc as "supportDoc",
+                    h.check_period as "checkPeriod",
+                    h.check_way as "checkWay",
+                    h.created_at as "createdAt",
+                    h.updated_at as "updatedAt",
+                    COALESCE(a.appr_stat_cd, 'NONE') as "approvalStatus",
+                    h.ledger_order as "ledgerOrder"
                 FROM hod_ic_item h
                 INNER JOIN responsibility r ON h.responsibility_id = r.responsibility_id
                 LEFT JOIN approval a ON h.approval_id = a.approval_id
