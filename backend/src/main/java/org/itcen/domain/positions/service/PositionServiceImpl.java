@@ -126,7 +126,6 @@ public class PositionServiceImpl implements PositionService {
     @Transactional
     public Long updatePosition(Long positionId, PositionUpdateRequestDto updateRequestDto) {
         // 1. 기존 직책 정보 조회
-        System.out.println("createRequestDto12341234");
         System.out.println(updateRequestDto.getPositionName());
         Position position = positionRepository.findById(positionId).orElseThrow(
                 () -> new BusinessException("해당 직책을 찾을 수 없습니다.", "POSITION_NOT_FOUND"));
