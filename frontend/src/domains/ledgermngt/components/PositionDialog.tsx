@@ -9,6 +9,8 @@ import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains
 import { Dialog } from '@/shared/components/modal';
 import Button from '@/shared/components/ui/button/Button';
 import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import apiClient from '@/app/common/api/client';
+import EmployeeSearchPopup from '@/domains/common/components/search/EmployeeSearchPopup';
 import {
   Alert,
   Box,
