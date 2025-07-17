@@ -10,7 +10,10 @@ import DepartmentApi, {
 import type { EmployeeSearchResult } from '@/domains/common/components/search';
 import { DepartmentSearchPopup, type Department } from '@/domains/common/components/search';
 import EmployeeSearchPopup from '@/domains/common/components/search/EmployeeSearchPopup';
-import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/meeting/components';
+import {
+  MeetingBodySearchDialog,
+  type MeetingBodySearchResult,
+} from '@/domains/meeting/components';
 import { Dialog } from '@/shared/components/modal';
 import Button from '@/shared/components/ui/button/Button';
 import TextField from '@/shared/components/ui/data-display/TextField';
@@ -75,8 +78,8 @@ interface FormData {
 
 // 부서 드롭다운 옵션 타입
 interface DepartmentOption {
-  value: string;  // departmentId
-  label: string;  // departmentName
+  value: string; // departmentId
+  label: string; // departmentName
 }
 
 interface OwnerDept {
@@ -140,7 +143,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         codeName: dept.label,
         groupCode: 'DEPT',
         useYn: 'Y',
-        sortOrder: 0
+        sortOrder: 0,
       }));
     }
 
@@ -171,7 +174,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         // API 응답을 드롭다운에 맞는 형식으로 변환
         const departmentOptions = apiDepartments.map(dept => ({
           value: dept.departmentId,
-          label: dept.departmentName
+          label: dept.departmentName,
         }));
 
         // 부서 데이터 상태 업데이트
@@ -325,9 +328,9 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       setError(null);
       try {
         const positionData: PositionData = await apiClient.get(`/positions/${id}`);
-        console.log(positionData, "test 1");
+        console.log(positionData, 'test 1');
         if (positionData) {
-          console.log(positionData, "test 2");
+          console.log(positionData, 'test 2');
 
           // 부서 코드에 해당하는 부서명 찾기
           let writeDeptName = '';
@@ -361,7 +364,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
             writeDeptName: writeDeptName,
           });
 
-          console.log("test 3");
+          console.log('test 3');
           const ownerDeptsData = positionData.ownerDepts || [];
           const meetingsData = positionData.meetings || [];
           const managersData = positionData.managers || [];
@@ -374,20 +377,20 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           setMeetings(
             meetingsData.length > 0
               ? meetingsData.map((m: any, i: any) => ({
-                id: String(i + 1),
-                ...m,
-                memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
-              }))
+                  id: String(i + 1),
+                  ...m,
+                  memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
+                }))
               : [
-                {
-                  id: '1',
-                  meetingBodyId: '',
-                  meetingBodyName: '',
-                  memberGubun: '',
-                  meetingPeriod: '',
-                  deliberationContent: '',
-                },
-              ]
+                  {
+                    id: '1',
+                    meetingBodyId: '',
+                    meetingBodyName: '',
+                    memberGubun: '',
+                    meetingPeriod: '',
+                    deliberationContent: '',
+                  },
+                ]
           );
           setManagers(
             managersData.length > 0
@@ -436,35 +439,35 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   // 입력값 변경 핸들러
   const handleInputChange =
     (field: keyof FormData) =>
-      (
-        event:
-          | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-          | { target: { value: string } }
-      ) => {
-        const value = event.target.value;
+    (
+      event:
+        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        | { target: { value: string } }
+    ) => {
+      const value = event.target.value;
 
-        // 부서 선택 시 부서명도 함께 저장
-        if (field === 'writeDeptCd') {
-          const selectedDept = departments.find(dept => dept.value === value);
-          setFormData(prev => ({
-            ...prev,
-            [field]: value,
-            writeDeptName: selectedDept ? selectedDept.label : '',
-          }));
-        } else {
-          setFormData(prev => ({
-            ...prev,
-            [field]: value,
-          }));
-        }
+      // 부서 선택 시 부서명도 함께 저장
+      if (field === 'writeDeptCd') {
+        const selectedDept = departments.find(dept => dept.value === value);
+        setFormData(prev => ({
+          ...prev,
+          [field]: value,
+          writeDeptName: selectedDept ? selectedDept.label : '',
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [field]: value,
+        }));
+      }
 
-        if (validationErrors[field]) {
-          setValidationErrors(prev => ({
-            ...prev,
-            [field]: '',
-          }));
-        }
-      };
+      if (validationErrors[field]) {
+        setValidationErrors(prev => ({
+          ...prev,
+          [field]: '',
+        }));
+      }
+    };
 
   // 소관부서 추가
   const addOwnerDept = () => {
@@ -508,9 +511,9 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       prev.map(meeting =>
         meeting.id === id
           ? {
-            ...meeting,
-            [field]: value,
-          }
+              ...meeting,
+              [field]: value,
+            }
           : meeting
       )
     );
@@ -535,12 +538,12 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         prev.map(meeting =>
           meeting.id === currentMeetingId
             ? {
-              ...meeting,
-              meetingBodyId: selectedMeeting.id,
-              meetingBodyName: selectedMeeting.name,
-              meetingPeriod: selectedMeeting.period || '',
-              deliberationContent: selectedMeeting.content || '',
-            }
+                ...meeting,
+                meetingBodyId: selectedMeeting.id,
+                meetingBodyName: selectedMeeting.name,
+                meetingPeriod: selectedMeeting.period || '',
+                deliberationContent: selectedMeeting.content || '',
+              }
             : meeting
         )
       );
@@ -587,11 +590,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         prev.map(manager =>
           manager.id === currentManagerId
             ? {
-              ...manager,
-              empNo: selectedEmployee.num,
-              empName: selectedEmployee.username,
-              position: selectedEmployee.jobRankCd,
-            }
+                ...manager,
+                empNo: selectedEmployee.num,
+                empName: selectedEmployee.username,
+                position: selectedEmployee.jobRankCd,
+              }
             : manager
         )
       );
@@ -622,10 +625,10 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           prev.map(dept =>
             dept.id === currentOwnerDeptId
               ? {
-                ...dept,
-                deptCode: selectedDepartment.deptCode,
-                deptName: selectedDepartment.deptName,
-              }
+                  ...dept,
+                  deptCode: selectedDepartment.deptCode,
+                  deptName: selectedDepartment.deptName,
+                }
               : dept
           )
         );
@@ -663,7 +666,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     console.log('저장할 폼 데이터:', formData);
     console.log('선택된 부서:', {
       코드: formData.writeDeptCd,
-      이름: formData.writeDeptName
+      이름: formData.writeDeptName,
     });
 
     const positionRequestData = {
@@ -676,19 +679,18 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
     try {
       let response: PositionData;
-      console.log(positionRequestData, mode, "test 4")
+      console.log(positionRequestData, mode, 'test 4');
       if (mode === 'create') {
         response = await apiClient.post('/positions', positionRequestData);
       } else {
         response = await apiClient.put(`/positions/${positionId}`, positionRequestData);
       }
-      console.log(response, "test 5")
+      console.log(response, 'test 5');
       if (onSave) {
         onSave(response); // ← 백엔드 응답 객체를 넘김
       }
       onClose();
-    }
-    catch (err) {
+    } catch (err) {
       setError('저장 중 오류가 발생했습니다.');
       console.error(err);
     } finally {
