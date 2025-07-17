@@ -68,7 +68,6 @@ export class RouteManager {
       });
     });
 
-    console.log(`📝 도메인 '${domain}' 라우트 ${routes.length}개 등록 완료`);
   }
 
   /**
@@ -76,7 +75,6 @@ export class RouteManager {
    */
   registerRoute(path: string, route: AppRouteObject): void {
     this.routes.set(path, route);
-    console.log(`📝 라우트 '${path}' 등록 완료`);
   }
 
   /**
