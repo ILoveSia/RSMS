@@ -1,16 +1,20 @@
 /**
  * 직책 등록/수정/조회 다이얼로그 컴포넌트
  */
-import { DepartmentSearchPopup, type Department } from '@/domains/common/components/search';
+import apiClient from '@/app/common/api/client';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
+import DepartmentApi, {
+  type Department as ApiDepartment,
+} from '@/domains/common/api/departmentApi';
 import type { EmployeeSearchResult } from '@/domains/common/components/search';
+import { DepartmentSearchPopup, type Department } from '@/domains/common/components/search';
+import EmployeeSearchPopup from '@/domains/common/components/search/EmployeeSearchPopup';
 import { MeetingBodySearchDialog, type MeetingBodySearchResult } from '@/domains/meeting/components';
 import { Dialog } from '@/shared/components/modal';
 import Button from '@/shared/components/ui/button/Button';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
-import apiClient from '@/app/common/api/client';
-import EmployeeSearchPopup from '@/domains/common/components/search/EmployeeSearchPopup';
 import {
   Alert,
   Box,
@@ -28,7 +32,6 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import TextField from '@/shared/components/ui/data-display/TextField';
 import React, { useEffect, useState } from 'react';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
@@ -67,6 +70,13 @@ export interface PositionDialogProps {
 interface FormData {
   positionName: string;
   writeDeptCd: string;
+  writeDeptName?: string; // Optional field to store the department name
+}
+
+// 부서 드롭다운 옵션 타입
+interface DepartmentOption {
+  value: string;  // departmentId
+  label: string;  // departmentName
 }
 
 interface OwnerDept {
@@ -104,6 +114,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     { data: CommonCode[] } | CommonCode[]
   >('codeStore/allCodes');
 
+  // 부서 데이터 상태
+  const [departments, setDepartments] = useState<Array<{ value: string; label: string }>>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState<boolean>(false);
+  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+
   // 공통코드 배열 추출 함수
   const getCodesArray = (): CommonCode[] => {
     if (!allCodes) return [];
@@ -118,6 +133,18 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
   // 공통코드 헬퍼 함수
   const getDeptCodes = () => {
+    // 부서 API에서 데이터를 가져온 경우 해당 데이터 사용
+    if (departments.length > 0) {
+      return departments.map(dept => ({
+        code: dept.value,
+        codeName: dept.label,
+        groupCode: 'DEPT',
+        useYn: 'Y',
+        sortOrder: 0
+      }));
+    }
+
+    // 기존 공통코드 로직 (폴백용)
     const codes = getCodesArray();
     return codes
       .filter(code => code.groupCode === 'DEPT' && code.useYn === 'Y')
@@ -129,6 +156,46 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     return codes
       .filter(code => code.groupCode === 'MEB_GUBUN' && code.useYn === 'Y')
       .sort((a, b) => a.sortOrder - b.sortOrder);
+  };
+
+  // 부서 데이터 가져오기
+  const fetchDepartments = async () => {
+    setDepartmentsLoading(true);
+    setDepartmentsError(null);
+
+    try {
+      const apiDepartments = await DepartmentApi.getActive();
+      console.log('API 부서 데이터:', apiDepartments);
+
+      if (apiDepartments && Array.isArray(apiDepartments)) {
+        // API 응답을 드롭다운에 맞는 형식으로 변환
+        const departmentOptions = apiDepartments.map(dept => ({
+          value: dept.departmentId,
+          label: dept.departmentName
+        }));
+
+        // 부서 데이터 상태 업데이트
+        setDepartments(departmentOptions);
+
+        // 부서 데이터 캐싱 (localStorage)
+        try {
+          localStorage.setItem('cachedDepartments', JSON.stringify(departmentOptions));
+          localStorage.setItem('departmentsCacheTimestamp', String(new Date().getTime()));
+          console.log('부서 데이터 캐시 저장 완료:', departmentOptions.length);
+        } catch (cacheError) {
+          console.warn('부서 데이터 캐싱 실패:', cacheError);
+          // 캐싱 실패는 치명적이지 않으므로 에러 상태로 설정하지 않음
+        }
+      } else {
+        console.warn('부서 API 응답이 예상과 다릅니다:', apiDepartments);
+        setDepartmentsError('부서 데이터 형식이 올바르지 않습니다.');
+      }
+    } catch (err) {
+      console.error('부서 목록 조회 실패:', err);
+      setDepartmentsError('부서 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setDepartmentsLoading(false);
+    }
   };
 
   const [formData, setFormData] = useState<FormData>({
@@ -173,7 +240,19 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   // 부서 검색 다이얼로그 상태
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
   const [currentOwnerDeptId, setCurrentOwnerDeptId] = useState<string>('');
-
+  const convertApiDepartmentToComponent = (apiDept: ApiDepartment): Department => {
+    return {
+      id: apiDept.departmentId,
+      deptCode: apiDept.departmentId,
+      deptName: apiDept.departmentName,
+      useYn: apiDept.useYn,
+      isActive: apiDept.isActive,
+      createdId: apiDept.createdId,
+      updatedId: apiDept.updatedId,
+      createdAt: apiDept.createdAt,
+      updatedAt: apiDept.updatedAt,
+    };
+  };
   // 다이얼로그 제목 설정
   const getDialogTitle = () => {
     switch (mode) {
@@ -188,7 +267,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     }
   };
 
-  // 컴포넌트 마운트 시 localStorage에서 공통코드 복원
+  // 컴포넌트 마운트 시 localStorage에서 공통코드 복원 및 부서 데이터 캐싱
   useEffect(() => {
     const storedCommonCodes = localStorage.getItem('commonCodes');
 
@@ -208,6 +287,35 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         localStorage.removeItem('commonCodes');
       }
     }
+
+    // 부서 데이터 캐싱 처리
+    const cachedDepartments = localStorage.getItem('cachedDepartments');
+    const cacheTimestamp = localStorage.getItem('departmentsCacheTimestamp');
+    const currentTime = new Date().getTime();
+
+    // 캐시 유효 시간: 1시간 (3600000 밀리초)
+    const cacheValidityPeriod = 3600000;
+
+    if (
+      cachedDepartments &&
+      cacheTimestamp &&
+      currentTime - parseInt(cacheTimestamp) < cacheValidityPeriod
+    ) {
+      try {
+        const parsedDepartments = JSON.parse(cachedDepartments);
+        console.log('부서 데이터 캐시에서 로드:', parsedDepartments.length);
+        setDepartments(parsedDepartments);
+      } catch (error) {
+        console.error('캐시된 부서 데이터 복원 실패:', error);
+        localStorage.removeItem('cachedDepartments');
+        localStorage.removeItem('departmentsCacheTimestamp');
+        // 캐시 복원 실패 시 API에서 다시 로드
+        fetchDepartments();
+      }
+    } else {
+      // 캐시가 없거나 만료된 경우 API에서 로드
+      fetchDepartments();
+    }
   }, [allCodes, setAllCodes]);
 
   // 폼 데이터 초기화 및 상세 데이터 로드
@@ -220,10 +328,39 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         console.log(positionData, "test 1");
         if (positionData) {
           console.log(positionData, "test 2");
+
+          // 부서 코드에 해당하는 부서명 찾기
+          let writeDeptName = '';
+          if (positionData.writeDeptCd) {
+            const matchingDept = departments.find(dept => dept.value === positionData.writeDeptCd);
+            if (matchingDept) {
+              writeDeptName = matchingDept.label;
+            } else {
+              // API에서 부서명 조회 시도
+              try {
+                const deptName = await DepartmentApi.getName(positionData.writeDeptCd);
+                if (typeof deptName === 'string') {
+                  writeDeptName = deptName;
+                } else if (typeof deptName === 'object' && deptName !== null) {
+                  writeDeptName = deptName.departmentName || '';
+                }
+              } catch (deptErr) {
+                console.warn('부서명 조회 실패:', deptErr);
+                // 부서명 조회 실패 시 공통코드에서 찾기
+                const deptCode = getCodesArray().find(
+                  code => code.groupCode === 'DEPT' && code.code === positionData.writeDeptCd
+                );
+                writeDeptName = deptCode ? deptCode.codeName : positionData.writeDeptCd;
+              }
+            }
+          }
+
           setFormData({
             positionName: positionData.positionName || '',
             writeDeptCd: positionData.writeDeptCd || '',
+            writeDeptName: writeDeptName,
           });
+
           console.log("test 3");
           const ownerDeptsData = positionData.ownerDepts || [];
           const meetingsData = positionData.meetings || [];
@@ -237,20 +374,20 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           setMeetings(
             meetingsData.length > 0
               ? meetingsData.map((m: any, i: any) => ({
-                  id: String(i + 1),
-                  ...m,
-                  memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
-                }))
+                id: String(i + 1),
+                ...m,
+                memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
+              }))
               : [
-                  {
-                    id: '1',
-                    meetingBodyId: '',
-                    meetingBodyName: '',
-                    memberGubun: '',
-                    meetingPeriod: '',
-                    deliberationContent: '',
-                  },
-                ]
+                {
+                  id: '1',
+                  meetingBodyId: '',
+                  meetingBodyName: '',
+                  memberGubun: '',
+                  meetingPeriod: '',
+                  deliberationContent: '',
+                },
+              ]
           );
           setManagers(
             managersData.length > 0
@@ -299,24 +436,35 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   // 입력값 변경 핸들러
   const handleInputChange =
     (field: keyof FormData) =>
-    (
-      event:
-        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-        | { target: { value: string } }
-    ) => {
-      const value = event.target.value;
-      setFormData(prev => ({
-        ...prev,
-        [field]: value,
-      }));
+      (
+        event:
+          | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+          | { target: { value: string } }
+      ) => {
+        const value = event.target.value;
 
-      if (validationErrors[field]) {
-        setValidationErrors(prev => ({
-          ...prev,
-          [field]: '',
-        }));
-      }
-    };
+        // 부서 선택 시 부서명도 함께 저장
+        if (field === 'writeDeptCd') {
+          const selectedDept = departments.find(dept => dept.value === value);
+          setFormData(prev => ({
+            ...prev,
+            [field]: value,
+            writeDeptName: selectedDept ? selectedDept.label : '',
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            [field]: value,
+          }));
+        }
+
+        if (validationErrors[field]) {
+          setValidationErrors(prev => ({
+            ...prev,
+            [field]: '',
+          }));
+        }
+      };
 
   // 소관부서 추가
   const addOwnerDept = () => {
@@ -360,9 +508,9 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       prev.map(meeting =>
         meeting.id === id
           ? {
-              ...meeting,
-              [field]: value,
-            }
+            ...meeting,
+            [field]: value,
+          }
           : meeting
       )
     );
@@ -387,12 +535,12 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         prev.map(meeting =>
           meeting.id === currentMeetingId
             ? {
-                ...meeting,
-                meetingBodyId: selectedMeeting.id,
-                meetingBodyName: selectedMeeting.name,
-                meetingPeriod: selectedMeeting.period || '',
-                deliberationContent: selectedMeeting.content || '',
-              }
+              ...meeting,
+              meetingBodyId: selectedMeeting.id,
+              meetingBodyName: selectedMeeting.name,
+              meetingPeriod: selectedMeeting.period || '',
+              deliberationContent: selectedMeeting.content || '',
+            }
             : meeting
         )
       );
@@ -439,11 +587,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         prev.map(manager =>
           manager.id === currentManagerId
             ? {
-                ...manager,
-                empNo: selectedEmployee.num,
-                empName: selectedEmployee.username,
-                position: selectedEmployee.jobRankCd,
-              }
+              ...manager,
+              empNo: selectedEmployee.num,
+              empName: selectedEmployee.username,
+              position: selectedEmployee.jobRankCd,
+            }
             : manager
         )
       );
@@ -474,10 +622,10 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           prev.map(dept =>
             dept.id === currentOwnerDeptId
               ? {
-                  ...dept,
-                  deptCode: selectedDepartment.deptCode,
-                  deptName: selectedDepartment.deptName,
-                }
+                ...dept,
+                deptCode: selectedDepartment.deptCode,
+                deptName: selectedDepartment.deptName,
+              }
               : dept
           )
         );
@@ -511,6 +659,13 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     setLoading(true);
     setError(null);
 
+    // 저장 전 폼 데이터 로깅 (디버깅용)
+    console.log('저장할 폼 데이터:', formData);
+    console.log('선택된 부서:', {
+      코드: formData.writeDeptCd,
+      이름: formData.writeDeptName
+    });
+
     const positionRequestData = {
       positionName: formData.positionName,
       writeDeptCd: formData.writeDeptCd,
@@ -521,19 +676,19 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
     try {
       let response: PositionData;
-      console.log(positionRequestData,mode,"test 4")
+      console.log(positionRequestData, mode, "test 4")
       if (mode === 'create') {
         response = await apiClient.post('/positions', positionRequestData);
       } else {
         response = await apiClient.put(`/positions/${positionId}`, positionRequestData);
       }
-      console.log(response,"test 5")
+      console.log(response, "test 5")
       if (onSave) {
         onSave(response); // ← 백엔드 응답 객체를 넘김
       }
       onClose();
     }
-     catch (err) {
+    catch (err) {
       setError('저장 중 오류가 발생했습니다.');
       console.error(err);
     } finally {
@@ -626,15 +781,30 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                 value={formData.writeDeptCd}
                 label='작성부서 *'
                 onChange={handleInputChange('writeDeptCd')}
-                disabled={mode === 'view'}
+                disabled={mode === 'view' || departmentsLoading}
               >
                 <MenuItem value=''>선택하세요</MenuItem>
-                {getDeptCodes().map(code => (
-                  <MenuItem key={code.code} value={code.code}>
-                    {code.codeName}
-                  </MenuItem>
-                ))}
+                {departmentsLoading ? (
+                  <MenuItem disabled>로딩 중...</MenuItem>
+                ) : departments.length > 0 ? (
+                  departments.map(dept => (
+                    <MenuItem key={dept.value} value={dept.value}>
+                      {dept.label}
+                    </MenuItem>
+                  ))
+                ) : (
+                  getDeptCodes().map(code => (
+                    <MenuItem key={code.code} value={code.code}>
+                      {code.codeName}
+                    </MenuItem>
+                  ))
+                )}
               </Select>
+              {departmentsError && (
+                <Box sx={{ color: 'warning.main', fontSize: '0.75rem', mt: 0.5 }}>
+                  {departmentsError} (공통코드 사용 중)
+                </Box>
+              )}
               {validationErrors.writeDeptCd && (
                 <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
                   {validationErrors.writeDeptCd}
