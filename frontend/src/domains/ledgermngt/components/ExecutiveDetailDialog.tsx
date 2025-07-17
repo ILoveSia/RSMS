@@ -76,6 +76,10 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       const positionDetails = await execOfficerApi.getPositionDetails(positionId);
       console.log('직책 상세 정보 조회 결과:', positionDetails);
 
+      setFormData(prev => ({
+          ...prev,
+          positionName:positionDetails.positionName||[]
+        }));
       // 조회된 데이터 설정
       if (positionDetails) {
         setFormData(prev => ({
@@ -133,7 +137,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         ownerDepts: [],
         meetings: []
       }));
-      const response=await apiClient.get('/positions/employee/${employee.')
+      console.log(employee,"12341234")
+      const response=await apiClient.get('/users/employee/${employee.username}')
       /*
       // 사용자 ID로 소관부서와 주관회의체 데이터 조회
       if (employee.id) {
@@ -185,10 +190,11 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   };
 
   const isFormValid = () => {
+    console.log(formData.positionName,formData.executiveName,formData.appointmentDate)
     return !!(
-      formData.positionName &&
+      formData.positionNameMapped &&
       formData.executiveName &&
-      formData.jobTitle &&
+      // formData.jobTitle &&
       formData.appointmentDate
     );
   };
@@ -222,7 +228,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               fullWidth
               required
               label="성명"
-              value={formData.empId || ''}
+              value={formData.executiveName || ''}
               onChange={e => handleInputChange('executiveName', e.target.value)}
               disabled={mode === 'view'}
             />
