@@ -208,10 +208,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <span style={{
-          color: value === 'Y' ? '#dc3545' : '#28a745',
+          color: value === 'Y' ? '#dc3545' : value==='N'? '#28a745':'#000000',
           fontWeight: 'bold'
         }}>
-          {value === 'Y' ? '있음' : value || '해당없음'}
+          {value === 'Y' ? '있음' : value==='N'? '없음 ' : value || '해당없음'}
         </span>
       )
     },

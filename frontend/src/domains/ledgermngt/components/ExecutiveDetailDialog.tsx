@@ -24,8 +24,8 @@ import {
   TableRow
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-import { DatePicker } from '../../../shared/components';
 import apiClient from '../../../app/common/api/client';
+import { DatePicker } from '../../../shared/components';
 
 interface ExecutiveDetailDialogProps {
   mode: DialogMode;
@@ -102,7 +102,15 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   useEffect(() => {
     console.log('Executive 데이터:', executive);
     if (executive && open) {
-      setFormData(executive);
+      // empId 필드를 executiveName으로도 설정하여 성명 필드에 표시되도록 함
+      // dualYn 필드를 hasConcurrentPosition으로 매핑하여 라디오박스에 표시되도록 함
+      // dualDetails 필드를 concurrentPosition으로 매핑하여 겸직사항 필드에 표시되도록 함
+      setFormData({
+        ...executive,
+        executiveName: executive.empId || '',
+        hasConcurrentPosition: executive.dualYn === 'Y',
+        concurrentPosition: executive.dualDetails || ''
+      });
 
       // 직책 ID가 있으면 직책 상세 정보 조회
       if (executive.positionsId) {
@@ -126,7 +134,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       setFormData((prev: any) => ({
         ...prev,
         employee,
-        empId: employee.num,
+        empId: employee.username,
         executiveName: employee.username, // 성명 자동 입력
       }));
 
@@ -138,7 +146,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         meetings: []
       }));
       console.log(employee,"12341234")
-      const response=await apiClient.get('/users/employee/${employee.username}')
+      const response=await apiClient.get(`/users/employee/${employee.username}`)
       /*
       // 사용자 ID로 소관부서와 주관회의체 데이터 조회
       if (employee.id) {
@@ -173,8 +181,15 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       setLoading(true);
       setError(null);
 
+      // 저장 전에 hasConcurrentPosition과 concurrentPosition을 dualYn과 dualDetails로 변환
+      const dataToSave = {
+        ...formData,
+        dualYn: formData.hasConcurrentPosition ? 'Y' : 'N',
+        dualDetails: formData.concurrentPosition || ''
+      };
+
       // onSave 함수 호출
-      await onSave(formData);
+      await onSave(dataToSave);
 
       setShowSuccessAlert(true);
       setTimeout(() => {
