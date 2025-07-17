@@ -165,7 +165,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
     try {
       const apiDepartments = await DepartmentApi.getActive();
-      console.log('API 부서 데이터:', apiDepartments);
 
       if (apiDepartments && Array.isArray(apiDepartments)) {
         // API 응답을 드롭다운에 맞는 형식으로 변환
@@ -181,7 +180,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         try {
           localStorage.setItem('cachedDepartments', JSON.stringify(departmentOptions));
           localStorage.setItem('departmentsCacheTimestamp', String(new Date().getTime()));
-          console.log('부서 데이터 캐시 저장 완료:', departmentOptions.length);
         } catch (cacheError) {
           console.warn('부서 데이터 캐싱 실패:', cacheError);
           // 캐싱 실패는 치명적이지 않으므로 에러 상태로 설정하지 않음
@@ -303,7 +301,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     ) {
       try {
         const parsedDepartments = JSON.parse(cachedDepartments);
-        console.log('부서 데이터 캐시에서 로드:', parsedDepartments.length);
         setDepartments(parsedDepartments);
       } catch (error) {
         console.error('캐시된 부서 데이터 복원 실패:', error);
