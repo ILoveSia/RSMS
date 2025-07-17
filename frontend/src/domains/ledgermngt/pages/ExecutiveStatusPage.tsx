@@ -3,6 +3,8 @@
  * 책무구조 원장 관리 - 임원 현황
  */
 import apiClient from '@/app/common/api/client'; // axios 인스턴스 등
+import { useReduxState } from '@/app/store/use-store';
+import type { CommonCode } from '@/app/types/common';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -117,6 +119,46 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // 성공 알림 상태
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const { data: allCodes, setData: setAllCodes } = useReduxState<
+    { data: CommonCode[] } | CommonCode[]
+  >('codeStore/allCodes');
+
+  // 부서 데이터 상태
+  const [departments, setDepartments] = useState<Array<{ value: string; label: string }>>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState<boolean>(false);
+  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+
+  // 공통코드 배열 추출 함수
+  const getCodesArray = (): CommonCode[] => {
+    if (!allCodes) return [];
+    if (Array.isArray(allCodes)) {
+      return allCodes;
+    }
+    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
+      return allCodes.data;
+    }
+    return [];
+  };
+
+  // 공통코드 헬퍼 함수
+  const getDeptCodes = () => {
+    // 부서 API에서 데이터를 가져온 경우 해당 데이터 사용
+    if (departments.length > 0) {
+      return departments.map(dept => ({
+        code: dept.value,
+        codeName: dept.label,
+        groupCode: 'DEPT',
+        useYn: 'Y',
+        sortOrder: 0
+      }));
+    }
+
+    // 기존 공통코드 로직 (폴백용)
+    const codes = getCodesArray();
+    return codes
+      .filter(code => code.groupCode === 'DEPT' && code.useYn === 'Y')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  };
 
   const fetchExecutiveStatus = useCallback(async () => {
     setLoading(true);
@@ -208,10 +250,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <span style={{
-          color: value === 'Y' ? '#dc3545' : value==='N'? '#28a745':'#000000',
+          color: value === 'Y' ? '#dc3545' : value === 'N' ? '#28a745' : '#000000',
           fontWeight: 'bold'
         }}>
-          {value === 'Y' ? '있음' : value==='N'? '없음 ' : value || '해당없음'}
+          {value === 'Y' ? '있음' : value === 'N' ? '없음 ' : value || '해당없음'}
         </span>
       )
     },
@@ -224,7 +266,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <span style={{
-          color: value ? '#1976d2' : '#6c757d',
+          color: "#000000",
           fontStyle: value ? 'normal' : 'italic'
         }}>
           {value || '해당없음'}
