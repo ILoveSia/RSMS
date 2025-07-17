@@ -36,7 +36,6 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, className = '' }) =>
 
   // 활성 탭이 없는 경우
   if (!activeTab) {
-    console.log('❌ [TabContent] 활성 탭이 없음');
     return (
       <Box
         className={`tab-content ${className}`}

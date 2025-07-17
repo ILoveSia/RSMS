@@ -43,7 +43,6 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
 
   // 로딩 중인 경우
   if (authState.loading) {
-    console.log('⏳ [RouteGuard] 인증 상태 로딩 중...');
     return (
       <Box
         display='flex'
@@ -133,7 +132,6 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
   }
 
   // 모든 검증을 통과한 경우 자식 컴포넌트 렌더링
-  console.log('✅ [RouteGuard] 모든 권한 체크 통과 -> 페이지 렌더링');
   return <>{children}</>;
 };
 
@@ -167,7 +165,6 @@ export const authUtils = {
       user,
     };
     localStorage.setItem('authState', JSON.stringify(authState));
-    console.log('✅ 인증 상태 저장 완료:', user);
   },
 
   /**
@@ -175,7 +172,6 @@ export const authUtils = {
    */
   clearAuthState: () => {
     localStorage.removeItem('authState');
-    console.log('🚪 인증 상태 제거 완료');
   },
 
   /**

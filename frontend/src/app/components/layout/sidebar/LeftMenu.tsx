@@ -63,7 +63,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   useEffect(() => {
     // AuthContext가 아직 로딩 중이면 메뉴 복원을 대기
     if (authState.loading) {
-      console.log('⏳ [LeftMenu] AuthContext 로딩 중 - 메뉴 복원 대기');
       return;
     }
 
@@ -109,11 +108,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
               return converted;
             });
 
-          console.log(
-            '✅ [LeftMenu] localStorage에서 메뉴 복원 완료:',
-            convertedMenus.length,
-            '개'
-          );
 
           setMenuItems(convertedMenus);
           setIsMenuLoaded(true);
@@ -217,7 +211,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         .sort((a, b) => a.sortOrder - b.sortOrder) // 정렬 순서 적용
         .map(menu => convertMenuToMenuItem(menu));
 
-      console.log('✅ [LeftMenu] Redux store에서 메뉴 데이터 로드:', convertedMenus.length, '개');
       setMenuItems(convertedMenus);
       setIsMenuLoaded(true);
 
@@ -332,7 +325,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
     );
   }
 
-  console.log('🎯 [LeftMenu] 메뉴 렌더링:', menuItems.length, '개 메뉴');
 
   return (
     <div className={`left-menu ${className}`}>
