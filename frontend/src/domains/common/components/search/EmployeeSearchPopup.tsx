@@ -168,9 +168,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
         params.append('deptCd', searchConditions.deptCd.trim());
       }
 
-
       const response = await apiClient.get<UserResponse[]>(`/users/employees?${params.toString()}`);
-
 
       if (response && Array.isArray(response)) {
         const transformedEmployees: EmployeeSearchResult[] = await Promise.all(
@@ -254,9 +252,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
         >
           선택
         </Button>
-        <Button onClick={onClose}>
-          취소
-        </Button>
+        <Button onClick={onClose}>취소</Button>
       </>
     );
   };
@@ -268,13 +264,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   ];
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      title={title}
-      maxWidth='lg'
-      actions={renderActions()}
-    >
+    <Dialog open={open} onClose={onClose} title={title} maxWidth='lg' actions={renderActions()}>
       <Box sx={{ height: '80vh', display: 'flex', flexDirection: 'column' }}>
         {/* 검색 영역 */}
         <Box sx={{ mb: 2 }}>
@@ -303,12 +293,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
               size='small'
               sx={{ minWidth: 120 }}
             />
-            <Button
-              onClick={handleSearch}
-              variant='contained'
-              color='secondary'
-              disabled={loading}
-            >
+            <Button onClick={handleSearch} variant='contained' color='secondary' disabled={loading}>
               {loading ? '검색중...' : '검색'}
             </Button>
           </Box>

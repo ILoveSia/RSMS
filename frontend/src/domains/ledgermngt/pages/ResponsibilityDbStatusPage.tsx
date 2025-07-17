@@ -4,7 +4,7 @@
 import '@/assets/scss/style.css';
 import { Button, DataGrid } from '@/shared/components/ui';
 import TextField from '@/shared/components/ui/data-display/textfield';
-import { ComboBox } from '@/shared/components/ui/form';
+import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
 import PageContent from '@/shared/components/ui/layout/PageContent';
 import PageHeader from '@/shared/components/ui/layout/PageHeader';
@@ -18,10 +18,6 @@ import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { responsibilityApi, type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
-interface SelectOption {
-  value: string;
-  label: string;
-}
 
 interface IResponsibilityDbStatusPageProps {
   className?: string;
@@ -37,15 +33,10 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
 
     // 검색 조건 상태
-    const [ledgerOrder, setLedgerOrder] = useState<string>('2024-001');
+    const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [searchText, setSearchText] = useState<string>('');
 
-    // 원장차수 옵션
-    const ledgerOrderOptions: SelectOption[] = [
-      { value: '2024-001', label: '2024-001' },
-      { value: '2024-002', label: '2024-002' },
-      { value: '2024-003', label: '2024-003' },
-    ];
+    // 원장차수는 LedgerOrderSelect에서 자동 관리
 
     // 책무 목록 조회 (성능 최적화)
     const fetchResponsibilities = useCallback(async (searchId?: string) => {
@@ -290,12 +281,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             }}
           >
             <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-            <ComboBox
+            <LedgerOrderSelect
               value={ledgerOrder}
-              options={ledgerOrderOptions}
-              onChange={value => setLedgerOrder(value as string)}
+              onChange={setLedgerOrder}
               size='small'
-              sx={{ width: '130px' }}
+              sx={{ minWidth: 150, maxWidth: 200 }}
             />
             <span
               style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}

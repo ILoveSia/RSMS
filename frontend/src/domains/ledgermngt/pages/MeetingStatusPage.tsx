@@ -8,7 +8,7 @@ import type { CommonCode } from '@/app/types/common';
 import { Confirm } from '@/shared/components/modal';
 import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { ComboBox, Select } from '@/shared/components/ui/form';
+import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -59,7 +59,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
   const [meetingBodies, setMeetingBodies] = useState<MeetingBody[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [filterDivision, setFilterDivision] = useState<string>('');
+  const [filterDivision, setFilterDivision] = useState<string>('전체');
 
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
@@ -372,9 +372,9 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
           flexDirection: 'column',
           overflow: 'hidden',
           minHeight: 0,
-          position: 'relative',  // 좌우 패딩을 3으로 수정
+          position: 'relative', // 좌우 패딩을 3으로 수정
           py: 1,
-          px:0
+          px: 0,
         }}
       >
         {/* 필터 영역 */}
@@ -405,13 +405,16 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
 
           <ComboBox
             value={filterDivision}
-            options={getMeetingBodyCodes().map(code => ({
-              value: code.code,
-              label: code.codeName,
-            }))}
-            onChange={option => setFilterDivision(option?.value as string)}
+            options={[
+              { value: '전체', label: '전체' },
+              ...getMeetingBodyCodes().map(code => ({
+                value: code.code,
+                label: code.codeName,
+              })),
+            ]}
+            onChange={value => setFilterDivision(value as string)}
             size='small'
-            sx={{width: 140}}
+            sx={{ width: 140 }}
           />
           <Button
             variant='contained'
@@ -468,7 +471,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
           }}
         >
           <DataGrid<MeetingBody>
-
             data={meetingBodies}
             columns={meetingColumns}
             loading={loading}
@@ -480,7 +482,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
               setSelectedIds(selectedRowIds.map(id => String(id)));
             }}
             rowIdField='meetingBodyId'
-
             serverSide
           />
         </Box>

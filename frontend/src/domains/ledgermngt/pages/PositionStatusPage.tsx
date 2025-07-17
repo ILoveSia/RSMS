@@ -1,9 +1,12 @@
-import DepartmentSearchPopup, { type Department } from '@/app/components/DepartmentSearchPopup';
-import EmployeeSearchPopup, {
+import {
+  DepartmentSearchPopup,
+  EmployeeSearchPopup,
+  type Department,
   type EmployeeSearchResult,
-} from '@/app/components/EmployeeSearchPopup';
+} from '@/domains/common/components/search';
 import { Confirm } from '@/shared/components/modal';
-import { Button, DataGrid, Select } from '@/shared/components/ui';
+import { Button, DataGrid } from '@/shared/components/ui';
+import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -27,9 +30,6 @@ interface IPositionStatusPageProps {
 const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): React.JSX.Element => {
   // 기존 상태 관리 방식
   const [rows, setRows] = useState<PositionStatusRow[]>([]);
-  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   const [positionDialogOpen, setPositionDialogOpen] = useState(false);
   const [positionDialogMode, setPositionDialogMode] = useState<DialogMode>('create');
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
-  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('');
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
 
   // 부서 검색 팝업 상태
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
@@ -83,21 +83,10 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
     }
   }, []);
 
-  // 원장차수 목록 조회
-  const fetchLedgerOrders = useCallback(async () => {
-    try {
-      const data = await positionApi.getLedgerOrderSelectList();
-      setLedgerOrderOptions(data);
-    } catch (err: unknown) {
-      console.error('원장차수 목록 조회 실패:', err);
-    }
-  }, []);
-
   // 초기 데이터 로드
   useEffect(() => {
     fetchPositionStatus();
-    fetchLedgerOrders();
-  }, [fetchPositionStatus, fetchLedgerOrders]);
+  }, [fetchPositionStatus]);
 
   // 부서 선택 핸들러
   const handleDepartmentSelect = (departments: Department | Department[]) => {
@@ -358,20 +347,11 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           }}
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <Select
+          <LedgerOrderSelect
             value={selectedLedgerOrder}
-            onChange={value => setSelectedLedgerOrder(value as string)}
+            onChange={setSelectedLedgerOrder}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
-            options={[
-              { value: '', label: '전체' },
-              ...(ledgerOrderOptions.length > 0
-                ? ledgerOrderOptions.map(option => ({
-                    value: option.value,
-                    label: option.label,
-                  }))
-                : [{ value: '', label: '데이터 로딩 중...', disabled: true }]),
-            ]}
           />
           <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
             조회

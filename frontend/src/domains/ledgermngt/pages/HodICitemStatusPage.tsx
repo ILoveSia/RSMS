@@ -1,9 +1,10 @@
-import { Button, Select } from '@/shared/components/ui';
+import { Button } from '@/shared/components/ui';
 import { DataGrid } from '@/shared/components/ui/data-display';
+import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -15,7 +16,7 @@ interface IHodICitemStatusPageProps {
 }
 
 const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.Element => {
-  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('');
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -26,10 +27,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedItemId, setSelectedItemId] = useState<number | undefined>();
 
-  // 원장차수 옵션 데이터 (실제로는 API에서 가져와야 함)
-  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<
-    Array<{ value: string; label: string }>
-  >([]);
+  // 원장차수 관련 상태는 LedgerOrderSelect에서 자동 관리됨
 
   // 컬럼 정의 - API 응답 구조에 맞게 수정
   const columns: DataGridColumn<HodICItemRow>[] = [
@@ -150,7 +148,9 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     setError(null);
 
     try {
-      const data = await hodICItemApi.getHodICItemStatusList(selectedLedgerOrder || undefined);
+      const data = await hodICItemApi.getHodICItemStatusList(
+        selectedLedgerOrder === 'ALL' ? undefined : selectedLedgerOrder
+      );
       setRows(data);
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -160,15 +160,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     }
   }, [selectedLedgerOrder]);
 
-  // 원장차수 목록 조회
-  const fetchLedgerOrders = useCallback(async () => {
-    try {
-      const data = await positionApi.getLedgerOrderSelectList();
-      setLedgerOrderOptions(data);
-    } catch (err: unknown) {
-      console.error('원장차수 목록 조회 실패:', err);
-    }
-  }, []);
+  // 원장차수 목록은 LedgerOrderSelect에서 자동으로 로드됨
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
@@ -272,33 +264,14 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
           }}
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <Select
+          <LedgerOrderSelect
             value={selectedLedgerOrder}
-            onChange={value => setSelectedLedgerOrder(value as string)}
+            onChange={setSelectedLedgerOrder}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
-            options={[
-              { value: '', label: '전체' },
-              ...(ledgerOrderOptions.length > 0
-                ? ledgerOrderOptions.map(option => ({
-                    value: option.value,
-                    label: option.label,
-                  }))
-                : [{ value: '', label: '데이터 로딩 중...', disabled: true }]),
-            ]}
           />
           <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
             조회
-          </Button>
-          <Button
-            variant='contained'
-            size='small'
-            color='success'
-            onClick={() => {
-              /* 차수생성 로직 미구현 */
-            }}
-          >
-            책무번호생성
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <Button
