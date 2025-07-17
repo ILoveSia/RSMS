@@ -234,27 +234,23 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       return;
     }
     const responsibilityRequestData = {
-        responsibilityContent: formData.responsibilityContent,
-        details: formData.details.map(d => ({
-          responsibilityDetailContent: d.responsibilityDetailContent,
-          keyManagementTasks: d.keyManagementTasks,
-          relatedBasis: d.relatedBasis,
-        })),
+      responsibilityContent: formData.responsibilityContent,
+      details: formData.details.map(d => ({
+        responsibilityDetailContent: d.responsibilityDetailContent,
+        keyManagementTasks: d.keyManagementTasks,
+        relatedBasis: d.relatedBasis,
+      })),
     };
-    console.log("responsibilityRequestData",responsibilityRequestData);
+    console.log("responsibilityRequestData", responsibilityRequestData);
     try {
       setLoading(true);
       // TODO: API 호출로 책무 저장
       let response: ResponsibilityData;
-      if(mode === 'create'){
-        console.log("test 12341234");
+      if (mode === 'create') {
         response = await apiClient.post('/api/responsibilities', responsibilityRequestData);
-        console.log("test 23452345");
-      }else{
+      } else {
         response = await apiClient.put(`/api/responsibilities/${responsibilityId}`, responsibilityRequestData);
       }
-      // const response = await apiClient.post('/responsibilities', formData);
-      console.log("response",response);
 
       await onSave();
 
