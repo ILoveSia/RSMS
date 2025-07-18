@@ -133,23 +133,18 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
     try {
       // API 호출 대신 목업 데이터 사용
-      const filteredData = mockData.filter(item => {
-        const matchesLedgerOrder = ledgerOrderFilter === '전체' || true; // 원장차수는 임시로 모두 통과
-        const matchesPosition = positionFilter === '전체' || item.positionName === positionFilter;
-        return matchesLedgerOrder && matchesPosition;
-      });
-
-      // 페이지네이션 처리
-      const start = (pageInfo.page - 1) * pageInfo.size;
-      const end = start + pageInfo.size;
-      const paginatedData = filteredData.slice(start, end);
-
-      setRows(paginatedData);
-      setPageInfo(prev => ({
-        ...prev,
-        totalElements: filteredData.length,
-        totalPages: Math.ceil(filteredData.length / pageInfo.size)
+      const response = await fetch('/api/position-responsibilities');
+      const data = await response.json();
+      console.log('data: ', data);
+      const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
+        ...item,
+        positionName: item.positions_name ?? '',
+        responsibilityOverview: item.role_summ ?? '',
+        responsibilityStartDate: item.created_at ?? '',
+        lastModifiedDate: item.updated_at ?? '',
       }));
+      setRows(mappedRows);
+      console.log('mappedRows: ', mappedRows);
     } catch (err) {
       console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
@@ -215,7 +210,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           whiteSpace: 'nowrap',
           maxWidth: '100%'
         }}>
-          {value || '미작성'}
+          {value || '해당 없음'}
         </Box>
       )
     },
@@ -224,14 +219,34 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       headerName: '책무 시작일',
       width: 120,
       align: 'center',
-      headerAlign: 'center'
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Box sx={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: '100%'
+        }}>
+          {value || '해당 없음'}
+        </Box>
+      )
     },
     {
       field: 'lastModifiedDate',
       headerName: '최종 수정일자',
       width: 120,
       align: 'center',
-      headerAlign: 'center'
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Box sx={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          maxWidth: '100%'
+        }}>
+          {value || '해당 없음'}
+        </Box>
+      )
     }
   ];
 
