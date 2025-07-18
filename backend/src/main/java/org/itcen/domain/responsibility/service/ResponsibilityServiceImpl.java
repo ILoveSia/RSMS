@@ -14,8 +14,13 @@ import org.itcen.domain.responsibility.repository.ResponsibilityDetailRepository
 import org.itcen.domain.responsibility.repository.ResponsibilityRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResponsibilityServiceImpl implements ResponsibilityService {
@@ -54,25 +59,35 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
         return responsibilityDetailRepository.findResponsibilityStatusList();
     }
 
+    @PersistenceContext
+    private EntityManager em;
+
     @Override
     @Transactional(readOnly = true)
-    public ResponsibilityResponseDto getResponsibilityById(Long id) {
-        Responsibility responsibility = responsibilityRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("책무를 찾을 수 없습니다. ID: " + id));
-
-        List<ResponsibilityDetail> details =
-                responsibilityDetailRepository.findAllByResponsibilityId(id);
-
-        List<ResponsibilityDetailResponseDto> detailDtos = details.stream()
-                .map(detail -> ResponsibilityDetailResponseDto.builder().id(detail.getId())
-                        .responsibilityDetailContent(detail.getResponsibilityDetailContent())
-                        .keyManagementTasks(detail.getResponsibilityMgtSts())
-                        .relatedBasis(detail.getResponsibilityRelEvid()).build())
-                .collect(Collectors.toList());
-
-        return ResponsibilityResponseDto.builder().id(responsibility.getId())
-                .responsibilityContent(responsibility.getResponsibilityContent())
-                .details(detailDtos).build();
+    public List<ResponsibilityResponseDto> getResponsibilityById(Long id) {
+        String sql = "SELECT "+
+    "r.responsibility_id, "+
+    "r2.responsibility_content , "+
+    "r3.responsibility_detail_content, "+
+    "r3.responsibility_rel_evid, "+
+    "r3.responsibility_mgt_sts "+
+    "FROM responsibility r "+
+    "left join responsibility r2 on r.responsibility_id = r2.responsibility_id "+
+    "left join responsibility_detail r3 on r.responsibility_id = r3.responsibility_id "+
+    "where r.responsibility_id ="+id+" "+
+    "ORDER BY r.responsibility_id;";
+        List<Object[]> results = em.createNativeQuery(sql).getResultList();
+        List<ResponsibilityResponseDto> responseDtos = new ArrayList<>();
+        responseDtos=results.stream().map(row -> {
+            ResponsibilityResponseDto dto = new ResponsibilityResponseDto();
+            dto.setId(row[0] != null ? ((Number) row[0]).longValue() : null);
+            dto.setResponsibilityContent(row[1] != null ? (String) row[1] : "");
+            dto.setResponsibilityDetailContent(row[2] != null ? (String) row[2] : "");
+            dto.setResponsibilityRelEvid(row[3] != null ? (String) row[3] : "");
+            dto.setResponsibilityMgtSts(row[4] != null ? (String) row[4] : "");
+            return dto;
+        }).collect(Collectors.toList());
+        return responseDtos;
     }
 
     @Override
@@ -101,4 +116,5 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
 
         return responsibility;
     }
+
 }

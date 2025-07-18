@@ -92,9 +92,16 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
           responsibilityContent: resp.responsibilityContent,
         })
       );
-
-      setResponsibilities(convertedResponsibilities);
-      setFilteredResponsibilities(convertedResponsibilities);
+      // 중복된 responsibility_id 제거
+      const uniqueResponsibilities = Array.from(
+        new Set(convertedResponsibilities.map(item => item.responsibilityId))
+      ).map(id =>
+        convertedResponsibilities.find(item => item.responsibilityId === id)
+      ).filter(Boolean);
+      const answer = uniqueResponsibilities as ResponsibilitySearchResult[];
+      console.log('answer: ', answer);
+      setResponsibilities(answer);
+      setFilteredResponsibilities(answer);
     } catch (err) {
       console.error('책무 목록 조회 실패:', err);
       setError('책무 목록을 불러오는데 실패했습니다.');
@@ -167,7 +174,6 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
     }
     onClose();
   };
-
   // 각 행에 고유 ID 생성
   const getRowsWithUniqueIds = () => {
     return filteredResponsibilities.map((resp, index) => ({

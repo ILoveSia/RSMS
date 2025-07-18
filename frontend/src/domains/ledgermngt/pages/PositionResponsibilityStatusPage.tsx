@@ -135,7 +135,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // API 호출 대신 목업 데이터 사용
       const response = await fetch('/api/position-responsibilities');
       const data = await response.json();
-      console.log('data: ', data);
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         ...item,
         positionName: item.positions_name ?? '',
@@ -144,7 +143,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         lastModifiedDate: item.updated_at ?? '',
       }));
       setRows(mappedRows);
-      console.log('mappedRows: ', mappedRows);
     } catch (err) {
       console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
@@ -261,7 +259,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const handleSave = async () => {
     try {
       // TODO: API 호출로 데이터 저장
-      console.log('저장된 데이터:', selectedDetailData);
 
       // 목록 새로고침
       await fetchData();
@@ -280,7 +277,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       const file = (event.target as HTMLInputElement).files?.[0];
       if (file) {
         // 임시로 성공 메시지만 표시
-        console.log('엑셀 파일 선택됨:', file.name);
         alert('엑셀 업로드가 완료되었습니다. (테스트용)');
       }
     };
@@ -467,6 +463,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       {/* 상세 다이얼로그 */}
       <ResponsibilityDialog
         open={dialogOpen}
+        positionName={selectedDetailData?.positionName || ''}
         onClose={() => setDialogOpen(false)}
         mode={dialogMode}
         responsibilityId={selectedDetailData?.id || null}
