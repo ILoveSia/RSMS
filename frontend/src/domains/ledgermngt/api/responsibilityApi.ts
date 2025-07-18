@@ -42,18 +42,14 @@ export const responsibilityApi = {
         params.append('responsibilityId', responsibilityId);
       }
 
-      console.log(`[responsibilityApi] getStatusList 호출 - responsibilityId: ${responsibilityId}`);
-      console.log(`[responsibilityApi] API URL: /api/responsibilities/status?${params.toString()}`);
 
       const response = await apiClient.get<ResponsibilityRow[]>(
         `/api/responsibilities/status?${params.toString()}`
       );
 
-      console.log('[responsibilityApi] getStatusList 응답:', response);
 
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
       const result = response || [];
-      console.log('[responsibilityApi] getStatusList 결과:', result);
 
       return result;
     } catch (error) {
@@ -67,17 +63,13 @@ export const responsibilityApi = {
    */
   getById: async (responsibilityId: number): Promise<ResponsibilityRow> => {
     try {
-      console.log(`[responsibilityApi] getById 호출 - responsibilityId: ${responsibilityId}`);
 
       const response = await apiClient.get<ResponsibilityRow>(
         `/api/responsibilities/${responsibilityId}`
       );
 
-      console.log('[responsibilityApi] getById 응답:', response);
-
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
       const result = response;
-      console.log('[responsibilityApi] getById 결과:', result);
 
       return result;
     } catch (error) {
