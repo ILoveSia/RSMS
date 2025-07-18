@@ -155,11 +155,4 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .orElse(departmentId); // 부서를 찾을 수 없으면 ID를 반환
     }
 
-    @Override
-    public List<DepartmentDto.SimpleDto> getSimpleDepartments() {
-        List<Department> departments = departmentRepository.findActiveDepartments();
-        return departments.stream()
-                .map(DepartmentDto.SimpleDto::from)
-                .collect(Collectors.toList());
-    }
 }

@@ -48,12 +48,6 @@ public class DepartmentController {
     /**
      * 프론트엔드 호환용 부서 목록 조회
      */
-    @GetMapping("/simple")
-    public ResponseEntity<ApiResponse<List<DepartmentDto.SimpleDto>>> getSimpleDepartments() {
-        List<DepartmentDto.SimpleDto> departments = departmentService.getSimpleDepartments();
-        return ResponseEntity.ok(ApiResponse.success(departments));
-    }
-
     /**
      * 부서 검색 (페이징)
      */

@@ -60,8 +60,4 @@ public interface DepartmentService {
      */
     String getDepartmentNameById(String departmentId);
 
-    /**
-     * 프론트엔드 호환용 부서 목록 조회
-     */
-    List<DepartmentDto.SimpleDto> getSimpleDepartments();
 }
