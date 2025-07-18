@@ -184,13 +184,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       )
     },
     {
-      field: 'positionId',
-      headerName: '직책 ID',
-      width: 100,
-      align: 'center',
-      headerAlign: 'center'
-    },
-    {
       field: 'positionName',
       headerName: '직책',
       width: 150,
