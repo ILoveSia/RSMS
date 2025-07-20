@@ -2,7 +2,7 @@
 
 -- Drop table
 
--- DROP TABLE public.responsibility;
+-- DROP TABLE public.responsibility CASCADE;
 
 CREATE TABLE public.responsibility (
 	responsibility_id bigserial NOT NULL, -- 책무ID

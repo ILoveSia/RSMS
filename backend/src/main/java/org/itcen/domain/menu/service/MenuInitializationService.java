@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * 메뉴 초기화 서비스
@@ -61,9 +63,30 @@ public class MenuInitializationService implements CommandLineRunner {
         logger.info("메뉴 강제 재초기화 시작");
         
         try {
-            // 기존 메뉴 모두 삭제
-            menuRepository.deleteAll();
-            logger.info("기존 메뉴 데이터 삭제 완료");
+            // 기존 메뉴가 있는지 확인
+            long existingMenuCount = menuRepository.count();
+            if (existingMenuCount > 0) {
+                logger.info("기존 메뉴 {} 개 발견. 안전한 방법으로 삭제 시도", existingMenuCount);
+                
+                // 모든 메뉴 조회 후 하위 메뉴부터 개별 삭제
+                List<Menu> allMenus = menuRepository.findAll();
+                
+                // 메뉴 레벨별로 분류 (높은 레벨부터 삭제)
+                Map<Integer, List<Menu>> menusByLevel = allMenus.stream()
+                    .collect(groupingBy(Menu::getMenuLevel));
+                
+                // 레벨을 내림차순으로 정렬하여 하위 메뉴부터 삭제
+                menusByLevel.keySet().stream()
+                    .sorted((a, b) -> b.compareTo(a)) // 내림차순
+                    .forEach(level -> {
+                        List<Menu> menusAtLevel = menusByLevel.get(level);
+                        logger.info("레벨 {} 메뉴 {} 개 삭제 중", level, menusAtLevel.size());
+                        menuRepository.deleteAll(menusAtLevel);
+                        menuRepository.flush(); // 즉시 반영
+                    });
+                
+                logger.info("기존 메뉴 데이터 삭제 완료");
+            }
             
             // 새 메뉴 생성
             initializeMenus();
@@ -175,15 +198,15 @@ public class MenuInitializationService implements CommandLineRunner {
     private void createLedgerMgmtSubMenus(Menu parent) {
         List<Menu> subMenus = new ArrayList<>();
         
-        // 회의체 현황
-        Menu companyStatus = new Menu(
+        // 1. 회의체 현황
+        Menu meetingStatus = new Menu(
             "LEDGER_MGMT_MEETING", "회의체 현황", "Meeting Status", 
-            parent, 2, 1, "/ledger/company-status", "fas fa-building", "회의체 현황 관리"
+            parent, 2, 1, "/ledger/company-status", "fas fa-users", "회의체 현황 관리"
         );
-        addPermissions(companyStatus);
-        subMenus.add(companyStatus);
+        addPermissions(meetingStatus);
+        subMenus.add(meetingStatus);
         
-        // 직책 현황
+        // 2. 직책 현황
         Menu positionStatus = new Menu(
             "LEDGER_MGMT_POSITION", "직책 현황", "Position Status", 
             parent, 2, 2, "/ledger/position-status", "fas fa-user-tie", "직책 현황 관리"
@@ -191,7 +214,53 @@ public class MenuInitializationService implements CommandLineRunner {
         addPermissions(positionStatus);
         subMenus.add(positionStatus);
         
-
+        // 3. 책무 DB현황
+        Menu responsibilityDbStatus = new Menu(
+            "LEDGER_MGMT_RESPONSIBILITY_DB", "책무 DB현황", "Responsibility DB Status", 
+            parent, 2, 3, "/ledger/responsibility-db-status", "fas fa-database", "책무 DB현황 관리"
+        );
+        addPermissions(responsibilityDbStatus);
+        subMenus.add(responsibilityDbStatus);
+        
+        // 4. 직책별 책무 현황
+        Menu positionResponsibilityStatus = new Menu(
+            "LEDGER_MGMT_POSITION_RESPONSIBILITY", "직책별 책무 현황", "Position Responsibility Status", 
+            parent, 2, 4, "/ledger/detail-status", "fas fa-list-alt", "직책별 책무 현황 관리"
+        );
+        addPermissions(positionResponsibilityStatus);
+        subMenus.add(positionResponsibilityStatus);
+        
+        // 5. 임원 현황
+        Menu executiveStatus = new Menu(
+            "LEDGER_MGMT_EXECUTIVE", "임원 현황", "Executive Status", 
+            parent, 2, 5, "/ledger/business-status", "fas fa-business-center", "임원 현황 관리"
+        );
+        addPermissions(executiveStatus);
+        subMenus.add(executiveStatus);
+        
+        // 6. 임원별 책무 현황
+        Menu executiveResponsibilityStatus = new Menu(
+            "LEDGER_MGMT_EXECUTIVE_RESPONSIBILITY", "임원별 책무 현황", "Executive Responsibility Status", 
+            parent, 2, 6, "/ledger/business-detail-status", "fas fa-analytics", "임원별 책무 현황 관리"
+        );
+        addPermissions(executiveResponsibilityStatus);
+        subMenus.add(executiveResponsibilityStatus);
+        
+        // 7. 부서장 내부통제 항목 현황
+        Menu hodICItemStatus = new Menu(
+            "LEDGER_MGMT_HOD_IC_ITEM", "부서장 내부통제 항목 현황", "HOD Internal Control Item Status", 
+            parent, 2, 7, "/ledger/internal-control", "fas fa-shield-alt", "부서장 내부통제 항목 현황 관리"
+        );
+        addPermissions(hodICItemStatus);
+        subMenus.add(hodICItemStatus);
+        
+        // 8. 책무구조도 제출 관리
+        Menu structureSubmissionMgmt = new Menu(
+            "LEDGER_MGMT_STRUCTURE_SUBMISSION", "책무구조도 제출 관리", "Structure Submission Management", 
+            parent, 2, 8, "/ledger/structure-submission", "fas fa-upload", "책무구조도 제출 관리"
+        );
+        addPermissions(structureSubmissionMgmt);
+        subMenus.add(structureSubmissionMgmt);
         
         menuRepository.saveAll(subMenus);
         logger.info("책무구조 원장 관리 하위 메뉴 {} 개 생성 완료", subMenus.size());

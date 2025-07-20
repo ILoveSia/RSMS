@@ -85,5 +85,7 @@ ehthumbs.db
 Thumbs.db
 
 node_modules/
+application.yml
+vite.config.js
 
 .kiro/

@@ -8,6 +8,7 @@ import {
 } from '@/domains/common/components/search';
 import { FileUpload } from '@/shared/components/ui/form';
 import type { SelectOption } from '@/shared/types/common';
+import { attachmentApi, type AttachmentResponse, type AttachmentUploadResult } from '@/shared/api/attachmentApi';
 import { Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
   Alert,
@@ -61,7 +62,8 @@ interface FormData {
   checkWay: string; // 점검방법
 
   // 파일 관련 필드들
-  evidenceFiles: File[]; // 증빙자료 파일들
+  evidenceFiles: File[]; // 증빙자료 파일들 (업로드 대기)
+  attachments: AttachmentResponse[]; // 업로드된 첨부파일들
 }
 
 const initialFormData: FormData = {
@@ -79,6 +81,7 @@ const initialFormData: FormData = {
   supportDoc: '',
   checkWay: '',
   evidenceFiles: [],
+  attachments: [],
 };
 
 const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
@@ -94,6 +97,8 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [requestingApproval, setRequestingApproval] = useState(false);
   const [canRequestApproval, setCanRequestApproval] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [loadingAttachments, setLoadingAttachments] = useState(false);
 
   // 팝업 상태들
   const [responsibilitySearchOpen, setResponsibilitySearchOpen] = useState(false);
@@ -293,6 +298,22 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     return [];
   }, [formData.fieldTypeCd, getCommonCodeOptions]);
 
+  // 첨부파일 로드 함수
+  const loadAttachments = useCallback(async () => {
+    if (!itemId) return;
+
+    setLoadingAttachments(true);
+    try {
+      const attachments = await attachmentApi.getAttachmentsByEntity('hod_ic_item', itemId);
+      setFormData(prev => ({ ...prev, attachments }));
+    } catch (err) {
+      console.error('Failed to load attachments:', err);
+      // 첨부파일 로딩 실패는 전체 로딩을 막지 않음
+    } finally {
+      setLoadingAttachments(false);
+    }
+  }, [itemId]);
+
   // 데이터 로드 함수
   const loadItemData = useCallback(async () => {
     if (!itemId) return;
@@ -315,15 +336,19 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         measureType: data.measureType,
         supportDoc: data.supportDoc,
         checkWay: data.checkWay,
-        evidenceFiles: [], // 기존 파일들은 별도 로딩 필요
+        evidenceFiles: [], // 새로 업로드할 파일들
+        attachments: [], // 기존 첨부파일들은 별도 로딩
       });
+
+      // 첨부파일 로드
+      await loadAttachments();
     } catch (err) {
       console.error('Failed to load item data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [itemId]);
+  }, [itemId, loadAttachments]);
 
   // 승인 권한 확인 함수
   const checkApprovalPermission = useCallback(async () => {
@@ -411,12 +436,32 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     }));
   };
 
-  // 파일 제거 핸들러
+  // 파일 제거 핸들러 (새로 추가한 파일)
   const handleFileRemove = (index: number) => {
     setFormData(prev => ({
       ...prev,
       evidenceFiles: prev.evidenceFiles.filter((_, i) => i !== index),
     }));
+  };
+
+  // 기존 첨부파일 삭제 핸들러
+  const handleAttachmentDelete = async (attachmentId: number) => {
+    if (!confirm('이 첨부파일을 삭제하시겠습니까?')) return;
+
+    try {
+      await attachmentApi.deleteAttachment(attachmentId, 'current_user'); // 실제 사용자 ID로 변경 필요
+      
+      // 로컬 상태에서도 제거
+      setFormData(prev => ({
+        ...prev,
+        attachments: prev.attachments.filter(att => att.attachId !== attachmentId),
+      }));
+
+      console.log('첨부파일 삭제 완료:', attachmentId);
+    } catch (err) {
+      console.error('첨부파일 삭제 실패:', err);
+      setError('첨부파일 삭제에 실패했습니다.');
+    }
   };
 
   const validateForm = (): boolean => {
@@ -450,6 +495,7 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     setError(null);
 
     try {
+      // 1. HodICItem 데이터 저장
       const requestData: HodICItemCreateRequest = {
         responsibilityId: formData.responsibilityId as number,
         deptCd: formData.deptCd,
@@ -462,14 +508,48 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         supportDoc: formData.supportDoc,
         checkPeriod: formData.checkPeriod,
         checkWay: formData.checkWay,
-        // TODO: 파일 업로드 후 파일 정보를 proofDoc에 저장
-        proofDoc: formData.evidenceFiles.map(file => file.name).join(', '),
+        proofDoc: [...formData.attachments.map(att => att.originalFilename), ...formData.evidenceFiles.map(file => file.name)].join(', '),
       };
 
+      let savedItemId: number;
       if (isCreateMode) {
-        await hodICItemApi.createHodICItem(requestData);
+        savedItemId = await hodICItemApi.createHodICItem(requestData);
       } else if (isEditMode && itemId) {
         await hodICItemApi.updateHodICItem(itemId, requestData);
+        savedItemId = itemId;
+      } else {
+        throw new Error('Invalid save mode');
+      }
+
+      // 2. 새 파일들 업로드 (evidenceFiles)
+      if (formData.evidenceFiles.length > 0) {
+        setUploadingFiles(true);
+        try {
+          const uploadResults = await attachmentApi.uploadFiles(
+            formData.evidenceFiles,
+            {
+              entityType: 'hod_ic_item',
+              entityId: savedItemId,
+              uploadedBy: 'current_user', // 실제 사용자 ID로 변경 필요
+            }
+          );
+
+          // 업로드 성공한 파일들 확인
+          const successfulUploads = uploadResults.filter((result: AttachmentUploadResult) => result.attachId);
+          console.log(`파일 업로드 완료: ${successfulUploads.length}/${uploadResults.length}`);
+
+          // 실패한 파일들이 있으면 경고 표시
+          const failedUploads = uploadResults.filter((result: AttachmentUploadResult) => !result.attachId);
+          if (failedUploads.length > 0) {
+            console.warn('일부 파일 업로드 실패:', failedUploads);
+            setError(`일부 파일 업로드에 실패했습니다: ${failedUploads.map((f: AttachmentUploadResult) => f.originalFilename).join(', ')}`);
+          }
+        } catch (uploadErr) {
+          console.error('파일 업로드 중 오류:', uploadErr);
+          setError('파일 업로드 중 오류가 발생했습니다.');
+        } finally {
+          setUploadingFiles(false);
+        }
       }
 
       onSuccess?.();
@@ -766,41 +846,108 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                   />
                 </Grid>
 
-                {/* 증빙자료 - 파일업로드 */}
-                <Grid item xs={12}>
-                  <FileUpload
-                    label='증빙자료'
-                    files={formData.evidenceFiles}
-                    onFileSelect={handleFileSelect}
-                    onFileRemove={handleFileRemove}
-                    disabled={isViewMode}
-                    multiple
-                    maxFiles={5}
-                    maxSize={10 * 1024 * 1024} // 10MB
-                    accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif'
-                    allowedFileTypes={[
-                      'pdf',
-                      'doc',
-                      'docx',
-                      'xls',
-                      'xlsx',
-                      'jpg',
-                      'jpeg',
-                      'png',
-                      'gif',
-                    ]}
-                    helperText='PDF, Word, Excel, 이미지 파일만 업로드 가능합니다. (최대 10MB)'
-                    variant='dropzone'
-                    preview
-                    showFileList
-                    sx={{
-                      '& .MuiDropzone-root': {
-                        height: '120px',
-                        minHeight: 'auto',
-                      },
-                    }}
-                  />
-                </Grid>
+                {/* 증빙자료 - 기존 첨부파일 목록 */}
+                {formData.attachments.length > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant='subtitle2' sx={{ mb: 1 }}>
+                      기존 첨부파일
+                    </Typography>
+                    <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, p: 2 }}>
+                      {loadingAttachments ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                          <CircularProgress size={20} />
+                          <Typography variant='body2' sx={{ ml: 1 }}>첨부파일 로딩중...</Typography>
+                        </Box>
+                      ) : (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          {formData.attachments.map((attachment) => (
+                            <Box
+                              key={attachment.attachId}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                p: 1,
+                                border: '1px solid #f0f0f0',
+                                borderRadius: 1,
+                                backgroundColor: '#fafafa',
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                                  {attachment.originalFilename}
+                                </Typography>
+                                <Typography variant='caption' sx={{ ml: 2, color: 'text.secondary' }}>
+                                  ({(attachment.fileSize / 1024).toFixed(1)}KB)
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button
+                                  size='small'
+                                  variant='outlined'
+                                  href={attachmentApi.getDownloadUrl(attachment.attachId)}
+                                  target='_blank'
+                                  sx={{ minWidth: 60 }}
+                                >
+                                  다운로드
+                                </Button>
+                                {!isViewMode && (
+                                  <Button
+                                    size='small'
+                                    variant='outlined'
+                                    color='error'
+                                    onClick={() => handleAttachmentDelete(attachment.attachId)}
+                                    sx={{ minWidth: 60 }}
+                                  >
+                                    삭제
+                                  </Button>
+                                )}
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
+                  </Grid>
+                )}
+
+                {/* 증빙자료 - 새 파일 업로드 */}
+                {!isViewMode && (
+                  <Grid item xs={12}>
+                    <FileUpload
+                      label={formData.attachments.length > 0 ? '새 파일 추가' : '증빙자료'}
+                      files={formData.evidenceFiles}
+                      onFileSelect={handleFileSelect}
+                      onFileRemove={handleFileRemove}
+                      disabled={isViewMode}
+                      multiple
+                      maxFiles={5}
+                      maxSize={10 * 1024 * 1024} // 10MB
+                      accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif'
+                      allowedFileTypes={[
+                        'pdf',
+                        'doc',
+                        'docx',
+                        'xls',
+                        'xlsx',
+                        'jpg',
+                        'jpeg',
+                        'png',
+                        'gif',
+                      ]}
+                      helperText='PDF, Word, Excel, 이미지 파일만 업로드 가능합니다. (최대 10MB)'
+                      variant='dropzone'
+                      preview
+                      showFileList
+                      sx={{
+                        '& .MuiDropzone-root': {
+                          height: '120px',
+                          minHeight: 'auto',
+                        },
+                      }}
+                    />
+                  </Grid>
+                )}
               </Grid>
             </>
           )}

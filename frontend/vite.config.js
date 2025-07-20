@@ -1,6 +1,9 @@
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -21,6 +24,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
       __APP_ENVIRONMENT__: JSON.stringify(mode),
+      global: 'globalThis',
     },
 
     // 개발 서버에 꼭 필요한 설정들을 다시 추가합니다.
@@ -29,6 +33,11 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       // 기존에 사용하던 3000번 포트를 다시 설정합니다.
       port: 3000,
+      // Hot reload 및 watch 설정
+      watch: {
+        usePolling: true,
+        interval: 1000,
+      },
       // API 프록시 설정
       proxy: {
         '/api': {

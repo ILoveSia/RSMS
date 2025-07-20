@@ -122,7 +122,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
   // 상태 관리
   const [userid, setUserid] = useState('testuser');
-  const [password, setPassword] = useState('testpass123');
+  const [password, setPassword] = useState('test1234');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
