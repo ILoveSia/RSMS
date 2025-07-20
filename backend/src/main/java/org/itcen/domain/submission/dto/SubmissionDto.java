@@ -12,4 +12,11 @@ public class SubmissionDto {
     private LocalDate submissionDate;
     private String attachmentFile;
     private String remarks;
+    
+    // positions 테이블과 조인된 정보
+    private Long positionsId;
+    private String positionsNm;  // positions 테이블의 직책명
+    private String ledgerOrder;
+    private String confirmGubunCd;
+    private String writeDeptCd;
 }

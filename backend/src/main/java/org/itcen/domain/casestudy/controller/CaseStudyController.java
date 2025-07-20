@@ -13,7 +13,7 @@ import java.util.List;
  * API 요청/응답 책임만 가짐
  */
 @RestController
-@RequestMapping("/api/case-studies")
+@RequestMapping("/case-studies")
 @RequiredArgsConstructor
 public class CaseStudyController {
 

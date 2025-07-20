@@ -45,6 +45,8 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
 
   // 등록 모드
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
+  const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
+  const [selectedItem, setSelectedItem] = useState<SubmissionHistoryRow | null>(null);
 
   // 에러 다이얼로그 상태
   const [errorMessage, setErrorMessage] = useState('');
@@ -71,7 +73,19 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
     {
       field: 'position',
       headerName: '직책',
-      width: 150,
+      width: 200,
+      renderCell: ({ row }) => (
+        <div>
+          <div style={{ fontWeight: 'bold' }}>
+            {row.positionsNm || row.position || '-'}
+          </div>
+          {row.positionsNm && (
+            <div style={{ fontSize: '0.75rem', color: '#666' }}>
+              원장차수: {row.ledgerOrder || '-'}
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       field: 'submissionDate',
@@ -129,16 +143,30 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
     setSelectedHistoryIds(selectedRows.map(id => Number(id)));
   };
 
-  // 행 클릭 핸들러
+  // 행 클릭 핸들러 (상세보기)
   const handleHistoryRowClick = (row: SubmissionHistoryRow) => {
     if (isRegistrationMode) {
       return;
     }
+    setSelectedItem(row);
+    setDialogMode('view');
+    setIsRegistrationMode(true);
   };
 
   // 등록 모드 전환
   const handleRegistrationModeToggle = () => {
     setIsRegistrationMode(!isRegistrationMode);
+    if (!isRegistrationMode) {
+      setDialogMode('create');
+      setSelectedItem(null);
+    }
+  };
+
+  // 모달 닫기 핸들러
+  const handleDialogClose = () => {
+    setIsRegistrationMode(false);
+    setSelectedItem(null);
+    setDialogMode('create');
   };
 
   // 제출 이력 등록
@@ -150,7 +178,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
         file = fileInputRef.current.files[0];
       }
       await submitSubmissionHistory(data, file);
-      handleRegistrationModeToggle();
+      handleDialogClose();
       handleFetchSubmissionHistory();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
@@ -292,9 +320,22 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
         {isRegistrationMode && (
           <StructureSubmissionStatusDialog
             open={isRegistrationMode}
-            onClose={handleRegistrationModeToggle}
+            onClose={handleDialogClose}
             onSubmit={handleSubmit}
             loading={isLoading}
+            mode={dialogMode}
+            itemId={selectedItem?.id}
+            initialData={selectedItem ? {
+              historyCode: { value: selectedItem.historyCode, label: selectedItem.historyCode },
+              executiveName: { value: selectedItem.executiveName, label: selectedItem.executiveName },
+              position: { value: selectedItem.position, label: selectedItem.position },
+              submissionDate: new Date(selectedItem.submissionDate),
+              attachmentFile: selectedItem.attachmentFile || '',
+              remarks: selectedItem.remarks ? { value: selectedItem.remarks, label: selectedItem.remarks } : null,
+              positionsId: selectedItem.positionsId,
+              positionsNm: selectedItem.positionsNm,
+              ledgerOrder: selectedItem.ledgerOrder
+            } : undefined}
           />
         )}
 

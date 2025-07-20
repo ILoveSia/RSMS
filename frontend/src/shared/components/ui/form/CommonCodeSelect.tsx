@@ -52,8 +52,9 @@ export interface CommonCodeOption {
 }
 
 // 공통코드 API 함수
+// 주의: /api 접두사는 apiClient에서 자동으로 추가됨
 const fetchCommonCodeList = async (groupCode: string): Promise<CommonCodeOption[]> => {
-  const response = await apiClient.get<any[]>(`/api/common-codes/group/${groupCode}/usable`);
+  const response = await apiClient.get<any[]>(`/common-codes/group/${groupCode}/usable`);
   return response?.map((item: any) => ({
     value: item.code,
     label: item.codeName,

@@ -32,11 +32,10 @@ export const mainApi = {
    */
   getRecentCaseStudies: async (limit: number = 5): Promise<CaseStudyDto[]> => {
     try {
-
+      // API URL 중복 경로 수정: /api는 apiClient에서 자동 추가됨
       const response = await apiClient.get<CaseStudyDto[]>(
-        `/api/case-studies/recent?limit=${limit}`
+        `/case-studies/recent?limit=${limit}`
       );
-
 
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
       const result = response || [];
@@ -53,9 +52,9 @@ export const mainApi = {
    */
   getDashboardStats: async (): Promise<any> => {
     try {
-
       // 향후 대시보드 통계 API 구현 시 사용
-      const response = await apiClient.get('/api/dashboard/stats');
+      // API URL 중복 경로 수정: /api는 apiClient에서 자동 추가됨
+      const response = await apiClient.get('/dashboard/stats');
 
       return response;
     } catch (error) {

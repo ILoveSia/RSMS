@@ -11,6 +11,13 @@ export interface SubmissionHistoryRow {
   modificationDate?: string;
   attachmentFile?: string;
   remarks?: string;
+  
+  // positions 테이블과 조인된 정보
+  positionsId?: number;
+  positionsNm?: string;  // positions 테이블의 직책명
+  ledgerOrder?: string;
+  confirmGubunCd?: string;
+  writeDeptCd?: string;
 }
 
 export interface RegistrationData {
@@ -20,6 +27,11 @@ export interface RegistrationData {
   submissionDate: Date;
   attachmentFile: string;
   remarks: SelectOption | null;
+  
+  // positions 테이블 정보
+  positionsId?: number | null;
+  positionsNm?: string;
+  ledgerOrder?: string;
 }
 
 export async function fetchSubmissionHistory(
@@ -32,12 +44,19 @@ export async function fetchSubmissionHistory(
   if (endDate) queryParams.append('endDate', endDate.toISOString().split('T')[0]);
   if (ledgerOrder) queryParams.append('ledgerOrder', ledgerOrder);
 
-  const response = await fetch(`/api/submission-history?${queryParams.toString()}`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!response.ok) throw new Error('제출 이력 조회에 실패했습니다.');
-  return await response.json();
+  const response = await apiClient.get(`/submissions/history?${queryParams.toString()}`);
+  if (response.success !== false) {
+    const submissions = response.data || response || [];
+    // 백엔드 데이터를 프론트엔드 형식으로 변환
+    return submissions.map((item: any) => ({
+      ...item,
+      isModified: false, // 기본값 설정
+      modificationDate: undefined, // 현재 사용하지 않음
+      position: item.positionsNm || item.position || '', // positions 테이블의 직책명 우선 사용
+    }));
+  } else {
+    throw new Error(response.message || '제출 이력 조회에 실패했습니다.');
+  }
 }
 
 export async function submitSubmissionHistory(
@@ -51,16 +70,17 @@ export async function submitSubmissionHistory(
   formData.append('submissionDate', data.submissionDate.toISOString().split('T')[0]);
   if (file) formData.append('file', file);
   if (data.remarks?.value) formData.append('remarks', String(data.remarks.value));
+  
+  // positions 테이블 정보 추가
+  if (data.positionsId) formData.append('positionsId', String(data.positionsId));
 
-  const response = await apiClient.post('/api/submissions', formData);
+  const response = await apiClient.post('/submissions', formData);
   if (!response.ok) throw new Error('제출 이력 등록에 실패했습니다.');
 }
 
 export async function deleteSubmissionHistory(ids: number[]): Promise<void> {
-  const response = await fetch(`/api/submission-history`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids }),
-  });
-  if (!response.ok) throw new Error('제출 이력 삭제에 실패했습니다.');
+  const response = await apiClient.delete('/submissions/history', ids);
+  if (response.success === false) {
+    throw new Error(response.message || '제출 이력 삭제에 실패했습니다.');
+  }
 }

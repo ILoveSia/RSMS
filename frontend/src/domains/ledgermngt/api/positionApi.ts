@@ -15,6 +15,36 @@ export interface LedgerOrderSelect {
   label: string;
 }
 
+// 직책 검색 결과 타입
+export interface PositionSearchResult {
+  positionsId: number;
+  positionsNm: string;
+  ledgerOrder: string;
+  confirmGubunCd?: string;
+  writeDeptCd?: string;
+}
+
+// 직책 상세 정보 타입
+export interface PositionDetailDto {
+  positionsId: number;
+  positionsNm: string;
+  ledgerOrder: string;
+  confirmGubunCd?: string;
+  writeDeptCd?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdId?: string;
+  updatedId?: string;
+}
+
+// 직책 검색 요청 타입
+export interface PositionSearchRequest {
+  ledgerOrder?: string;
+  positionsNm?: string;
+  writeDeptCd?: string;
+  confirmGubunCd?: string;
+}
+
 /**
  * Position 도메인 API 서비스 클래스
  */
@@ -50,6 +80,67 @@ export class PositionApiService {
     );
     return response || [];
   }
+
+  /**
+   * 직책 목록 조회 (검색용)
+   */
+  static async getPositionList(ledgerOrder?: string): Promise<PositionSearchResult[]> {
+    try {
+      const params = new URLSearchParams();
+      if (ledgerOrder) {
+        params.append('ledgerOrder', ledgerOrder);
+      }
+      
+      const queryString = params.toString();
+      const url = queryString ? `/positions/search?${queryString}` : '/positions/search';
+      const response = await apiClient.get(url);
+      
+      if (response.success !== false) {
+        return response.data || response || [];
+      } else {
+        throw new Error(response.message || '직책 목록 조회에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('직책 목록 조회 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 직책 검색 (키워드 기반)
+   */
+  static async searchPositions(searchRequest: PositionSearchRequest): Promise<PositionSearchResult[]> {
+    try {
+      const response = await apiClient.post('/positions/search', searchRequest);
+      
+      if (response.success !== false) {
+        return response.data || response || [];
+      } else {
+        throw new Error(response.message || '직책 검색에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('직책 검색 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 직책 상세 정보 조회
+   */
+  static async getPositionDetail(positionsId: number): Promise<PositionDetailDto> {
+    try {
+      const response = await apiClient.get(`/positions/${positionsId}`);
+      
+      if (response.success !== false) {
+        return response.data || response;
+      } else {
+        throw new Error(response.message || '직책 상세 정보 조회에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('직책 상세 정보 조회 실패:', error);
+      throw error;
+    }
+  }
 }
 
 // 하위 호환성을 위한 객체 스타일 export
@@ -57,6 +148,9 @@ export const positionApi = {
   getStatusList: PositionApiService.getStatusList,
   deleteBulk: PositionApiService.deleteBulk,
   getLedgerOrderSelectList: PositionApiService.getLedgerOrderSelectList,
+  getPositionList: PositionApiService.getPositionList,
+  searchPositions: PositionApiService.searchPositions,
+  getPositionDetail: PositionApiService.getPositionDetail,
 };
 
 export default positionApi;

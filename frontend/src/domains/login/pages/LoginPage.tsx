@@ -150,7 +150,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
     try {
 
       const allCodesResult = await apiClient.get<ApiResponse<CommonCode[]> | CommonCode[]>(
-        '/api/common-codes'
+        '/common-codes'
       );
 
       // ApiResponse 래퍼 구조인지 확인하여 적절히 처리

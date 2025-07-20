@@ -20,3 +20,7 @@ export type {
 // 책무 검색 팝업
 export { default as ResponsibilitySearchPopup } from './ResponsibilitySearchPopup';
 export type { ResponsibilitySearchResult, ResponsibilitySearchPopupProps } from './ResponsibilitySearchPopup';
+
+// 직책 검색 팝업
+export { default as PositionSearchPopup } from './PositionSearchPopup';
+export type { PositionSearchResult, PositionSearchPopupProps } from './PositionSearchPopup';

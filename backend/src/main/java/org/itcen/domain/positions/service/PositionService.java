@@ -5,6 +5,8 @@ import org.itcen.domain.positions.dto.PositionDetailDto;
 import org.itcen.domain.positions.dto.PositionStatusDto;
 import org.itcen.domain.positions.dto.PositionUpdateRequestDto;
 import org.itcen.domain.positions.dto.LedgerOrderSelectDto;
+import org.itcen.domain.positions.dto.PositionDto;
+import org.itcen.domain.positions.dto.PositionSearchRequestDto;
 
 import java.util.List;
 
@@ -60,4 +62,11 @@ public interface PositionService {
      * @return 직책 상세 정보
      */
     PositionDetailDto getPositionDetail(Long id);
+
+    /**
+     * 직책 검색
+     * @param searchRequest 검색 조건
+     * @return 검색된 직책 목록
+     */
+    List<PositionDto> searchPositions(PositionSearchRequestDto searchRequest);
 } 

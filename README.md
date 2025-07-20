@@ -350,6 +350,46 @@ npm run test
 - **Info**: `/api/actuator/info` - 애플리케이션 정보
 - **Metrics**: `/api/actuator/metrics` - 성능 메트릭
 
+### ⚠️ API 개발 시 주의사항
+
+**Context-Path 설정 관련 중요 사항:**
+
+```yaml
+# application.yml
+server:
+  servlet:
+    context-path: /api  # 전역 API 접두사 설정
+```
+
+**올바른 컨트롤러 매핑:**
+```java
+@RestController
+@RequestMapping("/case-studies")  // ✅ /api 접두사 제외
+public class CaseStudyController {
+    
+    @GetMapping("/recent")  // 실제 URL: /api/case-studies/recent
+    public ApiResponse<List<CaseStudyDto>> getRecentCaseStudies() {
+        // ...
+    }
+}
+```
+
+**잘못된 컨트롤러 매핑:**
+```java
+@RestController
+@RequestMapping("/api/case-studies")  // ❌ /api 중복으로 인한 오류
+public class CaseStudyController {
+    // NoResourceFoundException 발생
+}
+```
+
+**핵심 포인트:**
+- **context-path가 `/api`로 설정되어 있을 때**:
+  - 실제 URL: `http://localhost:3000/api/xxx`
+  - 컨트롤러 매핑: `@RequestMapping("/xxx")` (api 접두사 제거)
+- **이유**: Spring Boot가 context-path를 자동으로 제거한 후 컨트롤러 매핑과 비교하기 때문
+- **새 API 추가 시**: 반드시 context-path 설정을 고려하여 매핑 경로 작성
+
 ## 🤝 기여하기
 
 1. Fork the Project

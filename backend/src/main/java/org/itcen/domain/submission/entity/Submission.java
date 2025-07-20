@@ -2,6 +2,7 @@ package org.itcen.domain.submission.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.itcen.domain.positions.entity.Position;
 import java.time.LocalDate;
 
 @Entity
@@ -30,4 +31,13 @@ public class Submission {
 
     @Column(name = "remarks")
     private String remarks;
+    
+    // positions 테이블과의 조인을 위한 필드 (실제 FK는 아니지만 조인용)
+    @Column(name = "positions_id")
+    private Long positionsId;
+    
+    // positions 테이블과의 연관관계 (LAZY 로딩으로 성능 최적화)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "positions_id", insertable = false, updatable = false)
+    private Position positionEntity;
 }

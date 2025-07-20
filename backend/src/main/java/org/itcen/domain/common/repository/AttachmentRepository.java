@@ -26,7 +26,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     /**
      * 엔티티 타입과 엔티티 ID로 첨부파일 목록 조회
      * 
-     * @param entityType 엔티티 타입 (예: 'hod_ic_item')
+     * @param entityType 엔티티 타입 (예: 'submission')
      * @param entityId 엔티티 ID
      * @return 해당 엔티티의 첨부파일 목록 (생성일시 기준 정렬)
      */

@@ -43,10 +43,10 @@ export const responsibilityApi = {
       }
 
       console.log(`[responsibilityApi] getStatusList 호출 - responsibilityId: ${responsibilityId}`);
-      console.log(`[responsibilityApi] API URL: /api/responsibilities/status?${params.toString()}`);
+      console.log(`[responsibilityApi] API URL: /responsibilities/status?${params.toString()}`);
 
       const response = await apiClient.get<ResponsibilityRow[]>(
-        `/api/responsibilities/status?${params.toString()}`
+        `/responsibilities/status?${params.toString()}`
       );
 
       console.log('[responsibilityApi] getStatusList 응답:', response);
@@ -70,7 +70,7 @@ export const responsibilityApi = {
       console.log(`[responsibilityApi] getById 호출 - responsibilityId: ${responsibilityId}`);
 
       const response = await apiClient.get<ResponsibilityRow>(
-        `/api/responsibilities/${responsibilityId}`
+        `/responsibilities/${responsibilityId}`
       );
 
       console.log('[responsibilityApi] getById 응답:', response);
@@ -91,7 +91,7 @@ export const responsibilityApi = {
    */
   create: async (data: ResponsibilityRequestDto): Promise<ResponsibilityRow> => {
     const response = await apiClient.post<ApiResponse<ResponsibilityRow>>(
-      '/api/responsibilities',
+      '/responsibilities',
       data
     );
 
@@ -112,7 +112,7 @@ export const responsibilityApi = {
       );
 
       const response = await apiClient.put<ResponsibilityRow>(
-        `/api/responsibilities/${responsibilityId}`,
+        `/responsibilities/${responsibilityId}`,
         data
       );
 

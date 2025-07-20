@@ -89,11 +89,45 @@ public class PositionController {
     }
 
     /**
+     * 직책 검색 (검색팝업용)
+     */
+    @GetMapping(value = "/search")
+    public ResponseEntity<ApiResponse<List<PositionDto>>> searchPositions(
+            @RequestParam(required = false) String ledgerOrder,
+            @RequestParam(required = false) String positionsNm,
+            @RequestParam(required = false) String writeDeptCd,
+            @RequestParam(required = false) String confirmGubunCd) {
+        log.info("직책 검색 API 호출: ledgerOrder={}, positionsNm={}, writeDeptCd={}, confirmGubunCd={}", 
+                ledgerOrder, positionsNm, writeDeptCd, confirmGubunCd);
+        
+        PositionSearchRequestDto searchRequest = PositionSearchRequestDto.builder()
+                .ledgerOrder(ledgerOrder)
+                .positionsNm(positionsNm)
+                .writeDeptCd(writeDeptCd)
+                .confirmGubunCd(confirmGubunCd)
+                .build();
+                
+        List<PositionDto> positions = positionService.searchPositions(searchRequest);
+        return ResponseEntity.ok(ApiResponse.success(positions));
+    }
+
+    /**
      * 직책 상세 조회
      */
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<ApiResponse<PositionDetailDto>> getPositionDetail(@PathVariable("id") Long id) {
         PositionDetailDto positionDetail = positionService.getPositionDetail(id);
         return ResponseEntity.ok(ApiResponse.success(positionDetail));
+    }
+
+    /**
+     * 직책 검색 (POST 방식)
+     */
+    @PostMapping("/search")
+    public ResponseEntity<ApiResponse<List<PositionDto>>> searchPositionsPost(
+            @Valid @RequestBody PositionSearchRequestDto searchRequest) {
+        log.info("직책 검색 API 호출 (POST): {}", searchRequest);
+        List<PositionDto> positions = positionService.searchPositions(searchRequest);
+        return ResponseEntity.ok(ApiResponse.success(positions));
     }
 }

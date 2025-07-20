@@ -56,13 +56,23 @@ spring:
       namespace: "itcen:session"
     timeout: 3600 # 1시간 (BackendApplication과 동일)
 
-  # 개발 도구 설정
+  # 개발 도구 설정 (성능 최적화)
   devtools:
     livereload:
-      enabled: false
+      enabled: true                    # LiveReload 활성화
+      port: 35729
     restart:
-      enabled: true
-      additional-paths: src/main/java
+      enabled: true                    # 자동 재시작 활성화
+      poll-interval: 1000             # 파일 변경 감지 간격 (1초)
+      quiet-period: 400               # 변경 감지 후 대기 시간 (0.4초)
+      additional-paths: 
+        - src/main/java
+        - src/main/resources
+      exclude: 
+        - "static/**"
+        - "templates/**"
+        - "**/*.log"
+    add-properties: true              # 개발 전용 프로퍼티 추가
 
   # JSON 설정 (Spring Boot 3.5 최적화)
   jackson:
@@ -91,12 +101,17 @@ spring:
 
 # 로깅 설정
 logging:
+  config: classpath:logback-spring.xml
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     org.itcen: DEBUG
+    # Case Study 도메인 상세 로그
+    org.itcen.domain.casestudy: DEBUG
+  file:
+    path: logs
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
     file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
@@ -231,17 +246,15 @@ spring:
           min-idle: 8
           max-wait: -1ms
 
-# 운영환경 로깅 설정
+# 운영환경 로깅 설정 (prod 프로파일에서 오버라이드)
 logging:
+  config: classpath:logback-spring.xml
   level:
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
     org.springframework.web: WARN
     org.springframework.security: WARN
     org.itcen: INFO
+    org.itcen.domain.casestudy: INFO
   file:
-    name: logs/itcen-backend.log
-  logback:
-    rollingpolicy:
-      max-file-size: 100MB
-      max-history: 30
+    path: logs
