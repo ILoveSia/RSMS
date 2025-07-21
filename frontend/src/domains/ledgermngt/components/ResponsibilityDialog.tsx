@@ -3,12 +3,11 @@
  */
 import { apiClient } from '@/app/common/api/client';
 import ResponsibilitySearchPopup, { type ResponsibilitySearchResult } from '@/domains/common/components/search/ResponsibilitySearchPopup';
+import { Button } from '@/shared/components';
 import { Alert } from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import { Box, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { Box, Grid, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
@@ -75,22 +74,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
   // 선택한 책무 데이터를 저장할 상태
   const [selectedResponsibilityData, setSelectedResponsibilityData] = useState<any>(null);
-  const getDialogTitle = () => {
-    switch (mode) {
-      case 'create':
-        return '책무 등록';
-      case 'edit':
-        return '책무 수정';
-      case 'view':
-        return '책무 상세조회';
-      default:
-        return '책무';
-    }
-  };
+
 
   // 데이터 초기화 및 로드
   useEffect(() => {
@@ -150,6 +138,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         setLoading(false);
       }
     };
+    console.log("rowData", rowData);
 
     if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
       fetchDetails(responsibilityId.toString());
@@ -167,6 +156,8 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       });
     }
   }, [open, mode, responsibilityId]);
+
+
 
   // 세부내용 추가
   const addDetail = () => {
@@ -221,30 +212,30 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       return;
     }
 
-          // 백엔드 DTO 구조에 맞게 데이터 변환
-      const responsibilityRequestData = {
-        positions_id: rowData?.positions_id || responsibilityId || 1,
-        responsibility_id: selectedResponsibilityData?.responsibility_id || responsibilityId || 1,
-        updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
-        role_summ: formData.responsibilityContent, // 책무 내용을 role_summ에 포함
-      };
-      console.log(responsibilityRequestData);
-      try {
-        setLoading(true);
+    // 백엔드 DTO 구조에 맞게 데이터 변환
+    const responsibilityRequestData = {
+      positions_id: rowData?.positions_id || responsibilityId || 1,
+      responsibility_id: selectedResponsibilityData?.responsibility_id || responsibilityId || 1,
+      updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
+      role_summ: formData.responsibilityContent, // 책무 내용을 role_summ에 포함
+    };
+    console.log(responsibilityRequestData);
+    try {
+      setLoading(true);
 
-        // 백엔드 API 호출
-        const response = await apiClient.put('/position-responsibilities', responsibilityRequestData);
+      // 백엔드 API 호출
+      await apiClient.put('/position-responsibilities', responsibilityRequestData);
 
 
-        await onSave();
-        setShowSuccessAlert(true);
-        onClose();
-      } catch (err: any) {
-        console.error('책무 저장 실패:', err);
-        console.error('에러 상세:', err.response?.data || err.message);
-      } finally {
-        setLoading(false);
-      }
+      onSave();
+      setShowSuccessAlert(true);
+      onClose();
+    } catch (err: any) {
+      console.error('책무 저장 실패:', err);
+      console.error('에러 상세:', err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
   };
   const handleSelect = async (responsibility: ResponsibilitySearchResult) => {
     try {
@@ -283,6 +274,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       }));
 
 
+
       setFormData({
         responsibilityContent,
         details,
@@ -292,13 +284,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       setError('책무 데이터를 불러오는 중 오류가 발생했습니다.');
     }
   };
-  // 책무 내용 변경
-  const handleContentChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      responsibilityContent: value,
-    }));
-  };
+
 
   // 세부내용 변경
   const handleDetailChange = (id: string, field: keyof ResponsibilityDetail, value: string) => {
@@ -324,71 +310,71 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         disableSave={loading}
         loading={loading}
       >
-        <TextField
-          sx={{ height: '100%', width: '100%' }}
-          disabled={true}
-          multiline
-          rows={3}
-          label="직책"
-          value={positionName}
-        />
 
 
         <Box sx={{ p: 2 }}>
-          {/* 책무 내용 */}
+          {/* 깔끔한 레이아웃 구조 */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
-              책무 내용
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              value={formData.responsibilityContent}
-              onChange={(e) => handleContentChange(e.target.value)}
-              disabled={mode === 'view'}
-              error={!!validationErrors.responsibilityContent}
-              helperText={validationErrors.responsibilityContent}
-              placeholder="책무 내용을 입력하세요"
-            />
-          </Box>
-
-          {/* 세부내용 목록 */}
-          <Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                세부내용 목록
-              </Typography>
-              {mode !== 'view' && (
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={addDetail}
-                  size="small"
-                >
-                  세부내용 추가
-                </Button>
-              )}
+            {/* 라벨 행 */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
+              <Box sx={{ flex: '0 0 25%' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                  책무
+                </Typography>
+              </Box>
+              <Box sx={{ flex: '0 0 50%', display: 'flex', gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                    책무 세부내용
+                  </Typography>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                    책무이행을 위한 주요 관리의무
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ flex: '0 0 25%' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                  관련 근거
+                </Typography>
+              </Box>
             </Box>
 
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>책무 세부내용</TableCell>
-                    <TableCell>책무이행을 위한 주요 관리업무</TableCell>
-                    <TableCell>관련 근거</TableCell>
-                    {mode !== 'view' && <TableCell width={50}>삭제</TableCell>}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {formData.details.map((detail) => (
-                    <TableRow key={detail.id}>
-                      <TableCell>
+            {/* 메인 컨텐츠 - CSS Grid 사용 */}
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 2fr 1fr',
+              gap: 2,
+              alignItems: 'stretch'
+            }}>
+              {/* 책무 (고정) */}
+              <Box sx={{ display: 'flex' }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  value={positionName}
+                  disabled={true}
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: '100%',
+                      alignItems: 'flex-start'
+                    }
+                  }}
+                />
+              </Box>
+
+              {/* 가운데 동적 컬럼들 */}
+              <Box>
+                <Grid container spacing={2}>
+                  {formData.details.map((detail, index) => (
+                    <React.Fragment key={detail.id}>
+                      {/* 책무 세부내용 */}
+                      <Grid item xs={6}>
                         <TextField
                           fullWidth
                           multiline
-                          rows={2}
+                          rows={4}
                           value={detail.responsibilityDetailContent || ''}
                           onChange={(e) =>
                             handleDetailChange(detail.id || '', 'responsibilityDetailContent', e.target.value)
@@ -396,67 +382,80 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                           disabled={mode === 'view'}
                           error={!!validationErrors[`detail_${detail.id}_content`]}
                           helperText={validationErrors[`detail_${detail.id}_content`]}
-                          placeholder="세부내용을 입력하세요"
+                          placeholder="책무 세부내용을 입력하세요"
                         />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          value={detail.keyManagementTasks || ''}
-                          onChange={(e) =>
-                            handleDetailChange(detail.id || '', 'keyManagementTasks', e.target.value)
-                          }
-                          disabled={mode === 'view'}
-                          error={!!validationErrors[`detail_${detail.id}_tasks`]}
-                          helperText={validationErrors[`detail_${detail.id}_tasks`]}
-                          placeholder="주요 관리업무를 입력하세요"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          value={detail.relatedBasis || ''}
-                          onChange={(e) =>
-                            handleDetailChange(detail.id || '', 'relatedBasis', e.target.value)
-                          }
-                          disabled={mode === 'view'}
-                          error={!!validationErrors[`detail_${detail.id}_basis`]}
-                          helperText={validationErrors[`detail_${detail.id}_basis`]}
-                          placeholder="관련 근거를 입력하세요"
-                        />
-                      </TableCell>
-                      {mode !== 'view' && (
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            onClick={() => removeDetail(detail.id)}
-                            disabled={formData.details.length === 1}
-                            color="error"
-                          >
-                            <RemoveIcon />
-                          </IconButton>
-                        </TableCell>
-                      )}
-                    </TableRow>
+                      </Grid>
+                      {/* 주요 관리의무 */}
+                      <Grid item xs={6}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                          <TextField
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={detail.keyManagementTasks || ''}
+                            onChange={(e) =>
+                              handleDetailChange(detail.id || '', 'keyManagementTasks', e.target.value)
+                            }
+                            disabled={mode === 'view'}
+                            error={!!validationErrors[`detail_${detail.id}_tasks`]}
+                            helperText={validationErrors[`detail_${detail.id}_tasks`]}
+                            placeholder="주요 관리의무를 입력하세요"
+                          />
+                          {mode !== 'view' && (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={addDetail}
+                                sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }}
+                              >
+                                +
+                              </Button>
+                              {formData.details.length > 1 && (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => removeDetail(detail.id)}
+                                  sx={{ minWidth: 'auto', px: 1, fontSize: '0.75rem' }}
+                                >
+                                  -
+                                </Button>
+                              )}
+                            </Box>
+                          )}
+                        </Box>
+                      </Grid>
+                    </React.Fragment>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                setSearchPopupOpen(true);
-              }}
-              color="error"
-            >
-              책무검색테스트
-            </Button>
+                </Grid>
+              </Box>
+
+              {/* 관련 근거 (고정) */}
+              <Box sx={{ display: 'flex' }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  value={formData.details[0]?.relatedBasis || ''}
+                  onChange={(e) =>
+                    handleDetailChange(formData.details[0]?.id || '', 'relatedBasis', e.target.value)
+                  }
+                  disabled={mode === 'view'}
+                  error={!!validationErrors[`detail_${formData.details[0]?.id}_basis`]}
+                  helperText={validationErrors[`detail_${formData.details[0]?.id}_basis`]}
+                  placeholder="관련 근거를 입력하세요"
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      height: '100%',
+                      alignItems: 'flex-start'
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
           </Box>
+
+
         </Box>
       </BaseDialog>
       <Alert
