@@ -26,6 +26,7 @@ public class ExecutiveResponsibilityDto {
     private String empId;
     private String jobRankCd;
     private String jobTitleCd;
+    private String num;
 
     @Data
     @Builder

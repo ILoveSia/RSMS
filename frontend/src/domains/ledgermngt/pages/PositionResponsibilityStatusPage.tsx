@@ -16,7 +16,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import ResponsibilityDialog from '../components/ResponsibilityDialog';
+import PositionResponsibilityDialog from '../components/PositionResponsibilityDialog';
 interface IPositionResponsibilityStatusPageProps {
   className?: string;
 }
@@ -37,64 +37,6 @@ const ledgerOrderFilterOptions: SelectOption[] = [
     { value: '2024-002', label: '2024-002' },
     { value: '2024-003', label: '2024-003' }
   ];
-// 테스트 데이터
-const mockData: PositionResponsibility[] = [
-  {
-    id: 1,
-    classification: '핵심',
-    positionId: 'P001',
-    positionName: '부장',
-    responsibilityOverview: '부서 전반적인 업무 총괄 및 리스크 관리',
-    responsibilityStartDate: '2024-01-01',
-    lastModifiedDate: '2024-03-20',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-03-20'
-  },
-  {
-    id: 2,
-    classification: '중요',
-    positionId: 'P002',
-    positionName: '차장',
-    responsibilityOverview: '팀 실무 관리 및 성과 모니터링',
-    responsibilityStartDate: '2024-01-01',
-    lastModifiedDate: '2024-03-19',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-03-19'
-  },
-  {
-    id: 3,
-    classification: '일반',
-    positionId: 'P003',
-    positionName: '과장',
-    responsibilityOverview: '일상적인 업무 수행 및 보고',
-    responsibilityStartDate: '2024-01-01',
-    lastModifiedDate: '2024-03-18',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-03-18'
-  },
-  {
-    id: 4,
-    classification: '핵심',
-    positionId: 'P004',
-    positionName: '팀장',
-    responsibilityOverview: '팀 업무 총괄 및 인력 관리',
-    responsibilityStartDate: '2024-01-01',
-    lastModifiedDate: '2024-03-17',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-03-17'
-  },
-  {
-    id: 5,
-    classification: '중요',
-    positionId: 'P005',
-    positionName: '수석',
-    responsibilityOverview: '전문 분야 기술 검토 및 자문',
-    responsibilityStartDate: '2024-01-01',
-    lastModifiedDate: '2024-03-16',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-03-16'
-  }
-];
 
 const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPageProps> = (): React.JSX.Element => {
   const [rows, setRows] = useState<PositionResponsibility[]>([]);
@@ -460,7 +402,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       </PageContent>
 
       {/* 상세 다이얼로그 */}
-      <ResponsibilityDialog
+      <PositionResponsibilityDialog
         open={dialogOpen}
         positionName={selectedDetailData?.positionName || ''}
         onClose={() => setDialogOpen(false)}

@@ -22,7 +22,7 @@ public class ExecutiveResponsibilityService {
 
     public List<ExecutiveResponsibilityDto> getAll() {
         String sql = "SELECT " + "p.positions_id, " + "p.positions_nm, " + "e.execofficer_id, "
-                + "u.username, " + "u.job_rank_cd, " + "u.job_title_cd " + "FROM positions p "
+                + "u.username, " + "u.job_rank_cd, " + "u.job_title_cd, " +" u.num "+ "FROM positions p "
                 + "LEFT JOIN execofficer e ON p.positions_id = e.positions_id "
                 + "LEFT JOIN users u ON e.emp_id = u.id " + "ORDER BY p.positions_id";
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
@@ -35,6 +35,7 @@ public class ExecutiveResponsibilityService {
                 dto.setEmpId((String) row[3]);
                 dto.setJobRankCd((String) row[4]);
                 dto.setJobTitleCd((String) row[5]);
+                dto.setNum((String) row[6]);
                 return dto;
             } catch (Exception e) {
                 log.error("Error processing row: {}", row, e);
