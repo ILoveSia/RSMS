@@ -148,11 +148,9 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         positionId: selectedPosition?.value === 'all' ? undefined : selectedPosition?.value as string
       };
 
-      console.log('조회 조건:', params);
 
       // 실제 API 호출
       const data = await executiveResponsibilityApi.getAll();
-      console.log("백엔드에서 받은 원본 데이터:", data);
       // API 응답을 페이지에서 사용하는 형태로 변환
       const transformedData: ExecutiveResponsibilityRow[] = data.map((item: any) => ({
         id: item.positionsId || 0,
@@ -166,8 +164,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         relatedBasis: '' // 백엔드에 해당 필드가 없음
       }));
 
-      console.log("변환된 데이터:", transformedData);
-      console.log("!@#$!!");
       setRows(transformedData);
 
     } catch (err) {
@@ -186,7 +182,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
   // 직책 클릭 핸들러
   const handlePositionClick = (row: ExecutiveResponsibilityRow) => {
-    console.log('선택된 직책 정보:', row);
     // TODO: 직책 상세 정보 다이얼로그 표시 또는 페이지 이동 구현
     alert(`선택된 직책: ${row.position}\n임원: ${row.executiveName}\n책무: ${row.responsibility}`);
   };
@@ -208,7 +203,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       }}
     >
       <PageHeader
-        title="[600] 임원별 책무 현황"
+        title="[600] 임원 현황"
         icon={<GroupsIcon />}
         description="임원별 책무 현황을 조회합니다."
         elevation={false}

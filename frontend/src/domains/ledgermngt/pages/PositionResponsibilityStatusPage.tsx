@@ -250,7 +250,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 상세보기 핸들러
   const handleViewDetail = (row: PositionResponsibility) => {
     setSelectedDetailData(row);
-    console.log("row",row);
     setDialogMode('view');
     setDialogOpen(true);
   };

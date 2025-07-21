@@ -166,7 +166,6 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     try {
       setIsLoading(true);
       // TODO: API 호출 구현
-      console.log('조회 조건:', { selectedRound, selectedDepartment });
     } catch (err) {
       console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터 조회에 실패했습니다.');

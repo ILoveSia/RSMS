@@ -229,17 +229,12 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         role_summ: formData.responsibilityContent, // 책무 내용을 role_summ에 포함
       };
       console.log(responsibilityRequestData);
-      console.log("@@@");
-      console.log("백엔드 DTO 구조로 변환된 데이터:", responsibilityRequestData);
       try {
         setLoading(true);
-        console.log('PUT 요청 시작 - URL: /position-responsibilities');
-        console.log('PUT 요청 데이터:', responsibilityRequestData);
 
         // 백엔드 API 호출
         const response = await apiClient.put('/position-responsibilities', responsibilityRequestData);
 
-        console.log('PUT 요청 성공 - 응답:', response);
 
         await onSave();
         setShowSuccessAlert(true);
@@ -266,7 +261,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         `/api/responsibilities/${responsibility.responsibilityId}`
       );
 
-      console.log('response@@@: ', response);
 
       // 응답 데이터를 상태에 저장 (PUT 요청 시 활용)
       setSelectedResponsibilityData(response);
@@ -288,7 +282,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         relatedBasis: item.responsibilityRelEvid || '',       // 실제 필드명 매핑
       }));
 
-      console.log('변환된 데이터:', { responsibilityContent, details });
 
       setFormData({
         responsibilityContent,

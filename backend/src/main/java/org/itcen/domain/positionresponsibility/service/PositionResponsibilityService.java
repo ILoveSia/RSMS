@@ -37,14 +37,6 @@ public class PositionResponsibilityService {
         List<PositionResponsibilityDto> finalResult = results.stream().map(row -> {
             try {
                 PositionResponsibilityDto dto = new PositionResponsibilityDto();
-                log.info("row[0]: {}", row[0]);
-                log.info("row[1]: {}", row[1]);
-                log.info("row[2]: {}", row[2]);
-                log.info("row[3]: {}", row[3]);
-                log.info("row[4]: {}", row[4]);
-                log.info("row[5]: {}", row[5]);
-                log.info("row[6]: {}", row[6]);
-                log.info("row[7]: {}", row[7]);
                 dto.setPositions_id(row[0] != null ? ((Number) row[0]).longValue() : null);
                 dto.setPositions_name(row[1] != null ? (String) row[1] : "");
                 dto.setRole_summ(row[2] != null ? (String) row[2] : "");
@@ -77,10 +69,8 @@ public class PositionResponsibilityService {
                 + "WHERE NOT EXISTS ( " + "SELECT 1 FROM role_resp_status WHERE positions_id = "
                 + requestDto.getPositions_id() + ");";
 
-        log.info("실행할 SQL: {}", sql);
         try {
             em.createNativeQuery(sql).executeUpdate();
-            log.info("책무 업데이트 성공");
             return true;
         } catch (Exception e) {
             log.error("Error updating responsibility: {}", e);

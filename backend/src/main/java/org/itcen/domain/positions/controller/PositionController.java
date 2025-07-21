@@ -58,7 +58,6 @@ public class PositionController {
     @DeleteMapping("/bulk-delete")
     public ResponseEntity<ApiResponse<Void>> deleteBulk(
             @RequestBody PositionBulkDeleteRequestDto requestDto) {
-        log.info("직책 일괄 삭제 API 호출: {}", requestDto.getPositionsIds());
         positionService.deleteBulk(requestDto.getPositionsIds());
         return ResponseEntity.ok(ApiResponse.success("직책이 성공적으로 삭제되었습니다."));
     }
@@ -71,7 +70,6 @@ public class PositionController {
     @PostMapping
     public ResponseEntity<ApiResponse<PositionDetailDto>> createPosition(
             @Valid @RequestBody PositionCreateRequestDto createRequestDto) {
-        log.info("직책 생성 API 호출: {}", createRequestDto);
         Long positionId = positionService.createPosition(createRequestDto);
         PositionDetailDto detail = positionService.getPositionDetail(positionId);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -82,9 +80,6 @@ public class PositionController {
     public ResponseEntity<ApiResponse<PositionDetailDto>> updatePosition(
             @PathVariable("id") Long id,
             @Valid @RequestBody PositionUpdateRequestDto updateRequestDto) {
-        log.info("직책 수정 API 호출: {}", id);
-        System.out.println("updateRequestDto23452345");
-        System.out.println(updateRequestDto);
         positionService.updatePosition(id, updateRequestDto);
         PositionDetailDto detail = positionService.getPositionDetail(id);
         return ResponseEntity.ok(ApiResponse.success("직책이 성공적으로 수정되었습니다.", detail));
