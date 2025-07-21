@@ -3,7 +3,7 @@
  */
 import '@/assets/scss/style.css';
 import { Button, DataGrid } from '@/shared/components/ui';
-import TextField from '@/shared/components/ui/data-display/textfield';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
 import PageContent from '@/shared/components/ui/layout/PageContent';
@@ -146,12 +146,9 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               }}
               onClick={e => {
                 e.stopPropagation();
-                console.log('클릭된 responsibilityId:', params.row.responsibilityId);
-                console.log('현재 rows 데이터:', rows);
 
                 // 선택된 행의 데이터 찾기
                 const selectedRow = rows.find(row => row.responsibilityId === params.row.responsibilityId);
-                console.log('찾은 selectedRow:', selectedRow);
 
                 // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
                 setSelectedResponsibilityId(params.row.responsibilityId);

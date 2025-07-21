@@ -9,6 +9,7 @@ import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialo
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { Box, Grid, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import responsibilityApi from '../api/responsibilityApi';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
 interface ApiSuccessResponse<T> {
@@ -138,9 +139,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         setLoading(false);
       }
     };
-    console.log(rowData);
-    console.log("mode", mode);
-    console.log("responsibilityId", responsibilityId);
 
     if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
       // 수정/조회 모드에서는 rowData가 있으면 우선 사용, 없으면 API 호출
@@ -189,7 +187,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           id: `temp-${Date.now()}`,
           responsibilityDetailContent: '',
           keyManagementTasks: '',
-          relatedBasis: '',
+          relatedBasis: prev.details[0]?.relatedBasis || '', // 기존 관련 근거 값 복사
         },
       ],
     }));
@@ -228,23 +226,27 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   };
 
   const handleSave = async () => {
+    console.log("handlesave in");
     if (!validateForm()) {
+      console.log("handlesave invalid");
       return;
     }
 
     // 백엔드 DTO 구조에 맞게 데이터 변환
     const responsibilityRequestData = {
-      positions_id: rowData?.positions_id || responsibilityId || 1,
-      responsibility_id: selectedResponsibilityData?.responsibility_id || responsibilityId || 1,
-      updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
-      role_summ: formData.responsibilityContent, // 책무 내용을 role_summ에 포함
+      responsibilityContent: formData.responsibilityContent,
+      details: formData.details.map(detail => ({
+        responsibilityDetailContent: detail.responsibilityDetailContent,
+        keyManagementTasks: detail.keyManagementTasks,
+        relatedBasis: detail.relatedBasis
+      }))
     };
-    console.log(responsibilityRequestData);
     try {
       setLoading(true);
-
+      console.log("########################");
+      console.log(responsibilityRequestData);
       // 백엔드 API 호출
-      await apiClient.put('/position-responsibilities', responsibilityRequestData);
+      await responsibilityApi.update(responsibilityId || 1, responsibilityRequestData);
 
 
       onSave();
@@ -310,9 +312,16 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const handleDetailChange = (id: string, field: keyof ResponsibilityDetail, value: string) => {
     setFormData(prev => ({
       ...prev,
-      details: prev.details.map(detail =>
-        detail.id === id ? { ...detail, [field]: value } : detail
-      ),
+      details: prev.details.map(detail => {
+        if (detail.id === id) {
+          return { ...detail, [field]: value };
+        }
+        // 관련 근거는 모든 detail에 동일하게 적용
+        if (field === 'relatedBasis') {
+          return { ...detail, [field]: value };
+        }
+        return detail;
+      }),
     }));
   };
 
@@ -384,7 +393,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                 />
               </Box>
 
-              {/* 가운데 동적 컬럼들 */}
+              {/* 가운데 동적 컬럼들 (세부내용 + 관리의무) */}
               <Box>
                 <Grid container spacing={2}>
                   {formData.details.map((detail, index) => (
@@ -451,7 +460,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                 </Grid>
               </Box>
 
-              {/* 관련 근거 (고정) */}
+              {/* 관련 근거 (고정, 공통) */}
               <Box sx={{ display: 'flex' }}>
                 <TextField
                   fullWidth

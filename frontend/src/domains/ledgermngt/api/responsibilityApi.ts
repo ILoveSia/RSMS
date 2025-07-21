@@ -102,7 +102,7 @@ export const responsibilityApi = {
         `[responsibilityApi] update 호출 - responsibilityId: ${responsibilityId}, data:`,
         data
       );
-
+      console.log(responsibilityId);
       const response = await apiClient.put<ResponsibilityRow>(
         `/api/responsibilities/${responsibilityId}`,
         data
