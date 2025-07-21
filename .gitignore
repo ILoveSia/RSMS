@@ -84,9 +84,8 @@ login*.json
 ehthumbs.db
 Thumbs.db
 
-node_modules/
-application.yml
-vite.config.js
+
+backend/src/main/resources/application.yml
 .claude/
 backend/build.gradle
 frontend/tsconfig.json
