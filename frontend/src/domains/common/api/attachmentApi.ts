@@ -1,15 +1,19 @@
 import apiClient from '@/app/common/api/client';
 
 export interface AttachmentInfo {
-  id: number;
-  fileName: string;
-  originalName: string;
-  fileSize: number;
-  filePath: string;
-  contentType: string;
-  uploadDate: string;
-  refTable: string;
-  refId: number;
+  attachId: number;              // attachId (백엔드 Response DTO와 일치)
+  originalFilename: string;      // originalFilename
+  storedFilename: string;        // storedFilename
+  fileSize: number;              // fileSize
+  filePath: string;              // filePath
+  contentType: string;           // contentType
+  entityType: string;            // entityType
+  entityId: number;              // entityId
+  uploadedBy: string;            // uploadedBy
+  createdAt: string;             // createdAt
+  updatedAt: string;             // updatedAt
+  createdId: string;             // createdId
+  updatedId: string;             // updatedId
 }
 
 export interface AttachmentUploadRequest {
@@ -31,11 +35,7 @@ export async function uploadAttachment(
   formData.append('entityId', request.entityId.toString());
   formData.append('uploadedBy', request.uploadedBy);
 
-  const response = await apiClient.post('/attachments/upload/single', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  const response = await apiClient.post('/attachments/upload/single', formData);
 
   if (response.success !== false) {
     return response.data || response;
@@ -61,11 +61,17 @@ export async function getAttachments(entityType: string, entityId: number): Prom
  * 첨부파일 다운로드
  */
 export async function downloadAttachment(attachmentId: number): Promise<Blob> {
-  const response = await apiClient.get(`/attachments/download/${attachmentId}`, {
-    responseType: 'blob'
+  // Blob 응답을 위해 fetch API를 직접 사용
+  const response = await fetch(`/api/attachments/download/${attachmentId}`, {
+    method: 'GET',
+    credentials: 'include'
   });
   
-  return response;
+  if (!response.ok) {
+    throw new Error('파일 다운로드에 실패했습니다.');
+  }
+  
+  return await response.blob();
 }
 
 /**

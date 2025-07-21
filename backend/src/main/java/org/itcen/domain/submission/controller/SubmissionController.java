@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.common.dto.ApiResponse;
 import org.itcen.domain.submission.dto.SubmissionDto;
+import org.itcen.domain.submission.dto.SubmissionCreateRequest;
 import org.itcen.domain.submission.service.SubmissionService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -23,36 +24,35 @@ public class SubmissionController {
     @PostMapping
     public ApiResponse<SubmissionDto> create(
             HttpServletRequest request,
-            @RequestParam(required = false) String historyCode,
-            @RequestParam(required = false) String executiveName,
-            @RequestParam(required = false) String position,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate submissionDate,
-            @RequestParam(required = false) String remarks,
-            @RequestParam(required = false) Long positionsId,
-            @RequestParam(required = false) MultipartFile file) {
+            @RequestBody SubmissionCreateRequest createRequest) {
         
         // 모든 파라미터 로그 출력
         log.info("=== 제출 이력 등록 API 호출 ===");
         log.info("Request Content-Type: {}", request.getContentType());
-        request.getParameterMap().forEach((key, values) -> {
-            log.info("Parameter: {} = {}", key, String.join(", ", values));
-        });
+        log.info("Request Body: {}", createRequest);
         
-        log.info("제출 이력 등록 API 호출: historyCode={}, executiveName={}, position={}, submissionDate={}, positionsId={}", 
-                historyCode, executiveName, position, submissionDate, positionsId);
+        log.info("제출 이력 등록 API 호출: submitHistCd={}, execofficerId={}, rmSubmitDt={}, positionsId={}", 
+                createRequest.getSubmitHistCd(), createRequest.getExecofficerId(), createRequest.getRmSubmitDt(), createRequest.getPositionsId());
         
         SubmissionDto dto = SubmissionDto.builder()
-                .historyCode(historyCode)
-                .executiveName(executiveName)
-                .position(position)
-                .submissionDate(submissionDate != null ? submissionDate : LocalDate.now())
-                .remarks(remarks)
-                .positionsId(positionsId)
+                .submitHistCd(createRequest.getSubmitHistCd())
+                .execofficerId(createRequest.getExecofficerId())
+                .rmSubmitDt(createRequest.getRmSubmitDt() != null ? createRequest.getRmSubmitDt() : LocalDate.now())
+                .updateYn(createRequest.getUpdateYn() != null ? createRequest.getUpdateYn() : "N")
+                .rmSubmitRemarks(createRequest.getRmSubmitRemarks())
+                .positionsId(createRequest.getPositionsId())
+                .createdId("system") // TODO: 실제 로그인 사용자 ID로 변경
+                .updatedId("system") // TODO: 실제 로그인 사용자 ID로 변경
+                .createdAt(java.time.LocalDateTime.now())
+                .updatedAt(java.time.LocalDateTime.now())
+                // 프론트엔드 호환성을 위한 필드들 (deprecated)
+                .historyCode(createRequest.getHistoryCode())
+                .executiveName(createRequest.getExecutiveName())
+                .position(createRequest.getPosition())
+                .submissionDate(createRequest.getSubmissionDate())
+                .remarks(createRequest.getRemarks())
+                .attachmentFile(createRequest.getAttachmentFile())
                 .build();
-        
-        if (file != null && !file.isEmpty()) {
-            dto.setAttachmentFile(file.getOriginalFilename());
-        }
         
         return ApiResponse.success(submissionService.createSubmission(dto));
     }

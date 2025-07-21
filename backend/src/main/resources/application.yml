@@ -84,6 +84,14 @@ spring:
       write-dates-as-timestamps: false
       fail-on-empty-beans: false
 
+  # 파일 업로드 설정
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+      resolve-lazily: false
+
   # CORS 설정
   web:
     cors:
@@ -115,6 +123,13 @@ logging:
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
     file: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
+
+# 애플리케이션 설정
+app:
+  file:
+    upload-dir: ./uploads
+    max-size: 10485760  # 10MB in bytes
+    allowed-types: pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,hwp,zip,rar
 
 # 관리 엔드포인트 설정 (Spring Boot 3.5 최신 기능)
 management:

@@ -304,16 +304,18 @@ public class AttachmentServiceImpl implements AttachmentService {
      * 실제 파일 저장
      */
     private String saveFile(MultipartFile file, String storedFilename) throws IOException {
-        // 업로드 디렉토리 생성
-        Path uploadPath = Paths.get(uploadDir);
+        // 업로드 디렉토리 생성 (상대 경로를 절대 경로로 변환)
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
+            log.info("업로드 디렉토리 생성: {}", uploadPath);
         }
 
-        // 파일 저장
+        // 파일 저장 (중복 시 덮어쓰기)
         Path filePath = uploadPath.resolve(storedFilename);
-        Files.copy(file.getInputStream(), filePath);
-
+        Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        
+        log.debug("파일 저장 완료: {}", filePath);
         return filePath.toString();
     }
 

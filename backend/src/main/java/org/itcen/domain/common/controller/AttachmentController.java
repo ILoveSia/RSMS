@@ -166,9 +166,14 @@ public class AttachmentController {
 
             log.info("첨부파일 다운로드 완료: {}", downloadInfo.getOriginalFilename());
 
+            // 한글 파일명 인코딩 처리
+            String encodedFilename = java.net.URLEncoder.encode(downloadInfo.getOriginalFilename(), "UTF-8")
+                    .replaceAll("\\+", "%20");
+            
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, 
-                            "attachment; filename=\"" + downloadInfo.getOriginalFilename() + "\"")
+                            "attachment; filename=\"" + downloadInfo.getOriginalFilename() + "\"; " +
+                            "filename*=UTF-8''" + encodedFilename)
                     .contentType(MediaType.parseMediaType(downloadInfo.getContentType()))
                     .contentLength(downloadInfo.getFileSize())
                     .body(resource);

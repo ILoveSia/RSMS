@@ -13,17 +13,17 @@ import java.util.List;
 public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     
     /**
-     * 제출 이력 조회 (positions 테이블과 조인)
+     * 모든 제출 이력 조회 (필터링 없음) - 네이티브 쿼리
      */
     @Query(value = """
         SELECT 
-            s.submit_id as id,
-            s.history_code as historyCode,
-            s.executive_name as executiveName,
-            s.position as position,
-            s.submission_date as submissionDate,
-            s.attachment_file as attachmentFile,
-            s.remarks as remarks,
+            s.rm_submit_mgmt_id as id,
+            s.submit_hist_cd as historyCode,
+            COALESCE(u.username, s.execofficer_id) as executiveName,
+            p.positions_nm as position,
+            s.rm_submit_dt as submissionDate,
+            '' as attachmentFile,
+            s.rm_submit_remarks as remarks,
             s.positions_id as positionsId,
             p.positions_nm as positionsNm,
             p.ledger_order as ledgerOrder,
@@ -31,29 +31,58 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             p.write_dept_cd as writeDeptCd
         FROM rm_submit_mgmt s
         LEFT JOIN positions p ON s.positions_id = p.positions_id
-        WHERE 1=1
-            AND (:startDate IS NULL OR s.submission_date >= :startDate)
-            AND (:endDate IS NULL OR s.submission_date <= :endDate)
-            AND (:ledgerOrder IS NULL OR p.ledger_order = :ledgerOrder)
-        ORDER BY s.submission_date DESC, s.submit_id DESC
+        LEFT JOIN users u ON s.execofficer_id = u.id
+        ORDER BY s.rm_submit_dt DESC, s.rm_submit_mgmt_id DESC
+        """, nativeQuery = true)
+    List<Object[]> findAllSubmissionHistoryWithPositions();
+    
+    // 임시로 주석 처리 - PostgreSQL 파라미터 타입 에러 때문에
+    /*
+    @Query(value = """
+        SELECT 
+            s.rm_submit_mgmt_id as id,
+            s.submit_hist_cd as historyCode,
+            COALESCE(u.username, s.execofficer_id) as executiveName,
+            p.positions_nm as position,
+            s.rm_submit_dt as submissionDate,
+            '' as attachmentFile,
+            s.rm_submit_remarks as remarks,
+            s.positions_id as positionsId,
+            p.positions_nm as positionsNm,
+            p.ledger_order as ledgerOrder,
+            p.confirm_gubun_cd as confirmGubunCd,
+            p.write_dept_cd as writeDeptCd
+        FROM rm_submit_mgmt s
+        LEFT JOIN positions p ON s.positions_id = p.positions_id
+        LEFT JOIN users u ON s.execofficer_id = u.id
+        WHERE (?1 IS NULL OR s.rm_submit_dt >= CAST(?1 AS DATE))
+        AND (?2 IS NULL OR s.rm_submit_dt <= CAST(?2 AS DATE)) 
+        AND (?3 IS NULL OR ?3 = '' OR p.ledger_order = ?3)
+        ORDER BY s.rm_submit_dt DESC, s.rm_submit_mgmt_id DESC
         """, nativeQuery = true)
     List<Object[]> findSubmissionHistoryWithPositions(
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate,
         @Param("ledgerOrder") String ledgerOrder
     );
+    */
     
     /**
      * positions 테이블과 조인하여 제출 이력 조회 (JPQL)
      */
     @Query("SELECT s FROM Submission s LEFT JOIN FETCH s.positionEntity p " +
-           "WHERE (:startDate IS NULL OR s.submissionDate >= :startDate) " +
-           "AND (:endDate IS NULL OR s.submissionDate <= :endDate) " +
+           "WHERE (:startDate IS NULL OR s.rmSubmitDt >= :startDate) " +
+           "AND (:endDate IS NULL OR s.rmSubmitDt <= :endDate) " +
            "AND (:ledgerOrder IS NULL OR p.ledgerOrder = :ledgerOrder) " +
-           "ORDER BY s.submissionDate DESC, s.id DESC")
+           "ORDER BY s.rmSubmitDt DESC, s.id DESC")
     List<Submission> findSubmissionHistoryWithPositionsJPQL(
         @Param("startDate") LocalDate startDate,
         @Param("endDate") LocalDate endDate,
         @Param("ledgerOrder") String ledgerOrder
     );
+    
+    /**
+     * submit_hist_cd로 존재 여부 확인
+     */
+    boolean existsBySubmitHistCd(String submitHistCd);
 }

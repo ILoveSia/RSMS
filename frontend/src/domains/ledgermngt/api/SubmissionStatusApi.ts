@@ -21,6 +21,8 @@ export interface SubmissionHistoryRow {
 }
 
 export interface RegistrationData {
+  submitHistCd: string;
+  execofficerId?: string | null; // 직원 ID 추가
   historyCode: SelectOption | null;
   executiveName: SelectOption | null;
   position: SelectOption | null;
@@ -62,20 +64,37 @@ export async function fetchSubmissionHistory(
 export async function submitSubmissionHistory(
   data: RegistrationData,
   file?: File
-): Promise<void> {
-  const formData = new FormData();
-  if (data.historyCode?.value) formData.append('historyCode', String(data.historyCode.value));
-  if (data.executiveName?.value) formData.append('executiveName', String(data.executiveName.value));
-  if (data.position?.value) formData.append('position', String(data.position.value));
-  formData.append('submissionDate', data.submissionDate.toISOString().split('T')[0]);
-  if (file) formData.append('file', file);
-  if (data.remarks?.value) formData.append('remarks', String(data.remarks.value));
-  
-  // positions 테이블 정보 추가
-  if (data.positionsId) formData.append('positionsId', String(data.positionsId));
+): Promise<{ id: number }> {
+  const requestData = {
+    submitHistCd: data.submitHistCd || null,
+    execofficerId: data.execofficerId || null, // 직원 ID 전달 (문자열 타입)
+    rmSubmitDt: data.submissionDate.toISOString().split('T')[0],
+    updateYn: 'N',
+    rmSubmitRemarks: data.remarks?.value || null,
+    positionsId: data.positionsId || null,
+    // 프론트엔드 호환성을 위한 필드들 (deprecated)
+    historyCode: data.historyCode?.value || null,
+    executiveName: data.executiveName?.value || null,
+    position: data.position?.value || null,
+    submissionDate: data.submissionDate.toISOString().split('T')[0],
+    remarks: data.remarks?.value || null,
+    attachmentFile: file?.name || null
+  };
 
-  const response = await apiClient.post('/submissions', formData);
-  if (!response.ok) throw new Error('제출 이력 등록에 실패했습니다.');
+  console.log('제출 요청 데이터:', requestData);
+  
+  const response = await apiClient.post<any>('/submissions', requestData);
+  console.log('제출 응답:', response);
+  
+  // API 클라이언트가 자동으로 ApiResponse wrapper를 unwrap하므로
+  // response는 이미 SubmissionDto 데이터입니다
+  console.log('응답 ID:', response?.id);
+  
+  if (!response || !response.id) {
+    throw new Error('서버에서 유효한 ID를 반환하지 않았습니다.');
+  }
+  
+  return { id: response.id };
 }
 
 export async function deleteSubmissionHistory(ids: number[]): Promise<void> {
