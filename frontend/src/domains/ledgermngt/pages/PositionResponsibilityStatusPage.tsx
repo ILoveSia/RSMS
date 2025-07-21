@@ -369,7 +369,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           >
             변경 이력
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             size="small"
             onClick={() => {
@@ -380,7 +380,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             color="primary"
           >
             등록
-          </Button>
+          </Button> */}
         </Box>
 
         {/* 그리드 영역 */}

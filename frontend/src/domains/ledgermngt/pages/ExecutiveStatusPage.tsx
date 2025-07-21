@@ -505,14 +505,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 다운로드
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             size="small"
             onClick={handleCreateExecutive}
           >
             임원 등록
-          </Button>
+          </Button> */}
         </Box>
 
         {/* 데이터 그리드 */}
