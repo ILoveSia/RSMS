@@ -14,10 +14,9 @@ import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn } from '@/shared/types/common';
+import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
-import type { SelectOption } from '@/shared/types/common';
 interface IPositionResponsibilityStatusPageProps {
   className?: string;
 }
@@ -251,6 +250,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 상세보기 핸들러
   const handleViewDetail = (row: PositionResponsibility) => {
     setSelectedDetailData(row);
+    console.log("row",row);
     setDialogMode('view');
     setDialogOpen(true);
   };
@@ -467,6 +467,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         onClose={() => setDialogOpen(false)}
         mode={dialogMode}
         responsibilityId={selectedDetailData?.id || null}
+        rowData={selectedDetailData} // row 데이터 전달
         onSave={handleSave}
         onChangeMode={setDialogMode}
       />

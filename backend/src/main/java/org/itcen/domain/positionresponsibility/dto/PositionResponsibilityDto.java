@@ -1,5 +1,6 @@
 package org.itcen.domain.positionresponsibility.dto;
 
+import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -7,7 +8,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import java.time.Instant;
 
 /**
  * 임원별 책무 현황 DTO
@@ -53,5 +53,16 @@ public class PositionResponsibilityDto {
         private String responsibility_conent;
         private String responsibility_detail_content;
 
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ResponsibilityCreateRequestDto {
+        private Long positions_id;
+        private Long responsibility_id;
+        private String updated_id;
+        private String role_summ;
     }
 }

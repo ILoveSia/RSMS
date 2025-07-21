@@ -1,15 +1,16 @@
 package org.itcen.domain.positionresponsibility.service;
 
+// import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.itcen.domain.positionresponsibility.dto.PositionResponsibilityDto;
+import org.itcen.domain.positionresponsibility.dto.PositionResponsibilityDto.ResponsibilityCreateRequestDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
-// import java.sql.Timestamp;
-import java.time.Instant;
 
 /**
  * 임원별 책무 현황 서비스
@@ -61,5 +62,29 @@ public class PositionResponsibilityService {
                 .collect(Collectors.toList());
 
         return finalResult;
+    }
+
+    @Transactional(readOnly = false)
+    public boolean updateResponsibility(ResponsibilityCreateRequestDto requestDto) {
+        String sql = "UPDATE role_resp_status " + "SET role_summ = '" + requestDto.getRole_summ()
+                + "', " + "updated_id = '" + requestDto.getUpdated_id() + "', "
+                + "updated_at = CURRENT_TIMESTAMP " + "WHERE positions_id = "
+                + requestDto.getPositions_id() + "; " + "INSERT INTO role_resp_status("
+                + "positions_id, responsibility_id, role_summ, created_id, updated_id, created_at, updated_at) "
+                + "SELECT " + requestDto.getPositions_id() + ", "
+                + requestDto.getResponsibility_id() + ", '" + requestDto.getRole_summ()
+                + "', 'system', 'system', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP "
+                + "WHERE NOT EXISTS ( " + "SELECT 1 FROM role_resp_status WHERE positions_id = "
+                + requestDto.getPositions_id() + ");";
+
+        log.info("실행할 SQL: {}", sql);
+        try {
+            em.createNativeQuery(sql).executeUpdate();
+            log.info("책무 업데이트 성공");
+            return true;
+        } catch (Exception e) {
+            log.error("Error updating responsibility: {}", e);
+            return false;
+        }
     }
 }

@@ -45,6 +45,7 @@ interface IResponsibilityDialogProps {
   mode: DialogMode;
   responsibilityId: number | null;
   positionName: string;
+  rowData?: any; // row 데이터를 받을 props 추가
   onClose: () => void;
   onSave: () => void;
   onChangeMode: (mode: DialogMode) => void;
@@ -55,6 +56,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   mode,
   responsibilityId,
   positionName,
+  rowData,
   onClose,
   onSave,
   onChangeMode,
@@ -75,6 +77,8 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
+  // 선택한 책무 데이터를 저장할 상태
+  const [selectedResponsibilityData, setSelectedResponsibilityData] = useState<any>(null);
   const getDialogTitle = () => {
     switch (mode) {
       case 'create':
@@ -216,34 +220,36 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     if (!validateForm()) {
       return;
     }
-    const responsibilityRequestData = {
-      responsibilityContent: formData.responsibilityContent,
-      details: formData.details.map(d => ({
-        responsibilityDetailContent: d.responsibilityDetailContent,
-        keyManagementTasks: d.keyManagementTasks,
-        relatedBasis: d.relatedBasis,
-      })),
-    };
-    console.log("responsibilityRequestData", responsibilityRequestData);
-    try {
-      setLoading(true);
-      // TODO: API 호출로 책무 저장
-      let response: ResponsibilityData;
-      if (mode === 'create') {
-        response = await apiClient.post('/api/responsibilities', responsibilityRequestData);
-      } else {
-        response = await apiClient.put(`/api/responsibilities/${responsibilityId}`, responsibilityRequestData);
+
+          // 백엔드 DTO 구조에 맞게 데이터 변환
+      const responsibilityRequestData = {
+        positions_id: rowData?.positions_id || responsibilityId || 1,
+        responsibility_id: selectedResponsibilityData?.responsibility_id || responsibilityId || 1,
+        updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
+        role_summ: formData.responsibilityContent, // 책무 내용을 role_summ에 포함
+      };
+      console.log(responsibilityRequestData);
+      console.log("@@@");
+      console.log("백엔드 DTO 구조로 변환된 데이터:", responsibilityRequestData);
+      try {
+        setLoading(true);
+        console.log('PUT 요청 시작 - URL: /position-responsibilities');
+        console.log('PUT 요청 데이터:', responsibilityRequestData);
+
+        // 백엔드 API 호출
+        const response = await apiClient.put('/position-responsibilities', responsibilityRequestData);
+
+        console.log('PUT 요청 성공 - 응답:', response);
+
+        await onSave();
+        setShowSuccessAlert(true);
+        onClose();
+      } catch (err: any) {
+        console.error('책무 저장 실패:', err);
+        console.error('에러 상세:', err.response?.data || err.message);
+      } finally {
+        setLoading(false);
       }
-
-      await onSave();
-
-      setShowSuccessAlert(true);
-      onClose();
-    } catch (err) {
-      console.error('책무 저장 실패:', err);
-    } finally {
-      setLoading(false);
-    }
   };
   const handleSelect = async (responsibility: ResponsibilitySearchResult) => {
     try {
@@ -261,6 +267,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       );
 
       console.log('response@@@: ', response);
+
+      // 응답 데이터를 상태에 저장 (PUT 요청 시 활용)
+      setSelectedResponsibilityData(response);
 
       // 응답이 배열인지 확인
       if (!Array.isArray(response) || response.length === 0) {
