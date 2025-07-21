@@ -26,6 +26,7 @@ interface ExecutiveResponsibilityRow {
   jobTitle?: string;         // 직위
   empNo?: string;            // 사번
   executiveName?: string;    // 성명
+  jobRank?: string;          // 직위
   responsibility?: string;   // 책무
   responsibilityDetail?: string; // 책무 세부내용
   managementDuty?: string;   // 책무이행을 위한 주요 관리의무
@@ -77,7 +78,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       ),
     },
     {
-      field: 'jobTitle',
+      field: 'jobRank',
       headerName: '직위',
       flex: 1,
       minWidth: 100,
@@ -103,33 +104,33 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     {
       field: 'responsibility',
       headerName: '책무',
-      flex: 1.5,
-      minWidth: 150,
-      align: 'left',
+      flex: 1,
+      minWidth: 100,
+      align: 'center',
       headerAlign: 'center',
     },
     {
       field: 'responsibilityDetail',
       headerName: '책무 세부내용',
-      flex: 2,
-      minWidth: 200,
-      align: 'left',
+      flex: 1,
+      minWidth: 100,
+      align: 'center',
       headerAlign: 'center',
     },
     {
       field: 'managementDuty',
       headerName: '책무이행을 위한 주요 관리의무',
-      flex: 2,
-      minWidth: 200,
-      align: 'left',
+      flex: 1,
+      minWidth: 100,
+      align: 'center',
       headerAlign: 'center',
     },
     {
       field: 'relatedBasis',
       headerName: '관련근거',
-      flex: 1.5,
-      minWidth: 150,
-      align: 'left',
+      flex: 1,
+      minWidth: 100,
+      align: 'center',
       headerAlign: 'center',
     },
   ];
@@ -152,16 +153,18 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       // 실제 API 호출
       const data = await executiveResponsibilityApi.getAll();
       // API 응답을 페이지에서 사용하는 형태로 변환
+      console.log("data",data);
       const transformedData: ExecutiveResponsibilityRow[] = data.map((item: any) => ({
         id: item.positionsId || 0,
         position: item.positionNameMapped || '해당없음',
         jobTitle: item.jobTitleCd || '해당없음',
-        empNo: item.empId || '해당없음',
+        empNo: item.num || '해당없음',
         executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
         responsibility: '', // 백엔드에 해당 필드가 없음
         responsibilityDetail: '', // 백엔드에 해당 필드가 없음
         managementDuty: '', // 백엔드에 해당 필드가 없음
-        relatedBasis: '' // 백엔드에 해당 필드가 없음
+        relatedBasis: '', // 백엔드에 해당 필드가 없음
+        jobRank: item.jobRankCd || '해당없음'
       }));
 
       setRows(transformedData);
@@ -203,7 +206,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       }}
     >
       <PageHeader
-        title="[600] 임원 현황"
+        title="[600] 임원별 책무 현황"
         icon={<GroupsIcon />}
         description="임원별 책무 현황을 조회합니다."
         elevation={false}
