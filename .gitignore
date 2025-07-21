@@ -21,8 +21,8 @@ Thumbs.db
 .settings/
 
 # Cursor AI 설정 (선택적으로 공유)
-!.vscode/settings.json
-!.vscode/extensions.json
+# !.vscode/settings.json
+# !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/tasks.json
 !.cursorrules
