@@ -243,8 +243,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     };
     try {
       setLoading(true);
-      console.log("########################");
-      console.log(responsibilityRequestData);
       // 백엔드 API 호출
       await responsibilityApi.update(responsibilityId || 1, responsibilityRequestData);
 
