@@ -101,7 +101,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         // 응답 데이터의 상세 타입 정의
         type DetailResponseType = {
           id: number;
-          responsibilityDetailContent: string;
+          responsibility_detail_content: string;
           keyManagementTasks: string;
           relatedBasis: string;
         };
@@ -137,7 +137,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           details: fetchedData.details.map((d: DetailResponseType) => ({
             id: String(d.id),
             responsibilityDetailId: String(d.id),
-            responsibilityDetailContent: d.responsibilityDetailContent,
+            responsibilityDetailContent: d.responsibility_detail_content,
             keyManagementTasks: d.keyManagementTasks,
             relatedBasis: d.relatedBasis,
           })),
@@ -150,10 +150,29 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         setLoading(false);
       }
     };
-    console.log("rowData",rowData);
+    console.log("rowData", rowData);
+    console.log("rowData.responsibility_mgt_sts:", rowData?.responsibility_mgt_sts);
+    console.log("rowData.responsibility_rel_evid:", rowData?.responsibility_rel_evid);
+    console.log("formData.details", formData.details);
 
     if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
-      fetchDetails(responsibilityId.toString());
+      // rowData가 있으면 우선 사용, 없으면 API 호출
+      if (rowData) {
+        setFormData({
+          responsibilityContent: rowData.responsibility_conent || '',
+          details: [
+            {
+              id: String(rowData.respontibility_id || Date.now()),
+              responsibilityDetailId: String(rowData.respontibility_id || ''),
+              responsibilityDetailContent: rowData.responsibility_detail_content || '',
+              keyManagementTasks: rowData.responsibility_mgt_sts || '',
+              relatedBasis: rowData.responsibility_rel_evid || '',
+            }
+          ]
+        });
+      } else {
+        fetchDetails(responsibilityId.toString());
+      }
     } else if (open && mode === 'create') {
       setFormData({
         responsibilityContent: '',
@@ -167,7 +186,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         ],
       });
     }
-  }, [open, mode, responsibilityId]);
+  }, [open, mode, responsibilityId, rowData]);
 
   // 세부내용 추가
   const addDetail = () => {
@@ -222,30 +241,33 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       return;
     }
 
-          // 백엔드 DTO 구조에 맞게 데이터 변환
-      const responsibilityRequestData = {
-        positions_id: rowData?.positions_id || responsibilityId || 1,
-        responsibility_id: selectedResponsibilityData?.responsibility_id || responsibilityId || 1,
-        updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
-        role_summ: formData.responsibilityContent, // 책무 내용을 role_summ에 포함
-      };
-      console.log(responsibilityRequestData);
-      try {
-        setLoading(true);
+    // 백엔드 DTO 구조에 맞게 데이터 변환
+    console.log(selectedResponsibilityData)
+    console.log(selectedResponsibilityData[0].id)
+    console.log("############")
+    const responsibilityRequestData = {
+      positions_id: rowData?.positions_id || responsibilityId || 1,
+      responsibility_id: selectedResponsibilityData[0].id || responsibilityId || 1,
+      updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
+      role_summ: formData.responsibilityContent, // 책무 내용을 role_summ에 포함
+    };
+    console.log(responsibilityRequestData);
+    try {
+      setLoading(true);
 
-        // 백엔드 API 호출
-        const response = await apiClient.put('/position-responsibilities', responsibilityRequestData);
+      // 백엔드 API 호출
+      const response = await apiClient.put('/position-responsibilities', responsibilityRequestData);
 
 
-        await onSave();
-        setShowSuccessAlert(true);
-        onClose();
-      } catch (err: any) {
-        console.error('책무 저장 실패:', err);
-        console.error('에러 상세:', err.response?.data || err.message);
-      } finally {
-        setLoading(false);
-      }
+      await onSave();
+      setShowSuccessAlert(true);
+      onClose();
+    } catch (err: any) {
+      console.error('책무 저장 실패:', err);
+      console.error('에러 상세:', err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
   };
   const handleSelect = async (responsibility: ResponsibilitySearchResult) => {
     try {
@@ -329,32 +351,32 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
 
         <Box sx={{ p: 2 }}>
-        <TextField
-          sx={{ height: '100%', width: '100%', mb: 3 }}
-          disabled={true}
-          multiline
-          rows={3}
-          label="직책"
-          value={positionName}
-        />
-        <TextField
-        sx={{ height: '100%', width: '100%', mb: 3 }}
-        multiline
-        rows={3}
-        label="책무 개요"
-        disabled={mode==='view'}
-        value={rowData?.responsibilityOverview}
-        />
+          <TextField
+            sx={{ height: '100%', width: '100%', mb: 3 }}
+            disabled={true}
+            multiline
+            rows={3}
+            label="직책"
+            value={positionName}
+          />
+          <TextField
+            sx={{ height: '100%', width: '100%', mb: 3 }}
+            multiline
+            rows={3}
+            label="책무 개요"
+            disabled={mode === 'view'}
+            value={rowData?.responsibilityOverview}
+          />
           {/* 책무 내용 */}
-        <TextField
-          fullWidth
-          multiline
-          label="책무 내용"
-          rows={3}
-          value={rowData?.responsibility_conent}
-          // onChange={(e) => handleContentChange(e.target.value)}
-          disabled={true}
-        />
+          <TextField
+            fullWidth
+            multiline
+            label="책무 내용"
+            rows={3}
+            value={rowData?.responsibility_conent}
+            // onChange={(e) => handleContentChange(e.target.value)}
+            disabled={true}
+          />
 
           {/* 세부내용 목록 */}
           <Box>
@@ -385,67 +407,78 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {formData.details.map((detail) => (
-                    <TableRow key={detail.id}>
+                  <TableRow>
+                    <TableCell>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={2}
+                        value={rowData?.responsibility_detail_content || ''}
+                        onChange={(e) => {
+                          // rowData 직접 수정은 불가하므로 formData도 함께 업데이트
+                          setFormData(prev => ({
+                            ...prev,
+                            details: [{
+                              ...prev.details[0],
+                              responsibilityDetailContent: e.target.value
+                            }]
+                          }));
+                        }}
+                        disabled={mode === 'view'}
+                        placeholder="세부내용을 입력하세요"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={2}
+                        value={rowData?.responsibility_mgt_sts || ''}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            details: [{
+                              ...prev.details[0],
+                              keyManagementTasks: e.target.value
+                            }]
+                          }));
+                        }}
+                        disabled={mode === 'view'}
+                        placeholder="주요 관리업무를 입력하세요"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={2}
+                        value={rowData?.responsibility_rel_evid || ''}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            details: [{
+                              ...prev.details[0],
+                              relatedBasis: e.target.value
+                            }]
+                          }));
+                        }}
+                        disabled={mode === 'view'}
+                        placeholder="관련 근거를 입력하세요"
+                      />
+                    </TableCell>
+                    {mode !== 'view' && (
                       <TableCell>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          value={detail.responsibilityDetailContent || ''}
-                          onChange={(e) =>
-                            handleDetailChange(detail.id || '', 'responsibilityDetailContent', e.target.value)
-                          }
-                          disabled={mode === 'view'}
-                          error={!!validationErrors[`detail_${detail.id}_content`]}
-                          helperText={validationErrors[`detail_${detail.id}_content`]}
-                          placeholder="세부내용을 입력하세요"
-                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => { }}
+                          disabled={true}
+                          color="error"
+                        >
+                          <RemoveIcon />
+                        </IconButton>
                       </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          value={detail.keyManagementTasks || ''}
-                          onChange={(e) =>
-                            handleDetailChange(detail.id || '', 'keyManagementTasks', e.target.value)
-                          }
-                          disabled={mode === 'view'}
-                          error={!!validationErrors[`detail_${detail.id}_tasks`]}
-                          helperText={validationErrors[`detail_${detail.id}_tasks`]}
-                          placeholder="주요 관리업무를 입력하세요"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={2}
-                          value={detail.relatedBasis || ''}
-                          onChange={(e) =>
-                            handleDetailChange(detail.id || '', 'relatedBasis', e.target.value)
-                          }
-                          disabled={mode === 'view'}
-                          error={!!validationErrors[`detail_${detail.id}_basis`]}
-                          helperText={validationErrors[`detail_${detail.id}_basis`]}
-                          placeholder="관련 근거를 입력하세요"
-                        />
-                      </TableCell>
-                      {mode !== 'view' && (
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            onClick={() => removeDetail(detail.id)}
-                            disabled={formData.details.length === 1}
-                            color="error"
-                          >
-                            <RemoveIcon />
-                          </IconButton>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
+                    )}
+                  </TableRow>
                 </TableBody>
               </Table>
             </TableContainer>

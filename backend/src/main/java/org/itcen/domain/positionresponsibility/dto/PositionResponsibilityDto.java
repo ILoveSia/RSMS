@@ -29,6 +29,8 @@ public class PositionResponsibilityDto {
     private Instant updated_at;
     private String responsibility_conent;
     private String responsibility_detail_content;
+    private String responsibility_mgt_sts; // 주요 관리업무
+    private String responsibility_rel_evid; // 관련 근거
 
     @Data
     @Builder

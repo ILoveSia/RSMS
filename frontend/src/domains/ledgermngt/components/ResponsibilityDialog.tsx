@@ -382,8 +382,12 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
-                  value={positionName}
-                  disabled={true}
+                  value={formData.responsibilityContent}
+                  onChange={(e) => setFormData(prev => ({ ...prev, responsibilityContent: e.target.value }))}
+                  disabled={mode!=='create'}
+                  error={!!validationErrors.responsibilityContent}
+                  helperText={validationErrors.responsibilityContent}
+                  placeholder="책무 내용을 입력하세요"
                   sx={{
                     '& .MuiInputBase-root': {
                       height: '100%',

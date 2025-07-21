@@ -33,10 +33,10 @@ interface PositionResponsibility {
   updatedAt: string;
 }
 const ledgerOrderFilterOptions: SelectOption[] = [
-    { value: '2024-001', label: '2024-001' },
-    { value: '2024-002', label: '2024-002' },
-    { value: '2024-003', label: '2024-003' }
-  ];
+  { value: '2024-001', label: '2024-001' },
+  { value: '2024-002', label: '2024-002' },
+  { value: '2024-003', label: '2024-003' }
+];
 
 const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPageProps> = (): React.JSX.Element => {
   const [rows, setRows] = useState<PositionResponsibility[]>([]);
@@ -76,12 +76,17 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // API 호출 대신 목업 데이터 사용
       const response = await fetch('/api/position-responsibilities');
       const data = await response.json();
+      console.log('API 응답 데이터:', data);
+      console.log('첫 번째 항목:', data[0]);
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         ...item,
         positionName: item.positions_name ?? '',
         responsibilityOverview: item.role_summ ?? '',
         responsibilityStartDate: item.created_at ?? '',
         lastModifiedDate: item.updated_at ?? '',
+        // 새로운 필드들 추가
+        responsibility_mgt_sts: item.responsibility_mgt_sts ?? '',
+        responsibility_rel_evid: item.responsibility_rel_evid ?? '',
       }));
       setRows(mappedRows);
     } catch (err) {
@@ -111,8 +116,8 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           size="small"
           color={
             value === '핵심' ? 'error' :
-            value === '중요' ? 'warning' :
-            value === '일반' ? 'default' : 'default'
+              value === '중요' ? 'warning' :
+                value === '일반' ? 'default' : 'default'
           }
         />
       )
@@ -311,7 +316,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             size="small"
             sx={{ width: '130px' }}
           />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333',marginLeft: '16px'  }}>직책</span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
           <ComboBox
             value={positionFilter}
             options={[
