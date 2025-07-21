@@ -482,6 +482,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                 </TableBody>
               </Table>
             </TableContainer>
+            {mode !== 'view' && (
             <Button
               variant="contained"
               size="small"
@@ -492,6 +493,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
             >
               책무검색테스트
             </Button>
+            )}
           </Box>
         </Box>
       </BaseDialog>
