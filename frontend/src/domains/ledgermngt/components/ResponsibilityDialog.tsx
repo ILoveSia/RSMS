@@ -138,10 +138,30 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         setLoading(false);
       }
     };
-    console.log("rowData", rowData);
+    console.log(rowData);
+    console.log("mode", mode);
+    console.log("responsibilityId", responsibilityId);
 
     if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
-      fetchDetails(responsibilityId.toString());
+      // 수정/조회 모드에서는 rowData가 있으면 우선 사용, 없으면 API 호출
+      if (rowData) {
+        // ResponsibilityRow 타입에 맞게 데이터 로드
+        setFormData({
+          responsibilityContent: rowData.responsibilityContent || '',
+          details: [
+            {
+              id: String(rowData.responsibilityDetailId),
+              responsibilityDetailId: String(rowData.responsibilityDetailId),
+              responsibilityDetailContent: rowData.responsibilityDetailContent || '',
+              keyManagementTasks: rowData.responsibilityMgtSts || '',
+              relatedBasis: rowData.responsibilityRelEvid || '',
+            }
+          ]
+        });
+      } else {
+        // rowData가 없으면 API 호출
+        fetchDetails(responsibilityId.toString());
+      }
     } else if (open && mode === 'create') {
       setFormData({
         responsibilityContent: '',
@@ -155,7 +175,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         ],
       });
     }
-  }, [open, mode, responsibilityId]);
+  }, [open, mode, responsibilityId, rowData]);
 
 
 
