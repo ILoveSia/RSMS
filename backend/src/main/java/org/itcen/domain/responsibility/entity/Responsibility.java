@@ -25,10 +25,12 @@ public class Responsibility extends BaseTimeEntity {
     private String responsibilityContent;
 
     @OneToMany(mappedBy = "responsibility", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ResponsibilityDetail> details = new ArrayList<>();
 
     public void addDetail(ResponsibilityDetail detail) {
         details.add(detail);
         detail.setResponsibility(this);
     }
-} 
+
+}

@@ -16,8 +16,9 @@ import dayjs from 'dayjs';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { responsibilityApi, type ResponsibilityRow } from '../api/responsibilityApi';
+import { type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
+import responsibilityApi from '../api/responsibilityApi';
 
 interface IResponsibilityDbStatusPageProps {
   className?: string;
@@ -35,6 +36,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [searchText, setSearchText] = useState<string>('');
+    const [selectedIds, setSelectedIds] = useState<number>();
+    const [data, setData] = useState<ResponsibilityRow[]>([]);
 
     // 원장차수는 LedgerOrderSelect에서 자동 관리
 
@@ -45,6 +48,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
       try {
         const data = await responsibilityApi.getStatusList(searchId);
+        setData(data);
         setRows(data);
       } catch (err) {
         console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
@@ -259,6 +263,18 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       setSearchText(e.target.value);
     }, []);
 
+    const handleDelete = useCallback(() => {
+      if (selectedIds) {
+        try {
+          responsibilityApi.delete(data[selectedIds].responsibilityId);
+          fetchResponsibilities();
+        } catch (error) {
+          console.error('책무 삭제 실패:', error);
+          setError('책무 삭제 중 오류가 발생했습니다.');
+        }
+      }
+    }, [selectedIds]);
+
     return (
       <PageContainer>
         <PageHeader
@@ -353,7 +369,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             >
               등록
             </Button>
-            <Button variant='contained' size='small' color='error' sx={{ mr: 1 }}>
+            <Button variant='contained' size='small' color='error' sx={{ mr: 1 }} onClick={handleDelete}>
               삭제
             </Button>
           </Box>
@@ -374,6 +390,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               columns={columns as any}
               loading={loading}
               selectable={true}
+              multiSelect={false}
+              selectedRows={selectedIds}
+              onRowSelectionChange={selectedRows => {
+                setSelectedIds(selectedRows.map(id => Number(id)));
+              }}
               onRowClick={(row: ResponsibilityRow) => {
                 console.log('DataGrid onRowClick:', row);
                 setSelectedResponsibilityId(row.responsibilityId);

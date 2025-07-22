@@ -15,4 +15,6 @@ public interface ResponsibilityService {
     List<ResponsibilityResponseDto> getResponsibilityById(Long id);
 
     Responsibility updateResponsibility(Long id, ResponsibilityCreateRequestDto requestDto);
+
+    void deleteResponsibility(Long id);
 }

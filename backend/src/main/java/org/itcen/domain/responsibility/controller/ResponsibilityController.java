@@ -59,4 +59,10 @@ public class ResponsibilityController {
             return ResponseEntity.internalServerError().body(ApiResponse.error("책무 수정에 실패했습니다: " + e.getMessage()));
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteResponsibility(@PathVariable Long id) {
+        responsibilityService.deleteResponsibility(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

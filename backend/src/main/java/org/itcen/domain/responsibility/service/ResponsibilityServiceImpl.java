@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,22 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
 
     @Override
     @Transactional
+    public void deleteResponsibility(Long id) {
+        log.info("책무 삭제 API 호출: {}", id);
+
+        // Responsibility responsibility = responsibilityRepository.findById(id)
+        //         .orElseThrow(() -> new RuntimeException("책무를 찾을 수 없습니다: " + id));
+
+        // 논리적 삭제 (soft delete)
+        // responsibility.softDelete();
+        // responsibilityRepository.save(responsibility);
+
+        // 물리적 삭제를 원한다면 아래 주석 해제
+        responsibilityRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
     public Responsibility createResponsibility(ResponsibilityCreateRequestDto requestDto) {
 
         Responsibility responsibility = Responsibility.builder()
@@ -37,11 +54,10 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
         Responsibility savedResponsibility = responsibilityRepository.save(responsibility);
 
         for (ResponsibilityDetailDto detailDto : requestDto.getDetails()) {
-            ResponsibilityDetail detail =
-                    ResponsibilityDetail.builder().responsibility(savedResponsibility)
-                            .responsibilityDetailContent(detailDto.getResponsibilityDetailContent())
-                            .responsibilityMgtSts(detailDto.getKeyManagementTasks())
-                            .responsibilityRelEvid(detailDto.getRelatedBasis()).build();
+            ResponsibilityDetail detail = ResponsibilityDetail.builder().responsibility(savedResponsibility)
+                    .responsibilityDetailContent(detailDto.getResponsibilityDetailContent())
+                    .responsibilityMgtSts(detailDto.getKeyManagementTasks())
+                    .responsibilityRelEvid(detailDto.getRelatedBasis()).build();
 
             responsibilityDetailRepository.save(detail);
         }
@@ -65,20 +81,20 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
     @Override
     @Transactional(readOnly = true)
     public List<ResponsibilityResponseDto> getResponsibilityById(Long id) {
-        String sql = "SELECT "+
-    "r.responsibility_id, "+
-    "r2.responsibility_content , "+
-    "r3.responsibility_detail_content, "+
-    "r3.responsibility_rel_evid, "+
-    "r3.responsibility_mgt_sts "+
-    "FROM responsibility r "+
-    "left join responsibility r2 on r.responsibility_id = r2.responsibility_id "+
-    "left join responsibility_detail r3 on r.responsibility_id = r3.responsibility_id "+
-    "where r.responsibility_id ="+id+" "+
-    "ORDER BY r.responsibility_id;";
+        String sql = "SELECT " +
+                "r.responsibility_id, " +
+                "r2.responsibility_content , " +
+                "r3.responsibility_detail_content, " +
+                "r3.responsibility_rel_evid, " +
+                "r3.responsibility_mgt_sts " +
+                "FROM responsibility r " +
+                "left join responsibility r2 on r.responsibility_id = r2.responsibility_id " +
+                "left join responsibility_detail r3 on r.responsibility_id = r3.responsibility_id " +
+                "where r.responsibility_id =" + id + " " +
+                "ORDER BY r.responsibility_id;";
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
         List<ResponsibilityResponseDto> responseDtos = new ArrayList<>();
-        responseDtos=results.stream().map(row -> {
+        responseDtos = results.stream().map(row -> {
             ResponsibilityResponseDto dto = new ResponsibilityResponseDto();
             dto.setId(row[0] != null ? ((Number) row[0]).longValue() : null);
             dto.setResponsibilityContent(row[1] != null ? (String) row[1] : "");
@@ -99,17 +115,15 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
         responsibility.setResponsibilityContent(requestDto.getResponsibilityContent());
 
         // 기존 상세 정보 삭제
-        List<ResponsibilityDetail> existingDetails =
-                responsibilityDetailRepository.findAllByResponsibilityId(id);
+        List<ResponsibilityDetail> existingDetails = responsibilityDetailRepository.findAllByResponsibilityId(id);
         responsibilityDetailRepository.deleteAll(existingDetails);
 
         // 새로운 상세 정보 추가
         for (ResponsibilityDetailDto detailDto : requestDto.getDetails()) {
-            ResponsibilityDetail newDetail =
-                    ResponsibilityDetail.builder().responsibility(responsibility)
-                            .responsibilityDetailContent(detailDto.getResponsibilityDetailContent())
-                            .responsibilityMgtSts(detailDto.getKeyManagementTasks())
-                            .responsibilityRelEvid(detailDto.getRelatedBasis()).build();
+            ResponsibilityDetail newDetail = ResponsibilityDetail.builder().responsibility(responsibility)
+                    .responsibilityDetailContent(detailDto.getResponsibilityDetailContent())
+                    .responsibilityMgtSts(detailDto.getKeyManagementTasks())
+                    .responsibilityRelEvid(detailDto.getRelatedBasis()).build();
 
             responsibilityDetailRepository.save(newDetail);
         }

@@ -128,7 +128,7 @@ export const responsibilityApi = {
     try {
       console.log(`[responsibilityApi] delete 호출 - responsibilityId: ${responsibilityId}`);
 
-      await apiClient.delete(`/api/responsibilities/${responsibilityId}`);
+      await apiClient.delete(`/responsibilities/${responsibilityId}`);
 
       console.log('[responsibilityApi] delete 완료');
     } catch (error) {
