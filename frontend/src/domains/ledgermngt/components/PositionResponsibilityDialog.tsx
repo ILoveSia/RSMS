@@ -167,7 +167,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         setLoading(false);
       }
     };
-    if ((mode === 'edit' || mode === 'view') && rowData.positions_id != null && open) {
+    if ((mode === 'edit' || mode === 'view') && rowData?.positions_id != null && open) {
       // rowData가 있으면 우선 사용, 없으면 API 호출
       if (rowData) {
         const initialData = {
