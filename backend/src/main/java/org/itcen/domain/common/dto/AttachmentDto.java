@@ -74,8 +74,8 @@ public class AttachmentDto {
                     .contentType(attachment.getContentType())
                     .filePath(attachment.getFilePath())
                     .fileSize(attachment.getFileSize())
-                    .originalFilename(attachment.getOriginalFilename())
-                    .storedFilename(attachment.getStoredFilename())
+                    .originalFilename(attachment.getOriginalName())
+                    .storedFilename(attachment.getStoredName())
                     .uploadedBy(attachment.getUploadedBy())
                     .entityType(attachment.getEntityType())
                     .entityId(attachment.getEntityId())
@@ -122,7 +122,7 @@ public class AttachmentDto {
          */
         public static DownloadInfo from(Attachment attachment) {
             return DownloadInfo.builder()
-                    .originalFilename(attachment.getOriginalFilename())
+                    .originalFilename(attachment.getOriginalName())
                     .contentType(attachment.getContentType())
                     .fileSize(attachment.getFileSize())
                     .filePath(attachment.getFilePath())
@@ -180,8 +180,8 @@ public class AttachmentDto {
         public static UploadResult success(Attachment attachment) {
             return UploadResult.builder()
                     .attachId(attachment.getAttachId())
-                    .originalFilename(attachment.getOriginalFilename())
-                    .storedFilename(attachment.getStoredFilename())
+                    .originalFilename(attachment.getOriginalName())
+                    .storedFilename(attachment.getStoredName())
                     .fileSize(attachment.getFileSize())
                     .message("파일 업로드가 완료되었습니다.")
                     .build();

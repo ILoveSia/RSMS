@@ -11,8 +11,8 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
-import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { AttachFile as AttachFileIcon, Groups as GroupsIcon } from '@mui/icons-material';
+import { Box, Chip, Tooltip } from '@mui/material';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { RegistrationData, SubmissionHistoryRow } from '../api/SubmissionStatusApi';
 import {
@@ -123,7 +123,25 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
     {
       field: 'attachmentFile',
       headerName: '첨부파일',
-      width: 200,
+      width: 120,
+      align: 'center' as const,
+      renderCell: ({ row }) => {
+        if (row.hasAttachment && row.attachmentCount && row.attachmentCount > 0) {
+          return (
+            <Tooltip title={`첨부파일 ${row.attachmentCount}개`}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <AttachFileIcon fontSize="small" color="primary" />
+                <span style={{ fontSize: '0.75rem', color: '#666' }}>
+                  {row.attachmentCount}
+                </span>
+              </Box>
+            </Tooltip>
+          );
+        }
+        return (
+          <span style={{ fontSize: '0.75rem', color: '#999' }}>-</span>
+        );
+      },
     },
     {
       field: 'remarks',
@@ -372,7 +390,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             itemId={selectedItem?.id}
             initialData={selectedItem ? {
               submitHistCd: selectedItem.historyCode,
-              execofficerId: null, // 필요시 설정
+              execofficerId: selectedItem.execofficerId || null, // 기존 데이터에서 execofficerId 가져오기
               historyCode: { value: selectedItem.historyCode, label: selectedItem.historyCode },
               executiveName: { value: selectedItem.executiveName, label: selectedItem.executiveName },
               position: { value: selectedItem.position, label: selectedItem.position },

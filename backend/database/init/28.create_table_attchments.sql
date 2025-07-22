@@ -1,3 +1,9 @@
+-- 기존 attachments 테이블 삭제 후 재생성
+-- 28.create_table_attchments.sql의 정확한 스키마로 재생성
+
+-- 기존 테이블 삭제 (데이터도 함께 삭제됨)
+DROP TABLE IF EXISTS public.attachments CASCADE;
+
 -- 개선된 첨부파일 테이블
 -- 여러 업무에서 공통으로 사용할 수 있도록 설계
 

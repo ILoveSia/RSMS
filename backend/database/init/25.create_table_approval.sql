@@ -2,12 +2,13 @@
 
 -- Drop table
 
--- DROP TABLE public.approval;
+-- DROP TABLE public.approval CASCADE;
 -- 결재 테이블
 
 CREATE TABLE public.approval (
 	approval_id serial4 NOT NULL,       -- 결재ID
-	task_id varchar(100) NOT NULL,      -- 관련 업무 ID (어떤 업무에 대한 결재인지 식별)
+	task_type_cd varchar(100) NOT NULL,    -- 업무 유형코드
+	task_id int8 NOT NULL,      -- 관련 업무 ID (어떤 업무에 대한 결재인지 식별)
 	requester_id varchar(100) NOT NULL, -- 결재 요청자 ID
 	approver_id varchar(100) NULL,     -- 결재자 ID
 	appr_stat_cd varchar(20) NULL,     -- 결재 상태 코드

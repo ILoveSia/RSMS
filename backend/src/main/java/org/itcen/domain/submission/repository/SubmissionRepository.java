@@ -19,10 +19,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         SELECT 
             s.rm_submit_mgmt_id as id,
             s.submit_hist_cd as historyCode,
+            s.execofficer_id as execofficerId,
             COALESCE(u.username, s.execofficer_id) as executiveName,
             p.positions_nm as position,
             s.rm_submit_dt as submissionDate,
-            COALESCE(a.original_filename, '') as attachmentFile,
+            COALESCE(a.original_name, '') as attachmentFile,
             s.rm_submit_remarks as remarks,
             s.positions_id as positionsId,
             p.positions_nm as positionsNm,
@@ -36,10 +37,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         LEFT JOIN users u ON s.execofficer_id = u.id
         LEFT JOIN attachments a ON a.entity_type = 'LEDGER_MGMT_STRUCTURE_SUBMISSION' 
             AND a.entity_id = s.rm_submit_mgmt_id 
-            AND a.deleted_at IS NULL
-        GROUP BY s.rm_submit_mgmt_id, s.submit_hist_cd, u.username, s.execofficer_id, 
+            AND (a.deleted_yn = 'N' OR a.deleted_yn IS NULL)
+        GROUP BY s.rm_submit_mgmt_id, s.submit_hist_cd, s.execofficer_id, u.username, 
                  p.positions_nm, s.rm_submit_dt, s.rm_submit_remarks, s.positions_id,
-                 p.ledger_order, p.confirm_gubun_cd, p.write_dept_cd, a.original_filename, a.attach_id
+                 p.ledger_order, p.confirm_gubun_cd, p.write_dept_cd, a.original_name, a.attach_id
         ORDER BY s.rm_submit_dt DESC, s.rm_submit_mgmt_id DESC
         """, nativeQuery = true)
     List<Object[]> findAllSubmissionHistoryWithPositions();

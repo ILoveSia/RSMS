@@ -97,10 +97,11 @@ public class AttachmentServiceImpl implements AttachmentService {
         // DB 저장
         Attachment attachment = Attachment.builder()
                 .contentType(file.getContentType())
+                .mimeType(file.getContentType()) // MIME 타입은 content-type과 동일하게 설정
                 .filePath(filePath)
                 .fileSize(file.getSize())
-                .originalFilename(file.getOriginalFilename())
-                .storedFilename(storedFilename)
+                .originalName(file.getOriginalFilename())
+                .storedName(storedFilename)
                 .uploadedBy(uploadRequest.getUploadedBy())
                 .entityType(uploadRequest.getEntityType())
                 .entityId(uploadRequest.getEntityId())

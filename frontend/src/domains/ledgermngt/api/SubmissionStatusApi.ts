@@ -4,6 +4,7 @@ import apiClient from '@/app/common/api/client';
 export interface SubmissionHistoryRow {
   id: number;
   historyCode: string;
+  execofficerId?: string; // 직원 ID 추가
   executiveName: string;
   position: string;
   submissionDate: string;
@@ -11,6 +12,10 @@ export interface SubmissionHistoryRow {
   modificationDate?: string;
   attachmentFile?: string;
   remarks?: string;
+  
+  // 첨부파일 관련 필드들
+  hasAttachment?: boolean;  // 첨부파일 존재 여부
+  attachmentCount?: number; // 첨부파일 개수
   
   // positions 테이블과 조인된 정보
   positionsId?: number;
@@ -136,7 +141,7 @@ export async function updateSubmissionHistory(
 
 export async function deleteSubmissionHistory(ids: number[]): Promise<void> {
   const response = await apiClient.delete('/submissions/history', ids);
-  if (response.success === false) {
+  if (response && response.success === false) {
     throw new Error(response.message || '제출 이력 삭제에 실패했습니다.');
   }
 }

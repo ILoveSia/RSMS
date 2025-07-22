@@ -93,4 +93,5 @@ backend/src/main/resources/application.yml
 backend/build.gradle
 frontend/tsconfig.json
 application.yml
+backend/uploads
 .kiro/
