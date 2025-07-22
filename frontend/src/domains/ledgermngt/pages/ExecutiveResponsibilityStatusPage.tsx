@@ -12,8 +12,9 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
+import executiveResponsibilityApi from '../api/executiveResponsibilityApi';
 
 interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
@@ -21,20 +22,23 @@ interface IExecutiveResponsibilityStatusPageProps {
 
 interface ExecutiveResponsibilityRow {
   id: number;
-  executiveName: string;     // 임원명
   position: string;          // 직책
-  jobTitle: string;          // 직위
-  totalCount: number;        // 총 책무 수
-  mainCount: number;         // 주책무 수
-  subCount: number;          // 부책무 수
-  status: string;           // 상태
-  lastUpdateDate: string;   // 최종 수정일
+  jobTitle?: string;         // 직위
+  empNo?: string;            // 사번
+  executiveName?: string;    // 성명
+  jobRank?: string;          // 직위
+  responsibility?: string;   // 책무
+  responsibilityDetail?: string; // 책무 세부내용
+  managementDuty?: string;   // 책무이행을 위한 주요 관리의무
+  relatedBasis?: string;     // 관련근거
 }
-  const ledgerOrderOptions: SelectOption[] = [
-    { value: '2024-001', label: '2024-001' },
-    { value: '2024-002', label: '2024-002' },
-    { value: '2024-003', label: '2024-003' }
-  ];
+
+const ledgerOrderOptions: SelectOption[] = [
+  { value: '2024-001', label: '2024-001' },
+  { value: '2024-002', label: '2024-002' },
+  { value: '2024-003', label: '2024-003' }
+];
+
 const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatusPageProps> = () => {
   // 상태 관리
   const [selectedRound, setSelectedRound] = useState<SelectOption | null>(null);
@@ -44,11 +48,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   // 옵션 데이터
-  const roundOptions: SelectOption[] = [
-    { value: '2024-001', label: '2024년 1차' },
-    { value: '2024-002', label: '2024년 2차' },
-  ];
-
   const positionOptions: SelectOption[] = [
     { value: 'all', label: '전체' },
     { value: 'chairman', label: '이사회 의장' },
@@ -59,146 +58,123 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   // 테이블 컬럼 정의
   const columns: DataGridColumn<ExecutiveResponsibilityRow>[] = [
     {
-      field: 'executiveName',
-      headerName: '임원명',
-      flex: 1,
-      minWidth: 120,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
       field: 'position',
       headerName: '직책',
       flex: 1,
       minWidth: 150,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ value, row }) => (
+        <span
+          style={{
+            color: '#1976d2',
+            cursor: 'pointer',
+            textDecoration: 'underline'
+          }}
+          onClick={() => handlePositionClick(row)}
+        >
+          {value || '해당없음'}
+        </span>
+      ),
     },
     {
-      field: 'jobTitle',
+      field: 'jobRank',
       headerName: '직위',
       flex: 1,
-      minWidth: 120,
+      minWidth: 100,
       align: 'center',
       headerAlign: 'center',
     },
     {
-      field: 'totalCount',
-      headerName: '총 책무 수',
+      field: 'empNo',
+      headerName: '사번',
       flex: 1,
-      minWidth: 120,
+      minWidth: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value }) => `${value}개`
     },
     {
-      field: 'mainCount',
-      headerName: '주책무 수',
+      field: 'executiveName',
+      headerName: '성명',
       flex: 1,
-      minWidth: 120,
+      minWidth: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value }) => `${value}개`
     },
     {
-      field: 'subCount',
-      headerName: '부책무 수',
+      field: 'responsibility',
+      headerName: '책무',
       flex: 1,
-      minWidth: 120,
+      minWidth: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value }) => `${value}개`
     },
     {
-      field: 'status',
-      headerName: '상태',
+      field: 'responsibilityDetail',
+      headerName: '책무 세부내용',
       flex: 1,
-      minWidth: 120,
+      minWidth: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value }) => {
-        let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
-
-        switch (value) {
-          case '검토중':
-            color = 'warning';
-            break;
-          case '확정':
-            color = 'success';
-            break;
-          case '미작성':
-            color = 'error';
-            break;
-          default:
-            color = 'default';
-        }
-
-        return (
-          <Chip
-            label={value}
-            color={color}
-            size="small"
-          />
-        );
-      }
     },
     {
-      field: 'lastUpdateDate',
-      headerName: '최종 수정일',
+      field: 'managementDuty',
+      headerName: '책무이행을 위한 주요 관리의무',
       flex: 1,
-      minWidth: 150,
+      minWidth: 100,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'relatedBasis',
+      headerName: '관련근거',
+      flex: 1,
+      minWidth: 100,
       align: 'center',
       headerAlign: 'center',
     },
   ];
 
-  // 임시 데이터
-  const [rows, setRows] = useState<ExecutiveResponsibilityRow[]>([
-    {
-      id: 1,
-      executiveName: '홍길동',
-      position: '이사회 의장',
-      jobTitle: '회장',
-      totalCount: 15,
-      mainCount: 10,
-      subCount: 5,
-      status: '확정',
-      lastUpdateDate: '2024-03-15'
-    },
-    {
-      id: 2,
-      executiveName: '김철수',
-      position: '은행장',
-      jobTitle: '행장',
-      totalCount: 20,
-      mainCount: 12,
-      subCount: 8,
-      status: '검토중',
-      lastUpdateDate: '2024-03-20'
-    },
-    {
-      id: 3,
-      executiveName: '이영희',
-      position: '상임이사',
-      jobTitle: '이사',
-      totalCount: 0,
-      mainCount: 0,
-      subCount: 0,
-      status: '미작성',
-      lastUpdateDate: '-'
-    },
-  ]);
+  // 데이터 상태 관리
+  const [rows, setRows] = useState<ExecutiveResponsibilityRow[]>([]);
 
   // 데이터 조회
   const fetchExecutiveResponsibility = useCallback(async () => {
     try {
       setIsLoading(true);
-      // TODO: API 호출 구현
-      console.log('조회 조건:', { selectedRound, selectedPosition });
+
+      // API 호출 파라미터 구성
+      const params = {
+        ledgerOrder: selectedRound?.value as string,
+        positionId: selectedPosition?.value === 'all' ? undefined : selectedPosition?.value as string
+      };
+
+
+      // 실제 API 호출
+      const data = await executiveResponsibilityApi.getAll();
+      // API 응답을 페이지에서 사용하는 형태로 변환
+      console.log("data",data);
+
+      const transformedData: ExecutiveResponsibilityRow[] = data.map((item: any) => ({
+        id: item.positionsId || 0,
+        position: item.positionNameMapped || '해당없음',
+        jobTitle: item.jobTitleCd || '해당없음',
+        empNo: item.num || '해당없음',
+        executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
+        responsibility: item.responsibilityContent || '해당없음', // 백엔드에 해당 필드가 없음
+        responsibilityDetail: item.responsibilityDetailContent || '해당없음', // 백엔드에 해당 필드가 없음
+        managementDuty: item.responsibilityMgtSts || '해당없음', // 백엔드에 해당 필드가 없음
+        relatedBasis: item.responsibilityRelEvid || '해당없음', // 백엔드에 해당 필드가 없음
+        jobRank: item.jobRankCd || '해당없음'
+      }));
+
+      setRows(transformedData);
+
     } catch (err) {
       console.error('데이터 조회 실패:', err);
-      setErrorMessage('데이터 조회에 실패했습니다.');
+      setErrorMessage('임원별 책무 현황 데이터를 불러오는데 실패했습니다.');
       setErrorDialogOpen(true);
+      setRows([]); // 에러 시 빈 배열로 초기화
     } finally {
       setIsLoading(false);
     }
@@ -207,6 +183,12 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   useEffect(() => {
     fetchExecutiveResponsibility();
   }, [fetchExecutiveResponsibility]);
+
+  // 직책 클릭 핸들러
+  const handlePositionClick = (row: ExecutiveResponsibilityRow) => {
+    // TODO: 직책 상세 정보 다이얼로그 표시 또는 페이지 이동 구현
+    alert(`선택된 직책: ${row.position}\n임원: ${row.executiveName}\n책무: ${row.responsibility}`);
+  };
 
   const handleErrorDialogClose = () => {
     setErrorDialogOpen(false);
@@ -288,10 +270,10 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         <Box sx={{
           flex: 1,
           width: '100%',
+          minHeight: '400px',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          minHeight: 0,
           position: 'relative',
         }}>
           <DataGrid

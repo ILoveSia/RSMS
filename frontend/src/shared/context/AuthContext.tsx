@@ -63,7 +63,6 @@ const dispatchToStore = (action: { type: string; payload: unknown }) => {
     const store = (window as any).__HOST_STORE__?.main;
     if (store && store.dispatch) {
       store.dispatch(action);
-      console.log('📤 [AuthContext] Redux store에 액션 디스패치:', action.type);
     } else {
       console.warn('⚠️ [AuthContext] Redux store에 접근할 수 없음');
     }
@@ -91,11 +90,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (savedMenus) {
         const parsedMenus = JSON.parse(savedMenus) as Menu[];
         if (Array.isArray(parsedMenus) && parsedMenus.length > 0) {
-          console.log(
-            '📋 [AuthContext] localStorage에서 메뉴 데이터 복원:',
-            parsedMenus.length,
-            '개'
-          );
 
           // Redux store의 MenuStore/accessibleMenus에 데이터 설정
           dispatchToStore({
@@ -103,7 +97,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             payload: { data: parsedMenus },
           });
 
-          console.log('✅ [AuthContext] 메뉴 데이터 Redux store 복원 완료');
         }
       } else {
         console.log('ℹ️ [AuthContext] localStorage에 메뉴 데이터 없음');
@@ -139,8 +132,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           loading: false,
         });
 
-        // 인증 성공 후 메뉴 데이터도 복원
-        console.log('🔄 [AuthContext] 인증 확인 후 메뉴 데이터 복원 시작');
         // 약간의 지연을 두고 메뉴 복원 (Redux store 초기화 완료 대기)
         setTimeout(() => {
           restoreMenuData();

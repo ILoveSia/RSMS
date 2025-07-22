@@ -96,20 +96,4 @@ public class DepartmentDto {
     /**
      * 부서 간단 정보 DTO (프론트엔드 호환)
      */
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class SimpleDto {
-        private String deptCode;    // departmentId와 매핑
-        private String deptName;    // departmentName과 매핑
-
-        public static SimpleDto from(Department department) {
-            return SimpleDto.builder()
-                    .deptCode(department.getDepartmentId())
-                    .deptName(department.getDepartmentName())
-                    .build();
-        }
-    }
 }

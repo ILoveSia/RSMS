@@ -3,7 +3,7 @@
  */
 import '@/assets/scss/style.css';
 import { Button, DataGrid } from '@/shared/components/ui';
-import TextField from '@/shared/components/ui/data-display/textfield';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
 import PageContent from '@/shared/components/ui/layout/PageContent';
@@ -29,9 +29,9 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const [error, setError] = useState<string | null>(null);
     const [rows, setRows] = useState<ResponsibilityRow[]>([]);
     const [selectedResponsibilityId, setSelectedResponsibilityId] = useState<number | null>(null);
+    const [selectedRowData, setSelectedRowData] = useState<ResponsibilityRow | null>(null);
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
-
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [searchText, setSearchText] = useState<string>('');
@@ -117,87 +117,95 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       }
     }, [rows]);
 
-  // 컬럼 정의 (성능 최적화)
-  const columns: GridColDef<ResponsibilityRow>[] = useMemo(
-    () => [
-      // {
-      //   field: 'responsibilityId',
-      //   headerName: '책무 ID',
-      //   width: 100,
-      //   sortable: false,
-      //   align: 'center',
-      //   cellClassName: 'wrap-text',
-      // },
-      {
-        field: 'responsibilityContent',
-        headerName: '책무',
-        width: 250,
-        flex: 1,
-        sortable: false,
-        align: 'center',
-        cellClassName: 'wrap-text',
-        renderCell: params => (
-          <span
-            style={{
-              color: 'var(--bank-primary)',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-            }}
-            onClick={e => {
-              e.stopPropagation();
-              handleResponsibilityCellClick(params.row.responsibilityId.toString());
-            }}
-          >
-            {params.value}
-          </span>
-        ),
-      },
-      // {
-      //   field: 'responsibilityDetailId',
-      //   headerName: '책무 세부내용 ID',
-      //   width: 150,
-      //   cellClassName: 'wrap-text',
-      // },
-      {
-        field: 'responsibilityDetailContent',
-        headerName: '책무 세부내용',
-        width: 300,
-        flex: 1,
-        cellClassName: 'wrap-text',
-      },
-      {
-        field: 'responsibilityMgtSts',
-        headerName: '책무이행을 위한 주요 관리업무',
-        width: 300,
-        flex: 2,
-        cellClassName: 'wrap-text',
-      },
-      {
-        field: 'responsibilityRelEvid',
-        headerName: '관련 근거',
-        width: 200,
-        flex: 1,
-        cellClassName: 'wrap-text',
-      },
-      {
-        field: 'createdAt',
-        headerName: '등록일자',
-        width: 90,
-        valueFormatter: (value: any) => dayjs(value).format('YYYY.MM.DD'),
-        align: 'center',
-        cellClassName: 'wrap-text',
-      },
-      {
-        field: 'updatedAt',
-        headerName: '최종수정일자',
-        width: 100,
-        valueFormatter: (value: any) => dayjs(value).format('YYYY.MM.DD'),
-        align: 'center',
-        cellClassName: 'wrap-text',
-      },
-    ],
-    []
-  );
+    // 컬럼 정의 (성능 최적화)
+    const columns: GridColDef<ResponsibilityRow>[] = useMemo(
+      () => [
+        // {
+        //   field: 'responsibilityId',
+        //   headerName: '책무 ID',
+        //   width: 100,
+        //   sortable: false,
+        //   align: 'center',
+        //   cellClassName: 'wrap-text',
+        // },
+        {
+          field: 'responsibilityContent',
+          headerName: '책무',
+          width: 250,
+          flex: 1,
+          sortable: false,
+          align: 'center',
+          cellClassName: 'wrap-text',
+          renderCell: params => (
+            <span
+              style={{
+                color: 'var(--bank-primary)',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+              onClick={e => {
+                e.stopPropagation();
+
+                // 선택된 행의 데이터 찾기
+                const selectedRow = rows.find(row => row.responsibilityId === params.row.responsibilityId);
+
+                // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
+                setSelectedResponsibilityId(params.row.responsibilityId);
+                setSelectedRowData(selectedRow || null);
+                setDialogMode('view');
+                setDialogOpen(true);
+              }}
+            >
+              {params.value}
+            </span>
+          ),
+        },
+        // {
+        //   field: 'responsibilityDetailId',
+        //   headerName: '책무 세부내용 ID',
+        //   width: 150,
+        //   cellClassName: 'wrap-text',
+        // },
+        {
+          field: 'responsibilityDetailContent',
+          headerName: '책무 세부내용',
+          width: 300,
+          flex: 1,
+          cellClassName: 'wrap-text',
+        },
+        {
+          field: 'responsibilityMgtSts',
+          headerName: '책무이행을 위한 주요 관리업무',
+          width: 300,
+          flex: 2,
+          cellClassName: 'wrap-text',
+        },
+        {
+          field: 'responsibilityRelEvid',
+          headerName: '관련 근거',
+          width: 200,
+          flex: 1,
+          cellClassName: 'wrap-text',
+        },
+        {
+          field: 'createdAt',
+          headerName: '등록일자',
+          width: 90,
+          valueFormatter: (value: any) => dayjs(value).format('YYYY.MM.DD'),
+          align: 'center',
+          cellClassName: 'wrap-text',
+        },
+        {
+          field: 'updatedAt',
+          headerName: '최종수정일자',
+          width: 100,
+          valueFormatter: (value: any) => dayjs(value).format('YYYY.MM.DD'),
+          align: 'center',
+          cellClassName: 'wrap-text',
+        },
+      ],
+      [rows, setSelectedResponsibilityId, setSelectedRowData, setDialogMode, setDialogOpen]
+    );
 
     // 조회 버튼 클릭 핸들러
     const handleSearch = useCallback(() => {
@@ -213,24 +221,33 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // '책무' 셀 클릭 시 상세조회 다이얼로그 오픈 (성능 최적화)
     const handleResponsibilityCellClick = useCallback((responsibilityId: string) => {
+      console.log('클릭된 responsibilityId:', responsibilityId);
+      console.log('현재 rows 데이터:', rows);
+
+      // 선택된 행의 데이터 찾기
+      const selectedRow = rows.find(row => row.responsibilityId === Number(responsibilityId));
+      console.log('찾은 selectedRow:', selectedRow);
+
       // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
       setSelectedResponsibilityId(Number(responsibilityId));
+      setSelectedRowData(selectedRow || null);
       setDialogMode('view');
       setDialogOpen(true);
-    }, []);
+    }, [rows]);
 
     // 다이얼로그 닫기 (성능 최적화)
     const handleDialogClose = useCallback(() => {
       setDialogOpen(false);
       setSelectedResponsibilityId(null);
+      setSelectedRowData(null);
     }, []);
 
-  // 다이얼로그 저장
-  const handleDialogSave = useCallback(() => {
+    // 다이얼로그 저장
+    const handleDialogSave = useCallback(() => {
 
-    handleDialogClose();
-    fetchResponsibilities(); // 목록 새로고침
-  }, [handleDialogClose, fetchResponsibilities]);
+      handleDialogClose();
+      fetchResponsibilities(); // 목록 새로고침
+    }, [handleDialogClose, fetchResponsibilities]);
 
     // 다이얼로그 모드 변경
     const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view') => {
@@ -357,6 +374,13 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               columns={columns as any}
               loading={loading}
               selectable={true}
+              onRowClick={(row: ResponsibilityRow) => {
+                console.log('DataGrid onRowClick:', row);
+                setSelectedResponsibilityId(row.responsibilityId);
+                setSelectedRowData(row);
+                setDialogMode('view');
+                setDialogOpen(true);
+              }}
             />
           </Box>
         </PageContent>
@@ -365,6 +389,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           open={dialogOpen}
           mode={dialogMode}
           responsibilityId={selectedResponsibilityId}
+          positionName={selectedRowData?.responsibilityContent || "책무 관리"}
+          rowData={selectedRowData}
           onClose={handleDialogClose}
           onSave={handleDialogSave}
           onChangeMode={handleModeChange}

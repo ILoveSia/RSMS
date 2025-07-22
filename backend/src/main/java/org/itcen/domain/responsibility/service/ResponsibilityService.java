@@ -12,7 +12,7 @@ public interface ResponsibilityService {
 
     List<ResponsibilityStatusDto> getResponsibilityStatusList(Long responsibilityId);
 
-    ResponsibilityResponseDto getResponsibilityById(Long id);
+    List<ResponsibilityResponseDto> getResponsibilityById(Long id);
 
     Responsibility updateResponsibility(Long id, ResponsibilityCreateRequestDto requestDto);
-} 
+}
