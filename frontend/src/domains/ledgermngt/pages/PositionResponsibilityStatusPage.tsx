@@ -4,7 +4,7 @@
  */
 import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-
+import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
@@ -54,7 +54,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>('view');
   const [selectedDetailData, setSelectedDetailData] = useState<PositionResponsibility | null>(null);
-
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -307,12 +307,11 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           alignItems: 'center'
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <ComboBox
-            value={ledgerOrderFilter}
-            options={ledgerOrderFilterOptions}
-            onChange={value => setLedgerOrderFilter(value as string)}
-            size="small"
-            sx={{ width: '130px' }}
+          <LedgerOrderSelect
+            value={selectedLedgerOrder}
+            onChange={setSelectedLedgerOrder}
+            size='small'
+            sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
           <ComboBox
