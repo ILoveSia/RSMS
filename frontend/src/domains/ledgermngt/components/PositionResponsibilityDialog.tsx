@@ -61,6 +61,20 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   onSave,
   onChangeMode,
 }) => {
+  // 원본 데이터 저장용 상태
+  const [originalFormData, setOriginalFormData] = useState<FormData>({
+    responsibilityContent: '',
+    details: [
+      {
+        id: '1',
+        responsibilityDetailContent: '',
+        keyManagementTasks: '',
+        relatedBasis: '',
+      },
+    ],
+  });
+
+  // 현재 폼 데이터 (검색으로 변경될 수 있는 임시 데이터)
   const [formData, setFormData] = useState<FormData>({
     responsibilityContent: '',
     details: [
@@ -132,7 +146,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           throw new Error('데이터를 불러오는 데 실패했습니다.');
         }
 
-        setFormData({
+        const initialData = {
           responsibilityContent: fetchedData.responsibilityContent,
           details: fetchedData.details.map((d: DetailResponseType) => ({
             id: String(d.id),
@@ -141,7 +155,10 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
             keyManagementTasks: d.keyManagementTasks,
             relatedBasis: d.relatedBasis,
           })),
-        });
+        };
+        // 원본 데이터와 현재 폼 데이터 모두 설정
+        setOriginalFormData(initialData);
+        setFormData(initialData);
       } catch (err) {
         const error = err as Error;
         setError(error.message || '상세 정보를 불러오는 중 오류가 발생했습니다.');
@@ -150,15 +167,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         setLoading(false);
       }
     };
-    console.log("rowData", rowData);
-    console.log("rowData.responsibility_mgt_sts:", rowData?.responsibility_mgt_sts);
-    console.log("rowData.responsibility_rel_evid:", rowData?.responsibility_rel_evid);
-    console.log("formData.details", formData.details);
-
-    if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
+    if ((mode === 'edit' || mode === 'view') && rowData.positions_id != null && open) {
       // rowData가 있으면 우선 사용, 없으면 API 호출
       if (rowData) {
-        setFormData({
+        const initialData = {
+          // 책무 내용 - responsibility_conent 필드 사용 (오타 있음)
           responsibilityContent: rowData.responsibility_conent || '',
           details: [
             {
@@ -169,12 +182,15 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
               relatedBasis: rowData.responsibility_rel_evid || '',
             }
           ]
-        });
+        };
+        // 원본 데이터와 현재 폼 데이터 모두 설정
+        setOriginalFormData(initialData);
+        setFormData(initialData);
       } else {
-        fetchDetails(responsibilityId.toString());
+        fetchDetails(rowData.positions_id.toString());
       }
     } else if (open && mode === 'create') {
-      setFormData({
+      const initialData = {
         responsibilityContent: '',
         details: [
           {
@@ -184,7 +200,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
             relatedBasis: '',
           },
         ],
-      });
+      };
+      console.log("initialData", initialData);
+      // 원본 데이터와 현재 폼 데이터 모두 설정
+      setOriginalFormData(initialData);
+      setFormData(initialData);
     }
   }, [open, mode, responsibilityId, rowData]);
 
@@ -242,9 +262,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     }
 
     // 백엔드 DTO 구조에 맞게 데이터 변환
-    console.log(selectedResponsibilityData)
-    console.log(selectedResponsibilityData[0].id)
-    console.log("############")
     const responsibilityRequestData = {
       positions_id: rowData?.positions_id || responsibilityId || 1,
       responsibility_id: selectedResponsibilityData[0].id || responsibilityId || 1,
@@ -258,6 +275,8 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       // 백엔드 API 호출
       const response = await apiClient.put('/position-responsibilities', responsibilityRequestData);
 
+      // 저장 성공 시 현재 formData를 새로운 원본 데이터로 설정
+      setOriginalFormData({ ...formData });
 
       await onSave();
       setShowSuccessAlert(true);
@@ -281,7 +300,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       };
 
       const response = await apiClient.get<ApiResponseItem[]>(
-        `/api/responsibilities/${responsibility.responsibilityId}`
+        `/responsibilities/${responsibility.responsibilityId}`
       );
 
 
@@ -306,7 +325,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       }));
 
 
-
+      // 검색으로 선택한 데이터는 formData에만 설정 (임시 데이터)
       setFormData({
         responsibilityContent,
         details,
@@ -316,6 +335,14 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       setError('책무 데이터를 불러오는 중 오류가 발생했습니다.');
     }
   };
+  // 다이얼로그 닫기 핸들러 - 검색된 데이터를 버리고 원본 데이터로 복원
+  const handleClose = () => {
+    // 검색으로 변경된 데이터를 버리고 원본 데이터로 복원
+    setFormData({ ...originalFormData });
+    setSelectedResponsibilityData(null);
+    onClose();
+  };
+
   // 책무 내용 변경
   const handleContentChange = (value: string) => {
     setFormData(prev => ({
@@ -340,7 +367,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         open={open}
         mode={mode}
         title={`책무 ${mode === 'create' ? '등록' : mode === 'edit' ? '수정' : '상세 정보'}`}
-        onClose={onClose}
+        onClose={handleClose}
         onSave={handleSave}
         onModeChange={onChangeMode}
         maxWidth="lg"
@@ -365,7 +392,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
             rows={3}
             label="책무 개요"
             disabled={mode === 'view'}
-            value={rowData?.responsibilityOverview}
+            value={rowData?.responsibilityOverview || rowData?.role_summ || ''}
           />
           {/* 책무 내용 */}
           <TextField
@@ -373,9 +400,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
             multiline
             label="책무 내용"
             rows={3}
-            value={rowData?.responsibility_conent}
-            // onChange={(e) => handleContentChange(e.target.value)}
-            disabled={true}
+            value={formData.responsibilityContent}
+            onChange={(e) => handleContentChange(e.target.value)}
+            disabled={mode === 'view'}
           />
 
           {/* 세부내용 목록 */}
@@ -413,16 +440,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                         fullWidth
                         multiline
                         rows={2}
-                        value={rowData?.responsibility_detail_content || ''}
+                        value={formData.details[0]?.responsibilityDetailContent || ''}
                         onChange={(e) => {
-                          // rowData 직접 수정은 불가하므로 formData도 함께 업데이트
-                          setFormData(prev => ({
-                            ...prev,
-                            details: [{
-                              ...prev.details[0],
-                              responsibilityDetailContent: e.target.value
-                            }]
-                          }));
+                          handleDetailChange(formData.details[0]?.id || '1', 'responsibilityDetailContent', e.target.value);
                         }}
                         disabled={mode === 'view'}
                         placeholder="세부내용을 입력하세요"
@@ -433,15 +453,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                         fullWidth
                         multiline
                         rows={2}
-                        value={rowData?.responsibility_mgt_sts || ''}
+                        value={formData.details[0]?.keyManagementTasks || ''}
                         onChange={(e) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            details: [{
-                              ...prev.details[0],
-                              keyManagementTasks: e.target.value
-                            }]
-                          }));
+                          handleDetailChange(formData.details[0]?.id || '1', 'keyManagementTasks', e.target.value);
                         }}
                         disabled={mode === 'view'}
                         placeholder="주요 관리업무를 입력하세요"
@@ -452,15 +466,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                         fullWidth
                         multiline
                         rows={2}
-                        value={rowData?.responsibility_rel_evid || ''}
+                        value={formData.details[0]?.relatedBasis || ''}
                         onChange={(e) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            details: [{
-                              ...prev.details[0],
-                              relatedBasis: e.target.value
-                            }]
-                          }));
+                          handleDetailChange(formData.details[0]?.id || '1', 'relatedBasis', e.target.value);
                         }}
                         disabled={mode === 'view'}
                         placeholder="관련 근거를 입력하세요"
@@ -483,16 +491,16 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
               </Table>
             </TableContainer>
             {mode !== 'view' && (
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => {
-                setSearchPopupOpen(true);
-              }}
-              color="error"
-            >
-              책무검색테스트
-            </Button>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => {
+                  setSearchPopupOpen(true);
+                }}
+                color="error"
+              >
+                책무검색테스트
+              </Button>
             )}
           </Box>
         </Box>
