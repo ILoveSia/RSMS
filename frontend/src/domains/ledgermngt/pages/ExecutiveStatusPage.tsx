@@ -53,6 +53,10 @@ const execOfficerApi = {
     return response;
   },
   update: async (id: number, data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
+    console.log("data", data);
+    if(data.dualYn === "N"){
+      data.dualDetails = "";
+    }
     const response = await apiClient.put<ExecOfficer>(`/execofficer/${id}`, data);
     return response;
   },
