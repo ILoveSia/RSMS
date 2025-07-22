@@ -244,7 +244,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     try {
       setLoading(true);
       // 백엔드 API 호출
-      await responsibilityApi.update(responsibilityId || 1, responsibilityRequestData);
+      if(responsibilityId){
+        await responsibilityApi.update(responsibilityId, responsibilityRequestData);
+      }else{
+        await responsibilityApi.create(responsibilityRequestData);
+      }
 
 
       onSave();

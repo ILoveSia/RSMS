@@ -32,7 +32,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const [selectedRowData, setSelectedRowData] = useState<ResponsibilityRow | null>(null);
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
-
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [searchText, setSearchText] = useState<string>('');
