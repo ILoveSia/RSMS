@@ -4,7 +4,8 @@
 CREATE TABLE public.execofficer (
     execofficer_id          bigserial               NOT NULL,               -- 임원현황ID
     emp_id                  VARCHAR(100)            NOT NULL,               -- 사원아이디(userID 사용)
-    execofficer_dt          VARCHAR(8)              NULL,                   -- 임원선임일
+    execofficer_dt          date                    NULL,                   -- 임원선임일
+    pos_appt_dt             date                    NULL,                   -- 직책부여일
     dual_yn                 VARCHAR(1)              NULL,                   -- 겸직여부
     dual_details            VARCHAR(1000)           NULL,                   -- 겸직사항
     positions_id            int8                    NOT NULL,               -- 직책ID

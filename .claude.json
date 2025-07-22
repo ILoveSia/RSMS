@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "/home/rocosoo/.nvm/versions/node/v22.17.0/bin/context7-mcp",
+      "args": [],
+      "env": {},
+      "disabled": false
+    },
+    "playwright": {
+      "command": "/home/rocosoo/.nvm/versions/node/v22.17.0/bin/mcp-server-playwright",
+      "args": [],
+      "env": {},
+      "disabled": false
+    }
+  }
+}

@@ -1,20 +1,15 @@
 package org.itcen.auth.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import org.itcen.auth.filter.SessionAuthenticationFilter;
 import org.itcen.auth.handler.CustomAuthFailureHandler;
 import org.itcen.auth.handler.CustomAuthSuccessHandler;
-import org.itcen.auth.service.AuthService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,10 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.itcen.auth.filter.SessionAuthenticationFilter;
-
-import java.util.Arrays;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Spring Security 설정 클래스
@@ -125,10 +117,13 @@ public class SecurityConfig {
                     "/menus/**",
                     // 공통코드 API (로그인 시 필요한 기본 데이터)
                     "/common-codes/**",
+                    // 첨부파일 API (로그인 시 필요한 기능)
+                    "/attachments/**",
                     // Case Study API (공개 접근 허용)
-                    "/case-studies",
+                    "/case-studies/**",
                     // 원장차수+진행상태 셀렉트박스용 API (공개 접근 허용)
-                    "/ledger-orders/select-list"
+                    "/ledger-orders/select-list",
+                    "/ledger-orders-hod/select-list"
             ).permitAll()
 
             // 모든 API 엔드포인트는 인증 필요 (일반화)

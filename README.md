@@ -48,6 +48,15 @@
 - **PostgreSQL 17** - 관계형 데이터베이스
 - **Redis** - 인메모리 데이터 저장소
 
+### Development Tools & AI
+
+- **Claude Code SuperClaude v3.0.0** - AI 개발 프레임워크
+- **MCP (Model Context Protocol)** - AI 서버 통합
+  - **Context7** - 라이브러리 문서 및 패턴 검색
+  - **Playwright** - 브라우저 자동화 및 E2E 테스팅
+- **ESLint & Prettier** - 코드 품질 및 포맷팅
+- **Hot Reload** - 개발 중 실시간 업데이트
+
 ## 🚀 빠른 시작
 
 ### 1. 필수 요구사항
@@ -201,6 +210,13 @@ npm run lint            # 코드 린트
 npm run format          # 코드 포맷팅
 npm run setup           # 전체 의존성 설치
 npm run setup:local     # 로컬 환경 전체 설정
+
+# AI 개발 도구 (Claude Code)
+claude --c7             # Context7 MCP 서버 활용
+claude --play           # Playwright MCP 서버 활용
+claude /analyze         # 코드 분석 및 개선사항 제안
+claude /build           # 프로젝트 빌드 최적화
+claude /improve         # 코드 품질 개선
 ```
 
 ## 🔧 환경 설정
@@ -334,6 +350,46 @@ npm run test
 - **Info**: `/api/actuator/info` - 애플리케이션 정보
 - **Metrics**: `/api/actuator/metrics` - 성능 메트릭
 
+### ⚠️ API 개발 시 주의사항
+
+**Context-Path 설정 관련 중요 사항:**
+
+```yaml
+# application.yml
+server:
+  servlet:
+    context-path: /api  # 전역 API 접두사 설정
+```
+
+**올바른 컨트롤러 매핑:**
+```java
+@RestController
+@RequestMapping("/case-studies")  // ✅ /api 접두사 제외
+public class CaseStudyController {
+    
+    @GetMapping("/recent")  // 실제 URL: /api/case-studies/recent
+    public ApiResponse<List<CaseStudyDto>> getRecentCaseStudies() {
+        // ...
+    }
+}
+```
+
+**잘못된 컨트롤러 매핑:**
+```java
+@RestController
+@RequestMapping("/api/case-studies")  // ❌ /api 중복으로 인한 오류
+public class CaseStudyController {
+    // NoResourceFoundException 발생
+}
+```
+
+**핵심 포인트:**
+- **context-path가 `/api`로 설정되어 있을 때**:
+  - 실제 URL: `http://localhost:3000/api/xxx`
+  - 컨트롤러 매핑: `@RequestMapping("/xxx")` (api 접두사 제거)
+- **이유**: Spring Boot가 context-path를 자동으로 제거한 후 컨트롤러 매핑과 비교하기 때문
+- **새 API 추가 시**: 반드시 context-path 설정을 고려하여 매핑 경로 작성
+
 ## 🤝 기여하기
 
 1. Fork the Project
@@ -358,7 +414,14 @@ npm run test
 
 ### 🆕 새로운 기능
 
-- **책무구조도 메인 대시보드**: 통합 대시보드 구현
+- **책무구조도 원장 관리**: 7개 업무 메뉴 통합 시스템
+  - 회의체 현황, 직책 현황, 직책별 책무 현황
+  - 임원 현황, 임원별 책무 현황
+  - 부서장 내부통제 항목 현황, 책무구조도 제출 관리
+- **AI 개발 프레임워크**: Claude Code SuperClaude v3.0.0 통합
+- **MCP 서버 연동**: Context7, Playwright 서버 설정
+- **아키텍처 문서화**: 초보자 친화적인 기술 문서 생성
+- **메뉴 시스템 개선**: 동적 메뉴 초기화 및 계층 구조 관리
 - **서버 사이드 데이터 그리드**: 고성능 데이터 그리드 시스템
 - **멀티 탭 시스템**: 동적 탭 생성 및 관리 기능
 - **Excel 내보내기**: ExcelJS 기반 데이터 내보내기 기능
@@ -367,6 +430,10 @@ npm run test
 
 ### 🔧 기술적 개선사항
 
+- **AI 통합 개발**: Claude Code SuperClaude 프레임워크 도입
+- **MCP 프로토콜**: Model Context Protocol 서버 연동
+- **데이터베이스 최적화**: 계층적 메뉴 삭제 및 외래키 제약 해결
+- **아키텍처 문서**: Frontend/Backend 구조 체계적 문서화
 - **성능 최적화**: React.memo, useMemo, useCallback 적용
 - **타입 안전성**: TypeScript 5.8.3 엄격 모드 적용
 - **컴포넌트 시스템**: 재사용 가능한 UI 컴포넌트 라이브러리
@@ -384,12 +451,57 @@ npm run test
 
 ### 📱 사용자 경험
 
+- **통합 메뉴 시스템**: 책무구조도 원장 관리 7개 메뉴 추가
+- **개발자 친화적**: AI 도구 통합으로 개발 효율성 향상
 - **반응형 디자인**: 모바일 우선 설계
 - **직관적 네비게이션**: 브레드크럼 및 탭 시스템
 - **일관된 UI**: Material-UI 기반 디자인 시스템
 - **접근성**: 웹 접근성 가이드라인 준수
 - **로딩 상태**: 사용자 피드백 시스템
 
+## 🤖 AI 개발 환경
+
+### Claude Code SuperClaude Framework
+
+이 프로젝트는 **Claude Code SuperClaude v3.0.0** 프레임워크를 사용하여 AI 기반 개발 환경을 구축했습니다.
+
+**주요 특징**:
+- 🧠 **지능형 코드 분석**: 자동 패턴 인식 및 개선사항 제안
+- 📚 **문서 자동 생성**: 아키텍처 및 API 문서 자동화
+- 🔧 **통합 개발 도구**: MCP 서버를 통한 확장된 기능
+- ⚡ **성능 최적화**: AI 기반 코드 최적화 및 리팩토링
+
+**MCP 서버 구성**:
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "context7-mcp",
+      "description": "라이브러리 문서 및 패턴 검색"
+    },
+    "playwright": {
+      "command": "mcp-server-playwright",
+      "description": "브라우저 자동화 및 E2E 테스팅"
+    }
+  }
+}
+```
+
+**사용 방법**:
+```bash
+# AI 코드 분석
+claude /analyze --scope project
+
+# 컴포넌트 생성
+claude /build --type component --name MyComponent
+
+# 성능 최적화
+claude /improve --focus performance
+
+# 문서 생성
+claude /document --type architecture
+```
+
 ---
 
-**Made with ❤️ by ITCEN Team**
+**Made with ❤️ by ITCEN Team & Claude Code AI**

@@ -28,7 +28,7 @@ import java.util.Optional;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/common-codes")
+@RequestMapping("/common-codes")
 @RequiredArgsConstructor
 public class CommonCodeController {
 

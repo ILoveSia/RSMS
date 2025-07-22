@@ -122,7 +122,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
   // 상태 관리
   const [userid, setUserid] = useState('testuser');
-  const [password, setPassword] = useState('testpass123');
+  const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,7 +150,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
     try {
 
       const allCodesResult = await apiClient.get<ApiResponse<CommonCode[]> | CommonCode[]>(
-        '/api/common-codes'
+        '/common-codes'
       );
 
       // ApiResponse 래퍼 구조인지 확인하여 적절히 처리

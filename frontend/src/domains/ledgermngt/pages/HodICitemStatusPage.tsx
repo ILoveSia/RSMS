@@ -1,6 +1,6 @@
 import { Button } from '@/shared/components/ui';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { LedgerOrderSelect } from '@/shared/components/ui/form';
+import { LedgerOrdersHodSelect, CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -17,6 +17,7 @@ interface IHodICitemStatusPageProps {
 
 const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.Element => {
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
+  const [selectedFieldType, setSelectedFieldType] = useState<string>('ALL');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -27,7 +28,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedItemId, setSelectedItemId] = useState<number | undefined>();
 
-  // 원장차수 관련 상태는 LedgerOrderSelect에서 자동 관리됨
+  // 부서장 원장차수 관련 상태는 LedgerOrdersHodSelect에서 자동 관리됨
 
   // 컬럼 정의 - API 응답 구조에 맞게 수정
   const columns: DataGridColumn<HodICItemRow>[] = [
@@ -149,7 +150,8 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
 
     try {
       const data = await hodICItemApi.getHodICItemStatusList(
-        selectedLedgerOrder === 'ALL' ? undefined : selectedLedgerOrder
+        selectedLedgerOrder === 'ALL' ? undefined : selectedLedgerOrder,
+        selectedFieldType === 'ALL' ? undefined : selectedFieldType
       );
       setRows(data);
     } catch (err) {
@@ -158,14 +160,20 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     } finally {
       setLoading(false);
     }
-  }, [selectedLedgerOrder]);
+  }, [selectedLedgerOrder, selectedFieldType]);
 
-  // 원장차수 목록은 LedgerOrderSelect에서 자동으로 로드됨
+  // 부서장 원장차수 목록은 LedgerOrdersHodSelect에서 자동으로 로드됨
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
     console.log('엑셀 다운로드');
   }, [rows]);
+
+  const handleCreateHodOrder = useCallback(() => {
+    // 부서장차수생성 로직
+    console.log('부서장차수생성');
+    alert('부서장차수생성 기능은 추후 구현될 예정입니다.');
+  }, []);
 
   const handleCreateClick = useCallback(() => {
     setDialogMode('create');
@@ -270,14 +278,31 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
           }}
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <LedgerOrderSelect
+          <LedgerOrdersHodSelect
             value={selectedLedgerOrder}
             onChange={setSelectedLedgerOrder}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>항목</span>
+          <CommonCodeSelect
+            groupCode="FIELD_TYPE"
+            value={selectedFieldType}
+            onChange={setSelectedFieldType}
+            size='small'
+            sx={{ minWidth: 120, maxWidth: 180 }}
+          />
           <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
             조회
+          </Button>
+          <Button 
+            variant='contained' 
+            size='small' 
+            color='secondary' 
+            sx={{ marginLeft: '8px' }}
+            onClick={handleCreateHodOrder}
+          >
+            부서장차수생성
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <Button

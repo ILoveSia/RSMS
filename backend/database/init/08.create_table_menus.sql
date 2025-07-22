@@ -2,7 +2,7 @@
 
 -- Drop table
 
--- DROP TABLE public.menus;
+-- DROP TABLE public.menus CASCADE;
 
 CREATE TABLE public.menus (
 	id bigserial NOT NULL, -- 메뉴ID

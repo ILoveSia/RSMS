@@ -3,6 +3,8 @@ package org.itcen.domain.positions.controller;
 import java.util.ArrayList;
 import java.util.List;
 import org.itcen.common.dto.ApiResponse;
+import org.itcen.domain.positions.dto.PositionDto;
+import org.itcen.domain.positions.dto.PositionSearchRequestDto;
 import org.itcen.domain.positions.dto.LedgerOrderSelectDto;
 import org.itcen.domain.positions.dto.PositionBulkDeleteRequestDto;
 import org.itcen.domain.positions.dto.PositionCreateRequestDto;
@@ -25,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.web.bind.annotation.RequestParam;
 /**
  * 직책 통합 Controller
  *
@@ -95,6 +97,30 @@ public class PositionController {
     }
 
     /**
+     * 직책 검색 (검색팝업용)
+     */
+
+    @GetMapping(value = "/search")
+    public ResponseEntity<ApiResponse<List<PositionDto>>> searchPositions(
+            @RequestParam(required = false) String ledgerOrder,
+            @RequestParam(required = false) String positionsNm,
+            @RequestParam(required = false) String writeDeptCd,
+            @RequestParam(required = false) String confirmGubunCd) {
+        log.info("직책 검색 API 호출: ledgerOrder={}, positionsNm={}, writeDeptCd={}, confirmGubunCd={}", 
+                ledgerOrder, positionsNm, writeDeptCd, confirmGubunCd);
+        
+        PositionSearchRequestDto searchRequest = PositionSearchRequestDto.builder()
+                .ledgerOrder(ledgerOrder)
+                .positionsNm(positionsNm)
+                .writeDeptCd(writeDeptCd)
+                .confirmGubunCd(confirmGubunCd)
+                .build();
+                
+        List<PositionDto> positions = positionService.searchPositions(searchRequest);
+        return ResponseEntity.ok(ApiResponse.success(positions));
+    }
+
+    /**
      * 직책 상세 조회
      */
     @GetMapping("/{id}")
@@ -133,5 +159,16 @@ public class PositionController {
         log.info("사용자별 소관부서 목록 조회 API 호출: employeeId={}", employeeId);
         // 현재는 임시로 빈 목록 반환
         return ResponseEntity.ok(ApiResponse.success(new ArrayList<>()));
+    }
+
+    /**
+     * 직책 검색 (POST 방식)
+     */
+    @PostMapping("/search")
+    public ResponseEntity<ApiResponse<List<PositionDto>>> searchPositionsPost(
+            @Valid @RequestBody PositionSearchRequestDto searchRequest) {
+        log.info("직책 검색 API 호출 (POST): {}", searchRequest);
+        List<PositionDto> positions = positionService.searchPositions(searchRequest);
+        return ResponseEntity.ok(ApiResponse.success(positions));
     }
 }

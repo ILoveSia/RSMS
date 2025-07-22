@@ -52,6 +52,8 @@ export interface DataGridProps<T = any> extends BaseComponentProps {
   selectable?: boolean;
   multiSelect?: boolean;
   selectedRows?: (string | number)[];
+  checkboxSelection?: boolean;
+  rowSelectionModel?: GridRowSelectionModel;
 
   // 이벤트 핸들러
   onRowClick?: (row: T, event: GridRowParams) => void;
@@ -137,6 +139,8 @@ const DataGrid = <T extends Record<string, any>>({
   selectable = false,
   multiSelect = true,
   selectedRows = [],
+  checkboxSelection = false,
+  rowSelectionModel,
   onRowClick,
   onRowDoubleClick,
   onRowSelectionChange,
@@ -329,10 +333,10 @@ const DataGrid = <T extends Record<string, any>>({
               rows={processedData}
               columns={muiColumns}
               getRowId={row => row._gridId}
-              checkboxSelection={selectable}
+              checkboxSelection={checkboxSelection || selectable}
               disableRowSelectionOnClick={disableRowSelectionOnClick}
               disableMultipleRowSelection={!multiSelect}
-              rowSelectionModel={selectedRows}
+              rowSelectionModel={rowSelectionModel || selectedRows}
               onRowClick={handleRowClick}
               onRowDoubleClick={handleRowDoubleClick}
               onRowSelectionModelChange={handleSelectionChange}

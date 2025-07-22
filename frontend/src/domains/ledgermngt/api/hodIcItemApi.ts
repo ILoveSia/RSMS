@@ -87,21 +87,21 @@ export const hodICItemApi = {
    */
   async getHodICItemStatusList(ledgerOrder?: string): Promise<HodICItemRow[]> {
     const params = ledgerOrder ? { ledgerOrder } : {};
-    return apiClient.get('/api/hod-ic-items', { params });
+    return apiClient.get('/hod-ic-items', { params });
   },
 
   /**
    * 부서장 내부통제 항목 상세 조회
    */
   async getHodICItemById(hodIcItemId: number): Promise<HodICItemDetail> {
-    return apiClient.get(`/api/hod-ic-items/${hodIcItemId}`);
+    return apiClient.get(`/hod-ic-items/${hodIcItemId}`);
   },
 
   /**
    * 부서장 내부통제 항목 등록
    */
   async createHodICItem(data: HodICItemCreateRequest): Promise<number> {
-    return apiClient.post('/api/hod-ic-items', data);
+    return apiClient.post('/hod-ic-items', data);
   },
 
   /**
@@ -111,34 +111,34 @@ export const hodICItemApi = {
     hodIcItemId: number,
     data: HodICItemCreateRequest
       ): Promise<HodICItemDetail> {
-    return apiClient.put(`/api/hod-ic-items/${hodIcItemId}`, data);
+    return apiClient.put(`/hod-ic-items/${hodIcItemId}`, data);
   },
 
   /**
    * 부서장 내부통제 항목 삭제
    */
   async deleteHodICItem(hodIcItemId: number): Promise<void> {
-    return apiClient.delete(`/api/hod-ic-items/${hodIcItemId}`);
+    return apiClient.delete(`/hod-ic-items/${hodIcItemId}`);
   },
 
   /**
    * 부서장 내부통제 항목 다중 삭제
    */
   async deleteMultipleHodICItems(hodIcItemIds: number[]): Promise<void> {
-    return apiClient.delete('/api/hod-ic-items/batch', { data: hodIcItemIds });
+    return apiClient.delete('/hod-ic-items/batch', { data: hodIcItemIds });
   },
 
   /**
    * 결재 승인 요청
    */
   async requestApproval(hodIcItemId: number): Promise<number> {
-    return apiClient.post(`/api/hod-ic-items/${hodIcItemId}/approval`);
+    return apiClient.post(`/hod-ic-items/${hodIcItemId}/approval`);
   },
 
   /**
    * 작성자 권한 확인
    */
   async isCreatedBy(hodIcItemId: number): Promise<boolean> {
-    return apiClient.get(`/api/hod-ic-items/${hodIcItemId}/is-created-by`);
+    return apiClient.get(`/hod-ic-items/${hodIcItemId}/is-created-by`);
   },
 };

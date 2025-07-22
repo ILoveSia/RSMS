@@ -3,8 +3,10 @@ package org.itcen.domain.qna.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.itcen.common.entity.BaseEntity;
 
 import java.time.LocalDateTime;
@@ -23,10 +25,12 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "qna")
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = false)
 public class Qna extends BaseEntity {
 
     /**

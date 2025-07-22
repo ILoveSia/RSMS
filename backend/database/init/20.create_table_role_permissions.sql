@@ -2,7 +2,7 @@
 
 -- Drop table
 
--- DROP TABLE public.role_permissions;
+-- DROP TABLE public.role_permissions CASCADE;
 
 CREATE TABLE public.role_permissions (
 	role_id varchar(20) NOT NULL, -- 역할ID

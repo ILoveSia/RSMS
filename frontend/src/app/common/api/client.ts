@@ -86,13 +86,18 @@ class ApiClient {
   /**
    * 요청 헤더 생성
    * @param options - 요청 옵션
+   * @param body - 요청 바디 (FormData 체크용)
    * @returns 헤더 객체
    */
-  private createHeaders(options: RequestOptions = {}): HeadersInit {
+  private createHeaders(options: RequestOptions = {}, body?: unknown): HeadersInit {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
       ...options.headers,
     };
+
+    // FormData가 아닌 경우에만 Content-Type 설정
+    if (!(body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     // 인증이 필요한 경우 토큰 추가 (향후 구현)
     if (!options.skipAuth) {
@@ -208,7 +213,7 @@ class ApiClient {
 
     const finalRequestOptions: RequestInit = {
       ...requestOptions,
-      headers: this.createHeaders(requestOptions),
+      headers: this.createHeaders(requestOptions, requestOptions.body),
       credentials: 'include', // 세션 쿠키 포함
       signal: controller.signal,
     };

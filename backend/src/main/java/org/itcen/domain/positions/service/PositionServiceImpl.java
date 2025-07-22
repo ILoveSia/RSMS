@@ -14,6 +14,8 @@ import org.itcen.domain.positions.dto.LedgerOrderSelectDto;
 import org.itcen.domain.positions.dto.PositionCreateRequestDto;
 import org.itcen.domain.positions.dto.PositionDetailDto;
 import org.itcen.domain.positions.dto.PositionMeetingDto;
+import org.itcen.domain.positions.dto.PositionDto;
+import org.itcen.domain.positions.dto.PositionSearchRequestDto;
 import org.itcen.domain.positions.dto.PositionStatusDto;
 import org.itcen.domain.positions.dto.PositionStatusProjection;
 import org.itcen.domain.positions.dto.PositionUpdateRequestDto;
@@ -361,5 +363,32 @@ public class PositionServiceImpl implements PositionService {
                     .updatedAt(pm.getUpdatedAt()).createdId(pm.getCreatedId())
                     .updatedId(pm.getUpdatedId()).build();
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PositionDto> searchPositions(PositionSearchRequestDto searchRequest) {
+        log.info("직책 검색 서비스 호출: {}", searchRequest);
+        
+        List<Position> positions = positionRepository.searchPositions(
+            searchRequest.getLedgerOrder(),
+            searchRequest.getPositionsNm(),
+            searchRequest.getWriteDeptCd(),
+            searchRequest.getConfirmGubunCd()
+        );
+        
+        return positions.stream()
+                .map(this::convertToPositionDto)
+                .collect(Collectors.toList());
+    }
+    
+    private PositionDto convertToPositionDto(Position position) {
+        return PositionDto.builder()
+                .positionsId(position.getPositionsId())
+                .positionsNm(position.getPositionsNm())
+                .ledgerOrder(position.getLedgerOrder())
+                .confirmGubunCd(position.getConfirmGubunCd())
+                .writeDeptCd(position.getWriteDeptCd())
+                .build();
     }
 }

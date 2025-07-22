@@ -146,6 +146,11 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '책무구조도 제출',
     icon: 'upload',
   },
+  '/ledger/responsibility-db-status': {
+    component: () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage'),
+    title: '책무 DB현황',
+    icon: 'database',
+  },
 
   // 조회
   '/inquiry/dept-status': {

@@ -6,7 +6,6 @@ import {
   type Department,
   type ResponsibilitySearchResult,
 } from '@/domains/common/components/search';
-import { FileUpload } from '@/shared/components/ui/form';
 import type { SelectOption } from '@/shared/types/common';
 import { Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
@@ -60,8 +59,6 @@ interface FormData {
   supportDoc: string; // 관련근거
   checkWay: string; // 점검방법
 
-  // 파일 관련 필드들
-  evidenceFiles: File[]; // 증빙자료 파일들
 }
 
 const initialFormData: FormData = {
@@ -78,7 +75,6 @@ const initialFormData: FormData = {
   measureType: '',
   supportDoc: '',
   checkWay: '',
-  evidenceFiles: [],
 };
 
 const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
@@ -180,12 +176,11 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         if (filteredCodes.length === 0) {
           console.log('주기 코드가 없어 하드코딩된 값 사용');
           return [
-            { value: 'PERIOD01', label: '일별' },
-            { value: 'PERIOD02', label: '주별' },
-            { value: 'PERIOD03', label: '월별' },
-            { value: 'PERIOD04', label: '분기별' },
-            { value: 'PERIOD05', label: '반기별' },
-            { value: 'PERIOD06', label: '연간' },
+            { value: 'PRD01', label: '년' },
+            { value: 'PRD02', label: '반기' },
+            { value: 'PRD03', label: '분기' },
+            { value: 'PRD04', label: '월' },
+            { value: 'PRD05', label: '수시' },
           ];
         }
 
@@ -211,18 +206,18 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         if (filteredCodes.length === 0) {
           console.log('점검시기 코드가 없어 하드코딩된 값 사용');
           return [
-            { value: 'MONTH01', label: '1월' },
-            { value: 'MONTH02', label: '2월' },
-            { value: 'MONTH03', label: '3월' },
-            { value: 'MONTH04', label: '4월' },
-            { value: 'MONTH05', label: '5월' },
-            { value: 'MONTH06', label: '6월' },
-            { value: 'MONTH07', label: '7월' },
-            { value: 'MONTH08', label: '8월' },
-            { value: 'MONTH09', label: '9월' },
-            { value: 'MONTH10', label: '10월' },
-            { value: 'MONTH11', label: '11월' },
-            { value: 'MONTH12', label: '12월' },
+            { value: 'MON01', label: '1월' },
+            { value: 'MON02', label: '2월' },
+            { value: 'MON03', label: '3월' },
+            { value: 'MON04', label: '4월' },
+            { value: 'MON05', label: '5월' },
+            { value: 'MON06', label: '6월' },
+            { value: 'MON07', label: '7월' },
+            { value: 'MON08', label: '8월' },
+            { value: 'MON09', label: '9월' },
+            { value: 'MON10', label: '10월' },
+            { value: 'MON11', label: '11월' },
+            { value: 'MON12', label: '12월' },
           ];
         }
 
@@ -293,6 +288,7 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     return [];
   }, [formData.fieldTypeCd, getCommonCodeOptions]);
 
+
   // 데이터 로드 함수
   const loadItemData = useCallback(async () => {
     if (!itemId) return;
@@ -315,8 +311,8 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         measureType: data.measureType,
         supportDoc: data.supportDoc,
         checkWay: data.checkWay,
-        evidenceFiles: [], // 기존 파일들은 별도 로딩 필요
       });
+
     } catch (err) {
       console.error('Failed to load item data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -403,21 +399,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     }));
   };
 
-  // 파일 선택 핸들러
-  const handleFileSelect = (files: File[]) => {
-    setFormData(prev => ({
-      ...prev,
-      evidenceFiles: files,
-    }));
-  };
-
-  // 파일 제거 핸들러
-  const handleFileRemove = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      evidenceFiles: prev.evidenceFiles.filter((_, i) => i !== index),
-    }));
-  };
 
   const validateForm = (): boolean => {
     if (!formData.responsibilityId) {
@@ -450,6 +431,7 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     setError(null);
 
     try {
+      // 1. HodICItem 데이터 저장
       const requestData: HodICItemCreateRequest = {
         responsibilityId: formData.responsibilityId as number,
         deptCd: formData.deptCd,
@@ -462,15 +444,19 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         supportDoc: formData.supportDoc,
         checkPeriod: formData.checkPeriod,
         checkWay: formData.checkWay,
-        // TODO: 파일 업로드 후 파일 정보를 proofDoc에 저장
-        proofDoc: formData.evidenceFiles.map(file => file.name).join(', '),
+        proofDoc: '',
       };
 
+      let savedItemId: number;
       if (isCreateMode) {
-        await hodICItemApi.createHodICItem(requestData);
+        savedItemId = await hodICItemApi.createHodICItem(requestData);
       } else if (isEditMode && itemId) {
         await hodICItemApi.updateHodICItem(itemId, requestData);
+        savedItemId = itemId;
+      } else {
+        throw new Error('Invalid save mode');
       }
+
 
       onSuccess?.();
       onClose();
@@ -766,41 +752,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                   />
                 </Grid>
 
-                {/* 증빙자료 - 파일업로드 */}
-                <Grid item xs={12}>
-                  <FileUpload
-                    label='증빙자료'
-                    files={formData.evidenceFiles}
-                    onFileSelect={handleFileSelect}
-                    onFileRemove={handleFileRemove}
-                    disabled={isViewMode}
-                    multiple
-                    maxFiles={5}
-                    maxSize={10 * 1024 * 1024} // 10MB
-                    accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif'
-                    allowedFileTypes={[
-                      'pdf',
-                      'doc',
-                      'docx',
-                      'xls',
-                      'xlsx',
-                      'jpg',
-                      'jpeg',
-                      'png',
-                      'gif',
-                    ]}
-                    helperText='PDF, Word, Excel, 이미지 파일만 업로드 가능합니다. (최대 10MB)'
-                    variant='dropzone'
-                    preview
-                    showFileList
-                    sx={{
-                      '& .MuiDropzone-root': {
-                        height: '120px',
-                        minHeight: 'auto',
-                      },
-                    }}
-                  />
-                </Grid>
               </Grid>
             </>
           )}

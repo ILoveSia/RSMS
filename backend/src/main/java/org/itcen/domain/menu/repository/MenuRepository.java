@@ -158,4 +158,14 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
         ORDER BY m.menuLevel ASC, m.sortOrder ASC
         """)
     List<Menu> searchMenusByKeyword(@Param("keyword") String keyword);
+    
+    /**
+     * 특정 레벨의 메뉴 삭제
+     */
+    void deleteByMenuLevel(Integer menuLevel);
+    
+    /**
+     * 특정 레벨보다 큰 메뉴 삭제
+     */
+    void deleteByMenuLevelGreaterThan(Integer menuLevel);
 } 

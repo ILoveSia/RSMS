@@ -316,7 +316,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       // 캐시가 없거나 만료된 경우 API에서 로드
       fetchDepartments();
     }
-  }, [allCodes, setAllCodes]);
+  }, [allCodes]);
 
   // 폼 데이터 초기화 및 상세 데이터 로드
   useEffect(() => {

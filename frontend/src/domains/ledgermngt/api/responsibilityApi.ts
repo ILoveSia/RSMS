@@ -44,7 +44,7 @@ export const responsibilityApi = {
 
 
       const response = await apiClient.get<ResponsibilityRow[]>(
-        `/api/responsibilities/status?${params.toString()}`
+        `/responsibilities/status?${params.toString()}`
       );
 
 
@@ -65,7 +65,7 @@ export const responsibilityApi = {
     try {
 
       const response = await apiClient.get<ResponsibilityRow>(
-        `/api/responsibilities/${responsibilityId}`
+        `/responsibilities/${responsibilityId}`
       );
 
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
@@ -83,7 +83,7 @@ export const responsibilityApi = {
    */
   create: async (data: ResponsibilityRequestDto): Promise<ResponsibilityRow> => {
     const response = await apiClient.post<ApiResponse<ResponsibilityRow>>(
-      '/api/responsibilities',
+      '/responsibilities',
       data
     );
 
@@ -104,7 +104,7 @@ export const responsibilityApi = {
       );
       console.log(responsibilityId);
       const response = await apiClient.put<ResponsibilityRow>(
-        `/api/responsibilities/${responsibilityId}`,
+        `/responsibilities/${responsibilityId}`,
         data
       );
 

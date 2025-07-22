@@ -85,5 +85,10 @@ ehthumbs.db
 Thumbs.db
 
 node_modules/
+application.yml
+vite.config.js
+.claude/
+backend/build.gradle
+frontend/tsconfig.json
 
 .kiro/

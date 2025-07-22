@@ -109,4 +109,18 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
             """,
             nativeQuery = true)
     List<PositionStatusProjection> findPositionStatusList();
+
+    /**
+     * 직책 검색 (검색팝업용)
+     */
+    @Query("SELECT p FROM Position p WHERE "
+            + "(:ledgerOrder IS NULL OR p.ledgerOrder = :ledgerOrder) AND "
+            + "(:positionsNm IS NULL OR p.positionsNm LIKE %:positionsNm%) AND "
+            + "(:writeDeptCd IS NULL OR p.writeDeptCd = :writeDeptCd) AND "
+            + "(:confirmGubunCd IS NULL OR p.confirmGubunCd = :confirmGubunCd) "
+            + "ORDER BY p.ledgerOrder DESC, p.positionsNm ASC")
+    List<Position> searchPositions(@Param("ledgerOrder") String ledgerOrder,
+                                 @Param("positionsNm") String positionsNm,
+                                 @Param("writeDeptCd") String writeDeptCd,
+                                 @Param("confirmGubunCd") String confirmGubunCd);
 }

@@ -26,7 +26,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/hod-ic-items")
+@RequestMapping("/hod-ic-items")
 @RequiredArgsConstructor
 public class HodICItemController {
 

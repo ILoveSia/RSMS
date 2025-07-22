@@ -2,6 +2,7 @@ package org.itcen.domain.submission.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.itcen.domain.positions.entity.Position;
 import java.time.LocalDate;
 
 @Entity
@@ -10,24 +11,41 @@ import java.time.LocalDate;
 public class Submission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "submit_id")
+    @Column(name = "rm_submit_mgmt_id")
     private Long id;
 
-    @Column(name = "history_code", nullable = false)
-    private String historyCode;
+    @Column(name = "submit_hist_cd", nullable = false)
+    private String submitHistCd;
 
-    @Column(name = "executive_name", nullable = false)
-    private String executiveName;
+    @Column(name = "execofficer_id", nullable = false, length = 100)
+    private String execofficerId;
 
-    @Column(name = "position", nullable = false)
-    private String position;
+    @Column(name = "rm_submit_dt")
+    private LocalDate rmSubmitDt;
 
-    @Column(name = "submission_date", nullable = false)
-    private LocalDate submissionDate;
+    @Column(name = "update_yn", length = 1)
+    private String updateYn = "N";
 
-    @Column(name = "attachment_file", nullable = false)
-    private String attachmentFile;
-
-    @Column(name = "remarks")
-    private String remarks;
+    @Column(name = "rm_submit_remarks", length = 1000)
+    private String rmSubmitRemarks;
+    
+    @Column(name = "positions_id")
+    private Long positionsId;
+    
+    @Column(name = "created_id", length = 100)
+    private String createdId;
+    
+    @Column(name = "updated_id", length = 100)
+    private String updatedId;
+    
+    @Column(name = "created_at")
+    private java.time.LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+    
+    // positions 테이블과의 연관관계 (LAZY 로딩으로 성능 최적화)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "positions_id", insertable = false, updatable = false)
+    private Position positionEntity;
 }
