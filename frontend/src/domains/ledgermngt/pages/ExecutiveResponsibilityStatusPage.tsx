@@ -154,16 +154,17 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       const data = await executiveResponsibilityApi.getAll();
       // API 응답을 페이지에서 사용하는 형태로 변환
       console.log("data",data);
+
       const transformedData: ExecutiveResponsibilityRow[] = data.map((item: any) => ({
         id: item.positionsId || 0,
         position: item.positionNameMapped || '해당없음',
         jobTitle: item.jobTitleCd || '해당없음',
         empNo: item.num || '해당없음',
         executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
-        responsibility: '', // 백엔드에 해당 필드가 없음
-        responsibilityDetail: '', // 백엔드에 해당 필드가 없음
-        managementDuty: '', // 백엔드에 해당 필드가 없음
-        relatedBasis: '', // 백엔드에 해당 필드가 없음
+        responsibility: item.responsibilityContent || '해당없음', // 백엔드에 해당 필드가 없음
+        responsibilityDetail: item.responsibilityDetailContent || '해당없음', // 백엔드에 해당 필드가 없음
+        managementDuty: item.responsibilityMgtSts || '해당없음', // 백엔드에 해당 필드가 없음
+        relatedBasis: item.responsibilityRelEvid || '해당없음', // 백엔드에 해당 필드가 없음
         jobRank: item.jobRankCd || '해당없음'
       }));
 

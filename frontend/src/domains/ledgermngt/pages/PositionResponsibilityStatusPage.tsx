@@ -76,8 +76,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // API 호출 대신 목업 데이터 사용
       const response = await fetch('/api/position-responsibilities');
       const data = await response.json();
-      console.log('API 응답 데이터:', data);
-      console.log('첫 번째 항목:', data[0]);
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         ...item,
         positionName: item.positions_name ?? '',

@@ -53,7 +53,6 @@ const execOfficerApi = {
     return response;
   },
   update: async (id: number, data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
-    console.log("data", data);
     if(data.dualYn === "N"){
       data.dualDetails = "";
     }
@@ -175,7 +174,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         ...item,
         positionNameMapped: item.positionNameMapped ?? '', // undefined 방지
       }));
-      console.log(mappedRows);
       setRows(mappedRows);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
