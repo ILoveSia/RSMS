@@ -87,6 +87,7 @@ Thumbs.db
 # 프로젝트 특정 파일
 frontend/node_modules
 frontend_backup
+node_modules/
 backend/src/main/resources/application.yml
 .claude/
 backend/build.gradle
