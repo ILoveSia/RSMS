@@ -94,3 +94,5 @@ backend/build.gradle
 frontend/tsconfig.json
 
 .kiro/
+*storybook.log
+storybook-static
