@@ -15,6 +15,7 @@ import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import executiveResponsibilityApi from '../api/executiveResponsibilityApi';
+import ExecutiveResponsibilityDialog from '../components/ExecutiveResponsibilityDialog';
 
 interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
@@ -46,6 +47,8 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [isLoading, setIsLoading] = useState(false);
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [dialogData, setDialogData] = useState<any>(null);
 
   // 옵션 데이터
   const positionOptions: SelectOption[] = [
@@ -153,7 +156,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       // 실제 API 호출
       const data = await executiveResponsibilityApi.getAll();
       // API 응답을 페이지에서 사용하는 형태로 변환
-      console.log("data",data);
 
       const transformedData: ExecutiveResponsibilityRow[] = data.map((item: any) => ({
         id: item.positionsId || 0,
@@ -187,7 +189,9 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   // 직책 클릭 핸들러
   const handlePositionClick = (row: ExecutiveResponsibilityRow) => {
     // TODO: 직책 상세 정보 다이얼로그 표시 또는 페이지 이동 구현
-    alert(`선택된 직책: ${row.position}\n임원: ${row.executiveName}\n책무: ${row.responsibility}`);
+    console.log("row", row);
+    setDialogData(row);
+    setDialogOpen(true);
   };
 
   const handleErrorDialogClose = () => {
@@ -293,6 +297,11 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         open={errorDialogOpen}
         errorMessage={errorMessage}
         onClose={handleErrorDialogClose}
+      />
+      <ExecutiveResponsibilityDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        data={dialogData}
       />
     </PageContainer>
   );
