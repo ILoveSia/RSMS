@@ -337,7 +337,6 @@ public class PositionServiceImpl implements PositionService {
     @Override
     @Transactional(readOnly = true)
     public List<PositionMeetingDto> getPositionMeetings(Long id) {
-        log.info("직책별 회의체 목록 조회 서비스 호출: 12341234id={}", id);
 
         // 직책 존재 여부 확인
         Position position = positionRepository.findById(id).orElseThrow(
