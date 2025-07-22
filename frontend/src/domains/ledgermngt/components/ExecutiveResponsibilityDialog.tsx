@@ -27,16 +27,12 @@ interface ExecutiveDetailDialogProps {
   // positionName: string;
   onClose: () => void;
   data: any | null;
-  onSave: (data: any) => void;
-  onChangeMode: (mode: DialogMode) => void;
 }
 
 const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   open,
   onClose,
   data,
-  mode,
-  onChangeMode,
 }) => {
   // const [mode, setMode] = useState<DialogMode>('view');
   const [formData, setFormData] = useState<any>({});
@@ -182,11 +178,11 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   return (
     <>
       <BaseDialog
-        mode={mode}
+        mode={'view'}
         open={open}
         title={'임원 책무 상세조회'}
         onClose={onClose}
-        onModeChange={onChangeMode}
+        // onModeChange={onChangeMode}
         loading={loading}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
