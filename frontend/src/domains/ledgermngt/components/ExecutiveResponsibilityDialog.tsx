@@ -23,7 +23,6 @@ import React, { useEffect, useState } from 'react';
 import { DatePicker } from '../../../shared/components';
 
 interface ExecutiveDetailDialogProps {
-  mode: DialogMode;
   open: boolean;
   // positionName: string;
   onClose: () => void;
@@ -36,8 +35,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   open,
   onClose,
   data,
-  onChangeMode,
   mode,
+  onChangeMode,
 }) => {
   // const [mode, setMode] = useState<DialogMode>('view');
   const [formData, setFormData] = useState<any>({});
@@ -183,8 +182,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   return (
     <>
       <BaseDialog
-        open={open}
         mode={mode}
+        open={open}
         title={'임원 책무 상세조회'}
         onClose={onClose}
         onModeChange={onChangeMode}
@@ -239,8 +238,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               // onChange={e => handleInputChange('hasConcurrentPosition', (e as React.ChangeEvent<HTMLInputElement>).target.value === 'Y')}
               name="hasConcurrentPosition"
             >
-              <FormControlLabel value="N" control={<Radio />} label="없음" disabled={mode === 'view'} />
-              <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={mode === 'view'} />
+              <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
+              <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
             </RadioGroup>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
@@ -248,7 +247,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                 label="겸직사항"
                 value={formData.concurrentPosition || ''}
                 onChange={e => handleInputChange('concurrentPosition', e.target.value)}
-                disabled={mode === 'view' || !formData.hasConcurrentPosition}
+                disabled={true}
               />
             </Box>
           </Box>

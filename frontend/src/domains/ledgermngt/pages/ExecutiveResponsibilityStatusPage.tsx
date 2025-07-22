@@ -11,6 +11,7 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -34,11 +35,6 @@ interface ExecutiveResponsibilityRow {
   relatedBasis?: string;     // 관련근거
 }
 
-const ledgerOrderOptions: SelectOption[] = [
-  { value: '2024-001', label: '2024-001' },
-  { value: '2024-002', label: '2024-002' },
-  { value: '2024-003', label: '2024-003' }
-];
 
 const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatusPageProps> = () => {
   // 상태 관리
@@ -49,7 +45,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogData, setDialogData] = useState<any>(null);
-
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   // 옵션 데이터
   const positionOptions: SelectOption[] = [
     { value: 'all', label: '전체' },
@@ -246,11 +242,11 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           alignItems: 'center'
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <ComboBox
-            options={ledgerOrderOptions}
-            onChange={value => setSelectedRound(value as SelectOption)}
-            size="small"
-            sx={{ width: '130px' }}
+          <LedgerOrderSelect
+            value={selectedLedgerOrder}
+            onChange={setSelectedLedgerOrder}
+            size='small'
+            sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
           <ComboBox
