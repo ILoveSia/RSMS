@@ -19,6 +19,7 @@ import {
   deleteSubmissionHistory,
   fetchSubmissionHistory,
   submitSubmissionHistory,
+  updateSubmissionHistory,
 } from '../api/SubmissionStatusApi';
 import { StructureSubmissionStatusDialog } from '../components';
 
@@ -184,11 +185,22 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
     setDialogMode('create');
   };
 
-  // 제출 이력 등록
+  // 제출 이력 등록/수정
   const handleSubmit = async (data: RegistrationData): Promise<{ id: number }> => {
     try {
       setIsLoading(true);
-      const result = await submitSubmissionHistory(data);
+      let result: { id: number };
+      
+      if (dialogMode === 'edit' && selectedItem?.id) {
+        // 수정 모드: PUT 요청
+        console.log('수정 모드: ID', selectedItem.id, '데이터 수정');
+        result = await updateSubmissionHistory(selectedItem.id, data);
+      } else {
+        // 생성 모드: POST 요청
+        console.log('생성 모드: 새 데이터 생성');
+        result = await submitSubmissionHistory(data);
+      }
+      
       handleDialogClose();
       handleFetchSubmissionHistory();
       return result;
@@ -334,6 +346,18 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             onRowSelectionChange={handleHistoryRowSelectionModelChange}
             checkboxSelection={true}
             rowSelectionModel={selectedHistoryIds}
+            initialState={{
+              pagination: {
+                paginationModel: { pageSize: 10, page: 0 }
+              }
+            }}
+            pageSizeOptions={[5, 10, 25, 50]}
+            sx={{
+              height: '650px', // 고정 높이로 변경
+              '& .MuiDataGrid-virtualScroller': {
+                overflow: 'auto' // 스크롤 허용
+              }
+            }}
           />
         </Box>
 

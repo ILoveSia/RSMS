@@ -84,7 +84,9 @@ login*.json
 ehthumbs.db
 Thumbs.db
 
-
+# 프로젝트 특정 파일
+frontend/node_modules
+frontend_backup
 backend/src/main/resources/application.yml
 .claude/
 backend/build.gradle

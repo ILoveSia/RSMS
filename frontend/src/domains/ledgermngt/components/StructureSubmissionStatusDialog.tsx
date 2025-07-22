@@ -285,35 +285,23 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         '수정 조건 전체': !!(selectedFile && itemId && mode === 'edit')
       });
 
-      // 새로 선택한 파일이 있고 새로 생성된 경우 첨부파일 업로드
-      if (selectedFile && result && result.id && mode !== 'view') {
-        console.log('첨부파일 업로드 시작 (새 생성):', result.id);
-        try {
-          await uploadAttachment(selectedFile, {
-            entityType: 'LEDGER_MGMT_STRUCTURE_SUBMISSION',
-            entityId: result.id,
-            uploadedBy: 'system'
-          });
-          console.log('첨부파일 업로드 완료 (새 생성)');
-        } catch (uploadError) {
-          console.error('첨부파일 업로드 실패 (새 생성):', uploadError);
-          throw uploadError; // 에러를 다시 던져서 전체 처리 실패로 만듦
-        }
-      }
-
-      // 기존 데이터 수정 시에도 새 파일이 있으면 업로드
-      if (selectedFile && itemId && mode === 'edit') {
-        console.log('첨부파일 업로드 시작 (수정):', itemId);
-        try {
-          await uploadAttachment(selectedFile, {
-            entityType: 'LEDGER_MGMT_STRUCTURE_SUBMISSION',
-            entityId: itemId,
-            uploadedBy: 'system'
-          });
-          console.log('첨부파일 업로드 완료 (수정)');
-        } catch (uploadError) {
-          console.error('첨부파일 업로드 실패 (수정):', uploadError);
-          throw uploadError; // 에러를 다시 던져서 전체 처리 실패로 만듦
+      // 새로 선택한 파일이 있으면 첨부파일 업로드
+      if (selectedFile && mode !== 'view') {
+        const targetEntityId = mode === 'edit' && itemId ? itemId : result?.id;
+        
+        if (targetEntityId) {
+          console.log(`첨부파일 업로드 시작 (${mode === 'edit' ? '수정' : '생성'}):`, targetEntityId);
+          try {
+            await uploadAttachment(selectedFile, {
+              entityType: 'LEDGER_MGMT_STRUCTURE_SUBMISSION',
+              entityId: targetEntityId,
+              uploadedBy: 'system'
+            });
+            console.log(`첨부파일 업로드 완료 (${mode === 'edit' ? '수정' : '생성'})`);
+          } catch (uploadError) {
+            console.error(`첨부파일 업로드 실패 (${mode === 'edit' ? '수정' : '생성'}):`, uploadError);
+            throw uploadError; // 에러를 다시 던져서 전체 처리 실패로 만듦
+          }
         }
       }
 

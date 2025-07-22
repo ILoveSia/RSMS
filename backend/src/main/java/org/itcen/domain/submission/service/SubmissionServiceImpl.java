@@ -169,13 +169,15 @@ public class SubmissionServiceImpl implements SubmissionService {
             .executiveName((String) row[2])  // users.username (실제 임원 이름)
             .position((String) row[3])  // positions_nm (직책명)
             .submissionDate(row[4] != null ? ((Date) row[4]).toLocalDate() : null)  // rm_submit_dt
-            .attachmentFile((String) row[5])  // 빈 문자열 (첨부파일은 별도 테이블)
+            .attachmentFile((String) row[5])  // 첨부파일명 (COALESCE(a.original_filename, ''))
             .remarks((String) row[6])  // rm_submit_remarks
             .positionsId(row[7] != null ? ((Number) row[7]).longValue() : null)  // 안전한 숫자 타입 변환
             .positionsNm((String) row[8])  // positions_nm
             .ledgerOrder((String) row[9])  // ledger_order
             .confirmGubunCd((String) row[10])  // confirm_gubun_cd
             .writeDeptCd((String) row[11])  // write_dept_cd
+            .hasAttachment(row[12] != null ? (Boolean) row[12] : false)  // 첨부파일 존재 여부
+            .attachmentCount(row[13] != null ? ((Number) row[13]).intValue() : 0)  // 첨부파일 개수
             // 새로운 필드들 추가
             .submitHistCd((String) row[1])  // submit_hist_cd
             .execofficerId((String) row[2])  // execofficer_id (실제로는 COALESCE된 username)
