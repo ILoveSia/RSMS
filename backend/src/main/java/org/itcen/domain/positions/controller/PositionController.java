@@ -60,6 +60,7 @@ public class PositionController {
     @DeleteMapping("/bulk-delete")
     public ResponseEntity<ApiResponse<Void>> deleteBulk(
             @RequestBody PositionBulkDeleteRequestDto requestDto) {
+        log.info("직책 일괄 삭제 API 호출: {}", requestDto);
         positionService.deleteBulk(requestDto.getPositionsIds());
         return ResponseEntity.ok(ApiResponse.success("직책이 성공적으로 삭제되었습니다."));
     }

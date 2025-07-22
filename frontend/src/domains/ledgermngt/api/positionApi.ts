@@ -62,13 +62,7 @@ export class PositionApiService {
    * @param ids 삭제할 positionsId 배열
    */
   static async deleteBulk(ids: number[]): Promise<void> {
-    await apiClient.post(
-      '/positions/bulk-delete',
-      { positionsIds: ids },
-      {
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    await apiClient.delete('/positions/bulk-delete', { positionsIds: ids });
   }
 
   /**
@@ -86,20 +80,13 @@ export class PositionApiService {
    */
   static async getPositionList(ledgerOrder?: string): Promise<PositionSearchResult[]> {
     try {
-      const params = new URLSearchParams();
+      const params: Record<string, string> = {};
       if (ledgerOrder) {
-        params.append('ledgerOrder', ledgerOrder);
+        params.ledgerOrder = ledgerOrder;
       }
-      
-      const queryString = params.toString();
-      const url = queryString ? `/positions/search?${queryString}` : '/positions/search';
-      const response = await apiClient.get(url);
-      
-      if (response.success !== false) {
-        return response.data || response || [];
-      } else {
-        throw new Error(response.message || '직책 목록 조회에 실패했습니다.');
-      }
+
+      const response = await apiClient.get<PositionSearchResult[]>('/positions/search', { params });
+      return response || [];
     } catch (error) {
       console.error('직책 목록 조회 실패:', error);
       throw error;
@@ -111,13 +98,8 @@ export class PositionApiService {
    */
   static async searchPositions(searchRequest: PositionSearchRequest): Promise<PositionSearchResult[]> {
     try {
-      const response = await apiClient.post('/positions/search', searchRequest);
-      
-      if (response.success !== false) {
-        return response.data || response || [];
-      } else {
-        throw new Error(response.message || '직책 검색에 실패했습니다.');
-      }
+      const response = await apiClient.post<PositionSearchResult[]>('/positions/search', searchRequest);
+      return response || [];
     } catch (error) {
       console.error('직책 검색 실패:', error);
       throw error;
@@ -129,13 +111,8 @@ export class PositionApiService {
    */
   static async getPositionDetail(positionsId: number): Promise<PositionDetailDto> {
     try {
-      const response = await apiClient.get(`/positions/${positionsId}`);
-      
-      if (response.success !== false) {
-        return response.data || response;
-      } else {
-        throw new Error(response.message || '직책 상세 정보 조회에 실패했습니다.');
-      }
+      const response = await apiClient.get<PositionDetailDto>(`/positions/${positionsId}`);
+      return response;
     } catch (error) {
       console.error('직책 상세 정보 조회 실패:', error);
       throw error;

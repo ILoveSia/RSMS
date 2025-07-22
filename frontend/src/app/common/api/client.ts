@@ -286,14 +286,20 @@ class ApiClient {
   /**
    * DELETE 요청
    * @param endpoint - API 엔드포인트
+   * @param data - 요청 데이터 (선택적)
    * @param options - 요청 옵션
    * @returns 응답 데이터
    */
   async delete<T>(
     endpoint: string,
-    options: Omit<RequestOptions, 'method' | 'body'> = {}
+    data?: unknown,
+    options: Omit<RequestOptions, 'method'> = {}
   ): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
+    });
   }
 
   /**
