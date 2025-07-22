@@ -11,6 +11,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
+import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import {
   Box,
   Snackbar
@@ -100,6 +101,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const [rows, setRows] = useState<ExecutiveStatusRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
 
   // 필터 상태
   const [ledgerOrderFilter, setLedgerOrderFilter] = useState<string>('전체');
@@ -466,12 +468,11 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           alignItems: 'center'
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <ComboBox
-            value={ledgerOrderFilter}
-            options={ledgerOrderOptions}
-            onChange={(value) => setLedgerOrderFilter(value as string)}
-            size="small"
-            sx={{ minWidth: '200px' }}
+          <LedgerOrderSelect
+            value={selectedLedgerOrder}
+            onChange={setSelectedLedgerOrder}
+            size='small'
+            sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <Button
             variant="contained"
