@@ -23,6 +23,37 @@ public class PositionResponsibilityService {
     @PersistenceContext
     private EntityManager em;
 
+    public List<PositionResponsibilityDto> getByPositionId(Long positionId) {
+        String sql = "SELECT p.positions_id, p.positions_nm, r.role_summ, p.positions_id as responsibility_id, r.created_at, r.updated_at, r2.responsibility_content, r3.responsibility_detail_content, r3.responsibility_mgt_sts, r3.responsibility_rel_evid "
+                        + "FROM positions p "
+                        + "LEFT JOIN role_resp_status r ON p.positions_id = r.positions_id "
+                        + "LEFT JOIN responsibility r2 ON r.responsibility_id = r2.responsibility_id "
+                        + "LEFT JOIN responsibility_detail r3 ON r.responsibility_id = r3.responsibility_id "
+                        + "WHERE p.positions_id = " + positionId
+                        + " ORDER BY p.positions_id";
+
+        log.info("[PositionResponsibilityService] 실행할 SQL: {}", sql);
+        List<Object[]> results = em.createNativeQuery(sql).getResultList();
+        List<PositionResponsibilityDto> finalResult = results.stream().map(row -> {
+            try {
+                PositionResponsibilityDto dto = new PositionResponsibilityDto();
+                dto.setPositions_id(row[0] != null ? ((Number) row[0]).longValue() : null);
+                dto.setPositions_name(row[1] != null ? (String) row[1] : "");
+                dto.setRole_summ(row[2] != null ? (String) row[2] : "");
+                dto.setRespontibility_id(row[3] != null ? ((Number) row[3]).longValue() : null);
+                dto.setCreated_at(row[4] != null ? (Instant) row[4] : null);
+                dto.setUpdated_at(row[5] != null ? (Instant) row[5] : null);
+                dto.setResponsibility_conent(row[6] != null ? (String) row[6] : "");
+                return dto;
+            } catch (Exception e) {
+                log.error("Error processing row: {}", row, e);
+                return null; // Return null for problematic rows
+            }
+        }).filter(java.util.Objects::nonNull) // Filter out nulls
+                .collect(Collectors.toList());
+
+        return finalResult;
+    }
     public List<PositionResponsibilityDto> getAll() {
         String sql =
                 "SELECT p.positions_id, p.positions_nm, r.role_summ, p.positions_id as responsibility_id, r.created_at, r.updated_at, r2.responsibility_content, r3.responsibility_detail_content, r3.responsibility_mgt_sts, r3.responsibility_rel_evid "
@@ -36,14 +67,6 @@ public class PositionResponsibilityService {
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
         log.info("[PositionResponsibilityService] 쿼리 결과 개수: {}", results.size());
 
-        // 첫 번째 결과 로그 출력 (디버깅용)
-        if (!results.isEmpty()) {
-            Object[] firstRow = results.get(0);
-            log.info("[PositionResponsibilityService] 첫 번째 행 데이터:");
-            for (int i = 0; i < firstRow.length; i++) {
-                log.info("  [{}]: {}", i, firstRow[i]);
-            }
-        }
         List<PositionResponsibilityDto> finalResult = results.stream().map(row -> {
             try {
                 PositionResponsibilityDto dto = new PositionResponsibilityDto();

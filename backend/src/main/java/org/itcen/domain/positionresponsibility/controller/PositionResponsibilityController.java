@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PathVariable;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -31,6 +32,14 @@ public class PositionResponsibilityController {
         return result;
     }
 
+    @GetMapping("/{positionId}")
+    public List<PositionResponsibilityDto> getByPositionId( @PathVariable Long positionId) {
+        log.info("getByPositionId() method called");
+        List<PositionResponsibilityDto> result = positionResponsibilityService.getByPositionId(positionId);
+        log.info("Returning {} items", result.size());
+        return result;
+    }
+
     @PutMapping
     public boolean updateResponsibility(@RequestBody ResponsibilityCreateRequestDto requestDto) {
         log.info("updateResponsibility() method called 12341234");
@@ -38,4 +47,5 @@ public class PositionResponsibilityController {
         log.info("updateResponsibility() method called" + result);
         return result;
     }
+
 }

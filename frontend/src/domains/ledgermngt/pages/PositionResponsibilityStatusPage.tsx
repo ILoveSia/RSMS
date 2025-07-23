@@ -10,7 +10,8 @@ import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { ComboBox } from '@/shared/components/ui/form';
+import PositionSelect from '@/shared/components/ui/form/PositionSelect';
+import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -32,11 +33,6 @@ interface PositionResponsibility {
   createdAt: string;
   updatedAt: string;
 }
-const ledgerOrderFilterOptions: SelectOption[] = [
-  { value: '2024-001', label: '2024-001' },
-  { value: '2024-002', label: '2024-002' },
-  { value: '2024-003', label: '2024-003' }
-];
 
 const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPageProps> = (): React.JSX.Element => {
   const [rows, setRows] = useState<PositionResponsibility[]>([]);
@@ -44,8 +40,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [error, setError] = useState<string | null>(null);
 
   // 필터 상태
-  const [ledgerOrderFilter, setLedgerOrderFilter] = useState<string>('');
-  const [positionFilter, setPositionFilter] = useState<string>('');
+  const [selectedPosition, setSelectedPosition] = useState<PositionSearchResult | null>(null);
 
   // 선택된 행
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -69,12 +64,20 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
   // 데이터 로드 함수
   const fetchData = useCallback(async () => {
+    console.log("fetchdata in")
     setLoading(true);
     setError(null);
 
     try {
-      // API 호출 대신 목업 데이터 사용
-      const response = await fetch('/api/position-responsibilities');
+      let response = null;
+      if(selectedPosition===null){
+        response = await fetch('/api/position-responsibilities');
+      }
+      else{
+        console.log("selectedPosition.positionsId",selectedPosition.positionsId)
+        response = await fetch(`/api/position-responsibilities/${selectedPosition.positionsId}`);
+      }
+      
       const data = await response.json();
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         ...item,
@@ -86,15 +89,17 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         responsibility_mgt_sts: item.responsibility_mgt_sts ?? '',
         responsibility_rel_evid: item.responsibility_rel_evid ?? '',
       }));
+      
       setRows(mappedRows);
-    } catch (err) {
+    }
+    catch (err) {
       console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
       setErrorDialogOpen(true);
     } finally {
       setLoading(false);
     }
-  }, [ledgerOrderFilter, positionFilter, pageInfo.page, pageInfo.size]);
+  }, [selectedPosition,pageInfo.page, pageInfo.size]);
 
   useEffect(() => {
     fetchData();
@@ -304,17 +309,15 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
-          <ComboBox
+          {/* <ComboBox
             value={positionFilter}
-            options={[
-              { value: '전체', label: '전체' },
-              { value: '부장', label: '부장' },
-              { value: '차장', label: '차장' },
-              { value: '과장', label: '과장' },
-              { value: '팀장', label: '팀장' },
-              { value: '수석', label: '수석' }
-            ]}
             onChange={(value) => setPositionFilter(value as string)}
+            size="small"
+            sx={{ minWidth: '200px' }}
+          /> */}
+          <PositionSelect
+            value={selectedPosition}
+            onChange={setSelectedPosition}
             size="small"
             sx={{ minWidth: '200px' }}
           />

@@ -38,6 +38,7 @@ export interface PositionSelectProps {
   /** 초기 검색 조건 */
   initialSearchParams?: PositionSearchRequest;
   /** 에러 발생 콜백 */
+  searchParams?: PositionSearchRequest;
   onError?: (error: string) => void;
 }
 const PositionSelect: React.FC<PositionSelectProps> = ({
@@ -51,6 +52,7 @@ const PositionSelect: React.FC<PositionSelectProps> = ({
   helperText,
   minWidth = 200,
   maxWidth = 300,
+  searchParams,
   initialSearchParams,
   onError,
 }) => {
@@ -98,7 +100,6 @@ const PositionSelect: React.FC<PositionSelectProps> = ({
         open={positionSearchPopupOpen}
         onClose={() => setPositionSearchPopupOpen(false)}
         onSelect={handleSelect}
-        initialSearchParams={initialSearchParams}
       />
     </Box>
   );
