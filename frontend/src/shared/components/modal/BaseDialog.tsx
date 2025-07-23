@@ -104,6 +104,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
         dividers
         sx={{
           p: 3,
+          paddingX: 5,
           backgroundColor: 'var(--bank-bg-paper)',
           '& .MuiTextField-root.Mui-disabled': {
             backgroundColor: '#f8fafc',

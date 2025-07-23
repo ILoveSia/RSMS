@@ -11,20 +11,15 @@ import { Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
   Alert,
   Box,
-  Button,
   CircularProgress,
-  Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
-  FormControl,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
 } from '@mui/material';
+import { Select } from '@/shared/components/ui/form';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
+import { Button } from '@/shared/components/ui/button';
+import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { HodICItemCreateRequest } from '../api/hodIcItemApi';
 import { hodICItemApi } from '../api/hodIcItemApi';
@@ -104,11 +99,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   const isCreateMode = mode === 'create';
   const isEditMode = mode === 'edit';
 
-  const title = {
-    create: '부서장 내부통제항목 등록',
-    edit: '부서장 내부통제항목 수정',
-    view: '부서장 내부통제항목 상세보기',
-  }[mode];
 
   // 공통코드 배열 추출 함수
   const getCodesArray = useCallback((): CommonCode[] => {
@@ -515,37 +505,20 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
 
   return (
     <>
-      <Dialog
+      <BaseDialog
         open={open}
         onClose={handleClose}
         maxWidth='lg'
-        fullWidth
-        PaperProps={{
-          sx: {
-            minHeight: '700px',
-            maxHeight: '90vh',
-          },
-        }}
+        mode='create'
+        title='내부통제항목 등록'
+      // fullWidth
+      // PaperProps={{
+      //   sx: {
+      //     minHeight: '700px',
+      //     maxHeight: '90vh',
+      //   },
+      // }}
       >
-        <DialogTitle
-          component='div'
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid var(--bank-border)',
-            pb: 2,
-          }}
-        >
-          <Typography variant='h6'>{title}</Typography>
-          <Button
-            onClick={handleClose}
-            sx={{ minWidth: 'auto', p: 1 }}
-            disabled={saving || requestingApproval}
-          >
-            <CloseIcon />
-          </Button>
-        </DialogTitle>
 
         <DialogContent sx={{ p: 3 }}>
           {loading ? (
@@ -613,42 +586,33 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
 
                 {/* 항목구분 */}
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>항목구분 *</InputLabel>
-                    <Select
-                      value={formData.fieldTypeCd}
-                      label='항목구분 *'
-                      onChange={e => handleInputChange('fieldTypeCd', e.target.value)}
-                      disabled={isViewMode}
-                    >
-                      <MenuItem value=''>선택하세요</MenuItem>
-                      {getFieldTypeCodes().map(code => (
-                        <MenuItem key={code.code} value={code.code}>
-                          {code.codeName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Select
+                    value={formData.fieldTypeCd}
+                    label='항목구분 *'
+                    options={[
+                      { value: '', label: '선택하세요' },
+                      ...getFieldTypeCodes().map(code => ({
+                        value: code.code,
+                        label: code.codeName,
+                      }))
+                    ]}
+                    onChange={(value) => handleInputChange('fieldTypeCd', value as string)}
+                    disabled={isViewMode}
+                  />
                 </Grid>
 
                 {/* 직무구분 */}
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>직무구분 *</InputLabel>
-                    <Select
-                      value={formData.roleTypeCd}
-                      label='직무구분 *'
-                      onChange={e => handleInputChange('roleTypeCd', e.target.value)}
-                      disabled={isViewMode || !formData.fieldTypeCd}
-                    >
-                      <MenuItem value=''>선택하세요</MenuItem>
-                      {getRoleTypeOptions().map(option => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Select
+                    value={formData.roleTypeCd}
+                    label='직무구분 *'
+                    options={[
+                      { value: '', label: '선택하세요' },
+                      ...getRoleTypeOptions()
+                    ]}
+                    onChange={(value) => handleInputChange('roleTypeCd', value as string)}
+                    disabled={isViewMode || !formData.fieldTypeCd}
+                  />
                 </Grid>
 
                 {/* 내부통제업무 */}
@@ -690,42 +654,30 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
 
                 {/* 주기 */}
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>주기</InputLabel>
-                    <Select
-                      value={formData.periodCd}
-                      label='주기'
-                      onChange={e => handleInputChange('periodCd', e.target.value)}
-                      disabled={isViewMode}
-                    >
-                      <MenuItem value=''>선택하세요</MenuItem>
-                      {getCommonCodeOptions('PERIOD').map(option => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Select
+                    value={formData.periodCd}
+                    label='주기'
+                    options={[
+                      { value: '', label: '선택하세요' },
+                      ...getCommonCodeOptions('PERIOD')
+                    ]}
+                    onChange={(value) => handleInputChange('periodCd', value as string)}
+                    disabled={isViewMode}
+                  />
                 </Grid>
 
                 {/* 점검시기 */}
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>점검시기</InputLabel>
-                    <Select
-                      value={formData.checkPeriod}
-                      label='점검시기'
-                      onChange={e => handleInputChange('checkPeriod', e.target.value)}
-                      disabled={isViewMode}
-                    >
-                      <MenuItem value=''>선택하세요</MenuItem>
-                      {getCommonCodeOptions('MONTH').map(option => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Select
+                    value={formData.checkPeriod}
+                    label='점검시기'
+                    options={[
+                      { value: '', label: '선택하세요' },
+                      ...getCommonCodeOptions('MONTH')
+                    ]}
+                    onChange={(value) => handleInputChange('checkPeriod', value as string)}
+                    disabled={isViewMode}
+                  />
                 </Grid>
 
                 {/* 관련근거 */}
@@ -757,7 +709,7 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
           )}
         </DialogContent>
 
-        <DialogActions sx={{ p: 3, borderTop: '1px solid var(--bank-border)' }}>
+        <DialogActions>
           <Box sx={{ display: 'flex', gap: 1, width: '100%', justifyContent: 'flex-end' }}>
             {isViewMode && canRequestApproval && (
               <Button
@@ -769,19 +721,9 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                 {requestingApproval ? '처리중...' : '승인요청'}
               </Button>
             )}
-
-            <Button onClick={handleClose} disabled={saving || requestingApproval}>
-              {isViewMode ? '닫기' : '취소'}
-            </Button>
-
-            {!isViewMode && (
-              <Button variant='contained' onClick={handleSave} disabled={saving || loading}>
-                {saving ? '저장중...' : '저장'}
-              </Button>
-            )}
           </Box>
         </DialogActions>
-      </Dialog>
+      </BaseDialog>
 
       {/* 책무 조회 팝업 */}
       <ResponsibilitySearchPopup
