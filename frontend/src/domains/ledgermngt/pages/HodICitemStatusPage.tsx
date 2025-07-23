@@ -287,7 +287,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       }}
     >
       <PageHeader
-        title='[200] 부서장 내부통제 항목 현황'
+        title='[700] 부서장 내부통제 항목 현황'
         icon={<GroupsIcon />}
         description='부서장 내부통제 항목별 현황을 조회하고 관리합니다.'
         elevation={false}
