@@ -43,8 +43,6 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
                     (Collection<? extends GrantedAuthority>) session.getAttribute("authorities");
                 
                 if (username != null && authorities != null) {
-                    log.debug("세션에서 인증 정보 복원: {}", username);
-                    
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
                         username, null, authorities
                     );

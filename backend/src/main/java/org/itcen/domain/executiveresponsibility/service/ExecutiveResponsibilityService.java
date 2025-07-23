@@ -33,7 +33,6 @@ public List<ExecutiveResponsibilityDto> getByPositionId(Long positionId) {
     List<Object[]> results = em.createNativeQuery(sql).getResultList();
         List<ExecutiveResponsibilityDto> finalResult = results.stream().map(row -> {
             try {
-                log.info("row", row);
                 ExecutiveResponsibilityDto dto = new ExecutiveResponsibilityDto();
                 dto.setPositionsId(row[0] != null ? ((Number) row[0]).longValue() : null);
                 dto.setPositionNameMapped((String) row[1]);

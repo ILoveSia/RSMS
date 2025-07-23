@@ -37,27 +37,21 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 
     @Override
     public List<CommonCodeDto.Response> findAll() {
-        log.debug("모든 공통코드 조회 요청");
-        
         List<CommonCode> commonCodes = commonCodeRepository.findAll();
         List<CommonCodeDto.Response> responses = commonCodes.stream()
                 .map(CommonCodeDto.Response::from)
                 .toList();
         
-        log.debug("공통코드 조회 완료. 총 {}개", responses.size());
         return responses;
     }
 
     @Override
     public List<CommonCodeDto.Response> findAllUsable() {
-        log.debug("사용 가능한 모든 공통코드 조회 요청");
-        
         List<CommonCode> commonCodes = commonCodeRepository.findAllUsable();
         List<CommonCodeDto.Response> responses = commonCodes.stream()
                 .map(CommonCodeDto.Response::from)
                 .toList();
         
-        log.debug("사용 가능한 공통코드 조회 완료. 총 {}개", responses.size());
         return responses;
     }
 

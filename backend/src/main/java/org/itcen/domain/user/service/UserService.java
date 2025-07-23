@@ -36,8 +36,6 @@ public class UserService {
      * 사용자 목록 조회
      */
     public Page<UserDto.Response> getUsers(UserDto.SearchRequest request) {
-        log.debug("Getting users with search criteria: {}", request);
-
         // 정렬 방향 설정
         Sort.Direction direction = "asc".equalsIgnoreCase(request.getDirection()) 
                 ? Sort.Direction.ASC : Sort.Direction.DESC;
@@ -70,8 +68,6 @@ public class UserService {
      * 페이징 없이 검색 조건에 맞는 사원 목록을 반환
      */
     public List<UserDto.Response> getEmployees(UserDto.EmployeeSearchRequest request) {
-        log.debug("Getting employees with search criteria: {}", request);
-
         // 검색 조건에 따른 조회
         List<User> employees = userRepository.findEmployeesBySearchCriteria(
                 request.getUsername(),
@@ -91,8 +87,6 @@ public class UserService {
      * 사용자 상세 조회
      */
     public UserDto.Response getUser(String id) {
-        log.debug("Getting user by id: {}", id);
-        
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + id));
         
@@ -103,8 +97,6 @@ public class UserService {
      * 사용자명으로 사용자 조회
      */
     public UserDto.Response getUserByUsername(String username) {
-        log.debug("Getting user by username: {}", username);
-        
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Username: " + username));
         
@@ -116,7 +108,6 @@ public class UserService {
      */
     @Transactional
     public UserDto.Response createUser(UserDto.CreateRequest request) {
-        log.debug("Creating user: {}", request.getUsername());
 
         // 중복 검사
         if (userRepository.existsById(request.getId())) {
@@ -146,7 +137,6 @@ public class UserService {
         User user = request.toEntity();
         User savedUser = userRepository.save(user);
 
-        log.info("User created successfully: {}", savedUser.getUsername());
         return UserDto.Response.from(savedUser);
     }
 
@@ -155,7 +145,6 @@ public class UserService {
      */
     @Transactional
     public UserDto.Response updateUser(String id, UserDto.UpdateRequest request) {
-        log.debug("Updating user: {}", id);
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + id));
@@ -202,8 +191,6 @@ public class UserService {
         }
 
         User updatedUser = userRepository.save(user);
-        log.info("User updated successfully: {}", updatedUser.getUsername());
-        
         return UserDto.Response.from(updatedUser);
     }
 
@@ -212,13 +199,10 @@ public class UserService {
      */
     @Transactional
     public void deleteUser(String id) {
-        log.debug("Deleting user: {}", id);
-
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + id));
 
         userRepository.delete(user);
-        log.info("User deleted successfully: {}", user.getUsername());
     }
 
     /**
@@ -231,9 +215,7 @@ public class UserService {
     /**
      * 휴대폰 번호로 사용자 조회
      */
-    public UserDto.Response getUserByMobile(String mobile) {
-        log.debug("Getting user by mobile: {}", mobile);
-        
+    public UserDto.Response getUserByMobile(String mobile) {        
         User user = userRepository.findByMobile(mobile)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Mobile: " + mobile));
         
@@ -244,8 +226,6 @@ public class UserService {
      * 사번으로 사용자 조회
      */
     public UserDto.Response getUserByNum(String num) {
-        log.debug("Getting user by num: {}", num);
-        
         User user = userRepository.findByNum(num)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Num: " + num));
         

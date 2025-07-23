@@ -43,8 +43,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
     @Override
     @Transactional
     public MeetingBodyDto createMeetingBody(MeetingBodyCreateRequestDto createRequestDto) {
-        log.info("회의체 생성 요청: {}", createRequestDto.getMeetingName());
-
         // 회의체명 중복 체크
         if (meetingBodyRepository.existsByMeetingName(createRequestDto.getMeetingName())) {
             throw new BusinessException("이미 존재하는 회의체명입니다: " + createRequestDto.getMeetingName());
@@ -61,8 +59,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
 
         // 저장
         MeetingBody savedMeetingBody = meetingBodyRepository.save(meetingBody);
-        log.info("회의체 생성 완료: ID={}, 회의체명={}", savedMeetingBody.getMeetingBodyId(), savedMeetingBody.getMeetingName());
-
         return convertToDto(savedMeetingBody);
     }
 
@@ -72,7 +68,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
     @Override
     @Transactional
     public MeetingBodyDto updateMeetingBody(String meetingBodyId, MeetingBodyUpdateRequestDto updateRequestDto) {
-        log.info("회의체 수정 요청: ID={}, 회의체명={}", meetingBodyId, updateRequestDto.getMeetingName());
 
         // 기존 회의체 조회
         MeetingBody existingMeetingBody = meetingBodyRepository.findById(meetingBodyId)
@@ -91,8 +86,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
 
         // 저장
         MeetingBody updatedMeetingBody = meetingBodyRepository.save(existingMeetingBody);
-        log.info("회의체 수정 완료: ID={}, 회의체명={}", updatedMeetingBody.getMeetingBodyId(), updatedMeetingBody.getMeetingName());
-
         return convertToDto(updatedMeetingBody);
     }
 
@@ -102,8 +95,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
     @Override
     @Transactional
     public void deleteMeetingBody(String meetingBodyId) {
-        log.info("회의체 삭제 요청: ID={}", meetingBodyId);
-
         // 존재 여부 확인
         if (!meetingBodyRepository.existsById(meetingBodyId)) {
             throw new BusinessException("존재하지 않는 회의체입니다: ID=" + meetingBodyId);
@@ -111,7 +102,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
 
         // 삭제
         meetingBodyRepository.deleteById(meetingBodyId);
-        log.info("회의체 삭제 완료: ID={}", meetingBodyId);
     }
 
     /**
@@ -119,8 +109,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
      */
     @Override
     public MeetingBodyDto getMeetingBody(String meetingBodyId) {
-        log.debug("회의체 단건 조회 요청: ID={}", meetingBodyId);
-
         MeetingBody meetingBody = meetingBodyRepository.findById(meetingBodyId)
                 .orElseThrow(() -> new BusinessException("존재하지 않는 회의체입니다: ID=" + meetingBodyId));
 
@@ -132,8 +120,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
      */
     @Override
     public List<MeetingBodyDto> getAllMeetingBodies() {
-        log.debug("전체 회의체 목록 조회 요청");
-
         List<MeetingBody> meetingBodies = meetingBodyRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         return meetingBodies.stream()
                 .map(this::convertToDto)
@@ -145,8 +131,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
      */
     @Override
     public List<MeetingBodyDto> getMeetingBodiesByGubun(String gubun) {
-        log.debug("구분별 회의체 목록 조회 요청: gubun={}", gubun);
-
         List<MeetingBody> meetingBodies = meetingBodyRepository.findByGubunOrderByCreatedAtDesc(gubun);
         return meetingBodies.stream()
                 .map(this::convertToDto)
@@ -158,8 +142,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
      */
     @Override
     public Page<MeetingBodyDto> searchMeetingBodies(MeetingBodySearchRequestDto searchRequestDto) {
-        log.debug("회의체 검색 요청: {}", searchRequestDto);
-
         // 네이티브 쿼리에서는 정렬을 수동으로 처리하므로 Sort 없이 Pageable 생성
         Pageable pageable = PageRequest.of(
                 searchRequestDto.getPage(),
@@ -228,8 +210,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
     @Override
     @Transactional
     public void deleteMeetingBodies(List<String> ids) {
-        log.info("여러 회의체 일괄 삭제 요청: {}건", ids.size());
-
         // 존재하지 않는 ID 검증
         List<String> existingIds = meetingBodyRepository.findAllById(ids)
                 .stream()
@@ -245,7 +225,7 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
         }
 
         meetingBodyRepository.deleteAllByIdInBatch(ids);
-        log.info("여러 회의체 일괄 삭제 완료: {}건", ids.size());
+        
     }
 
     /**

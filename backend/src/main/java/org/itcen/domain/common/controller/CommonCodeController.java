@@ -41,11 +41,9 @@ public class CommonCodeController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<CommonCodeDto.Response>>> getAllCommonCodes() {
-        log.info("모든 공통코드 조회 API 호출");
         
         List<CommonCodeDto.Response> commonCodes = commonCodeService.findAll();
         
-        log.info("모든 공통코드 조회 완료. 개수: {}", commonCodes.size());
         return ResponseEntity.ok(
             ApiResponse.success("공통코드 목록 조회 성공", commonCodes)
         );
@@ -58,11 +56,9 @@ public class CommonCodeController {
      */
     @GetMapping("/usable")
     public ResponseEntity<ApiResponse<List<CommonCodeDto.Response>>> getAllUsableCommonCodes() {
-        log.info("사용 가능한 모든 공통코드 조회 API 호출");
         
         List<CommonCodeDto.Response> commonCodes = commonCodeService.findAllUsable();
         
-        log.info("사용 가능한 모든 공통코드 조회 완료. 개수: {}", commonCodes.size());
         return ResponseEntity.ok(
             ApiResponse.success("사용 가능한 공통코드 목록 조회 성공", commonCodes)
         );
@@ -75,11 +71,9 @@ public class CommonCodeController {
      */
     @GetMapping("/grouped")
     public ResponseEntity<ApiResponse<List<CommonCodeDto.GroupResponse>>> getAllGroupedCommonCodes() {
-        log.info("그룹별 공통코드 목록 조회 API 호출");
         
         List<CommonCodeDto.GroupResponse> groupedCodes = commonCodeService.findAllGrouped();
         
-        log.info("그룹별 공통코드 목록 조회 완료. 그룹 수: {}", groupedCodes.size());
         return ResponseEntity.ok(
             ApiResponse.success("그룹별 공통코드 목록 조회 성공", groupedCodes)
         );
@@ -92,11 +86,9 @@ public class CommonCodeController {
      */
     @GetMapping("/grouped/usable")
     public ResponseEntity<ApiResponse<List<CommonCodeDto.GroupResponse>>> getAllUsableGroupedCommonCodes() {
-        log.info("사용 가능한 그룹별 공통코드 목록 조회 API 호출");
         
         List<CommonCodeDto.GroupResponse> groupedCodes = commonCodeService.findAllUsableGrouped();
         
-        log.info("사용 가능한 그룹별 공통코드 목록 조회 완료. 그룹 수: {}", groupedCodes.size());
         return ResponseEntity.ok(
             ApiResponse.success("사용 가능한 그룹별 공통코드 목록 조회 성공", groupedCodes)
         );
@@ -111,11 +103,9 @@ public class CommonCodeController {
     @GetMapping("/group/{groupCode}")
     public ResponseEntity<ApiResponse<List<CommonCodeDto.Response>>> getCommonCodesByGroup(
             @PathVariable String groupCode) {
-        log.info("그룹코드별 공통코드 조회 API 호출. groupCode: {}", groupCode);
         
         List<CommonCodeDto.Response> commonCodes = commonCodeService.findByGroupCode(groupCode);
         
-        log.info("그룹코드별 공통코드 조회 완료. groupCode: {}, 개수: {}", groupCode, commonCodes.size());
         return ResponseEntity.ok(
             ApiResponse.success("그룹별 공통코드 조회 성공", commonCodes)
         );
@@ -130,11 +120,9 @@ public class CommonCodeController {
     @GetMapping("/group/{groupCode}/usable")
     public ResponseEntity<ApiResponse<List<CommonCodeDto.Response>>> getUsableCommonCodesByGroup(
             @PathVariable String groupCode) {
-        log.info("그룹코드별 사용 가능한 공통코드 조회 API 호출. groupCode: {}", groupCode);
         
         List<CommonCodeDto.Response> commonCodes = commonCodeService.findUsableByGroupCode(groupCode);
         
-        log.info("그룹코드별 사용 가능한 공통코드 조회 완료. groupCode: {}, 개수: {}", groupCode, commonCodes.size());
         return ResponseEntity.ok(
             ApiResponse.success("그룹별 사용 가능한 공통코드 조회 성공", commonCodes)
         );
@@ -151,7 +139,6 @@ public class CommonCodeController {
     public ResponseEntity<ApiResponse<CommonCodeDto.Response>> getCommonCode(
             @PathVariable String groupCode,
             @PathVariable String code) {
-        log.info("특정 공통코드 조회 API 호출. groupCode: {}, code: {}", groupCode, code);
         
         Optional<CommonCodeDto.Response> commonCode = commonCodeService.findByGroupCodeAndCode(groupCode, code);
         
@@ -162,7 +149,6 @@ public class CommonCodeController {
             );
         }
         
-        log.info("특정 공통코드 조회 완료. groupCode: {}, code: {}", groupCode, code);
         return ResponseEntity.ok(
             ApiResponse.success("공통코드 조회 성공", commonCode.get())
         );
@@ -177,11 +163,9 @@ public class CommonCodeController {
     @PostMapping("/search")
     public ResponseEntity<ApiResponse<List<CommonCodeDto.Response>>> searchCommonCodes(
             @RequestBody CommonCodeDto.SearchRequest searchRequest) {
-        log.info("검색 조건으로 공통코드 조회 API 호출. 조건: {}", searchRequest);
         
         List<CommonCodeDto.Response> commonCodes = commonCodeService.findBySearchConditions(searchRequest);
         
-        log.info("검색 조건으로 공통코드 조회 완료. 개수: {}", commonCodes.size());
         return ResponseEntity.ok(
             ApiResponse.success("공통코드 검색 성공", commonCodes)
         );
@@ -196,12 +180,9 @@ public class CommonCodeController {
     @PostMapping
     public ResponseEntity<ApiResponse<CommonCodeDto.Response>> createCommonCode(
             @Valid @RequestBody CommonCodeDto.CreateRequest createRequest) {
-        log.info("공통코드 생성 API 호출. request: {}", createRequest);
         
         CommonCodeDto.Response createdCode = commonCodeService.create(createRequest);
         
-        log.info("공통코드 생성 완료. groupCode: {}, code: {}", 
-                createdCode.getGroupCode(), createdCode.getCode());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("공통코드 생성 성공", createdCode));
     }
@@ -217,12 +198,9 @@ public class CommonCodeController {
     public ResponseEntity<ApiResponse<Boolean>> checkCommonCodeExists(
             @PathVariable String groupCode,
             @PathVariable String code) {
-        log.info("공통코드 존재 여부 확인 API 호출. groupCode: {}, code: {}", groupCode, code);
         
         boolean exists = commonCodeService.exists(groupCode, code);
         
-        log.info("공통코드 존재 여부 확인 완료. groupCode: {}, code: {}, 존재여부: {}", 
-                groupCode, code, exists);
         return ResponseEntity.ok(
             ApiResponse.success("공통코드 존재 여부 확인 완료", exists)
         );
@@ -239,7 +217,6 @@ public class CommonCodeController {
     public ResponseEntity<ApiResponse<CommonCodeDto.Response>> activateCommonCode(
             @PathVariable String groupCode,
             @PathVariable String code) {
-        log.info("공통코드 활성화 API 호출. groupCode: {}, code: {}", groupCode, code);
         
         Optional<CommonCodeDto.Response> activatedCode = commonCodeService.activate(groupCode, code);
         
@@ -250,7 +227,6 @@ public class CommonCodeController {
             );
         }
         
-        log.info("공통코드 활성화 완료. groupCode: {}, code: {}", groupCode, code);
         return ResponseEntity.ok(
             ApiResponse.success("공통코드 활성화 성공", activatedCode.get())
         );
@@ -267,7 +243,6 @@ public class CommonCodeController {
     public ResponseEntity<ApiResponse<CommonCodeDto.Response>> deactivateCommonCode(
             @PathVariable String groupCode,
             @PathVariable String code) {
-        log.info("공통코드 비활성화 API 호출. groupCode: {}, code: {}", groupCode, code);
         
         Optional<CommonCodeDto.Response> deactivatedCode = commonCodeService.deactivate(groupCode, code);
         
@@ -278,7 +253,6 @@ public class CommonCodeController {
             );
         }
         
-        log.info("공통코드 비활성화 완료. groupCode: {}, code: {}", groupCode, code);
         return ResponseEntity.ok(
             ApiResponse.success("공통코드 비활성화 성공", deactivatedCode.get())
         );

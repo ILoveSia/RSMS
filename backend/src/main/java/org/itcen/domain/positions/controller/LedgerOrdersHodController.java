@@ -40,7 +40,6 @@ public class LedgerOrdersHodController {
      */
     @GetMapping("/select-list")
     public ResponseEntity<ApiResponse<List<LedgerOrdersHodSelectDto>>> getLedgerOrdersHodSelectList() {
-        log.info("부서장 원장차수 SelectBox용 목록 조회 API 호출");
         List<LedgerOrdersHodSelectDto> list = ledgerOrdersHodService.getLedgerOrdersHodSelectList();
         return ResponseEntity.ok(ApiResponse.success(list));
     }
@@ -50,7 +49,6 @@ public class LedgerOrdersHodController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<LedgerOrdersHod>>> getAllLedgerOrdersHod() {
-        log.info("모든 부서장 원장차수 목록 조회 API 호출");
         List<LedgerOrdersHod> list = ledgerOrdersHodService.getAllLedgerOrdersHod();
         return ResponseEntity.ok(ApiResponse.success(list));
     }
@@ -60,7 +58,6 @@ public class LedgerOrdersHodController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<LedgerOrdersHod>> getLedgerOrdersHodById(@PathVariable("id") Long id) {
-        log.info("부서장 원장차수 상세 조회 API 호출: {}", id);
         LedgerOrdersHod ledgerOrdersHod = ledgerOrdersHodService.getLedgerOrdersHodById(id);
         return ResponseEntity.ok(ApiResponse.success(ledgerOrdersHod));
     }
@@ -71,7 +68,6 @@ public class LedgerOrdersHodController {
     @GetMapping("/field-type/{fieldTypeCd}")
     public ResponseEntity<ApiResponse<List<LedgerOrdersHod>>> getLedgerOrdersHodByFieldType(
             @PathVariable("fieldTypeCd") String fieldTypeCd) {
-        log.info("필드타입코드로 부서장 원장차수 목록 조회 API 호출: {}", fieldTypeCd);
         List<LedgerOrdersHod> list = ledgerOrdersHodService.getLedgerOrdersHodByFieldType(fieldTypeCd);
         return ResponseEntity.ok(ApiResponse.success(list));
     }
@@ -82,7 +78,6 @@ public class LedgerOrdersHodController {
     @PostMapping
     public ResponseEntity<ApiResponse<LedgerOrdersHod>> createLedgerOrdersHod(
             @Valid @RequestBody LedgerOrdersHod ledgerOrdersHod) {
-        log.info("부서장 원장차수 생성 API 호출: {}", ledgerOrdersHod.getLedgerOrdersHodTitle());
         LedgerOrdersHod result = ledgerOrdersHodService.createLedgerOrdersHod(ledgerOrdersHod);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("부서장 원장차수가 성공적으로 생성되었습니다.", result));
@@ -95,7 +90,6 @@ public class LedgerOrdersHodController {
     public ResponseEntity<ApiResponse<LedgerOrdersHod>> updateLedgerOrdersHod(
             @PathVariable("id") Long id,
             @Valid @RequestBody LedgerOrdersHod ledgerOrdersHod) {
-        log.info("부서장 원장차수 수정 API 호출: {}", id);
         LedgerOrdersHod result = ledgerOrdersHodService.updateLedgerOrdersHod(id, ledgerOrdersHod);
         return ResponseEntity.ok(ApiResponse.success("부서장 원장차수가 성공적으로 수정되었습니다.", result));
     }
@@ -105,7 +99,6 @@ public class LedgerOrdersHodController {
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteLedgerOrdersHod(@PathVariable("id") Long id) {
-        log.info("부서장 원장차수 삭제 API 호출: {}", id);
         ledgerOrdersHodService.deleteLedgerOrdersHod(id);
         return ResponseEntity.ok(ApiResponse.success("부서장 원장차수가 성공적으로 삭제되었습니다."));
     }
@@ -115,7 +108,6 @@ public class LedgerOrdersHodController {
      */
     @DeleteMapping("/bulk")
     public ResponseEntity<ApiResponse<Void>> deleteBulkLedgerOrdersHod(@RequestBody List<Long> ids) {
-        log.info("부서장 원장차수 일괄 삭제 API 호출, 건수: {}", ids.size());
         ledgerOrdersHodService.deleteBulkLedgerOrdersHod(ids);
         return ResponseEntity.ok(ApiResponse.success("부서장 원장차수가 성공적으로 일괄 삭제되었습니다."));
     }

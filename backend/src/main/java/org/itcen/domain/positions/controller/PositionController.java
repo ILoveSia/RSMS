@@ -60,7 +60,6 @@ public class PositionController {
     @DeleteMapping("/bulk-delete")
     public ResponseEntity<ApiResponse<Void>> deleteBulk(
             @RequestBody PositionBulkDeleteRequestDto requestDto) {
-        log.info("직책 일괄 삭제 API 호출: {}", requestDto);
         positionService.deleteBulk(requestDto.getPositionsIds());
         return ResponseEntity.ok(ApiResponse.success("직책이 성공적으로 삭제되었습니다."));
     }
@@ -106,10 +105,7 @@ public class PositionController {
             @RequestParam(required = false) String ledgerOrder,
             @RequestParam(required = false) String positionsNm,
             @RequestParam(required = false) String writeDeptCd,
-            @RequestParam(required = false) String confirmGubunCd) {
-        log.info("직책 검색 API 호출: ledgerOrder={}, positionsNm={}, writeDeptCd={}, confirmGubunCd={}", 
-                ledgerOrder, positionsNm, writeDeptCd, confirmGubunCd);
-        
+            @RequestParam(required = false) String confirmGubunCd) {        
         PositionSearchRequestDto searchRequest = PositionSearchRequestDto.builder()
                 .ledgerOrder(ledgerOrder)
                 .positionsNm(positionsNm)
@@ -128,7 +124,6 @@ public class PositionController {
     public ResponseEntity<ApiResponse<PositionDetailDto>> getPositionDetail(
             @PathVariable("id") Long id) {
         PositionDetailDto positionDetail = positionService.getPositionDetail(id);
-        System.out.println("78097890"+positionDetail);
         return ResponseEntity.ok(ApiResponse.success(positionDetail));
     }
 
@@ -145,7 +140,6 @@ public class PositionController {
     @GetMapping("/employee/{employeeId}/meetings")
     public ResponseEntity<ApiResponse<List<PositionMeetingDto>>> getEmployeeMeetings(
             @PathVariable("employeeId") String employeeId) {
-        log.info("사용자별 회의체 목록 조회 API 호출: employeeId={}23452345", employeeId);
         List<PositionMeetingDto> positionMeetings = new ArrayList<>();
         // 현재는 임시로 빈 목록 반환
         return ResponseEntity.ok(ApiResponse.success(positionMeetings));
@@ -157,7 +151,6 @@ public class PositionController {
     @GetMapping("/employee/{employeeId}/owner-departments")
     public ResponseEntity<ApiResponse<List<PositionDetailDto.OwnerDeptInfo>>> getEmployeeOwnerDepartments(
             @PathVariable("employeeId") String employeeId) {
-        log.info("사용자별 소관부서 목록 조회 API 호출: employeeId={}", employeeId);
         // 현재는 임시로 빈 목록 반환
         return ResponseEntity.ok(ApiResponse.success(new ArrayList<>()));
     }
@@ -168,7 +161,6 @@ public class PositionController {
     @PostMapping("/search")
     public ResponseEntity<ApiResponse<List<PositionDto>>> searchPositionsPost(
             @Valid @RequestBody PositionSearchRequestDto searchRequest) {
-        log.info("직책 검색 API 호출 (POST): {}", searchRequest);
         List<PositionDto> positions = positionService.searchPositions(searchRequest);
         return ResponseEntity.ok(ApiResponse.success(positions));
     }

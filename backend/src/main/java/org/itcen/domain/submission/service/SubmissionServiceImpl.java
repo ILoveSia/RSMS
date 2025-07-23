@@ -86,7 +86,6 @@ public class SubmissionServiceImpl implements SubmissionService {
             }
         }
         
-        log.info("생성된 submit_hist_cd: {}", submitHistCd);
         return submitHistCd;
     }
 
@@ -131,7 +130,6 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     @Transactional(readOnly = true)
     public List<SubmissionDto> getSubmissionHistoryWithPositions(LocalDate startDate, LocalDate endDate, String ledgerOrder) {
-        log.info("제출 이력 조회 서비스 호출: startDate={}, endDate={}, ledgerOrder={}", startDate, endDate, ledgerOrder);
         
         // 모든 데이터를 가져온 후 서비스 레이어에서 필터링
         List<Object[]> results = repository.findAllSubmissionHistoryWithPositions();
@@ -158,7 +156,6 @@ public class SubmissionServiceImpl implements SubmissionService {
     @Override
     @Transactional
     public void deleteSubmissions(List<Long> ids) {
-        log.info("제출 이력 일괄 삭제 서비스 호출: ids={}", ids);
         repository.deleteAllById(ids);
     }
     

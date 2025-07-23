@@ -32,16 +32,6 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
     @Override
     @Transactional
     public void deleteResponsibility(Long id) {
-        log.info("책무 삭제 API 호출: {}", id);
-
-        // Responsibility responsibility = responsibilityRepository.findById(id)
-        //         .orElseThrow(() -> new RuntimeException("책무를 찾을 수 없습니다: " + id));
-
-        // 논리적 삭제 (soft delete)
-        // responsibility.softDelete();
-        // responsibilityRepository.save(responsibility);
-
-        // 물리적 삭제를 원한다면 아래 주석 해제
         responsibilityRepository.deleteById(id);
     }
 

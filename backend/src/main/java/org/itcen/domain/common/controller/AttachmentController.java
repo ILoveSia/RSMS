@@ -49,9 +49,6 @@ public class AttachmentController {
             @RequestParam("entityId") Long entityId,
             @RequestParam("uploadedBy") String uploadedBy) {
         
-        log.info("파일 업로드 API 호출, 파일 개수: {}, 엔티티: {}-{}", 
-                files.length, entityType, entityId);
-
         try {
             AttachmentDto.UploadRequest uploadRequest = AttachmentDto.UploadRequest.builder()
                     .entityType(entityType)
@@ -61,9 +58,6 @@ public class AttachmentController {
 
             List<AttachmentDto.UploadResult> results = attachmentService
                     .uploadFiles(Arrays.asList(files), uploadRequest);
-
-            log.info("파일 업로드 완료, 성공: {}, 전체: {}", 
-                    results.stream().filter(r -> r.getAttachId() != null).count(), results.size());
 
             return ResponseEntity.ok(
                 ApiResponse.success("파일 업로드가 완료되었습니다.", results)
@@ -86,9 +80,6 @@ public class AttachmentController {
             @RequestParam("entityId") Long entityId,
             @RequestParam("uploadedBy") String uploadedBy) {
         
-        log.info("단일 파일 업로드 API 호출: {}, 엔티티: {}-{}", 
-                file.getOriginalFilename(), entityType, entityId);
-
         try {
             AttachmentDto.UploadRequest uploadRequest = AttachmentDto.UploadRequest.builder()
                     .entityType(entityType)
@@ -97,8 +88,6 @@ public class AttachmentController {
                     .build();
 
             AttachmentDto.UploadResult result = attachmentService.uploadFile(file, uploadRequest);
-
-            log.info("단일 파일 업로드 완료: {}", file.getOriginalFilename());
 
             return ResponseEntity.ok(
                 ApiResponse.success("파일 업로드가 완료되었습니다.", result)
@@ -119,13 +108,8 @@ public class AttachmentController {
             @PathVariable String entityType,
             @PathVariable Long entityId) {
         
-        log.info("엔티티 첨부파일 목록 조회 API 호출: {}-{}", entityType, entityId);
-
         List<AttachmentDto.Response> attachments = attachmentService
                 .getAttachmentsByEntity(entityType, entityId);
-
-        log.info("엔티티 첨부파일 목록 조회 완료: {}-{}, 파일 수: {}", 
-                entityType, entityId, attachments.size());
 
         return ResponseEntity.ok(
             ApiResponse.success("첨부파일 목록 조회가 완료되었습니다.", attachments)
@@ -139,11 +123,7 @@ public class AttachmentController {
     public ResponseEntity<ApiResponse<AttachmentDto.Response>> getAttachmentById(
             @PathVariable Long attachId) {
         
-        log.info("첨부파일 상세 조회 API 호출: {}", attachId);
-
         AttachmentDto.Response attachment = attachmentService.getAttachmentById(attachId);
-
-        log.info("첨부파일 상세 조회 완료: {}", attachId);
 
         return ResponseEntity.ok(
             ApiResponse.success("첨부파일 조회가 완료되었습니다.", attachment)
@@ -156,15 +136,11 @@ public class AttachmentController {
     @GetMapping("/download/{attachId}")
     public ResponseEntity<InputStreamResource> downloadFile(@PathVariable Long attachId) {
         
-        log.info("첨부파일 다운로드 API 호출: {}", attachId);
-
         try {
             AttachmentDto.DownloadInfo downloadInfo = attachmentService.getDownloadInfo(attachId);
 
             FileInputStream fileInputStream = new FileInputStream(downloadInfo.getFilePath());
             InputStreamResource resource = new InputStreamResource(fileInputStream);
-
-            log.info("첨부파일 다운로드 완료: {}", downloadInfo.getOriginalFilename());
 
             // 한글 파일명 인코딩 처리
             String encodedFilename = java.net.URLEncoder.encode(downloadInfo.getOriginalFilename(), "UTF-8")
@@ -192,11 +168,7 @@ public class AttachmentController {
             @PathVariable Long attachId,
             @RequestParam("deletedBy") String deletedBy) {
         
-        log.info("첨부파일 삭제 API 호출: {}", attachId);
-
         attachmentService.deleteAttachment(attachId, deletedBy);
-
-        log.info("첨부파일 삭제 완료: {}", attachId);
 
         return ResponseEntity.ok(
             ApiResponse.success("첨부파일이 삭제되었습니다.")
@@ -210,11 +182,7 @@ public class AttachmentController {
     public ResponseEntity<ApiResponse<Void>> deleteAttachments(
             @Valid @RequestBody AttachmentDto.BulkDeleteRequest deleteRequest) {
         
-        log.info("첨부파일 일괄 삭제 API 호출, 삭제 대상: {}", deleteRequest.getAttachIds().size());
-
         attachmentService.deleteAttachments(deleteRequest.getAttachIds(), deleteRequest.getDeletedBy());
-
-        log.info("첨부파일 일괄 삭제 완료: {}", deleteRequest.getAttachIds().size());
 
         return ResponseEntity.ok(
             ApiResponse.success("첨부파일들이 삭제되었습니다.")
@@ -230,11 +198,7 @@ public class AttachmentController {
             @PathVariable Long entityId,
             @RequestParam("deletedBy") String deletedBy) {
         
-        log.info("엔티티 첨부파일 전체 삭제 API 호출: {}-{}", entityType, entityId);
-
         attachmentService.deleteAllAttachmentsByEntity(entityType, entityId, deletedBy);
-
-        log.info("엔티티 첨부파일 전체 삭제 완료: {}-{}", entityType, entityId);
 
         return ResponseEntity.ok(
             ApiResponse.success("엔티티의 모든 첨부파일이 삭제되었습니다.")
@@ -249,11 +213,7 @@ public class AttachmentController {
             @PathVariable String entityType,
             @PathVariable Long entityId) {
         
-        log.info("엔티티 첨부파일 개수 조회 API 호출: {}-{}", entityType, entityId);
-
         long count = attachmentService.getAttachmentCount(entityType, entityId);
-
-        log.info("엔티티 첨부파일 개수 조회 완료: {}-{}, 개수: {}", entityType, entityId, count);
 
         return ResponseEntity.ok(
             ApiResponse.success("첨부파일 개수 조회가 완료되었습니다.", count)
@@ -267,11 +227,7 @@ public class AttachmentController {
     public ResponseEntity<ApiResponse<List<AttachmentDto.Response>>> getAttachmentsByUploader(
             @PathVariable String uploadedBy) {
         
-        log.info("업로드자 첨부파일 목록 조회 API 호출: {}", uploadedBy);
-
         List<AttachmentDto.Response> attachments = attachmentService.getAttachmentsByUploader(uploadedBy);
-
-        log.info("업로드자 첨부파일 목록 조회 완료: {}, 파일 수: {}", uploadedBy, attachments.size());
 
         return ResponseEntity.ok(
             ApiResponse.success("업로드자의 첨부파일 목록 조회가 완료되었습니다.", attachments)

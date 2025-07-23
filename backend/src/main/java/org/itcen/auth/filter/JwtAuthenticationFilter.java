@@ -45,9 +45,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
                                   FilterChain filterChain) throws ServletException, IOException {
         
-        // 현재는 세션 기반 인증을 사용하므로 JWT 검증을 수행하지 않음
-        log.debug("JWT 필터 통과 - 현재는 세션 기반 인증 사용 중");
-        
         // TODO: JWT 인증 구현 시 아래 로직 활성화
         /*
         try {

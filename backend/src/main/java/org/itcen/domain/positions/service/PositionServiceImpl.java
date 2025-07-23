@@ -74,7 +74,6 @@ public class PositionServiceImpl implements PositionService {
 
         List<LedgerOrderSelectDto> result = new ArrayList<>();
         for (Object[] row : rows) {
-            log.info("Query Result Row: {}", (Object) row);
             String title = (String) row[0];
             String statusName = (String) row[1];
             String label = title + (statusName != null ? " (" + statusName + ")" : "");
@@ -128,7 +127,6 @@ public class PositionServiceImpl implements PositionService {
     @Transactional
     public Long updatePosition(Long positionId, PositionUpdateRequestDto updateRequestDto) {
         // 1. 기존 직책 정보 조회
-        System.out.println(updateRequestDto.getPositionName());
         Position position = positionRepository.findById(positionId).orElseThrow(
                 () -> new BusinessException("해당 직책을 찾을 수 없습니다.", "POSITION_NOT_FOUND"));
 
@@ -259,8 +257,7 @@ public class PositionServiceImpl implements PositionService {
 
     @Override
     @Transactional(readOnly = true)
-    public PositionDetailDto getPositionDetail(Long id) {
-        log.info("직책 상세 조회 서비스 호출: id={}", id);
+    public PositionDetailDto getPositionDetail(Long id) 
         Position position = positionRepository.findById(id).orElseThrow(
                 () -> new BusinessException("해당 직책을 찾을 수 없습니다.", "POSITION_NOT_FOUND"));
 
@@ -285,7 +282,6 @@ public class PositionServiceImpl implements PositionService {
         // 관리자 정보 조회 및 변환
         List<PositionDetailDto.ManagerInfo> managers =
                 positionAdminRepository.findByPosition_PositionsId(id).stream().map(pa -> {
-                    log.debug("관리자 조회 시작: adminId={}", pa.getPositionsAdminId());
                     Optional<User> userOpt = userRepository.findByNum(pa.getPositionsAdminId());
 
                     if (userOpt.isEmpty()) {
@@ -296,8 +292,6 @@ public class PositionServiceImpl implements PositionService {
                     }
 
                     User user = userOpt.get();
-                    log.debug("사용자 정보: {}, 직급코드: {}", user.getUsername(), user.getJobRankCd());
-
                     String positionName = "직급정보 없음";
                     if (user.getJobRankCd() != null && !user.getJobRankCd().isBlank()) {
                         positionName = commonCodeRepository
@@ -367,7 +361,6 @@ public class PositionServiceImpl implements PositionService {
     @Override
     @Transactional(readOnly = true)
     public List<PositionDto> searchPositions(PositionSearchRequestDto searchRequest) {
-        log.info("직책 검색 서비스 호출: {}", searchRequest);
         
         List<Position> positions = positionRepository.searchPositions(
             searchRequest.getLedgerOrder(),

@@ -44,11 +44,7 @@ public class HodICItemController {
             @RequestParam(value = "ledgerOrder", required = false) String ledgerOrder,
             @RequestParam(value = "fieldType", required = false) String fieldType) {
 
-        log.info("부서장 내부통제 항목 현황 조회 API 호출: ledgerOrder={}, fieldType={}", ledgerOrder, fieldType);
-
         List<HodICItemStatusProjection> statusList = hodICItemService.getHodICItemStatusList(ledgerOrder, fieldType);
-
-        log.info("부서장 내부통제 항목 현황 조회 완료: 총 {}건", statusList.size());
         return ResponseEntity.ok(
             ApiResponse.success("부서장 내부통제 항목 현황 조회 성공", statusList)
         );
@@ -64,11 +60,7 @@ public class HodICItemController {
     public ResponseEntity<ApiResponse<HodICItemResponseDto>> getHodICItemById(
             @PathVariable Long hodIcItemId) {
 
-        log.info("부서장 내부통제 항목 상세 조회 API 호출: hodIcItemId={}", hodIcItemId);
-
         HodICItemResponseDto responseDto = hodICItemService.getHodICItemById(hodIcItemId);
-
-        log.info("부서장 내부통제 항목 상세 조회 완료: {}", responseDto.getHodIcItemId());
         return ResponseEntity.ok(
             ApiResponse.success("부서장 내부통제 항목 상세 조회 성공", responseDto)
         );
@@ -86,11 +78,7 @@ public class HodICItemController {
             @Valid @RequestBody HodICItemCreateRequestDto createRequest,
             @RequestHeader(value = "X-User-Id", defaultValue = "system") String currentUserId) {
 
-        log.info("부서장 내부통제 항목 등록 API 호출: 사용자={}", currentUserId);
-
         Long hodIcItemId = hodICItemService.createHodICItem(createRequest, currentUserId);
-
-        log.info("부서장 내부통제 항목 등록 완료: ID={}", hodIcItemId);
         return ResponseEntity.ok(
             ApiResponse.success("부서장 내부통제 항목이 성공적으로 등록되었습니다.", hodIcItemId)
         );
@@ -110,11 +98,7 @@ public class HodICItemController {
             @Valid @RequestBody HodICItemCreateRequestDto updateRequest,
             @RequestHeader(value = "X-User-Id", defaultValue = "system") String currentUserId) {
 
-        log.info("부서장 내부통제 항목 수정 API 호출: hodIcItemId={}, 사용자={}", hodIcItemId, currentUserId);
-
         HodICItemResponseDto responseDto = hodICItemService.updateHodICItem(hodIcItemId, updateRequest, currentUserId);
-
-        log.info("부서장 내부통제 항목 수정 완료: {}", responseDto.getHodIcItemId());
         return ResponseEntity.ok(
             ApiResponse.success("부서장 내부통제 항목이 성공적으로 수정되었습니다.", responseDto)
         );
@@ -132,11 +116,7 @@ public class HodICItemController {
             @PathVariable Long hodIcItemId,
             @RequestHeader(value = "X-User-Id", defaultValue = "system") String currentUserId) {
 
-        log.info("부서장 내부통제 항목 삭제 API 호출: hodIcItemId={}, 사용자={}", hodIcItemId, currentUserId);
-
         hodICItemService.deleteHodICItem(hodIcItemId, currentUserId);
-
-        log.info("부서장 내부통제 항목 삭제 완료: ID={}", hodIcItemId);
         return ResponseEntity.ok(
             ApiResponse.success("부서장 내부통제 항목이 성공적으로 삭제되었습니다.", null)
         );
@@ -154,11 +134,7 @@ public class HodICItemController {
             @RequestBody List<Long> hodIcItemIds,
             @RequestHeader(value = "X-User-Id", defaultValue = "system") String currentUserId) {
 
-        log.info("부서장 내부통제 항목 다중 삭제 API 호출: 개수={}, 사용자={}", hodIcItemIds.size(), currentUserId);
-
         hodICItemService.deleteMultipleHodICItems(hodIcItemIds, currentUserId);
-
-        log.info("부서장 내부통제 항목 다중 삭제 완료: 총 {}개", hodIcItemIds.size());
         return ResponseEntity.ok(
             ApiResponse.success("선택한 부서장 내부통제 항목들이 성공적으로 삭제되었습니다.", null)
         );
@@ -176,11 +152,7 @@ public class HodICItemController {
             @PathVariable Long hodIcItemId,
             @RequestHeader(value = "X-User-Id", defaultValue = "system") String currentUserId) {
 
-        log.info("결재 승인 요청 API 호출: hodIcItemId={}, 사용자={}", hodIcItemId, currentUserId);
-
         Long approvalId = hodICItemService.requestApproval(hodIcItemId, currentUserId);
-
-        log.info("결재 승인 요청 완료: hodIcItemId={}, approvalId={}", hodIcItemId, approvalId);
         return ResponseEntity.ok(
             ApiResponse.success("결재 승인 요청이 성공적으로 처리되었습니다.", approvalId)
         );
@@ -198,11 +170,7 @@ public class HodICItemController {
             @PathVariable Long hodIcItemId,
             @RequestHeader(value = "X-User-Id", defaultValue = "system") String currentUserId) {
 
-        log.info("작성자 권한 확인 API 호출: hodIcItemId={}, 사용자={}", hodIcItemId, currentUserId);
-
         boolean isCreatedBy = hodICItemService.isCreatedBy(hodIcItemId, currentUserId);
-
-        log.info("작성자 권한 확인 완료: hodIcItemId={}, isCreatedBy={}", hodIcItemId, isCreatedBy);
         return ResponseEntity.ok(
             ApiResponse.success("작성자 권한 확인 완료", isCreatedBy)
         );

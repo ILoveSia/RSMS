@@ -26,13 +26,6 @@ public class SubmissionController {
             HttpServletRequest request,
             @RequestBody SubmissionCreateRequest createRequest) {
         
-        // 모든 파라미터 로그 출력
-        log.info("=== 제출 이력 등록 API 호출 ===");
-        log.info("Request Content-Type: {}", request.getContentType());
-        log.info("Request Body: {}", createRequest);
-        
-        log.info("제출 이력 등록 API 호출: submitHistCd={}, execofficerId={}, rmSubmitDt={}, positionsId={}", 
-                createRequest.getSubmitHistCd(), createRequest.getExecofficerId(), createRequest.getRmSubmitDt(), createRequest.getPositionsId());
         
         SubmissionDto dto = SubmissionDto.builder()
                 .submitHistCd(createRequest.getSubmitHistCd())
@@ -75,7 +68,6 @@ public class SubmissionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String ledgerOrder) {
-        log.info("제출 이력 조회 API 호출: startDate={}, endDate={}, ledgerOrder={}", startDate, endDate, ledgerOrder);
         
         List<SubmissionDto> submissions = submissionService.getSubmissionHistoryWithPositions(startDate, endDate, ledgerOrder);
         return ApiResponse.success(submissions);
@@ -86,7 +78,6 @@ public class SubmissionController {
      */
     @DeleteMapping("/history")
     public ApiResponse<Void> deleteSubmissionHistory(@RequestBody List<Long> ids) {
-        log.info("제출 이력 일괄 삭제 API 호출: ids={}", ids);
         submissionService.deleteSubmissions(ids);
         return ApiResponse.success("제출 이력이 성공적으로 삭제되었습니다.");
     }

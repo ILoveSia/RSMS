@@ -39,7 +39,6 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
      */
     @Override
     public List<LedgerOrdersHodSelectDto> getLedgerOrdersHodSelectList() {
-        log.debug("부서장 원장차수 SelectBox용 목록 조회 시작");
         
         try {
             List<LedgerOrdersHod> ledgerOrdersHodList = ledgerOrdersHodRepository.findAllOrderByIdDesc();
@@ -47,8 +46,6 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
             List<LedgerOrdersHodSelectDto> result = ledgerOrdersHodList.stream()
                 .map(this::convertToSelectDto)
                 .collect(Collectors.toList());
-            
-            log.debug("부서장 원장차수 SelectBox용 목록 조회 완료, 건수: {}", result.size());
             return result;
             
         } catch (Exception e) {
@@ -62,11 +59,9 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
      */
     @Override
     public List<LedgerOrdersHod> getAllLedgerOrdersHod() {
-        log.debug("모든 부서장 원장차수 목록 조회 시작");
         
         try {
             List<LedgerOrdersHod> result = ledgerOrdersHodRepository.findAllOrderByIdDesc();
-            log.debug("모든 부서장 원장차수 목록 조회 완료, 건수: {}", result.size());
             return result;
             
         } catch (Exception e) {
@@ -80,7 +75,6 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
      */
     @Override
     public LedgerOrdersHod getLedgerOrdersHodById(Long id) {
-        log.debug("부서장 원장차수 상세 조회 시작, ID: {}", id);
         
         return ledgerOrdersHodRepository.findById(id)
             .orElseThrow(() -> {
@@ -94,11 +88,9 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
      */
     @Override
     public List<LedgerOrdersHod> getLedgerOrdersHodByFieldType(String fieldTypeCd) {
-        log.debug("필드타입코드로 부서장 원장차수 목록 조회 시작, fieldTypeCd: {}", fieldTypeCd);
         
         try {
             List<LedgerOrdersHod> result = ledgerOrdersHodRepository.findByLedgerOrdersHodFieldTypeCd(fieldTypeCd);
-            log.debug("필드타입코드로 부서장 원장차수 목록 조회 완료, 건수: {}", result.size());
             return result;
             
         } catch (Exception e) {
@@ -113,7 +105,6 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
     @Override
     @Transactional
     public LedgerOrdersHod createLedgerOrdersHod(LedgerOrdersHod ledgerOrdersHod) {
-        log.debug("부서장 원장차수 생성 시작");
         
         try {
             // 제목 중복 체크
@@ -123,7 +114,6 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
             }
             
             LedgerOrdersHod result = ledgerOrdersHodRepository.save(ledgerOrdersHod);
-            log.debug("부서장 원장차수 생성 완료, ID: {}", result.getLedgerOrdersHodId());
             return result;
             
         } catch (BusinessException e) {
@@ -139,9 +129,7 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
      */
     @Override
     @Transactional
-    public LedgerOrdersHod updateLedgerOrdersHod(Long id, LedgerOrdersHod ledgerOrdersHod) {
-        log.debug("부서장 원장차수 수정 시작, ID: {}", id);
-        
+    public LedgerOrdersHod updateLedgerOrdersHod(Long id, LedgerOrdersHod ledgerOrdersHod) {        
         try {
             LedgerOrdersHod existingLedgerOrdersHod = getLedgerOrdersHodById(id);
             
@@ -167,7 +155,6 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
             }
             
             LedgerOrdersHod result = ledgerOrdersHodRepository.save(existingLedgerOrdersHod);
-            log.debug("부서장 원장차수 수정 완료, ID: {}", result.getLedgerOrdersHodId());
             return result;
             
         } catch (BusinessException e) {
@@ -184,12 +171,10 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
     @Override
     @Transactional
     public void deleteLedgerOrdersHod(Long id) {
-        log.debug("부서장 원장차수 삭제 시작, ID: {}", id);
         
         try {
             LedgerOrdersHod ledgerOrdersHod = getLedgerOrdersHodById(id);
             ledgerOrdersHodRepository.delete(ledgerOrdersHod);
-            log.debug("부서장 원장차수 삭제 완료, ID: {}", id);
             
         } catch (BusinessException e) {
             throw e;
@@ -205,14 +190,11 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
     @Override
     @Transactional
     public void deleteBulkLedgerOrdersHod(List<Long> ids) {
-        log.debug("부서장 원장차수 일괄 삭제 시작, 건수: {}", ids.size());
         
         try {
             for (Long id : ids) {
                 deleteLedgerOrdersHod(id);
-            }
-            log.debug("부서장 원장차수 일괄 삭제 완료, 건수: {}", ids.size());
-            
+            }            
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {

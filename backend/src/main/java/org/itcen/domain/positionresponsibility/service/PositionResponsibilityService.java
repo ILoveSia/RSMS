@@ -32,7 +32,6 @@ public class PositionResponsibilityService {
                         + "WHERE p.positions_id = " + positionId
                         + " ORDER BY p.positions_id";
 
-        log.info("[PositionResponsibilityService] 실행할 SQL: {}", sql);
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
         List<PositionResponsibilityDto> finalResult = results.stream().map(row -> {
             try {
@@ -63,9 +62,7 @@ public class PositionResponsibilityService {
                         + "LEFT JOIN responsibility_detail r3 ON r.responsibility_id = r3.responsibility_id "
                         + "ORDER BY p.positions_id";
 
-        log.info("[PositionResponsibilityService] 실행할 SQL: {}", sql);
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
-        log.info("[PositionResponsibilityService] 쿼리 결과 개수: {}", results.size());
 
         List<PositionResponsibilityDto> finalResult = results.stream().map(row -> {
             try {

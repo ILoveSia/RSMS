@@ -26,25 +26,19 @@ public class PositionResponsibilityController {
 
     @GetMapping
     public List<PositionResponsibilityDto> getAll() {
-        log.info("getAll() method called");
         List<PositionResponsibilityDto> result = positionResponsibilityService.getAll();
-        log.info("Returning {} items", result.size());
         return result;
     }
 
     @GetMapping("/{positionId}")
     public List<PositionResponsibilityDto> getByPositionId( @PathVariable Long positionId) {
-        log.info("getByPositionId() method called");
         List<PositionResponsibilityDto> result = positionResponsibilityService.getByPositionId(positionId);
-        log.info("Returning {} items", result.size());
         return result;
     }
 
     @PutMapping
-    public boolean updateResponsibility(@RequestBody ResponsibilityCreateRequestDto requestDto) {
-        log.info("updateResponsibility() method called 12341234");
+        public boolean updateResponsibility(@RequestBody ResponsibilityCreateRequestDto requestDto) {
         boolean result = positionResponsibilityService.updateResponsibility(requestDto);
-        log.info("updateResponsibility() method called" + result);
         return result;
     }
 

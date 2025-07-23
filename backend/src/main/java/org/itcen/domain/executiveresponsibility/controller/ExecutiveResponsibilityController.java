@@ -22,17 +22,12 @@ public class ExecutiveResponsibilityController {
 
     @GetMapping
     public List<ExecutiveResponsibilityDto> getAll() {
-        log.info("getAll() method called");
         List<ExecutiveResponsibilityDto> result = executiveResponsibilityService.getAll();
-        log.info("Returning {} items", result.size());
         return result;
     }
     @GetMapping("/{positionId}")
-    public List<ExecutiveResponsibilityDto> getByPositionId(@PathVariable Long positionId) {
-        log.info("getByPositionId() method called");
+        public List<ExecutiveResponsibilityDto> getByPositionId(@PathVariable Long positionId) {
         List<ExecutiveResponsibilityDto> result = executiveResponsibilityService.getByPositionId(positionId);
-        log.info("Returning {} items", result.size());
-        log.info("result", result);
         return result;
     }
 }

@@ -38,34 +38,24 @@ public class HodICItemServiceImpl implements HodICItemService {
 
     @Override
     public List<HodICItemStatusProjection> getHodICItemStatusList(String ledgerOrder, String fieldType) {
-        log.debug("부서장 내부통제 항목 현황 조회 시작: ledgerOrder={}, fieldType={}", ledgerOrder, fieldType);
-
         List<HodICItemStatusProjection> resultList = hodICItemRepository.findHodICItemStatusList(ledgerOrder, fieldType);
-
-        log.debug("부서장 내부통제 항목 현황 조회 완료: 총 {}건", resultList.size());
         return resultList;
     }
 
     @Override
     public HodICItemResponseDto getHodICItemById(Long hodIcItemId) {
-        log.debug("부서장 내부통제 항목 상세 조회 시작: hodIcItemId={}", hodIcItemId);
-
         HodICItem hodICItem = hodICItemRepository.findById(hodIcItemId)
                 .orElseThrow(() -> new BusinessException("존재하지 않는 부서장 내부통제 항목입니다. ID: " + hodIcItemId));
 
         HodICItemResponseDto responseDto = HodICItemResponseDto.from(hodICItem);
-
-        log.debug("부서장 내부통제 항목 상세 조회 완료: {}", responseDto.getHodIcItemId());
         return responseDto;
     }
 
     @Override
     @Transactional
     public Long createHodICItem(HodICItemCreateRequestDto createRequest, String currentUserId) {
-        log.debug("부서장 내부통제 항목 등록 시작: 사용자={}", currentUserId);
-
         // 책무 존재 여부 확인
-        Responsibility responsibility = responsibilityRepository.findById(createRequest.getResponsibilityId())
+        responsibilityRepository.findById(createRequest.getResponsibilityId())
                 .orElseThrow(() -> new BusinessException("존재하지 않는 책무입니다. ID: " + createRequest.getResponsibilityId()));
 
         // 엔티티 생성
@@ -88,16 +78,12 @@ public class HodICItemServiceImpl implements HodICItemService {
                 .build();
 
         HodICItem savedHodICItem = hodICItemRepository.save(hodICItem);
-
-        log.info("부서장 내부통제 항목 등록 완료: ID={}", savedHodICItem.getHodIcItemId());
         return savedHodICItem.getHodIcItemId();
     }
 
     @Override
     @Transactional
     public HodICItemResponseDto updateHodICItem(Long hodIcItemId, HodICItemCreateRequestDto updateRequest, String currentUserId) {
-        log.debug("부서장 내부통제 항목 수정 시작: hodIcItemId={}, 사용자={}", hodIcItemId, currentUserId);
-
         HodICItem hodICItem = hodICItemRepository.findById(hodIcItemId)
                 .orElseThrow(() -> new BusinessException("존재하지 않는 부서장 내부통제 항목입니다. ID: " + hodIcItemId));
 
@@ -123,16 +109,12 @@ public class HodICItemServiceImpl implements HodICItemService {
         hodICItem.setProofDoc(updateRequest.getProofDoc());
 
         HodICItem updatedHodICItem = hodICItemRepository.save(hodICItem);
-
-        log.info("부서장 내부통제 항목 수정 완료: ID={}", updatedHodICItem.getHodIcItemId());
         return HodICItemResponseDto.from(updatedHodICItem);
     }
 
     @Override
     @Transactional
     public void deleteHodICItem(Long hodIcItemId, String currentUserId) {
-        log.debug("부서장 내부통제 항목 삭제 시작: hodIcItemId={}, 사용자={}", hodIcItemId, currentUserId);
-
         HodICItem hodICItem = hodICItemRepository.findById(hodIcItemId)
                 .orElseThrow(() -> new BusinessException("존재하지 않는 부서장 내부통제 항목입니다. ID: " + hodIcItemId));
 
@@ -142,15 +124,11 @@ public class HodICItemServiceImpl implements HodICItemService {
         }
 
         hodICItemRepository.delete(hodICItem);
-
-        log.info("부서장 내부통제 항목 삭제 완료: ID={}", hodIcItemId);
     }
 
     @Override
     @Transactional
     public Long requestApproval(Long hodIcItemId, String currentUserId) {
-        log.debug("결재 승인 요청 시작: hodIcItemId={}, 사용자={}", hodIcItemId, currentUserId);
-
         HodICItem hodICItem = hodICItemRepository.findById(hodIcItemId)
                 .orElseThrow(() -> new BusinessException("존재하지 않는 부서장 내부통제 항목입니다. ID: " + hodIcItemId));
 
@@ -169,16 +147,12 @@ public class HodICItemServiceImpl implements HodICItemService {
         Long approvalId = 1L;
         hodICItem.setApprovalId(approvalId);
         hodICItemRepository.save(hodICItem);
-
-        log.info("결재 승인 요청 완료: hodIcItemId={}, approvalId={}", hodIcItemId, approvalId);
         return approvalId;
     }
 
     @Override
     @Transactional
     public void deleteMultipleHodICItems(List<Long> hodIcItemIds, String currentUserId) {
-        log.debug("다중 삭제 시작: 개수={}, 사용자={}", hodIcItemIds.size(), currentUserId);
-
         for (Long hodIcItemId : hodIcItemIds) {
             try {
                 deleteHodICItem(hodIcItemId, currentUserId);
@@ -187,8 +161,6 @@ public class HodICItemServiceImpl implements HodICItemService {
                 // 개별 삭제 실패는 로그만 남기고 계속 진행
             }
         }
-
-        log.info("다중 삭제 완료: 총 {}개 항목 처리", hodIcItemIds.size());
     }
 
     @Override

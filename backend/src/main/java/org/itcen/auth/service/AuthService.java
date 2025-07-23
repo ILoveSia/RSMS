@@ -63,9 +63,6 @@ public class AuthService {
      * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우
      */
     private UserDetails loadUserByUsernameInternal(String usernameOrEmail) throws UsernameNotFoundException {
-        log.debug("내부 사용자 인증 정보 조회: usernameOrEmail '{}'", usernameOrEmail);
-        log.debug("usernameOrEmail 길이: {}", usernameOrEmail != null ? usernameOrEmail.length() : "null");
-        
         if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
             log.error("usernameOrEmail이 비어있습니다!");
             throw new UsernameNotFoundException("사용자명 또는 이메일이 비어있습니다.");
@@ -74,7 +71,6 @@ public class AuthService {
         User user = authUserRepository.findByUsernameOrEmail(usernameOrEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + usernameOrEmail));
         
-        log.debug("사용자 조회 성공: {}", user.getUsername());
         return createUserDetails(user);
     }
     
@@ -89,8 +85,6 @@ public class AuthService {
     @Transactional
     public AuthResponseDto.LoginResponse login(AuthRequestDto.LoginRequest request, HttpServletRequest httpRequest) {
         try {
-            log.info("로그인 시도: {}", request.getUserid());
-            
             // 1. 사용자 조회
             User user = authUserRepository.findByUsernameOrEmail(request.getUserid())
                     .orElseThrow(() -> new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다."));
@@ -134,15 +128,11 @@ public class AuthService {
                     .map(GrantedAuthority::getAuthority)
                     .toList();
             
-            log.debug("사용자 권한 목록: {}", authorities);
-            
             // 첫 번째 권한을 역할로 사용 (ROLE_ 접두사 제거)
             String userRole = authorities.isEmpty() ? "USER" : 
                     authorities.get(0).replace("ROLE_", "");
             
-            log.info("사용자 역할로 메뉴 조회: {} (원본 권한: {})", userRole, authorities);
             List<MenuDto> accessibleMenus = menuService.getAccessibleMenusByRole(userRole);
-            log.info("조회된 메뉴 개수: {}", accessibleMenus.size());
             
             // 메뉴가 없는 경우 디버깅 정보 출력
             if (accessibleMenus.isEmpty()) {
@@ -151,8 +141,6 @@ public class AuthService {
                 List<MenuDto> allMenus = menuService.getAllActiveMenus();
                 log.warn("전체 활성 메뉴 개수: {}", allMenus.size());
             }
-            
-            log.info("로그인 성공: {} (Session ID: {})", user.getUsername(), session.getId());
             
             return AuthResponseDto.LoginResponse.builder()
                     .userId(user.getId())
@@ -196,8 +184,6 @@ public class AuthService {
         // HTTP 세션 무효화
         session.invalidate();
         
-        log.info("로그아웃 완료: {} (User ID: {})", username, userId);
-        
         return AuthResponseDto.LogoutResponse.builder()
                 .userId(userId)
                 .logoutTime(LocalDateTime.now())
@@ -213,8 +199,6 @@ public class AuthService {
      */
     @Transactional
     public AuthResponseDto.SignupResponse signup(AuthRequestDto.SignupRequest request) {
-        log.info("회원가입 시도: {} ({})", request.getUsername(), request.getEmail());
-        
         // 비밀번호 일치 확인
         if (!request.isPasswordMatching()) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
@@ -235,8 +219,6 @@ public class AuthService {
         
         User savedUser = authUserRepository.save(user);
         
-        log.info("회원가입 완료: {} (User ID: {})", savedUser.getUsername(), savedUser.getId());
-        
         return AuthResponseDto.SignupResponse.builder()
                 .userId(savedUser.getId())
                 .username(savedUser.getUsername())
@@ -254,8 +236,6 @@ public class AuthService {
      */
     @Transactional
     public void changePassword(String userId, AuthRequestDto.ChangePasswordRequest request) {
-        log.info("비밀번호 변경 시도: User ID {}", userId);
-        
         User user = authUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
@@ -274,8 +254,6 @@ public class AuthService {
         authUserRepository.updatePassword(userId, encodedNewPassword);
         
         // 비밀번호 변경 시 보안상 재로그인 필요 (기본 HTTP 세션 사용)
-        
-        log.info("비밀번호 변경 완료: User ID {}", userId);
     }
     
     /**

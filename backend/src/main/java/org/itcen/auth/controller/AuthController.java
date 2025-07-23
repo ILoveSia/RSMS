@@ -39,17 +39,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponseDto.LoginResponse>> login(
             @Valid @RequestBody AuthRequestDto.LoginRequest request,
-            HttpServletRequest httpRequest) {
-        
-        log.info("로그인 API 호출: {}", request.getUserid());
-        log.debug("요청 데이터 상세 - userid: '{}', username: '{}', password 길이: {}, rememberMe: {}",
-                request.getUserid(),
-                request.getUsername(),
-                request.getPassword() != null ? request.getPassword().length() : 0,
-                request.getRememberMe());
-        log.debug("userid가 null인가? {}, 빈 문자열인가? {}", 
-                request.getUserid() == null, 
-                request.getUserid() != null && request.getUserid().isEmpty());
+            HttpServletRequest httpRequest) {        
         
         try {
             AuthResponseDto.LoginResponse response = authService.login(request, httpRequest);
@@ -75,13 +65,10 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponseDto.LogoutResponse>> logout(
             HttpServletRequest httpRequest) {
         
-        log.info("로그아웃 API 호출");
         
         try {
             AuthResponseDto.LogoutResponse response = authService.logout(httpRequest);
             
-            return ResponseEntity.ok(
-                    ApiResponse.success("로그아웃이 완료되었습니다.", response)
             );
         } catch (Exception e) {
             log.error("로그아웃 처리 중 오류 발생: {}", e.getMessage());
@@ -101,7 +88,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponseDto.SignupResponse>> signup(
             @Valid @RequestBody AuthRequestDto.SignupRequest request) {
         
-        log.info("회원가입 API 호출: {} ({})", request.getUsername(), request.getEmail());
         
         try {
             AuthResponseDto.SignupResponse response = authService.signup(request);
@@ -128,7 +114,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponseDto.UserInfoResponse>> getCurrentUser(
             HttpServletRequest httpRequest) {
         
-        log.debug("현재 사용자 정보 조회 API 호출");
         
         try {
             AuthResponseDto.UserInfoResponse response = authService.getCurrentUserInfo(httpRequest);
@@ -163,7 +148,6 @@ public class AuthController {
             @Valid @RequestBody AuthRequestDto.ChangePasswordRequest request,
             HttpServletRequest httpRequest) {
         
-        log.info("비밀번호 변경 API 호출");
         
         try {
             // 세션에서 사용자 ID 추출
@@ -198,7 +182,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> getSessionInfo(
             HttpServletRequest httpRequest) {
         
-        log.debug("세션 정보 조회 API 호출");
         
         try {
             HttpSession session = httpRequest.getSession(false);
@@ -233,7 +216,6 @@ public class AuthController {
             @RequestParam(defaultValue = "30") int additionalMinutes,
             HttpServletRequest httpRequest) {
         
-        log.info("세션 연장 API 호출: {}분", additionalMinutes);
         
         return ResponseEntity.ok(
                 ApiResponse.error("기본 HTTP 세션에서는 세션 연장을 지원하지 않습니다.", "SESSION_EXTEND_NOT_SUPPORTED")
@@ -249,7 +231,6 @@ public class AuthController {
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<Boolean>> checkAuthStatus(HttpServletRequest httpRequest) {
         
-        log.debug("로그인 상태 확인 API 호출");
         
         try {
             boolean isAuthenticated = httpRequest.getSession(false) != null &&
@@ -276,7 +257,6 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Long>> getActiveSessionCount() {
         
-        log.debug("활성 세션 수 조회 API 호출");
         
         return ResponseEntity.ok(
                 ApiResponse.error("기본 HTTP 세션에서는 활성 세션 수 조회를 지원하지 않습니다.", "SESSION_COUNT_NOT_SUPPORTED")

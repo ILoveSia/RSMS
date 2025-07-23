@@ -77,8 +77,6 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserDto.Response>> getUser(@PathVariable String id) {
-        log.info("getUser 호출");
-        log.debug("---------------------param :::: " + id);
         UserDto.Response user = userService.getUser(id);
         return ResponseEntity.ok(ApiResponse.success("사용자 정보를 성공적으로 조회했습니다.", user));
     }

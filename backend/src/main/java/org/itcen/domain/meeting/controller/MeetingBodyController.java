@@ -42,8 +42,6 @@ public class MeetingBodyController {
     public ResponseEntity<ApiResponse<MeetingBodyDto>> createMeetingBody(
             @Valid @RequestBody MeetingBodyCreateRequestDto createRequestDto) {
 
-        log.info("회의체 생성 API 호출: {}", createRequestDto.getMeetingName());
-
         MeetingBodyDto createdMeetingBody = meetingBodyService.createMeetingBody(createRequestDto);
 
         ApiResponse<MeetingBodyDto> response = ApiResponse.<MeetingBodyDto>builder()
@@ -67,8 +65,6 @@ public class MeetingBodyController {
             @PathVariable String meetingBodyId,
             @Valid @RequestBody MeetingBodyUpdateRequestDto updateRequestDto) {
 
-        log.info("회의체 수정 API 호출: ID={}, 회의체명={}", meetingBodyId, updateRequestDto.getMeetingName());
-
         MeetingBodyDto updatedMeetingBody = meetingBodyService.updateMeetingBody(meetingBodyId, updateRequestDto);
 
         ApiResponse<MeetingBodyDto> response = ApiResponse.<MeetingBodyDto>builder()
@@ -88,8 +84,6 @@ public class MeetingBodyController {
      */
     @DeleteMapping("/{meetingBodyId}")
     public ResponseEntity<ApiResponse<Void>> deleteMeetingBody(@PathVariable String meetingBodyId) {
-        log.info("회의체 삭제 API 호출: ID={}", meetingBodyId);
-
         meetingBodyService.deleteMeetingBody(meetingBodyId);
 
         ApiResponse<Void> response = ApiResponse.<Void>builder()
@@ -108,8 +102,6 @@ public class MeetingBodyController {
      */
     @GetMapping("/{meetingBodyId}")
     public ResponseEntity<ApiResponse<MeetingBodyDto>> getMeetingBody(@PathVariable String meetingBodyId) {
-        log.debug("회의체 단건 조회 API 호출: ID={}", meetingBodyId);
-
         MeetingBodyDto meetingBody = meetingBodyService.getMeetingBody(meetingBodyId);
 
         ApiResponse<MeetingBodyDto> response = ApiResponse.<MeetingBodyDto>builder()
@@ -128,8 +120,6 @@ public class MeetingBodyController {
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<MeetingBodyDto>>> getAllMeetingBodies() {
-        log.debug("전체 회의체 목록 조회 API 호출");
-
         List<MeetingBodyDto> meetingBodies = meetingBodyService.getAllMeetingBodies();
 
         ApiResponse<List<MeetingBodyDto>> response = ApiResponse.<List<MeetingBodyDto>>builder()
@@ -149,8 +139,6 @@ public class MeetingBodyController {
      */
     @GetMapping("/gubun/{gubun}")
     public ResponseEntity<ApiResponse<List<MeetingBodyDto>>> getMeetingBodiesByGubun(@PathVariable String gubun) {
-        log.debug("구분별 회의체 목록 조회 API 호출: gubun={}", gubun);
-
         List<MeetingBodyDto> meetingBodies = meetingBodyService.getMeetingBodiesByGubun(gubun);
 
         ApiResponse<List<MeetingBodyDto>> response = ApiResponse.<List<MeetingBodyDto>>builder()
@@ -186,8 +174,6 @@ public class MeetingBodyController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
 
-        log.info("회의체 검색 API 호출 시작: gubun={}, meetingName={}, page={}, size={}", gubun, meetingName, page, size);
-
         try {
             MeetingBodySearchRequestDto searchRequestDto = MeetingBodySearchRequestDto.builder()
                     .gubun(gubun)
@@ -201,8 +187,6 @@ public class MeetingBodyController {
                     .build();
 
             Page<MeetingBodyDto> meetingBodies = meetingBodyService.searchMeetingBodies(searchRequestDto);
-
-            log.info("회의체 검색 API 호출 성공: 총 {}건 조회", meetingBodies.getTotalElements());
 
             ApiResponse<Page<MeetingBodyDto>> response = ApiResponse.<Page<MeetingBodyDto>>builder()
                     .success(true)
@@ -232,8 +216,6 @@ public class MeetingBodyController {
      */
     @GetMapping("/count/gubun/{gubun}")
     public ResponseEntity<ApiResponse<Long>> countByGubun(@PathVariable String gubun) {
-        log.debug("구분별 회의체 개수 조회 API 호출: gubun={}", gubun);
-
         Long count = meetingBodyService.countByGubun(gubun);
 
         ApiResponse<Long> response = ApiResponse.<Long>builder()
@@ -253,8 +235,6 @@ public class MeetingBodyController {
      */
     @GetMapping("/count/period/{meetingPeriod}")
     public ResponseEntity<ApiResponse<Long>> countByMeetingPeriod(@PathVariable String meetingPeriod) {
-        log.debug("개최주기별 회의체 개수 조회 API 호출: meetingPeriod={}", meetingPeriod);
-
         Long count = meetingBodyService.countByMeetingPeriod(meetingPeriod);
 
         ApiResponse<Long> response = ApiResponse.<Long>builder()
@@ -276,8 +256,6 @@ public class MeetingBodyController {
     public ResponseEntity<ApiResponse<Boolean>> checkDuplicateMeetingName(
             @RequestParam String meetingName,
             @RequestParam(required = false) String excludeId) {
-
-        log.debug("회의체명 중복 체크 API 호출: meetingName={}, excludeId={}", meetingName, excludeId);
 
         boolean isDuplicate;
         if (excludeId != null) {
@@ -307,7 +285,6 @@ public class MeetingBodyController {
      */
     @PostMapping("/bulk-delete")
     public ResponseEntity<ApiResponse<Void>> deleteMeetingBodies(@RequestBody List<String> ids) {
-        log.info("여러 회의체 일괄 삭제 API 호출: {}건", ids.size());
         meetingBodyService.deleteMeetingBodies(ids);
         ApiResponse<Void> response = ApiResponse.<Void>builder()
                 .success(true)

@@ -56,8 +56,6 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public List<AttachmentDto.UploadResult> uploadFiles(List<MultipartFile> files, AttachmentDto.UploadRequest uploadRequest) throws IOException {
-        log.debug("파일 업로드 시작, 파일 개수: {}, 엔티티: {}-{}", 
-                files.size(), uploadRequest.getEntityType(), uploadRequest.getEntityId());
 
         List<AttachmentDto.UploadResult> results = new ArrayList<>();
 
@@ -73,9 +71,6 @@ public class AttachmentServiceImpl implements AttachmentService {
             }
         }
 
-        log.debug("파일 업로드 완료, 성공: {}, 전체: {}", 
-                results.stream().filter(r -> r.getAttachId() != null).count(), results.size());
-        
         return results;
     }
 
@@ -85,7 +80,6 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public AttachmentDto.UploadResult uploadFile(MultipartFile file, AttachmentDto.UploadRequest uploadRequest) throws IOException {
-        log.debug("단일 파일 업로드 시작: {}", file.getOriginalFilename());
 
         // 파일 유효성 검사
         validateFile(file);
@@ -110,7 +104,6 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         Attachment savedAttachment = attachmentRepository.save(attachment);
         
-        log.debug("파일 업로드 완료: {} -> {}", file.getOriginalFilename(), storedFilename);
         return AttachmentDto.UploadResult.success(savedAttachment);
     }
 
@@ -119,7 +112,6 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     @Override
     public List<AttachmentDto.Response> getAttachmentsByEntity(String entityType, Long entityId) {
-        log.debug("엔티티 첨부파일 목록 조회: {}-{}", entityType, entityId);
 
         List<Attachment> attachments = attachmentRepository
                 .findByEntityTypeAndEntityIdOrderByCreatedAtAsc(entityType, entityId);
@@ -134,8 +126,6 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     @Override
     public AttachmentDto.Response getAttachmentById(Long attachId) {
-        log.debug("첨부파일 상세 조회: {}", attachId);
-
         Attachment attachment = attachmentRepository.findById(attachId)
                 .orElseThrow(() -> new BusinessException("첨부파일을 찾을 수 없습니다."));
 
@@ -147,8 +137,6 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     @Override
     public AttachmentDto.DownloadInfo getDownloadInfo(Long attachId) {
-        log.debug("첨부파일 다운로드 정보 조회: {}", attachId);
-
         Attachment attachment = attachmentRepository.findById(attachId)
                 .orElseThrow(() -> new BusinessException("첨부파일을 찾을 수 없습니다."));
 
@@ -161,8 +149,6 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public void deleteAttachment(Long attachId, String deletedBy) {
-        log.debug("첨부파일 삭제: {}", attachId);
-
         Attachment attachment = attachmentRepository.findById(attachId)
                 .orElseThrow(() -> new BusinessException("첨부파일을 찾을 수 없습니다."));
 
@@ -171,8 +157,6 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         // DB에서 삭제
         attachmentRepository.delete(attachment);
-        
-        log.debug("첨부파일 삭제 완료: {}", attachId);
     }
 
     /**
@@ -181,8 +165,6 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public void deleteAttachments(List<Long> attachIds, String deletedBy) {
-        log.debug("첨부파일 일괄 삭제: {}", attachIds);
-
         List<Attachment> attachments = attachmentRepository.findAllById(attachIds);
 
         // 물리적 파일들 삭제
@@ -192,8 +174,6 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         // DB에서 일괄 삭제
         attachmentRepository.deleteAll(attachments);
-        
-        log.debug("첨부파일 일괄 삭제 완료: {}", attachIds.size());
     }
 
     /**
@@ -202,8 +182,6 @@ public class AttachmentServiceImpl implements AttachmentService {
     @Override
     @Transactional
     public void deleteAllAttachmentsByEntity(String entityType, Long entityId, String deletedBy) {
-        log.debug("엔티티 첨부파일 전체 삭제: {}-{}", entityType, entityId);
-
         List<Attachment> attachments = attachmentRepository
                 .findByEntityTypeAndEntityIdOrderByCreatedAtAsc(entityType, entityId);
 
@@ -214,9 +192,6 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         // DB에서 삭제
         attachmentRepository.deleteAll(attachments);
-        
-        log.debug("엔티티 첨부파일 전체 삭제 완료: {}-{}, 삭제된 파일 수: {}", 
-                entityType, entityId, attachments.size());
     }
 
     /**
@@ -240,8 +215,6 @@ public class AttachmentServiceImpl implements AttachmentService {
      */
     @Override
     public List<AttachmentDto.Response> getAttachmentsByUploader(String uploadedBy) {
-        log.debug("업로드자 첨부파일 목록 조회: {}", uploadedBy);
-
         List<Attachment> attachments = attachmentRepository
                 .findByUploadedByOrderByCreatedAtDesc(uploadedBy);
 
@@ -309,14 +282,12 @@ public class AttachmentServiceImpl implements AttachmentService {
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
-            log.info("업로드 디렉토리 생성: {}", uploadPath);
         }
 
         // 파일 저장 (중복 시 덮어쓰기)
         Path filePath = uploadPath.resolve(storedFilename);
         Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         
-        log.debug("파일 저장 완료: {}", filePath);
         return filePath.toString();
     }
 
@@ -328,7 +299,6 @@ public class AttachmentServiceImpl implements AttachmentService {
             Path path = Paths.get(filePath);
             if (Files.exists(path)) {
                 Files.delete(path);
-                log.debug("물리적 파일 삭제 완료: {}", filePath);
             }
         } catch (IOException e) {
             log.warn("물리적 파일 삭제 실패: {}", filePath, e);
