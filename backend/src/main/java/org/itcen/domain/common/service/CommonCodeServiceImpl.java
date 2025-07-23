@@ -57,8 +57,6 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 
     @Override
     public List<CommonCodeDto.Response> findByGroupCode(String groupCode) {
-        log.debug("그룹코드별 공통코드 조회 요청. groupCode: {}", groupCode);
-        
         validateGroupCode(groupCode);
         
         List<CommonCode> commonCodes = commonCodeRepository.findByGroupCodeOrderBySortOrderAscCodeAsc(groupCode);
@@ -66,14 +64,11 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                 .map(CommonCodeDto.Response::from)
                 .toList();
         
-        log.debug("그룹코드별 공통코드 조회 완료. groupCode: {}, 개수: {}", groupCode, responses.size());
         return responses;
     }
 
     @Override
     public List<CommonCodeDto.Response> findUsableByGroupCode(String groupCode) {
-        log.debug("그룹코드별 사용 가능한 공통코드 조회 요청. groupCode: {}", groupCode);
-        
         validateGroupCode(groupCode);
         
         List<CommonCode> commonCodes = commonCodeRepository.findUsableByGroupCode(groupCode);
@@ -81,29 +76,22 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                 .map(CommonCodeDto.Response::from)
                 .toList();
         
-        log.debug("그룹코드별 사용 가능한 공통코드 조회 완료. groupCode: {}, 개수: {}", groupCode, responses.size());
         return responses;
     }
 
     @Override
     public Optional<CommonCodeDto.Response> findByGroupCodeAndCode(String groupCode, String code) {
-        log.debug("특정 공통코드 조회 요청. groupCode: {}, code: {}", groupCode, code);
-        
         validateGroupCode(groupCode);
         validateCode(code);
         
         Optional<CommonCode> commonCode = commonCodeRepository.findByGroupCodeAndCode(groupCode, code);
         Optional<CommonCodeDto.Response> response = commonCode.map(CommonCodeDto.Response::from);
         
-        log.debug("특정 공통코드 조회 완료. groupCode: {}, code: {}, 존재여부: {}", 
-                 groupCode, code, response.isPresent());
         return response;
     }
 
     @Override
     public List<CommonCodeDto.Response> findBySearchConditions(CommonCodeDto.SearchRequest searchRequest) {
-        log.debug("검색 조건으로 공통코드 조회 요청. 조건: {}", searchRequest);
-        
         if (searchRequest == null) {
             return findAll();
         }
@@ -119,14 +107,11 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                 .map(CommonCodeDto.Response::from)
                 .toList();
         
-        log.debug("검색 조건으로 공통코드 조회 완료. 개수: {}", responses.size());
         return responses;
     }
 
     @Override
     public List<CommonCodeDto.Response> findByCodeNameContaining(String codeName) {
-        log.debug("코드명으로 공통코드 검색 요청. codeName: {}", codeName);
-        
         if (codeName == null || codeName.trim().isEmpty()) {
             throw new IllegalArgumentException("코드명은 필수입니다.");
         }
@@ -136,14 +121,11 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                 .map(CommonCodeDto.Response::from)
                 .toList();
         
-        log.debug("코드명으로 공통코드 검색 완료. codeName: {}, 개수: {}", codeName, responses.size());
         return responses;
     }
 
     @Override
     public List<CommonCodeDto.GroupResponse> findAllGrouped() {
-        log.debug("그룹별 공통코드 목록 조회 요청");
-        
         List<CommonCode> allCodes = commonCodeRepository.findAll();
         Map<String, List<CommonCode>> groupedCodes = allCodes.stream()
                 .collect(Collectors.groupingBy(CommonCode::getGroupCode));
@@ -158,14 +140,11 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                         .build())
                 .toList();
         
-        log.debug("그룹별 공통코드 목록 조회 완료. 그룹 수: {}", responses.size());
         return responses;
     }
 
     @Override
     public List<CommonCodeDto.GroupResponse> findAllUsableGrouped() {
-        log.debug("사용 가능한 그룹별 공통코드 목록 조회 요청");
-        
         List<CommonCode> usableCodes = commonCodeRepository.findAllUsable();
         Map<String, List<CommonCode>> groupedCodes = usableCodes.stream()
                 .collect(Collectors.groupingBy(CommonCode::getGroupCode));
@@ -180,20 +159,16 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                         .build())
                 .toList();
         
-        log.debug("사용 가능한 그룹별 공통코드 목록 조회 완료. 그룹 수: {}", responses.size());
         return responses;
     }
 
     @Override
     public Optional<CommonCodeDto.GroupResponse> findGroupedByGroupCode(String groupCode) {
-        log.debug("특정 그룹의 공통코드 조회 요청. groupCode: {}", groupCode);
-        
         validateGroupCode(groupCode);
         
         List<CommonCode> codes = commonCodeRepository.findByGroupCodeOrderBySortOrderAscCodeAsc(groupCode);
         
         if (codes.isEmpty()) {
-            log.debug("해당 그룹에 공통코드가 없습니다. groupCode: {}", groupCode);
             return Optional.empty();
         }
         
@@ -205,35 +180,26 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                         .toList())
                 .build();
         
-        log.debug("특정 그룹의 공통코드 조회 완료. groupCode: {}, 개수: {}", groupCode, response.getCodeCount());
         return Optional.of(response);
     }
 
     @Override
     public List<String> findAllGroupCodes() {
-        log.debug("모든 그룹코드 목록 조회 요청");
-        
         List<String> groupCodes = commonCodeRepository.findDistinctGroupCodes();
         
-        log.debug("모든 그룹코드 목록 조회 완료. 개수: {}", groupCodes.size());
         return groupCodes;
     }
 
     @Override
     public List<String> findUsableGroupCodes() {
-        log.debug("사용 가능한 그룹코드 목록 조회 요청");
-        
         List<String> groupCodes = commonCodeRepository.findDistinctUsableGroupCodes();
         
-        log.debug("사용 가능한 그룹코드 목록 조회 완료. 개수: {}", groupCodes.size());
         return groupCodes;
     }
 
     @Override
     @Transactional
     public CommonCodeDto.Response create(CommonCodeDto.CreateRequest createRequest) {
-        log.debug("공통코드 생성 요청. request: {}", createRequest);
-        
         validateCreateRequest(createRequest);
         
         // 중복 확인
@@ -260,56 +226,41 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         CommonCode savedCommonCode = commonCodeRepository.save(commonCode);
         CommonCodeDto.Response response = CommonCodeDto.Response.from(savedCommonCode);
         
-        log.info("공통코드 생성 완료. groupCode: {}, code: {}", 
-                savedCommonCode.getGroupCode(), savedCommonCode.getCode());
         return response;
     }
 
     @Override
     public boolean exists(String groupCode, String code) {
-        log.debug("공통코드 존재 여부 확인 요청. groupCode: {}, code: {}", groupCode, code);
-        
         validateGroupCode(groupCode);
         validateCode(code);
         
         boolean exists = commonCodeRepository.existsByGroupCodeAndCode(groupCode, code);
         
-        log.debug("공통코드 존재 여부 확인 완료. groupCode: {}, code: {}, 존재여부: {}", 
-                 groupCode, code, exists);
         return exists;
     }
 
     @Override
     public long countByGroupCode(String groupCode) {
-        log.debug("그룹코드별 공통코드 개수 조회 요청. groupCode: {}", groupCode);
-        
         validateGroupCode(groupCode);
         
         long count = commonCodeRepository.countByGroupCode(groupCode);
         
-        log.debug("그룹코드별 공통코드 개수 조회 완료. groupCode: {}, 개수: {}", groupCode, count);
         return count;
     }
 
     @Override
     public long countByGroupCodeAndUseYn(String groupCode, String useYn) {
-        log.debug("그룹코드와 사용여부별 공통코드 개수 조회 요청. groupCode: {}, useYn: {}", groupCode, useYn);
-        
         validateGroupCode(groupCode);
         validateUseYn(useYn);
         
         long count = commonCodeRepository.countByGroupCodeAndUseYn(groupCode, useYn);
         
-        log.debug("그룹코드와 사용여부별 공통코드 개수 조회 완료. groupCode: {}, useYn: {}, 개수: {}", 
-                 groupCode, useYn, count);
         return count;
     }
 
     @Override
     @Transactional
     public Optional<CommonCodeDto.Response> activate(String groupCode, String code) {
-        log.debug("공통코드 활성화 요청. groupCode: {}, code: {}", groupCode, code);
-        
         validateGroupCode(groupCode);
         validateCode(code);
         
@@ -325,15 +276,12 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         CommonCode savedCommonCode = commonCodeRepository.save(commonCode);
         CommonCodeDto.Response response = CommonCodeDto.Response.from(savedCommonCode);
         
-        log.info("공통코드 활성화 완료. groupCode: {}, code: {}", groupCode, code);
         return Optional.of(response);
     }
 
     @Override
     @Transactional
     public Optional<CommonCodeDto.Response> deactivate(String groupCode, String code) {
-        log.debug("공통코드 비활성화 요청. groupCode: {}, code: {}", groupCode, code);
-        
         validateGroupCode(groupCode);
         validateCode(code);
         
@@ -349,20 +297,16 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         CommonCode savedCommonCode = commonCodeRepository.save(commonCode);
         CommonCodeDto.Response response = CommonCodeDto.Response.from(savedCommonCode);
         
-        log.info("공통코드 비활성화 완료. groupCode: {}, code: {}", groupCode, code);
         return Optional.of(response);
     }
 
     @Override
     public Integer getNextSortOrder(String groupCode) {
-        log.debug("다음 정렬순서 조회 요청. groupCode: {}", groupCode);
-        
         validateGroupCode(groupCode);
         
         Integer maxSortOrder = commonCodeRepository.findMaxSortOrderByGroupCode(groupCode);
         Integer nextSortOrder = maxSortOrder + 1;
         
-        log.debug("다음 정렬순서 조회 완료. groupCode: {}, nextSortOrder: {}", groupCode, nextSortOrder);
         return nextSortOrder;
     }
 

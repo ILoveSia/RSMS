@@ -88,7 +88,6 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.setUpdatedId("system");
 
         Department savedDepartment = departmentRepository.save(department);
-        log.info("부서 생성 완료: {}", savedDepartment.getDepartmentId());
 
         return DepartmentDto.from(savedDepartment);
     }
@@ -117,7 +116,6 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.setUpdatedId("system"); // TODO: 실제 사용자 ID로 변경
 
         Department savedDepartment = departmentRepository.save(department);
-        log.info("부서 수정 완료: {}", savedDepartment.getDepartmentId());
 
         return DepartmentDto.from(savedDepartment);
     }
@@ -131,8 +129,6 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.deactivate();
         department.setUpdatedId("system"); // TODO: 실제 사용자 ID로 변경
         departmentRepository.save(department);
-
-        log.info("부서 비활성화 완료: {}", departmentId);
     }
 
     @Override
@@ -144,8 +140,6 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.activate();
         department.setUpdatedId("system"); // TODO: 실제 사용자 ID로 변경
         departmentRepository.save(department);
-
-        log.info("부서 활성화 완료: {}", departmentId);
     }
 
     @Override
