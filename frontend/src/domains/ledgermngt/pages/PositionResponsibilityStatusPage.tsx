@@ -18,6 +18,7 @@ import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import PositionResponsibilityDialog from '../components/PositionResponsibilityDialog';
+import { apiClient } from '@/app/common/api/client';
 interface IPositionResponsibilityStatusPageProps {
   className?: string;
 }
@@ -69,16 +70,14 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     setError(null);
 
     try {
-      let response = null;
+      let data: any[] = [];
       if(selectedPosition===null){
-        response = await fetch('/api/position-responsibilities');
+        data = await apiClient.get<any[]>('/position-responsibilities');
       }
       else{
         console.log("selectedPosition.positionsId",selectedPosition.positionsId)
-        response = await fetch(`/api/position-responsibilities/${selectedPosition.positionsId}`);
+        data = await apiClient.get<any[]>(`/position-responsibilities/${selectedPosition.positionsId}`);
       }
-      
-      const data = await response.json();
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         ...item,
         positionName: item.positions_name ?? '',

@@ -46,7 +46,7 @@ export interface AttachmentDownloadInfo {
  * 첨부파일 API 클라이언트 클래스
  */
 class AttachmentApiClient {
-  private readonly baseUrl = '/api/attachments';
+  private readonly baseUrl = '/attachments';
 
   /**
    * 여러 파일 업로드
