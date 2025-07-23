@@ -212,6 +212,15 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       />
 
       <PageContent
+        sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        position: 'relative', // 좌우 패딩을 3으로 수정
+        py: 1,
+        px: 0,
+      }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -259,7 +268,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         <Box sx={{
           flex: 1,
           width: '100%',
-          minHeight: '400px',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',

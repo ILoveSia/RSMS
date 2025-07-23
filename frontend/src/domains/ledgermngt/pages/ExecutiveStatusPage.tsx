@@ -445,6 +445,15 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       />
 
       <PageContent
+        sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        position: 'relative', // 좌우 패딩을 3으로 수정
+        py: 1,
+        px: 0,
+      }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -509,7 +518,13 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         </Box>
 
         {/* 데이터 그리드 */}
-        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Box sx={{
+          flex: 1,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+        }}>
           <DataGrid
             data={rows}
             columns={executiveColumns}
