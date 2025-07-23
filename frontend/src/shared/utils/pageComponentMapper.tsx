@@ -155,63 +155,31 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
   // 조회
   '/inquiry/dept-status': {
     component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
-    title: '부서별 현황',
-    icon: 'business',
-  },
-  '/inquiry/inspection-depart': {
-    component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
     title: '점검 현황(부서별)',
     icon: 'business',
   },
-  '/inquiry/inspection-plan': {
-    component: () => import('@/domains/inquiry/pages/InspectionPlanManagementPage'),
-    title: '점검 계획 관리',
-    icon: 'assignment',
+  '/inquiry/schedule': {
+    component: () => import('@/domains/inquiry/pages/AuditProgMngtStatusPage'),
+    title: '점검 계획',
+    icon: 'calendar_alt',
   },
   '/inquiry/monthly-status': {
     component: () => import('@/domains/inquiry/pages/MonthlyStatusPage'),
-    title: '월별 현황',
+    title: '점검 현황(월별)',
     icon: 'calendar_month',
   },
-  '/inquiry/inspection-schedule': {
-    component: () => import('@/domains/inquiry/pages/InspectionSchedulePage'),
-    title: '점검일정',
-    icon: 'schedule',
-  },
-  '/inquiry/non-employee': {
-    component: () => import('@/domains/inquiry/pages/NonEmployeePage'),
-    title: '비정규직',
-    icon: 'person_outline',
-  },
-  '/inquiry/deficiency-status': {
+  '/inquiry/employee': {
     component: () => import('@/domains/inquiry/pages/DeficiencyStatusPage'),
     title: '미흡상황 현황',
     icon: 'warning',
   },
-
   // 책무구조도 이력 점검
   '/history/dept-status': {
     component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
     title: '부서별 현황',
     icon: 'business',
   },
-  '/history/monthly-status': {
-    component: () => import('@/domains/inquiry/pages/MonthlyStatusPage'),
-    title: '월별 현황',
-    icon: 'calendar_month',
-  },
-  '/history/inspection-schedule': {
-    component: () => import('@/domains/inquiry/pages/InspectionSchedulePage'),
-    title: '점검일정',
-    icon: 'schedule',
-  },
-
-  // 점검계획
-  '/cmplcheck/review-plan': {
-    component: () => import('@/domains/cmplcheck/pages/ReviewPlanPage'),
-    title: '검토계획',
-    icon: 'task_alt',
-  },
+ 
 };
 
 /**

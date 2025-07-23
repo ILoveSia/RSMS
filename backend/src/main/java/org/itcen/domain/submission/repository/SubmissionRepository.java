@@ -19,19 +19,28 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
         SELECT 
             s.rm_submit_mgmt_id as id,
             s.submit_hist_cd as historyCode,
+            s.execofficer_id as execofficerId,
             COALESCE(u.username, s.execofficer_id) as executiveName,
             p.positions_nm as position,
             s.rm_submit_dt as submissionDate,
-            '' as attachmentFile,
+            COALESCE(a.original_name, '') as attachmentFile,
             s.rm_submit_remarks as remarks,
             s.positions_id as positionsId,
             p.positions_nm as positionsNm,
             p.ledger_order as ledgerOrder,
             p.confirm_gubun_cd as confirmGubunCd,
-            p.write_dept_cd as writeDeptCd
+            p.write_dept_cd as writeDeptCd,
+            CASE WHEN a.attach_id IS NOT NULL THEN true ELSE false END as hasAttachment,
+            COUNT(a.attach_id) as attachmentCount
         FROM rm_submit_mgmt s
         LEFT JOIN positions p ON s.positions_id = p.positions_id
         LEFT JOIN users u ON s.execofficer_id = u.id
+        LEFT JOIN attachments a ON a.entity_type = 'LEDGER_MGMT_STRUCTURE_SUBMISSION' 
+            AND a.entity_id = s.rm_submit_mgmt_id 
+            AND (a.deleted_yn = 'N' OR a.deleted_yn IS NULL)
+        GROUP BY s.rm_submit_mgmt_id, s.submit_hist_cd, s.execofficer_id, u.username, 
+                 p.positions_nm, s.rm_submit_dt, s.rm_submit_remarks, s.positions_id,
+                 p.ledger_order, p.confirm_gubun_cd, p.write_dept_cd, a.original_name, a.attach_id
         ORDER BY s.rm_submit_dt DESC, s.rm_submit_mgmt_id DESC
         """, nativeQuery = true)
     List<Object[]> findAllSubmissionHistoryWithPositions();

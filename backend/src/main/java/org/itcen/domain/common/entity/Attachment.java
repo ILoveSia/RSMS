@@ -36,20 +36,26 @@ public class Attachment extends BaseTimeEntity {
     @Column(name = "content_type", length = 100)
     private String contentType;
 
+    @Column(name = "mime_type", length = 100)
+    private String mimeType;
+
     @Column(name = "file_path", length = 500, nullable = false)
     private String filePath;
 
     @Column(name = "file_size", nullable = false)
     private Long fileSize;
 
-    @Column(name = "original_filename", length = 255, nullable = false)
-    private String originalFilename;
+    @Column(name = "original_name", length = 255, nullable = false)
+    private String originalName;
 
-    @Column(name = "stored_filename", length = 255, nullable = false)
-    private String storedFilename;
+    @Column(name = "stored_name", length = 255, nullable = false)
+    private String storedName;
 
     @Column(name = "uploaded_by", length = 100, nullable = false)
     private String uploadedBy;
+    
+    @Column(name = "upload_date", nullable = false)
+    private LocalDateTime uploadDate;
 
     @Column(name = "entity_type", length = 50, nullable = false)
     private String entityType;
@@ -62,30 +68,42 @@ public class Attachment extends BaseTimeEntity {
 
     @Column(name = "updated_id", length = 100)
     private String updatedId;
+    
+    @Column(name = "deleted_yn", length = 1)
+    private String deletedYn;
+    
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    
+    @Column(name = "deleted_by", length = 100)
+    private String deletedBy;
 
     @Builder
-    public Attachment(String contentType, String filePath, Long fileSize, 
-                     String originalFilename, String storedFilename, String uploadedBy,
+    public Attachment(String contentType, String mimeType, String filePath, Long fileSize, 
+                     String originalName, String storedName, String uploadedBy,
                      String entityType, Long entityId, String createdId) {
         this.contentType = contentType;
+        this.mimeType = mimeType;
         this.filePath = filePath;
         this.fileSize = fileSize;
-        this.originalFilename = originalFilename;
-        this.storedFilename = storedFilename;
+        this.originalName = originalName;
+        this.storedName = storedName;
         this.uploadedBy = uploadedBy;
+        this.uploadDate = LocalDateTime.now(); // 업로드 시간 자동 설정
         this.entityType = entityType;
         this.entityId = entityId;
         this.createdId = createdId;
         this.updatedId = createdId; // 생성 시에는 생성자와 수정자가 동일
+        this.deletedYn = "N"; // 기본값으로 삭제되지 않음으로 설정
     }
 
     /**
      * 첨부파일 정보 수정
      */
-    public void updateFileInfo(String originalFilename, String storedFilename, 
+    public void updateFileInfo(String originalName, String storedName, 
                               Long fileSize, String contentType, String updatedBy) {
-        this.originalFilename = originalFilename;
-        this.storedFilename = storedFilename;
+        this.originalName = originalName;
+        this.storedName = storedName;
         this.fileSize = fileSize;
         this.contentType = contentType;
         this.updatedId = updatedBy;

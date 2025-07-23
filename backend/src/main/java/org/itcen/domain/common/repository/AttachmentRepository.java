@@ -48,10 +48,10 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
     /**
      * 저장된 파일명으로 첨부파일 조회
      * 
-     * @param storedFilename 저장된 파일명
+     * @param storedName 저장된 파일명
      * @return 첨부파일 (있으면)
      */
-    Optional<Attachment> findByStoredFilename(String storedFilename);
+    Optional<Attachment> findByStoredName(String storedName);
 
     /**
      * 엔티티 타입과 엔티티 ID로 첨부파일 존재 여부 확인

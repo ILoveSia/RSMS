@@ -31,19 +31,34 @@ public interface HodICItemStatusProjection {
     String getResponsibilityContent();
 
     /**
-     * 부서명
+     * 부서코드
      */
     String getDeptCd();
 
     /**
-     * 항목구분
+     * 부서명
+     */
+    String getDeptName();
+
+    /**
+     * 항목구분 코드
      */
     String getFieldTypeCd();
 
     /**
-     * 직무구분
+     * 항목구분명
+     */
+    String getFieldTypeName();
+
+    /**
+     * 직무구분 코드
      */
     String getRoleTypeCd();
+
+    /**
+     * 직무구분명
+     */
+    String getRoleTypeName();
 
     /**
      * 내부통제 업무
@@ -61,9 +76,14 @@ public interface HodICItemStatusProjection {
     String getMeasureType();
 
     /**
-     * 주기
+     * 주기 코드
      */
     String getPeriodCd();
+
+    /**
+     * 주기명
+     */
+    String getPeriodName();
 
     /**
      * 관련근거
@@ -71,9 +91,14 @@ public interface HodICItemStatusProjection {
     String getSupportDoc();
 
     /**
-     * 점검시기
+     * 점검시기 코드
      */
     String getCheckPeriod();
+
+    /**
+     * 점검시기명
+     */
+    String getCheckPeriodName();
 
     /**
      * 점검방법

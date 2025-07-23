@@ -19,9 +19,10 @@ public interface HodICItemService {
      * 부서장 내부통제 항목 현황 조회 JOIN 쿼리를 통해 관련 테이블의 정보를 함께 조회
      *
      * @param ledgerOrder 책무번호(원장차수) 필터 (null이면 전체 조회)
+     * @param fieldType 항목구분 필터 (null이면 전체 조회)
      * @return 부서장 내부통제 항목 현황 목록
      */
-    List<HodICItemStatusProjection> getHodICItemStatusList(String ledgerOrder);
+    List<HodICItemStatusProjection> getHodICItemStatusList(String ledgerOrder, String fieldType);
 
     /**
      * 부서장 내부통제 항목 상세 조회

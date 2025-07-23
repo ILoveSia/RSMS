@@ -36,15 +36,17 @@ public class HodICItemController {
      * 부서장 내부통제 항목 현황 조회
      *
      * @param ledgerOrder 책무번호(원장차수) 필터 (선택사항)
+     * @param fieldType 항목구분 필터 (선택사항)
      * @return 부서장 내부통제 항목 현황 목록
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<HodICItemStatusProjection>>> getHodICItemStatusList(
-            @RequestParam(value = "ledgerOrder", required = false) String ledgerOrder) {
+            @RequestParam(value = "ledgerOrder", required = false) String ledgerOrder,
+            @RequestParam(value = "fieldType", required = false) String fieldType) {
 
-        log.info("부서장 내부통제 항목 현황 조회 API 호출: ledgerOrder={}", ledgerOrder);
+        log.info("부서장 내부통제 항목 현황 조회 API 호출: ledgerOrder={}, fieldType={}", ledgerOrder, fieldType);
 
-        List<HodICItemStatusProjection> statusList = hodICItemService.getHodICItemStatusList(ledgerOrder);
+        List<HodICItemStatusProjection> statusList = hodICItemService.getHodICItemStatusList(ledgerOrder, fieldType);
 
         log.info("부서장 내부통제 항목 현황 조회 완료: 총 {}건", statusList.size());
         return ResponseEntity.ok(

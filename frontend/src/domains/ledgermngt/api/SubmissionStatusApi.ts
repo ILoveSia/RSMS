@@ -4,6 +4,7 @@ import apiClient from '@/app/common/api/client';
 export interface SubmissionHistoryRow {
   id: number;
   historyCode: string;
+  execofficerId?: string; // 직원 ID 추가
   executiveName: string;
   position: string;
   submissionDate: string;
@@ -11,6 +12,10 @@ export interface SubmissionHistoryRow {
   modificationDate?: string;
   attachmentFile?: string;
   remarks?: string;
+  
+  // 첨부파일 관련 필드들
+  hasAttachment?: boolean;  // 첨부파일 존재 여부
+  attachmentCount?: number; // 첨부파일 개수
   
   // positions 테이블과 조인된 정보
   positionsId?: number;
@@ -97,9 +102,46 @@ export async function submitSubmissionHistory(
   return { id: response.id };
 }
 
+export async function updateSubmissionHistory(
+  id: number,
+  data: RegistrationData,
+  file?: File
+): Promise<{ id: number }> {
+  const requestData = {
+    submitHistCd: data.submitHistCd || null,
+    execofficerId: data.execofficerId || null, // 직원 ID 전달 (문자열 타입)
+    rmSubmitDt: data.submissionDate.toISOString().split('T')[0],
+    updateYn: 'Y', // 수정 모드에서는 Y로 설정
+    rmSubmitRemarks: data.remarks?.value || null,
+    positionsId: data.positionsId || null,
+    // 프론트엔드 호환성을 위한 필드들 (deprecated)
+    historyCode: data.historyCode?.value || null,
+    executiveName: data.executiveName?.value || null,
+    position: data.position?.value || null,
+    submissionDate: data.submissionDate.toISOString().split('T')[0],
+    remarks: data.remarks?.value || null,
+    attachmentFile: file?.name || null
+  };
+
+  console.log('수정 요청 데이터:', requestData);
+  
+  const response = await apiClient.put<any>(`/submissions/${id}`, requestData);
+  console.log('수정 응답:', response);
+  
+  // API 클라이언트가 자동으로 ApiResponse wrapper를 unwrap하므로
+  // response는 이미 SubmissionDto 데이터입니다
+  console.log('응답 ID:', response?.id);
+  
+  if (!response || !response.id) {
+    throw new Error('서버에서 유효한 ID를 반환하지 않았습니다.');
+  }
+  
+  return { id: response.id };
+}
+
 export async function deleteSubmissionHistory(ids: number[]): Promise<void> {
   const response = await apiClient.delete('/submissions/history', ids);
-  if (response.success === false) {
+  if (response && response.success === false) {
     throw new Error(response.message || '제출 이력 삭제에 실패했습니다.');
   }
 }

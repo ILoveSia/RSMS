@@ -123,7 +123,9 @@ public class SecurityConfig {
                     "/case-studies/**",
                     // 원장차수+진행상태 셀렉트박스용 API (공개 접근 허용)
                     "/ledger-orders/select-list",
-                    "/ledger-orders-hod/select-list"
+                    "/ledger-orders-hod/select-list",
+                    // 책무구조도 제출 API (개발 편의를 위해 임시 허용)
+                    "/submissions/**"
             ).permitAll()
 
             // 모든 API 엔드포인트는 인증 필요 (일반화)

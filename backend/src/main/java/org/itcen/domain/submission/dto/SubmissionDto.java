@@ -23,6 +23,10 @@ public class SubmissionDto {
     private String confirmGubunCd;
     private String writeDeptCd;
     
+    // 첨부파일 관련 필드들
+    private Boolean hasAttachment;  // 첨부파일 존재 여부
+    private Integer attachmentCount; // 첨부파일 개수
+    
     // 프론트엔드 호환성을 위한 필드들 (deprecated but kept for compatibility)
     @Deprecated
     private String historyCode;
