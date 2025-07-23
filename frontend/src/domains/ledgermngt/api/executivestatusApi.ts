@@ -4,10 +4,13 @@ export interface ExecOfficer {
   execofficerId: number;
   positionNameMapped?: string;
   empId: string;
-  execofficerDt: string;
+  execofficer_dt: string;
   dualYn: string;
   dualDetails: string;
   userName: string;
+  approvalId: number;
+  ledgerOrder: number;
+  orderStatus: string;
   positionsId?: number;
 }
 
@@ -43,6 +46,7 @@ export interface Manager {
 const execOfficerApi = {
   getAll: async (): Promise<ExecOfficer[]> => {
     const response = await apiClient.get<ExecOfficer[]>('/execofficer');
+    console.log('response', response);
     return response;
   },
   create: async (data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
@@ -53,7 +57,36 @@ const execOfficerApi = {
     if (data.dualYn === 'N') {
       data.dualDetails = '';
     }
-    const response = await apiClient.put<ExecOfficer>(`/execofficer/${id}`, data);
+
+    // 날짜를 YYYY-MM-DD 형식으로 완벽하게 파싱하는 함수
+    const formatDateToYYYYMMDD = (dateInput: any): string | null => {
+      if (!dateInput) return null;
+      
+      const date = new Date(dateInput);
+      if (isNaN(date.getTime())) return null;
+      
+      // 로컬 시간대 기준으로 YYYY-MM-DD 형식 생성
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      console.log("day",`${year}-${month}-${day}`)
+      return `${year}-${month}-${day}`;
+    };
+
+    // 백엔드에서 필요한 필드만 추출하여 전송
+    const updateData = {
+      empId: data.empId,
+      execofficer_dt: formatDateToYYYYMMDD(data.execofficer_dt),
+      dualYn: data.dualYn,
+      dualDetails: data.dualDetails,
+      positionsId: data.positionsId,
+      approvalId: data.approvalId,
+      ledgerOrder: data.ledgerOrder,
+      orderStatus: data.orderStatus
+    };
+
+    console.log('Sending update data:', updateData);
+    const response = await apiClient.put<ExecOfficer>(`/execofficer/${id}`, updateData);
     return response;
   },
   delete: async (id: number): Promise<void> => {

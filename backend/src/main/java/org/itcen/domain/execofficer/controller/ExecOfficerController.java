@@ -28,8 +28,22 @@ public class ExecOfficerController {
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<ExecOfficerDto> update(@PathVariable Long id, @RequestBody ExecOfficerDto dto) {
-        return ApiResponse.success(service.update(id, dto));
+    public ApiResponse<ExecOfficerDto> update(@PathVariable Long id, @RequestBody String rawJson) {
+        log.info("Raw JSON 받은 내용: {}", rawJson);
+        
+        try {
+            // ObjectMapper로 수동 파싱
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            ExecOfficerDto dto = mapper.readValue(rawJson, ExecOfficerDto.class);
+            
+            log.info("파싱된 DTO: {}", dto);
+            log.info("파싱된 execofficerDt: '{}'", dto.getExecofficer_dt());
+            
+            return ApiResponse.success(service.update(id, dto));
+        } catch (Exception e) {
+            log.error("JSON 파싱 실패", e);
+            throw new RuntimeException("JSON 파싱 실패", e);
+        }
     }
 
     @DeleteMapping("/{id}")

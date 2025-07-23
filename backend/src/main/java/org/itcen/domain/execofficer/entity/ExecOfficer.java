@@ -2,7 +2,10 @@ package org.itcen.domain.execofficer.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Entity
 @Table(name = "execofficer")
@@ -15,9 +18,9 @@ public class ExecOfficer {
 
     @Column(name = "emp_id", nullable = false)
     private String empId;
-
+    
     @Column(name = "execofficer_dt")
-    private String execofficerDt;
+    private String execofficer_dt;
 
     @Column(name = "dual_yn")
     private String dualYn;

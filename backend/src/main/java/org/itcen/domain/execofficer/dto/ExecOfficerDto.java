@@ -2,13 +2,18 @@ package org.itcen.domain.execofficer.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ExecOfficerDto {
     private Long execofficerId;
     private String empId;
-    private String execofficerDt;
+    private String execofficer_dt;
     private String dualYn;
     private String dualDetails;
     private Long positionsId;

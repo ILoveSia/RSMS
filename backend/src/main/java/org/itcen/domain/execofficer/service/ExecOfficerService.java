@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,13 +29,13 @@ public class ExecOfficerService {
 
     public List<ExecOfficerDto> getAll() {
         String sql = "SELECT  " +
-                     "p.positions_id, p.positions_nm,  " +
-                     "eo.execofficer_id, eo.emp_id,  eo.execofficer_dt, eo.dual_yn, eo.dual_details,  " +
-                     "eo.approval_id, eo.ledger_order, eo.order_status,  " +
-                     "eo.created_id, eo.updated_id, eo.created_at, eo.updated_at  " +
-                     "FROM positions p  " +
-                     "LEFT JOIN execofficer eo ON p.positions_id = eo.positions_id " +
-                     "ORDER BY p.positions_id";
+                "p.positions_id, p.positions_nm,  " +
+                "eo.execofficer_id, eo.emp_id,  eo.execofficer_dt, eo.dual_yn, eo.dual_details,  " +
+                "eo.approval_id, eo.ledger_order, eo.order_status,  " +
+                "eo.created_id, eo.updated_id, eo.created_at, eo.updated_at  " +
+                "FROM positions p  " +
+                "LEFT JOIN execofficer eo ON p.positions_id = eo.positions_id " +
+                "ORDER BY p.positions_id";
 
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
 
@@ -45,7 +46,7 @@ public class ExecOfficerService {
                 dto.setPositionNameMapped((String) row[1]);
                 dto.setExecofficerId(row[2] != null ? ((Number) row[2]).longValue() : null);
                 dto.setEmpId((String) row[3]);
-                dto.setExecofficerDt((String) row[4]);
+                dto.setExecofficer_dt(row[4] != null ? row[4].toString() : null);
                 dto.setDualYn((String) row[5]);
                 dto.setDualDetails((String) row[6]);
                 dto.setApprovalId(row[7] != null ? ((Number) row[7]).longValue() : null);
@@ -62,8 +63,9 @@ public class ExecOfficerService {
                 return null; // Return null for problematic rows
             }
         }).filter(java.util.Objects::nonNull) // Filter out nulls
-        .collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
+
     public ExecOfficerDto getnameById(Long id) {
         ExecOfficer entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("임원을 찾을 수 없습니다."));
@@ -79,8 +81,11 @@ public class ExecOfficerService {
     public ExecOfficerDto update(Long id, ExecOfficerDto dto) {
         ExecOfficer entity = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("임원을 찾을 수 없습니다."));
+
+        // 프론트엔드에서 완벽하게 파싱된 YYYY-MM-DD 형식 날짜를 단순 변환
+
         entity.setEmpId(dto.getEmpId());
-        entity.setExecofficerDt(dto.getExecofficerDt());
+        entity.setExecofficer_dt(dto.getExecofficer_dt());
         entity.setDualYn(dto.getDualYn());
         entity.setDualDetails(dto.getDualDetails());
         entity.setPositionsId(dto.getPositionsId());
@@ -99,7 +104,7 @@ public class ExecOfficerService {
         return ExecOfficerDto.builder()
                 .execofficerId(entity.getExecofficerId())
                 .empId(entity.getEmpId())
-                .execofficerDt(entity.getExecofficerDt())
+                .execofficer_dt(entity.getExecofficer_dt())
                 .dualYn(entity.getDualYn())
                 .dualDetails(entity.getDualDetails())
                 .positionsId(entity.getPositionsId())
@@ -114,10 +119,15 @@ public class ExecOfficerService {
     }
 
     private ExecOfficer toEntity(ExecOfficerDto dto) {
+        LocalDate execDate = null;
+        if (dto.getExecofficer_dt() != null && !dto.getExecofficer_dt().trim().isEmpty()) {
+            execDate = LocalDate.parse(dto.getExecofficer_dt());
+        }
+
         return ExecOfficer.builder()
                 .execofficerId(dto.getExecofficerId())
                 .empId(dto.getEmpId())
-                .execofficerDt(dto.getExecofficerDt())
+                .execofficer_dt(dto.getExecofficer_dt())
                 .dualYn(dto.getDualYn())
                 .dualDetails(dto.getDualDetails())
                 .positionsId(dto.getPositionsId())

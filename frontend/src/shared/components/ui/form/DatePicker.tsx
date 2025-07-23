@@ -13,12 +13,14 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import TextField from '@/shared/components/ui/data-display/textfield';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import React, { forwardRef, useState } from 'react';
 import type { DatePickerProps as DatePickerPropsType } from './types';
-
+// import { originalDate } from '@/domains/ledgermngt/components/ExecutiveDetailDialog';
 // DatePicker 컴포넌트 자체 Props 타입 정의
-export interface DatePickerProps extends DatePickerPropsType {}
+export interface DatePickerProps extends DatePickerPropsType {
+  onClose?: () => void;
+}
 
 /**
  * DatePicker 컴포넌트
@@ -60,6 +62,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     {
       value,
       onChange,
+      onClose,
       format = 'yyyy-MM-dd',
       views = ['year', 'month', 'day'],
       openTo = 'day',
@@ -98,12 +101,16 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     // 날짜 포맷팅
     const formatDate = (date: Date | null) => {
       if (!date) return '';
+      try{
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
 
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-
-      return format.replace('yyyy', String(year)).replace('MM', month).replace('dd', day);
+        return format.replace('yyyy', String(year)).replace('MM', month).replace('dd', day);
+      }
+      catch(e){
+        return date.toString();
+      }
     };
 
     // 입력 필드 클릭 핸들러
@@ -115,6 +122,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
 
     // 팝오버 닫기
     const handleClose = () => {
+      // setOriginalDate(null)
       setAnchorEl(null);
     };
 
@@ -207,7 +215,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         value={formatDate(value ?? null)}
         label={label}
         inputProps={{
-          readOnly: true,
+          readOnly: true, 
         }}
         InputLabelProps={{
           shrink: true,

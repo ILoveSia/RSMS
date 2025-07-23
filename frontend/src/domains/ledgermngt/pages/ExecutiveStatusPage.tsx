@@ -21,18 +21,7 @@ import { Button } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
 import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
-import execOfficerApi from '../api/executivestatusApi';
-
-export interface ExecOfficer {
-  execofficerId: number;
-  positionNameMapped?: string;
-  empId: string;
-  execofficerDt: string;
-  dualYn: string;
-  dualDetails: string;
-  userName: string;
-  positionsId?: number;
-}
+import execOfficerApi, { type ExecOfficer } from '../api/executivestatusApi';
 
 interface IExecutiveStatusPageProps {
   className?: string;
@@ -85,8 +74,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setError(null);
     try {
       const data = await execOfficerApi.getAll();
-      // const empname = await execOfficerApi.getnameById(data.empId);
       setRows(data);
+      console.log(data);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
       setErrorMessage('임원 현황 데이터를 불러오는 데 실패했습니다.');
@@ -132,8 +121,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     },
     
     {
-      field: 'execofficerDt',
-      headerName: '임원선임일',
+      field: 'execofficer_dt',
+      headerName: '직책부여일',
       width: 150,
       flex: 1,
       align: 'center',
@@ -180,6 +169,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     try {
       if (data.execofficerId) {
         // 수정
+        console.log('data', data)
         await execOfficerApi.update(data.execofficerId, data);
         setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
       } else {
@@ -206,7 +196,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   // 임원 상세 정보 핸들러
   const handleExecutiveDetail = (executive: ExecutiveStatusRow) => {
-    
+    console.log('executive', executive)
     setSelectedExecutive(executive);
     setDialogMode('view');
     setDialogOpen(true);
@@ -256,7 +246,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       const worksheet = workbook.addWorksheet('임원현황');
 
       // 헤더 설정
-      const headers = ['직책', '사원ID', '임원선임일', '겸직여부', '겸직사항'];
+      const headers = ['직책', '사원ID', '직책부여일', '겸직여부', '겸직사항'];
       worksheet.addRow(headers);
 
       // 헤더 스타일 설정
@@ -272,7 +262,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         worksheet.addRow([
           row.positionNameMapped,
           row.empId,
-          row.execofficerDt,
+          row.execofficer_dt,
           row.dualYn === 'Y' ? '있음' : '없음',
           row.dualDetails || '해당없음'
         ]);
