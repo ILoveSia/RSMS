@@ -17,14 +17,19 @@ export interface HodICItemRow {
   responsibilityId: number;
   responsibilityContent: string;
   deptCd: string;
+  deptName: string;
   fieldTypeCd: string;
+  fieldTypeName: string;
   roleTypeCd: string;
+  roleTypeName: string;
   icTask: string;
   measureDesc: string;
   measureType: string;
   periodCd: string;
+  periodName: string;
   supportDoc: string;
   checkPeriod: string;
+  checkPeriodName: string;
   checkWay: string;
   createdAt: string;
   updatedAt: string;
@@ -85,8 +90,10 @@ export const hodICItemApi = {
   /**
    * 부서장 내부통제 항목 현황 조회
    */
-  async getHodICItemStatusList(ledgerOrder?: string): Promise<HodICItemRow[]> {
-    const params = ledgerOrder ? { ledgerOrder } : {};
+  async getHodICItemStatusList(ledgerOrder?: string, fieldType?: string): Promise<HodICItemRow[]> {
+    const params: Record<string, string> = {};
+    if (ledgerOrder) params.ledgerOrder = ledgerOrder;
+    if (fieldType) params.fieldType = fieldType;
     return apiClient.get('/hod-ic-items', { params });
   },
 

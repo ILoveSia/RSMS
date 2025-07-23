@@ -29,14 +29,19 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                     r.responsibility_id as "responsibilityId",
                     r.responsibility_content as "responsibilityContent",
                     h.dept_cd as "deptCd",
+                    d.department_name as "deptName",
                     h.field_type_cd as "fieldTypeCd",
+                    cc1.code_name as "fieldTypeName",
                     h.role_type_cd as "roleTypeCd",
+                    cc2.code_name as "roleTypeName",
                     h.ic_task as "icTask",
                     h.measure_desc as "measureDesc",
                     h.measure_type as "measureType",
                     h.period_cd as "periodCd",
+                    cc3.code_name as "periodName",
                     h.support_doc as "supportDoc",
                     h.check_period as "checkPeriod",
+                    cc4.code_name as "checkPeriodName",
                     h.check_way as "checkWay",
                     h.created_at as "createdAt",
                     h.updated_at as "updatedAt",
@@ -44,12 +49,19 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                     h.ledger_order as "ledgerOrder"
                 FROM hod_ic_item h
                 INNER JOIN responsibility r ON h.responsibility_id = r.responsibility_id
+                LEFT JOIN departments d ON h.dept_cd = d.department_id
+                LEFT JOIN common_code cc1 ON h.field_type_cd = cc1.code AND cc1.group_code = 'FIELD_TYPE' AND cc1.use_yn = 'Y'
+                LEFT JOIN common_code cc2 ON h.role_type_cd = cc2.code AND (cc2.group_code = 'UNI_ROLE_TYPE' OR cc2.group_code = 'COM_ROLE_TYPE') AND cc2.use_yn = 'Y'
+                LEFT JOIN common_code cc3 ON h.period_cd = cc3.code AND cc3.group_code = 'PERIOD' AND cc3.use_yn = 'Y'
+                LEFT JOIN common_code cc4 ON h.check_period = cc4.code AND cc4.group_code = 'MONTH' AND cc4.use_yn = 'Y'
                 LEFT JOIN approval a ON h.approval_id = a.approval_id
                 WHERE (:ledgerOrder IS NULL OR h.ledger_order = :ledgerOrder)
+                  AND (:fieldType IS NULL OR h.field_type_cd = :fieldType)
                 ORDER BY h.hod_ic_item_id
             """, nativeQuery = true)
     List<HodICItemStatusProjection> findHodICItemStatusList(
-            @Param("ledgerOrder") String ledgerOrder);
+            @Param("ledgerOrder") String ledgerOrder,
+            @Param("fieldType") String fieldType);
 
     /**
      * 특정 책무번호로 부서장 내부통제 항목 조회

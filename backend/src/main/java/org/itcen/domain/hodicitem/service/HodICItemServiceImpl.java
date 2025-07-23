@@ -37,10 +37,10 @@ public class HodICItemServiceImpl implements HodICItemService {
     private final ResponsibilityRepository responsibilityRepository;
 
     @Override
-    public List<HodICItemStatusProjection> getHodICItemStatusList(String ledgerOrder) {
-        log.debug("부서장 내부통제 항목 현황 조회 시작: ledgerOrder={}", ledgerOrder);
+    public List<HodICItemStatusProjection> getHodICItemStatusList(String ledgerOrder, String fieldType) {
+        log.debug("부서장 내부통제 항목 현황 조회 시작: ledgerOrder={}, fieldType={}", ledgerOrder, fieldType);
 
-        List<HodICItemStatusProjection> resultList = hodICItemRepository.findHodICItemStatusList(ledgerOrder);
+        List<HodICItemStatusProjection> resultList = hodICItemRepository.findHodICItemStatusList(ledgerOrder, fieldType);
 
         log.debug("부서장 내부통제 항목 현황 조회 완료: 총 {}건", resultList.size());
         return resultList;
