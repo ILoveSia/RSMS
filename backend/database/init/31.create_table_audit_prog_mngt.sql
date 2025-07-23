@@ -1,9 +1,11 @@
 --31.create_table_audit_prog_mngt.sql
 -- 점검계획관리 table
 -- DROP TABLE public.audit_prog_mngt;
+
 CREATE TABLE public.audit_prog_mngt (
     audit_prog_mngt_id      bigserial           NOT NULL,       --점검계획관리ID 
     audit_prog_mngt_cd      varchar(100)        NOT NULL,       --점검계획코드(자동생성)
+    ledger_orders_hod       varchar(100)        NOT NULL,       --부서장 원장차수
     audit_title             varchar(300)        NOT NULL,       --점검회차명
     audit_start_dt          date                NOT NULL,       --점검기간 start
     audit_end_dt            date                NOT NULL,       --점검기간 end

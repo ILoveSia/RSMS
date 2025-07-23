@@ -1,6 +1,6 @@
 /**
- * 점검 계획 관리 페이지
- * 점검 계획을 조회하고 관리합니다.
+ * 점검계획관리 현황 페이지
+ * 점검계획관리 현황을 조회하고 관리합니다.
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
@@ -14,22 +14,93 @@ import type { DataGridColumn } from '@/shared/types/common';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
+import AuditProgMngtDialog, { type AuditProgramData } from '../components/AuditProgMngtDialog';
+import InspectionTargetSelectionDialog, { type InspectionTargetItem } from '../components/InspectionTargetSelectionDialog';
+import { 
+  getAllAuditProgMngtStatusList, 
+  deleteMultipleAuditProgMngt,
+  createAuditProgMngt,
+  updateAuditProgMngt,
+  type AuditProgMngtStatusResponse,
+  type AuditProgMngtRequest
+} from '../api/auditProgMngtApi';
 
-// 점검 계획 데이터 인터페이스
+// 점검계획관리 현황 데이터 인터페이스
 interface AuditProgRow {
-  id: number;
-  auditPlanCode: string;     // 점검계획코드
-  auditMemberName: string;   // 점검 회자명
-  auditPeriod: string;       // 점검기간
-  targetItemCount: number;   // 대상 점검항목 수
-  isModified: boolean;       // 수정여부
-  progressStatus: string;    // 진행상태
-  remarks?: string;          // 비고
+  auditProgMngtCd: string;    // 점검계획코드
+  auditProgName: string;      // 점검계획명
+  auditTypeName: string;      // 점검유형명
+  ledgerOrdersHod: string;    // 책무번호
+  auditTarget: string;        // 점검대상
+  auditPeriod: string;        // 점검기간
+  auditTeamLeader: string;    // 점검팀장
+  auditTeamMembers: string;   // 점검팀원
+  targetItemCount: number;    // 대상 점검항목수
+  auditStatusName: string;    // 점검상태명
+  remarks?: string;           // 비고
+  createdAt: string;          // 등록일자
 }
 
 interface IAuditProgMngtStatusPageProps {
   className?: string;
 }
+
+/**
+ * API 응답을 AuditProgRow로 변환하는 함수
+ */
+const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditProgRow => {
+  return {
+    auditProgMngtCd: response.auditProgMngtCd,
+    auditProgName: response.auditProgName,
+    auditTypeName: response.auditTypeName,
+    ledgerOrdersHod: response.ledgerOrdersHod,
+    auditTarget: response.auditTarget,
+    auditPeriod: `${response.auditStartDate} ~ ${response.auditEndDate}`,
+    auditTeamLeader: response.auditTeamLeader,
+    auditTeamMembers: response.auditTeamMembers,
+    targetItemCount: response.targetItemCount || 0,
+    auditStatusName: response.auditStatusName,
+    remarks: response.remarks,
+    createdAt: response.createdAt,
+  };
+};
+
+/**
+ * AuditProgRow를 AuditProgramData로 변환하는 함수
+ * 
+ * 책임: 기존 데이터 구조와 다이얼로그 데이터 구조 간 변환
+ */
+const convertToAuditProgramData = (row: AuditProgRow): AuditProgramData => {
+  // 감사기간 문자열을 Date 객체로 파싱
+  const parsePeriod = (periodStr: string): { startDate: Date | null; endDate: Date | null } => {
+    try {
+      const parts = periodStr.split(' ~ ');
+      if (parts.length === 2) {
+        return {
+          startDate: new Date(parts[0]),
+          endDate: new Date(parts[1])
+        };
+      }
+    } catch (error) {
+      console.error('날짜 파싱 오류:', error);
+    }
+    return { startDate: null, endDate: null };
+  };
+
+  const { startDate, endDate } = parsePeriod(row.auditPeriod);
+
+  return {
+    id: 0, // 임시 ID
+    planCode: row.auditProgMngtCd,
+    ledgerOrdersHod: row.ledgerOrdersHod,
+    locationName: row.auditTarget, // 감사대상을 위치명으로 매핑
+    startDate,
+    endDate,
+    targetSelection: `${row.targetItemCount}개 항목 선정`, // 대상 항목 수를 문자열로 변환
+    remarks: row.remarks || '',
+  };
+};
+
 
 const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): React.JSX.Element => {
   // 기본 날짜 계산 (3개월 전 ~ 오늘)
@@ -44,9 +115,9 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   const [startDate, setStartDate] = useState<Date | null>(getDefaultDates().startDate);
   const [endDate, setEndDate] = useState<Date | null>(getDefaultDates().endDate);
 
-  // 점검 계획 데이터
+  // 점검계획관리 현황 데이터
   const [auditRows, setAuditRows] = useState<AuditProgRow[]>([]);
-  const [selectedAuditIds, setSelectedAuditIds] = useState<number[]>([]);
+  const [selectedAuditIds, setSelectedAuditIds] = useState<string[]>([]);
 
   // 등록 모드
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
@@ -60,52 +131,69 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
 
+  // 점검 대상 선정 팝업 상태
+  const [targetSelectionOpen, setTargetSelectionOpen] = useState(false);
+  const [currentLedgerOrdersHod, setCurrentLedgerOrdersHod] = useState<string>('');
+
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<AuditProgRow>[] = [
     {
-      field: 'auditPlanCode',
+      field: 'auditProgMngtCd',
       headerName: '점검계획코드',
-      width: 150,
+      width: 140,
     },
     {
-      field: 'auditMemberName',
-      headerName: '점검 회자명',
-      width: 150,
+      field: 'auditProgName',
+      headerName: '점검계획명',
+      width: 180,
+    },
+    {
+      field: 'auditTypeName',
+      headerName: '점검유형',
+      width: 100,
+    },
+    {
+      field: 'ledgerOrdersHod',
+      headerName: '책무번호',
+      width: 120,
+    },
+    {
+      field: 'auditTarget',
+      headerName: '점검대상',
+      width: 140,
     },
     {
       field: 'auditPeriod',
       headerName: '점검기간',
-      width: 200,
+      width: 180,
+    },
+    {
+      field: 'auditTeamLeader',
+      headerName: '점검팀장',
+      width: 100,
+    },
+    {
+      field: 'auditTeamMembers',
+      headerName: '점검팀원',
+      width: 140,
     },
     {
       field: 'targetItemCount',
-      headerName: '대상 점검항목 수',
-      width: 150,
+      headerName: '대상 점검항목수',
+      width: 120,
       align: 'center' as const,
     },
     {
-      field: 'isModified',
-      headerName: '수정여부',
-      width: 100,
-      renderCell: ({ value }) => (
-        <Chip
-          label={value ? '수정' : '원본'}
-          color={value ? 'primary' : 'default'}
-          size="small"
-        />
-      ),
-    },
-    {
-      field: 'progressStatus',
-      headerName: '진행상태',
-      width: 120,
+      field: 'auditStatusName',
+      headerName: '점검상태',
+      width: 90,
       renderCell: ({ value }) => (
         <Chip
           label={value}
           color={
             value === '완료' ? 'success' :
             value === '진행중' ? 'primary' :
-            value === '대기' ? 'default' : 'warning'
+            value === '계획' ? 'default' : 'warning'
           }
           size="small"
         />
@@ -114,52 +202,34 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'remarks',
       headerName: '비고',
-      width: 200,
+      width: 150,
     },
   ];
 
-  // 점검 계획 조회 (임시 데이터)
+  // 점검계획관리 현황 조회
   const handleFetchAuditPrograms = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      // 임시 데이터 - 실제 API 호출로 교체 필요
-      const mockData: AuditProgRow[] = [
-        {
-          id: 1,
-          auditPlanCode: 'AUDIT-2024-001',
-          auditMemberName: '김점검',
-          auditPeriod: '2024-01-01 ~ 2024-01-31',
-          targetItemCount: 15,
-          isModified: false,
-          progressStatus: '완료',
-          remarks: '정기 점검 완료'
-        },
-        {
-          id: 2,
-          auditPlanCode: 'AUDIT-2024-002',
-          auditMemberName: '이감사',
-          auditPeriod: '2024-02-01 ~ 2024-02-28',
-          targetItemCount: 22,
-          isModified: true,
-          progressStatus: '진행중',
-          remarks: '추가 점검 항목 발견'
-        },
-        {
-          id: 3,
-          auditPlanCode: 'AUDIT-2024-003',
-          auditMemberName: '박검사',
-          auditPeriod: '2024-03-01 ~ 2024-03-31',
-          targetItemCount: 8,
-          isModified: false,
-          progressStatus: '대기',
-          remarks: ''
-        }
-      ];
+      // 날짜를 문자열로 포맷팅
+      const formatDate = (date: Date | null): string | undefined => {
+        if (!date) return undefined;
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      };
       
-      setAuditRows(mockData);
+      // API 호출
+      const apiResponse = await getAllAuditProgMngtStatusList(
+        formatDate(startDate),
+        formatDate(endDate)
+      );
+      
+      // API 응답을 화면용 데이터로 변환
+      const convertedData = apiResponse.map(convertApiResponseToRow);
+      setAuditRows(convertedData);
+      
     } catch (error) {
-      setErrorMessage('점검 계획 조회 중 오류가 발생했습니다.');
+      console.error('점검계획관리 현황 조회 오류:', error);
+      setErrorMessage('점검계획관리 현황 조회 중 오류가 발생했습니다.');
       setErrorDialogOpen(true);
     } finally {
       setIsLoading(false);
@@ -175,7 +245,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   const handleAuditRowSelectionModelChange = (
     selectedRows: (string | number)[]
   ) => {
-    setSelectedAuditIds(selectedRows.map(id => Number(id)));
+    setSelectedAuditIds(selectedRows.map(id => String(id)));
   };
 
   // 행 클릭 핸들러 (상세보기)
@@ -204,18 +274,34 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     setDialogMode('create');
   };
 
-  // 점검 계획 등록/수정 (임시 구현)
-  const handleSubmit = async (data: any): Promise<{ id: number }> => {
+  // 점검계획관리 등록/수정
+  const handleSubmit = async (data: AuditProgramData): Promise<void> => {
     try {
       setIsLoading(true);
       
-      // 임시 구현 - 실제 API 호출로 교체 필요
-      console.log('점검 계획 저장:', data);
+      // AuditProgramData를 AuditProgMngtRequest로 변환
+      const request: AuditProgMngtRequest = {
+        auditProgMngtCd: data.id ? String(data.id) : undefined,
+        ledgerOrdersHod: data.ledgerOrdersHod,
+        auditStartDt: data.startDate ? data.startDate.toISOString().split('T')[0] : '',
+        auditEndDt: data.endDate ? data.endDate.toISOString().split('T')[0] : '',
+        auditStatusCd: 'AUDIT_APPLY', // 기본값: 점검신청
+        auditContents: data.remarks,
+        targetItemIds: data.targetItems?.map(item => item.id) || []
+      };
+      
+      if (dialogMode === 'create') {
+        // 등록
+        await createAuditProgMngt(request);
+        console.log('점검계획관리 등록 완료');
+      } else if (dialogMode === 'edit' && request.auditProgMngtCd) {
+        // 수정
+        await updateAuditProgMngt(request.auditProgMngtCd, request);
+        console.log('점검계획관리 수정 완료');
+      }
       
       handleDialogClose();
       handleFetchAuditPrograms();
-      
-      return { id: Math.floor(Math.random() * 1000) };
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
       setErrorDialogOpen(true);
@@ -225,15 +311,29 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     }
   };
 
+  // 점검 대상 선정 핸들러
+  const handleTargetSelection = useCallback((formData?: AuditProgramData) => {
+    // 현재 선택된 항목의 책무번호 또는 전달받은 책무번호 사용
+    const ledgerOrdersHod = formData?.ledgerOrdersHod || selectedItem?.ledgerOrdersHod || '';
+    setCurrentLedgerOrdersHod(ledgerOrdersHod);
+    setTargetSelectionOpen(true);
+  }, [selectedItem]);
+
+  // 점검 대상 선정 완료 핸들러
+  const handleTargetSelectionComplete = useCallback((selectedItems: InspectionTargetItem[]) => {
+    console.log('선택된 점검 대상:', selectedItems);
+    setTargetSelectionOpen(false);
+  }, []);
+
   // 모드 변경 핸들러
   const handleModeChange = (mode: 'create' | 'edit' | 'view') => {
     setDialogMode(mode);
   };
 
-  // 점검 계획 삭제 (임시 구현)
+  // 점검계획관리 삭제
   const handleDelete = async () => {
     if (!selectedAuditIds.length) {
-      setErrorMessage('삭제할 점검 계획을 선택해주세요.');
+      setErrorMessage('삭제할 점검계획관리를 선택해주세요.');
       setErrorDialogOpen(true);
       return;
     }
@@ -241,13 +341,14 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     try {
       setIsLoading(true);
       
-      // 임시 구현 - 실제 API 호출로 교체 필요
-      console.log('점검 계획 삭제:', selectedAuditIds);
+      // API 호출
+      await deleteMultipleAuditProgMngt(selectedAuditIds);
       
       setSelectedAuditIds([]);
       handleFetchAuditPrograms();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
+      console.error('점검계획관리 삭제 오류:', error);
+      setErrorMessage(error instanceof Error ? error.message : '삭제 중 오류가 발생했습니다.');
       setErrorDialogOpen(true);
     } finally {
       setIsLoading(false);
@@ -257,9 +358,9 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   return (
     <PageContainer>
       <PageHeader
-        title="[900] 점검 계획"
+        title="[900] 점검계획관리 현황"
         icon={<SearchIcon />}
-        description="점검 계획을 조회하고 관리합니다."
+        description="점검계획관리 현황을 조회하고 관리합니다."
         elevation={false}
       />
       <PageContent
@@ -353,12 +454,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
             onRowSelectionChange={handleAuditRowSelectionModelChange}
             checkboxSelection={true}
             rowSelectionModel={selectedAuditIds}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10, page: 0 }
-              }
-            }}
-            pageSizeOptions={[5, 10, 25, 50]}
             sx={{
               height: '650px',
               '& .MuiDataGrid-virtualScroller': {
@@ -368,21 +463,27 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
           />
         </Box>
 
-        {/* TODO: 점검 계획 등록/수정 다이얼로그 추가 필요 */}
-        {/* 
+        {/* 점검계획관리 등록/수정 다이얼로그 */}
         {isRegistrationMode && (
           <AuditProgMngtDialog
             open={isRegistrationMode}
-            onClose={handleDialogClose}
-            onSubmit={handleSubmit}
-            loading={isLoading}
             mode={dialogMode}
-            itemId={selectedItem?.id}
-            initialData={selectedItem}
+            onClose={handleDialogClose}
+            onSave={handleSubmit}
             onModeChange={handleModeChange}
+            loading={isLoading}
+            initialData={selectedItem ? convertToAuditProgramData(selectedItem) : null}
+            onTargetSelection={handleTargetSelection}
           />
         )}
-        */}
+
+        {/* 점검 대상 선정 다이얼로그 */}
+        <InspectionTargetSelectionDialog
+          open={targetSelectionOpen}
+          onClose={() => setTargetSelectionOpen(false)}
+          onSelect={handleTargetSelectionComplete}
+          ledgerOrdersHod={currentLedgerOrdersHod}
+        />
 
         {/* 에러 다이얼로그 */}
         <ErrorDialog

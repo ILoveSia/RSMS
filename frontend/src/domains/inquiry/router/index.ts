@@ -6,21 +6,21 @@ import type { DomainRoute } from '@/app/router/route-manager';
 import React from 'react';
 
 // Lazy loading을 위한 컴포넌트 import
-const InspectionPlanManagementPage = React.lazy(() => import('@/domains/inquiry/pages/InspectionPlanManagementPage'));
+const AuditProgMngtStatusPage = React.lazy(() => import('@/domains/inquiry/pages/AuditProgMngtStatusPage'));
 const DeptStatusPage = React.lazy(() => import('@/domains/inquiry/pages/DeptStatusPage'));
 const DeficiencyStatusPage = React.lazy(() => import('@/domains/inquiry/pages/DeficiencyStatusPage'));
 
 const inquiryRoutes: DomainRoute[] = [
   {
     path: '/inquiry/inspection-plan',
-    element: InspectionPlanManagementPage,
+    element: AuditProgMngtStatusPage,
     meta: {
-      title: '점검 계획 관리',
+      title: '점검계획관리 현황',
       requiresAuth: true,
       roles: ['USER', 'ADMIN'],
-      breadcrumb: ['적부구조도 이력 점검', '점검 계획 관리'],
+      breadcrumb: ['적부구조도 이력 점검', '점검계획관리 현황'],
       icon: 'Assignment',
-      description: '점검 계획 관리 페이지',
+      description: '점검계획관리 현황 페이지',
     },
   },
   {
