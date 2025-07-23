@@ -257,7 +257,7 @@ public class PositionServiceImpl implements PositionService {
 
     @Override
     @Transactional(readOnly = true)
-    public PositionDetailDto getPositionDetail(Long id) 
+    public PositionDetailDto getPositionDetail(Long id) {
         Position position = positionRepository.findById(id).orElseThrow(
                 () -> new BusinessException("해당 직책을 찾을 수 없습니다.", "POSITION_NOT_FOUND"));
 
