@@ -344,14 +344,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
 
   return (
     <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
     >
       <PageHeader
         title=' [100] 회의체 현황'
@@ -463,14 +455,10 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             flex: 1,
             width: '100%',
             display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            minHeight: 0, // flex item이 축소될 수 있도록 설정
-            position: 'relative',
             // pb: 2,
           }}
         >
-          <DataGrid<MeetingBody>
+          <DataGrid
             data={meetingBodies}
             columns={meetingColumns}
             loading={loading}

@@ -303,14 +303,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
 
   return (
     <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
     >
       <PageHeader
         title='[200] 직책 현황'
@@ -412,7 +404,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             삭제
           </Button>
         </Box>
-        <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
             data={rows}
@@ -433,16 +425,16 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               setSelectedIds(selectedRows.map(id => Number(id)));
             }}
             rowIdField='positionsId'
-            sx={{
-              width: '100%',
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'var(--bank-bg-secondary) !important',
-                fontWeight: 'bold',
-              },
-              '& .MuiDataGrid-row': {
-                cursor: 'pointer',
-              },
-            }}
+          // sx={{
+          //   width: '100%',
+          //   '& .MuiDataGrid-columnHeaders': {
+          //     backgroundColor: 'var(--bank-bg-secondary) !important',
+          //     fontWeight: 'bold',
+          //   },
+          //   '& .MuiDataGrid-row': {
+          //     cursor: 'pointer',
+          //   },
+          // }}
           />
         </Box>
       </PageContent>

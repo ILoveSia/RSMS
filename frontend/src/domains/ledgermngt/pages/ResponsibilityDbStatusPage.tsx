@@ -276,7 +276,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     }, [selectedIds]);
 
     return (
-      <PageContainer>
+      <PageContainer
+      >
         <PageHeader
           title=' [300] 책무 DB 현황'
           icon={<GroupsIcon />}
@@ -377,10 +378,10 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           {/* 데이터 그리드 */}
           <Box
             sx={{
-              flex: 1,
               width: '100%',
               display: 'flex',
               flexDirection: 'column',
+              flex: 1,
             }}
           >
             {error && <p style={{ color: 'red' }}>{error}</p>}

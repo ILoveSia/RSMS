@@ -148,7 +148,7 @@ const DataGrid = <T extends Record<string, any>>({
   onFilterChange,
   pagination,
   serverSide = false,
-  height = 400,
+  height = 800,
   maxHeight,
   autoHeight = false,
   density = 'standard',

@@ -429,7 +429,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
         position: 'relative',
       }}
     >
@@ -446,15 +445,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       />
 
       <PageContent
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          minHeight: 0,
-          position: 'relative',
-          py: 1,
-        }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -519,8 +509,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         </Box>
 
         {/* 데이터 그리드 */}
-        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-          <DataGrid<ExecutiveStatusRow>
+        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <DataGrid
             data={rows}
             columns={executiveColumns}
             loading={loading}

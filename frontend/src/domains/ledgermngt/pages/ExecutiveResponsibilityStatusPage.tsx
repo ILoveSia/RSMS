@@ -17,6 +17,8 @@ import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import executiveResponsibilityApi from '../api/executiveResponsibilityApi';
 import ExecutiveResponsibilityDialog from '../components/ExecutiveResponsibilityDialog';
+import PositionSelect from '@/shared/components/ui/form/PositionSelect';
+import type { PositionSearchResult } from '@/shared/components/ui/form/PositionSelect';
 
 interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
@@ -46,14 +48,8 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogData, setDialogData] = useState<any>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
-  // 옵션 데이터
-  const positionOptions: SelectOption[] = [
-    { value: 'all', label: '전체' },
-    { value: 'chairman', label: '이사회 의장' },
-    { value: 'president', label: '은행장' },
-    { value: 'executive', label: '상임이사' },
-  ];
-
+  const [searchResult, setSearchResult] = useState<PositionSearchResult | null>(null);
+  
   // 테이블 컬럼 정의
   const columns: DataGridColumn<ExecutiveResponsibilityRow>[] = [
     {
@@ -145,7 +141,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       // API 호출 파라미터 구성
       const params = {
         ledgerOrder: selectedRound?.value as string,
-        positionId: selectedPosition?.value === 'all' ? undefined : selectedPosition?.value as string
+        positionId: searchResult?.positionsId
       };
 
 
@@ -202,7 +198,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
         position: 'relative',
       }}
     >
@@ -219,16 +214,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       />
 
       <PageContent
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          minHeight: 0,
-          position: 'relative',
-          py: 1,
-          height: 'calc(100vh - 64px)' // 헤더 높이를 제외한 전체 높이
-        }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -249,12 +234,24 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
-          <ComboBox
+          {/* <ComboBox
             value={selectedPosition}
             onChange={(value) => setSelectedPosition(value as SelectOption)}
             options={positionOptions}
             size="small"
             sx={{ minWidth: '200px' }}
+          /> */}
+          <PositionSelect
+
+            value={searchResult?.positionsNm || 'ALL'}
+            onChange={(value) => {
+              console.log('선택된 포지션:', value);
+              setSearchResult(value);
+              fetchExecutiveResponsibility();
+              // 여기서 추가 로직 처리 가능
+            }}
+            size='small'
+            sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <Button
             variant="contained"
@@ -273,7 +270,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           minHeight: '400px',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
           position: 'relative',
         }}>
           <DataGrid

@@ -268,7 +268,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
         position: 'relative',
       }}
     >
@@ -285,15 +284,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       />
 
       <PageContent
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          minHeight: 0,
-          position: 'relative',
-          py: 1,
-        }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -386,8 +376,8 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         </Box>
 
         {/* 그리드 영역 */}
-        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-          <DataGrid<PositionResponsibility>
+        <Box sx={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <DataGrid
             data={rows}
             columns={columns}
             loading={loading}
