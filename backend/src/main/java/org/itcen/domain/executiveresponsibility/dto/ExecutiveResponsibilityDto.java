@@ -31,6 +31,7 @@ public class ExecutiveResponsibilityDto {
     private String responsibilityDetailContent;
     private String responsibilityMgtSts;
     private String responsibilityRelEvid;
+    private String execofficer_dt;
 
     @Data
     @Builder

@@ -12,7 +12,7 @@ import {
 import type { ReactNode } from 'react';
 import React from 'react';
 
-export type DialogMode = 'create' | 'edit' | 'view';
+export type DialogMode = 'create' | 'edit' | 'view' | 'onlyRead';
 
 export interface BaseDialogProps {
   open: boolean;
@@ -45,6 +45,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit';
   const isCreateMode = mode === 'create';
+  const isOnlyReadMode = mode === 'onlyRead';
 
   const handleEdit = () => {
     onModeChange?.('edit');

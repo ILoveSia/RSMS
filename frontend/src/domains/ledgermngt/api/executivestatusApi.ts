@@ -99,7 +99,6 @@ const execOfficerApi = {
   getPositionDetails: async (positionId: number): Promise<PositionDetailResponse> => {
     try {
       const response = await apiClient.get<PositionDetailResponse>(`/positions/${positionId}`);
-      console.log('12341234', response);
       return response;
     } catch (error) {
       console.error(`Failed to fetch position details for ID ${positionId}:`, error);

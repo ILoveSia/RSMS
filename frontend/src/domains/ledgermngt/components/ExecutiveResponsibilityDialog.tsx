@@ -40,7 +40,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [employeeSearchPopupOpen, setEmployeeSearchPopupOpen] = useState(false);
   const [positionDetailsLoading, setPositionDetailsLoading] = useState(false);
-
+  const [originalDate, setOriginalDate] = useState<Date | null>(null);
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes, setData: setAllCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
 
@@ -93,6 +93,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
 
   // 직책 ID로 직책 상세 정보 조회
   const fetchPositionDetails = async (positionId: number) => {
+    const dateValue = data.execofficer_dt ? new Date(data.execofficer_dt) : null;
+    setOriginalDate(dateValue)
     try {
       setPositionDetailsLoading(true);
 
@@ -178,7 +180,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   return (
     <>
       <BaseDialog
-        mode={'view'}
+        mode={'onlyRead'}
         open={open}
         title={'임원 책무 상세조회'}
         onClose={onClose}
@@ -218,7 +220,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               sx={{ width: '50%' }} />
             <DatePicker
               label="현 직책 부여일"
-              value={formData.appointmentDate}
+              value={originalDate}
               disabled={true}
               onChange={(date) => {
                 setFormData((prev: any) => ({ ...prev, appointmentDate: date || new Date() }));

@@ -157,9 +157,11 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       responsibilityDetail: item.responsibilityDetailContent || '해당없음', // 백엔드에 해당 필드가 없음
       managementDuty: item.responsibilityMgtSts || '해당없음', // 백엔드에 해당 필드가 없음
       relatedBasis: item.responsibilityRelEvid || '해당없음', // 백엔드에 해당 필드가 없음
-      jobRank: item.jobRankCd || '해당없음'
+      jobRank: item.jobRankCd || '해당없음',
+      execofficer_dt: item.execofficer_dt || '해당없음'
     }));
-
+    console.log('data', data)
+      console.log('transformedData', transformedData)
       setRows(transformedData);
 
     } catch (err) {
@@ -292,7 +294,10 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       />
       <ExecutiveResponsibilityDialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => {
+          setDialogOpen(false);
+          setDialogData(null);
+        }}
         data={dialogData}
       />
     </PageContainer>

@@ -32,6 +32,7 @@ public class ExecutiveResponsibilityController {
         log.info("getByPositionId() method called");
         List<ExecutiveResponsibilityDto> result = executiveResponsibilityService.getByPositionId(positionId);
         log.info("Returning {} items", result.size());
+        log.info("result", result);
         return result;
     }
 }
