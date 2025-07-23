@@ -2,7 +2,6 @@
  * 임원 현황 페이지
  * 책무구조 원장 관리 - 임원 현황
  */
-import apiClient from '@/app/common/api/client'; // axios 인스턴스 등
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import { DataGrid } from '@/shared/components/ui/data-display';
@@ -12,10 +11,7 @@ import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
-import {
-  Box,
-  Snackbar
-} from '@mui/material';
+import { Box, Snackbar } from '@mui/material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -25,77 +21,25 @@ import { Button } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
 import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
+import execOfficerApi from '../api/executivestatusApi';
 
 export interface ExecOfficer {
-  positionNameMapped?: string; // 새로 추가될 필드
-  // execofficerId: number;
+  execofficerId: number;
+  positionNameMapped?: string;
   empId: string;
   execofficerDt: string;
   dualYn: string;
   dualDetails: string;
   userName: string;
-  // positionsId: number;
-  // approvalId: number;
-  // ledgerOrder: string;
-  // orderStatus: string;
-  // createdId: string;
-  // updatedId: string;
-  // createdAt: string; // 또는 Date 타입
-  // updatedAt: string; // 또는 Date 타입
+  positionsId?: number;
 }
-
-const execOfficerApi = {
-  getAll: async (): Promise<ExecOfficer[]> => {
-    const response = await apiClient.get<ExecOfficer[]>('/execofficer');
-    return response;
-  },
-  create: async (data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
-    const response = await apiClient.post<ExecOfficer>('/execofficer', data);
-    return response;
-  },
-  update: async (id: number, data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
-    if(data.dualYn === "N"){
-      data.dualDetails = "";
-    }
-    const response = await apiClient.put<ExecOfficer>(`/execofficer/${id}`, data);
-    return response;
-  },
-  delete: async (id: number): Promise<void> => {
-    await apiClient.delete(`/execofficer/${id}`);
-  },
-  getnameById: async (id: number): Promise<ExecOfficer> => {
-    const response = await apiClient.get<ExecOfficer>(`/execofficer/${id}`);
-    return response;
-  }
-};
 
 interface IExecutiveStatusPageProps {
   className?: string;
 }
 
-interface ExecutiveStatusRow {
-  positionNameMapped?: string; // 새로 추가될 필드
-  // execofficerId: number;
-  empId: string;
-  execofficerDt: string;
-  dualYn: string;
-  dualDetails: string;
-  userName: string;
-  positionsId?: number; // 직책 ID 추가
-  // positionName: string;
-  // execofficerId: number;
-  // empId: string;
-  // execofficerDt: string;
-  // dualYn: string;
-  // dualDetails: string;
-  // approvalId: number;
-  // ledgerOrder: string;
-  // orderStatus: string;
-  // createdId: string;
-  // updatedId: string;
-  // createdAt: string;
-  // updatedAt: string;
-}
+type ExecutiveStatusRow = ExecOfficer;
+
 
 const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.Element => {
   const [rows, setRows] = useState<ExecutiveStatusRow[]>([]);
@@ -103,14 +47,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const [error, setError] = useState<string | null>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
 
-  // 필터 상태
-  const [ledgerOrderFilter, setLedgerOrderFilter] = useState<string>('전체');
-
   // 선택된 행
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-  // 원장차수 SelectBox 옵션
-  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<{ value: string; label: string }[]>([]);
 
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -128,10 +66,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     { data: CommonCode[] } | CommonCode[]
   >('codeStore/allCodes');
 
-  // 부서 데이터 상태
-  const [departments, setDepartments] = useState<Array<{ value: string; label: string }>>([]);
-  const [departmentsLoading, setDepartmentsLoading] = useState<boolean>(false);
-  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
 
   // 공통코드 배열 추출 함수
   const getCodesArray = (): CommonCode[] => {
@@ -145,25 +79,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     return [];
   };
 
-  // 공통코드 헬퍼 함수
-  const getDeptCodes = () => {
-    // 부서 API에서 데이터를 가져온 경우 해당 데이터 사용
-    if (departments.length > 0) {
-      return departments.map(dept => ({
-        code: dept.value,
-        codeName: dept.label,
-        groupCode: 'DEPT',
-        useYn: 'Y',
-        sortOrder: 0
-      }));
-    }
-
-    // 기존 공통코드 로직 (폴백용)
-    const codes = getCodesArray();
-    return codes
-      .filter(code => code.groupCode === 'DEPT' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
-  };
 
   const fetchExecutiveStatus = useCallback(async () => {
     setLoading(true);
@@ -171,12 +86,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     try {
       const data = await execOfficerApi.getAll();
       // const empname = await execOfficerApi.getnameById(data.empId);
-      // ExecOfficer[] → ExecutiveStatusRow[] 변환 (positionNameMapped의 undefined 방지)
-      const mappedRows: ExecutiveStatusRow[] = data.map((item) => ({
-        ...item,
-        positionNameMapped: item.positionNameMapped ?? '', // undefined 방지
-      }));
-      setRows(mappedRows);
+      setRows(data);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
       setErrorMessage('임원 현황 데이터를 불러오는 데 실패했습니다.');
@@ -189,13 +99,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   useEffect(() => {
     fetchExecutiveStatus();
   }, [fetchExecutiveStatus]);
-
-  useEffect(() => {
-    // 원장차수 옵션 불러오기
-    import('../api/ledgerOrderApi').then(({ fetchLedgerOrderSelectList }) => {
-      fetchLedgerOrderSelectList().then(setLedgerOrderOptions);
-    });
-  }, []);
 
   const executiveColumns: DataGridColumn<ExecutiveStatusRow>[] = [
     {
@@ -227,15 +130,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       align: 'center',
       headerAlign: 'center',
     },
-    // {
-    //   field: 'empId',
-    //   headerName: '직위',
-    //   width: 120,
-    //   renderCell: ({ value }) => value || '해당없음',
-    //   flex: 1,
-    //   align: 'center',
-    //   headerAlign: 'center',
-    // },
+    
     {
       field: 'execofficerDt',
       headerName: '임원선임일',
@@ -279,19 +174,9 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     }
   ];
 
-  // 필터 변경 핸들러 - ComboBox의 onChange에서 직접 사용하므로 삭제하지 않음
-  const handleLedgerOrderChange = (value: string | SelectOption | SelectOption[] | string[] | null) => {
-    if (typeof value === 'string') {
-      setLedgerOrderFilter(value);
-    } else if (value && !Array.isArray(value) && 'value' in value) {
-      setLedgerOrderFilter(String(value.value));
-    } else {
-      setLedgerOrderFilter('전체');
-    }
-  };
 
   // 임원 저장 핸들러 (등록/수정 공통)
-  const handleSaveExecutive = async (data: any) => {
+  const handleSaveExecutive = async (data: ExecOfficer) => {
     try {
       if (data.execofficerId) {
         // 수정
@@ -321,8 +206,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   // 임원 상세 정보 핸들러
   const handleExecutiveDetail = (executive: ExecutiveStatusRow) => {
-    console.log('선택된 임원 정보:', executive);
-    console.log('직책 ID:', executive.positionsId);
+    
     setSelectedExecutive(executive);
     setDialogMode('view');
     setDialogOpen(true);
@@ -352,11 +236,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        // TODO: 엑셀 파일 업로드 처리 구현
         console.log('엑셀 업로드:', file.name);
-        // 임시로 성공 메시지 표시
         setError(null);
-        alert(`${file.name} 파일이 선택되었습니다.`);
       }
     };
     input.click();
@@ -507,14 +388,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 다운로드
           </Button>
-          {/* <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={handleCreateExecutive}
-          >
-            임원 등록
-          </Button> */}
+          
         </Box>
 
         {/* 데이터 그리드 */}
@@ -524,6 +398,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
+          height: '100%' // 높이 추가
         }}>
           <DataGrid
             data={rows}

@@ -1,17 +1,16 @@
-import apiClient from '@/app/common/api/client'; // axios 인스턴스 등
+import apiClient from '@/app/common/api/client';
 
 export interface ExecOfficer {
-  id: number;
-  positionName: string;
-  executiveName: string;
-  jobTitle: string;
-  appointmentDate: string;
-  hasConcurrentPosition: boolean;
-  concurrentDetails: string;
-  positionsId?: number; // Added positionsId field
+  execofficerId: number;
+  positionNameMapped?: string;
+  empId: string;
+  execofficerDt: string;
+  dualYn: string;
+  dualDetails: string;
+  userName: string;
+  positionsId?: number;
 }
 
-// Position details related interfaces
 export interface PositionDetailResponse {
   positionsId: number;
   positionName: string;
@@ -41,23 +40,19 @@ export interface Manager {
   position: string;
 }
 
-// ApiResponse 타입 정의
-interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data: T;
-}
-
 const execOfficerApi = {
   getAll: async (): Promise<ExecOfficer[]> => {
     const response = await apiClient.get<ExecOfficer[]>('/execofficer');
     return response;
   },
-  create: async (data: Omit<ExecOfficer, 'id'>): Promise<ExecOfficer> => {
+  create: async (data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
     const response = await apiClient.post<ExecOfficer>('/execofficer', data);
     return response;
   },
-  update: async (id: number, data: Omit<ExecOfficer, 'id'>): Promise<ExecOfficer> => {
+  update: async (id: number, data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {
+    if (data.dualYn === 'N') {
+      data.dualDetails = '';
+    }
     const response = await apiClient.put<ExecOfficer>(`/execofficer/${id}`, data);
     return response;
   },
@@ -68,19 +63,16 @@ const execOfficerApi = {
     const response = await apiClient.get<ExecOfficer>(`/execofficer/${id}`);
     return response;
   },
-  // New function to fetch position details by ID
   getPositionDetails: async (positionId: number): Promise<PositionDetailResponse> => {
     try {
-      // apiClient가 이미 ApiResponse wrapper를 unwrap해서 data만 반환하므로
-      // 직접 PositionDetailResponse 타입으로 받을 수 있습니다
       const response = await apiClient.get<PositionDetailResponse>(`/positions/${positionId}`);
-      console.log("12341234", response);
+      console.log('12341234', response);
       return response;
     } catch (error) {
       console.error(`Failed to fetch position details for ID ${positionId}:`, error);
       throw error;
     }
-  }
+  },
 };
 
 export default execOfficerApi;
