@@ -26,6 +26,10 @@ const executiveResponsibilityApi = {
         getAll:async():Promise<ExecutiveResponsibility[]> => {
     const response = await apiClient.get<ExecutiveResponsibility[]>('/executive-responsibilities');
     return response;
+  },
+  getByPositionId:async(positionId:number):Promise<ExecutiveResponsibility[]> => {
+    const response = await apiClient.get<ExecutiveResponsibility[]>(`/executive-responsibilities/${positionId}`);
+    return response;
   }
 };
 

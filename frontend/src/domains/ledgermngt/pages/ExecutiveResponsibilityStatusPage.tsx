@@ -18,8 +18,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import executiveResponsibilityApi from '../api/executiveResponsibilityApi';
 import ExecutiveResponsibilityDialog from '../components/ExecutiveResponsibilityDialog';
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
-import type { PositionSearchResult } from '@/shared/components/ui/form/PositionSelect';
-
+import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
 }
@@ -40,15 +39,13 @@ interface ExecutiveResponsibilityRow {
 
 const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatusPageProps> = () => {
   // 상태 관리
-  const [selectedRound, setSelectedRound] = useState<SelectOption | null>(null);
-  const [selectedPosition, setSelectedPosition] = useState<SelectOption | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<PositionSearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogData, setDialogData] = useState<any>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
-  const [searchResult, setSearchResult] = useState<PositionSearchResult | null>(null);
   
   // 테이블 컬럼 정의
   const columns: DataGridColumn<ExecutiveResponsibilityRow>[] = [
@@ -139,28 +136,29 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       setIsLoading(true);
 
       // API 호출 파라미터 구성
-      const params = {
-        ledgerOrder: selectedRound?.value as string,
-        positionId: searchResult?.positionsId
-      };
-
-
+      let transformedData:ExecutiveResponsibilityRow[] = [];
+      let data=null;
+      if(selectedPosition===null){
       // 실제 API 호출
-      const data = await executiveResponsibilityApi.getAll();
+      data = await executiveResponsibilityApi.getAll();
       // API 응답을 페이지에서 사용하는 형태로 변환
 
-      const transformedData: ExecutiveResponsibilityRow[] = data.map((item: any) => ({
-        id: item.positionsId || 0,
-        position: item.positionNameMapped || '해당없음',
-        jobTitle: item.jobTitleCd || '해당없음',
-        empNo: item.num || '해당없음',
-        executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
-        responsibility: item.responsibilityContent || '해당없음', // 백엔드에 해당 필드가 없음
-        responsibilityDetail: item.responsibilityDetailContent || '해당없음', // 백엔드에 해당 필드가 없음
-        managementDuty: item.responsibilityMgtSts || '해당없음', // 백엔드에 해당 필드가 없음
-        relatedBasis: item.responsibilityRelEvid || '해당없음', // 백엔드에 해당 필드가 없음
-        jobRank: item.jobRankCd || '해당없음'
-      }));
+    }
+    else{
+     data = await executiveResponsibilityApi.getByPositionId(selectedPosition.positionsId);
+    }
+    transformedData= data.map((item: any) => ({
+      id: item.positionsId || 0,
+      position: item.positionNameMapped || '해당없음',
+      jobTitle: item.jobTitleCd || '해당없음',
+      empNo: item.num || '해당없음',
+      executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
+      responsibility: item.responsibilityContent || '해당없음', // 백엔드에 해당 필드가 없음
+      responsibilityDetail: item.responsibilityDetailContent || '해당없음', // 백엔드에 해당 필드가 없음
+      managementDuty: item.responsibilityMgtSts || '해당없음', // 백엔드에 해당 필드가 없음
+      relatedBasis: item.responsibilityRelEvid || '해당없음', // 백엔드에 해당 필드가 없음
+      jobRank: item.jobRankCd || '해당없음'
+    }));
 
       setRows(transformedData);
 
@@ -172,7 +170,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     } finally {
       setIsLoading(false);
     }
-  }, [selectedRound, selectedPosition]);
+  }, [ selectedPosition]);
 
   useEffect(() => {
     fetchExecutiveResponsibility();
@@ -242,16 +240,10 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             sx={{ minWidth: '200px' }}
           /> */}
           <PositionSelect
-
-            value={searchResult?.positionsNm || 'ALL'}
-            onChange={(value) => {
-              console.log('선택된 포지션:', value);
-              setSearchResult(value);
-              fetchExecutiveResponsibility();
-              // 여기서 추가 로직 처리 가능
-            }}
-            size='small'
-            sx={{ minWidth: 150, maxWidth: 200 }}
+            value={selectedPosition}
+            onChange={setSelectedPosition}
+            size="small"
+            sx={{ minWidth: '200px' }}
           />
           <Button
             variant="contained"

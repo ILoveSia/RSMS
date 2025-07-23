@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.web.bind.annotation.PathVariable;
 /**
  * 임원별 책무 현황 컨트롤러
  */
@@ -24,6 +24,13 @@ public class ExecutiveResponsibilityController {
     public List<ExecutiveResponsibilityDto> getAll() {
         log.info("getAll() method called");
         List<ExecutiveResponsibilityDto> result = executiveResponsibilityService.getAll();
+        log.info("Returning {} items", result.size());
+        return result;
+    }
+    @GetMapping("/{positionId}")
+    public List<ExecutiveResponsibilityDto> getByPositionId(@PathVariable Long positionId) {
+        log.info("getByPositionId() method called");
+        List<ExecutiveResponsibilityDto> result = executiveResponsibilityService.getByPositionId(positionId);
         log.info("Returning {} items", result.size());
         return result;
     }
