@@ -6,6 +6,7 @@ import { Button, DataGrid } from '@/shared/components/ui';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
+import ResponsibilitySelect from '@/shared/components/ui/form/ResponsibilitySelect';
 import PageContent from '@/shared/components/ui/layout/PageContent';
 import PageHeader from '@/shared/components/ui/layout/PageHeader';
 import { Groups as GroupsIcon } from '@mui/icons-material';
@@ -62,6 +63,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [searchText, setSearchText] = useState<string>('');
+    const [selectedResponsibility, setSelectedResponsibility] = useState<any>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [data, setData] = useState<ResponsibilityRow[]>([]);
     const [groupedData, setGroupedData] = useState<GroupedResponsibility[]>([]);
@@ -128,24 +130,15 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
       try {
         const data = await responsibilityApi.getStatusList(searchId);
-        console.log("원본 data:", data);
 
         // 데이터 그룹핑
         const grouped = groupDataByResponsibilityId(data);
-        console.log("그룹핑된 data:", grouped);
-
-        // 그룹핑 결과 예시 출력
-        if (grouped.length > 0) {
-          console.log("첫 번째 그룹 예시:", grouped[0]);
-          console.log("첫 번째 그룹의 세부사항들:", grouped[0].details);
-        }
 
         setData(data);
         setGroupedData(grouped);
 
         // 그룹핑된 데이터를 DataGrid용으로 변환
         const gridRows = convertToGridRows(grouped);
-        console.log("DataGrid용 변환된 데이터:", gridRows);
         setRows(gridRows);
       } catch (err) {
         console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
@@ -153,12 +146,17 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         setError(errorMessage);
       } finally {
         setLoading(false);
-      }
-    }, [groupDataByResponsibilityId, convertToGridRows]);
+      }}, [groupDataByResponsibilityId, convertToGridRows]);
 
     useEffect(() => {
       fetchResponsibilities();
     }, [fetchResponsibilities]);
+
+    // 선택된 책무가 변경될 때 자동으로 데이터 다시 로드
+    useEffect(() => {
+      const searchId = selectedResponsibility?.responsibilityId?.toString() || '';
+      fetchResponsibilities(searchId);
+    }, [selectedResponsibility, fetchResponsibilities]);
 
     // 그룹핑된 데이터 활용 유틸리티 함수들
     const getResponsibilityById = useCallback((responsibilityId: number): GroupedResponsibility | undefined => {
@@ -329,8 +327,9 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // 조회 버튼 클릭 핸들러
     const handleSearch = useCallback(() => {
-      fetchResponsibilities(searchText);
-    }, [searchText, fetchResponsibilities]);
+      const searchId = selectedResponsibility?.responsibilityId?.toString() || '';
+      fetchResponsibilities(searchId);
+    }, [selectedResponsibility, fetchResponsibilities]);
 
     // 등록 버튼 클릭 핸들러
     const handleCreateClick = useCallback(() => {
@@ -360,9 +359,9 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       setDialogMode(newMode);
     }, []);
 
-    // 검색 텍스트 변경 핸들러 (성능 최적화)
-    const handleSearchTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchText(e.target.value);
+    // 책무 선택 변경 핸들러
+    const handleResponsibilityChange = useCallback((responsibility: any) => {
+      setSelectedResponsibility(responsibility);
     }, []);
 
     const handleDelete = useCallback(() => {
@@ -428,10 +427,17 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               sx={{ minWidth: 150, maxWidth: 200 }}
             />
             <span
-              style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
-            >
-              책무 ID
-            </span>
+            style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
+          >
+            책무 ID
+          </span>
+            <ResponsibilitySelect
+              value={selectedResponsibility}
+              onChange={setSelectedResponsibility}
+              size='small'
+              sx={{ minWidth: 150, maxWidth: 200 }}
+            />
+            {/* 
             <TextField
               size='small'
               variant='outlined'
@@ -446,7 +452,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
                   </InputAdornment>
                 ),
               }}
-            />
+            /> */}
             <Box sx={{ flexGrow: 1 }} />
             <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
               조회

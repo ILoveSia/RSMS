@@ -149,6 +149,21 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
     }
   }, [open]);
 
+  // 행 클릭 핸들러 (단일 선택)
+  const handleRowClick = (params: GridRowParams) => {
+    const rowId = params.id.toString();
+    const idParts = rowId.split('_');
+    const responsibilityId = parseInt(idParts[0], 10);
+
+    const selectedResp = filteredResponsibilities.find(
+      resp => resp.responsibilityId === responsibilityId
+    );
+    if (selectedResp) {
+      onSelect(selectedResp);
+      onClose();
+    }
+  };
+
   // 행 더블클릭 핸들러
   const handleRowDoubleClick = (params: GridRowParams) => {
     const rowId = params.id.toString();
@@ -223,7 +238,7 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
               placeholder='책무ID, 책무내용으로 검색'
               value={searchKeyword}
               onChange={e => setSearchKeyword(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && handleSearch()}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position='start'>
@@ -240,7 +255,7 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
           {/* 안내 메시지 */}
           <Box sx={{ mb: 1 }}>
             <Typography variant='body2' color='text.secondary'>
-              행을 더블클릭하거나 선택 후 "선택" 버튼을 클릭하세요.
+              행을 클릭하거나 선택 후 "선택" 버튼을 클릭하세요.
             </Typography>
           </Box>
 
@@ -269,6 +284,7 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
                 onRowSelectionModelChange={newSelection => {
                   setSelectedRows(Array.from(newSelection) as string[]);
                 }}
+                onRowClick={handleRowClick}
                 onRowDoubleClick={handleRowDoubleClick}
                 getRowHeight={() => 45}
                 sx={{

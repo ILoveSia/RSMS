@@ -241,9 +241,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   };
 
   const handleSave = async () => {
-    console.log("handlesave in");
     if (!validateForm()) {
-      console.log("handlesave invalid");
       return;
     }
 
