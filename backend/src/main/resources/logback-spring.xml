@@ -68,55 +68,58 @@
     <!-- 특정 패키지별 로그 레벨 설정 -->
     
     <!-- 애플리케이션 로그 -->
-    <logger name="org.itcen" level="DEBUG" additivity="false">
+    <logger name="org.itcen" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
         <appender-ref ref="ERROR_FILE"/>
     </logger>
     
     <!-- Case Study 도메인 상세 로그 -->
-    <logger name="org.itcen.domain.casestudy" level="DEBUG" additivity="false">
+    <logger name="org.itcen.domain.casestudy" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
         <appender-ref ref="ERROR_FILE"/>
     </logger>
     
     <!-- SQL 로그 설정 -->
-    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+    <logger name="org.hibernate.SQL" level="WARN" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="SQL_FILE"/>
     </logger>
     
     <!-- SQL 파라미터 로그 -->
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="SQL_FILE"/>
     </logger>
     
     <!-- Spring Security 로그 -->
-    <logger name="org.springframework.security" level="DEBUG" additivity="false">
+    <logger name="org.springframework.security" level="WARN" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
     
     <!-- Spring Web 로그 -->
-    <logger name="org.springframework.web" level="DEBUG" additivity="false">
+    <logger name="org.springframework.web" level="WARN" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
     
     <!-- JPA/Hibernate 로그 -->
-    <logger name="org.springframework.orm.jpa" level="DEBUG" additivity="false">
+    <logger name="org.springframework.orm.jpa" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
     
     <!-- 데이터베이스 연결 로그 -->
-    <logger name="com.zaxxer.hikari" level="DEBUG" additivity="false">
+    <logger name="com.zaxxer.hikari" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </logger>
     
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.apache.tomcat" level="WARN"/>
     <!-- 루트 로거 설정 -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
@@ -126,10 +129,14 @@
     
     <!-- 프로파일별 설정 -->
     <springProfile name="dev,local">
-        <logger name="org.itcen" level="DEBUG"/>
-        <logger name="org.hibernate.SQL" level="DEBUG"/>
-        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+        <logger name="org.itcen" level="INFO"/>
+        <logger name="org.hibernate.SQL" level="WARN"/>
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN"/>
+        <logger name="org.springframework.web" level="WARN"/>
+        <logger name="org.springframework.security" level="WARN"/>
     </springProfile>
+    
+    
     
     <springProfile name="prod">
         <logger name="org.itcen" level="INFO"/>
