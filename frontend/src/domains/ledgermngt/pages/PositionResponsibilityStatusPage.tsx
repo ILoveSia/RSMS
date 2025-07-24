@@ -34,8 +34,36 @@ interface PositionResponsibility {
   updatedAt: string;
 }
 
+// 그룹핑된 직책별 책무 데이터 타입 정의
+interface GroupedPositionResponsibility {
+  positionId: string;
+  positionName: string;
+  classification: string; // 공통 항목으로 이동
+  createdAt: string;
+  updatedAt: string;
+  details: Array<{
+    id: number;
+    responsibilityOverview: string;
+    responsibilityStartDate: string;
+    lastModifiedDate: string;
+  }>;
+}
+
+// DataGrid에서 사용할 그룹핑된 행 데이터 타입
+interface GroupedPositionResponsibilityRow {
+  positionId: string;
+  positionName: string;
+  classification: string; // 공통 구분 (그룹 내 동일)
+  responsibilityOverview: string; // 콤마로 구분된 문자열 또는 대표값
+  responsibilityStartDate: string;
+  lastModifiedDate: string;
+  detailCount: number; // 세부사항 개수
+}
+
 const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPageProps> = (): React.JSX.Element => {
-  const [rows, setRows] = useState<PositionResponsibility[]>([]);
+  const [rows, setRows] = useState<GroupedPositionResponsibilityRow[]>([]);
+  const [originalData, setOriginalData] = useState<PositionResponsibility[]>([]);
+  const [groupedData, setGroupedData] = useState<GroupedPositionResponsibility[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,7 +76,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>('view');
-  const [selectedDetailData, setSelectedDetailData] = useState<PositionResponsibility | null>(null);
+  const [selectedDetailData, setSelectedDetailData] = useState<any>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -62,6 +90,72 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     totalPages: 0
   });
 
+  // positions_id로 데이터 그룹화 함수
+  const groupDataByPositionId = useCallback((data: PositionResponsibility[]): GroupedPositionResponsibility[] => {
+    const groupMap = new Map<string, GroupedPositionResponsibility>();
+
+    data.forEach(item => {
+      const { positionId, positionName, createdAt, updatedAt, id, classification, responsibilityOverview, responsibilityStartDate, lastModifiedDate } = item;
+
+      if (!groupMap.has(positionId)) {
+        groupMap.set(positionId, {
+          positionId,
+          positionName,
+          classification, // 첫 번째 항목의 classification을 공통으로 사용
+          createdAt,
+          updatedAt,
+          details: []
+        });
+      }
+
+      const group = groupMap.get(positionId)!;
+      group.details.push({
+        id,
+        responsibilityOverview,
+        responsibilityStartDate,
+        lastModifiedDate
+      });
+    });
+
+    return Array.from(groupMap.values());
+  }, []);
+
+  // 그룹핑된 데이터를 DataGrid용 행 데이터로 변환
+  const convertToGridRows = useCallback((groupedData: GroupedPositionResponsibility[]): GroupedPositionResponsibilityRow[] => {
+    return groupedData.map(group => {
+      const formatWithCount = (items: string[]) => {
+        const validItems = items.filter(item => item && item.trim() !== '');
+        if (validItems.length === 0) {
+          return '해당 없음';
+        }
+        if (validItems.length === 1) {
+          return validItems[0];
+        }
+        return `${validItems[0]} 외 ${validItems.length - 1}개`;
+      };
+
+      return {
+        positionId: group.positionId,
+        positionName: group.positionName,
+        classification: group.classification, // 공통 항목으로 직접 사용
+        responsibilityOverview: formatWithCount(group.details.map(d => d.responsibilityOverview)),
+        responsibilityStartDate: group.details[0]?.responsibilityStartDate || '',
+        lastModifiedDate: group.details[0]?.lastModifiedDate || '',
+        detailCount: group.details.length
+      };
+    });
+  }, []);
+
+  // 그룹화된 데이터 활용 함수들
+  const getPositionData = useCallback((positionId: string): GroupedPositionResponsibility | undefined => {
+    return groupedData.find(item => item.positionId === positionId);
+  }, [groupedData]);
+
+  const getDetailsByPositionId = useCallback((positionId: string) => {
+    const position = getPositionData(positionId);
+    return position?.details || [];
+  }, [getPositionData]);
+
   // 데이터 로드 함수
   const fetchData = useCallback(async () => {
     console.log("fetchdata in")
@@ -70,28 +164,52 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
     try {
       let response = null;
-      if(selectedPosition===null){
+      if (selectedPosition === null) {
         console.log("selectedPosition is null")
         response = await fetch('/api/position-responsibilities');
       }
-      else{
-        console.log("selectedPosition.positionsId",selectedPosition.positionsId)
+      else {
+        console.log("selectedPosition.positionsId", selectedPosition.positionsId)
         response = await fetch(`/api/position-responsibilities/${selectedPosition.positionsId}`);
       }
-      
+
       const data = await response.json();
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
-        ...item,
+        id: item.respontibility_id ?? item.id ?? 0,
+        classification: item.classification ?? '일반',
+        positionId: String(item.positions_id ?? ''),
         positionName: item.positions_name ?? '',
         responsibilityOverview: item.role_summ ?? '',
         responsibilityStartDate: item.created_at ?? '',
         lastModifiedDate: item.updated_at ?? '',
+        createdAt: item.created_at ?? '',
+        updatedAt: item.updated_at ?? '',
         // 새로운 필드들 추가
         responsibility_mgt_sts: item.responsibility_mgt_sts ?? '',
         responsibility_rel_evid: item.responsibility_rel_evid ?? '',
       }));
-      
-      setRows(mappedRows);
+
+      console.log("원본 data:", mappedRows);
+
+      // 원본 데이터 저장
+      setOriginalData(mappedRows);
+
+      // 데이터 그룹핑
+      const grouped = groupDataByPositionId(mappedRows);
+      console.log("그룹핑된 data:", grouped);
+
+      // 그룹핑 결과 예시 출력
+      if (grouped.length > 0) {
+        console.log("첫 번째 그룹 예시:", grouped[0]);
+        console.log("첫 번째 그룹의 세부사항들:", grouped[0].details);
+      }
+
+      setGroupedData(grouped);
+
+      // 그룹핑된 데이터를 DataGrid용으로 변환
+      const gridRows = convertToGridRows(grouped);
+      console.log("DataGrid용 변환된 데이터:", gridRows);
+      setRows(gridRows);
     }
     catch (err) {
       console.error('데이터 조회 실패:', err);
@@ -100,14 +218,14 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     } finally {
       setLoading(false);
     }
-  }, [selectedPosition,pageInfo.page, pageInfo.size]);
+  }, [selectedPosition, pageInfo.page, pageInfo.size, groupDataByPositionId, convertToGridRows]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   // 컬럼 정의
-  const columns: DataGridColumn<PositionResponsibility>[] = [
+  const columns: DataGridColumn<GroupedPositionResponsibilityRow>[] = [
     {
       field: 'classification',
       headerName: '구분',
@@ -137,7 +255,28 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           style={{ color: 'var(--bank-primary)', textDecoration: 'underline', cursor: 'pointer' }}
           onClick={(e) => {
             e.stopPropagation();
-            handleViewDetail(row);
+
+            // 그룹핑된 데이터에서 해당 직책의 모든 세부항목들을 가져오기
+            const groupedPosition = getPositionData(row.positionId);
+
+            // 다이얼로그에서 사용할 수 있는 형태로 데이터 변환
+            const dialogData = groupedPosition ? {
+              id: 0, // 그룹 대표 ID
+              classification: groupedPosition.classification, // 공통 항목
+              positionId: groupedPosition.positionId,
+              positionName: groupedPosition.positionName,
+              responsibilityOverview: groupedPosition.details[0]?.responsibilityOverview || '',
+              responsibilityStartDate: groupedPosition.details[0]?.responsibilityStartDate || '',
+              lastModifiedDate: groupedPosition.details[0]?.lastModifiedDate || '',
+              createdAt: groupedPosition.createdAt,
+              updatedAt: groupedPosition.updatedAt,
+              // 모든 세부항목들을 포함
+              allDetails: groupedPosition.details
+            } : null;
+
+            setSelectedDetailData(dialogData);
+            setDialogMode('view');
+            setDialogOpen(true);
           }}
         >
           {value}
@@ -152,14 +291,9 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       align: 'left',
       headerAlign: 'center',
       renderCell: ({ value }) => (
-        <Box sx={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          maxWidth: '100%'
-        }}>
+        <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
           {value || '해당 없음'}
-        </Box>
+        </div>
       )
     },
     {
@@ -195,12 +329,45 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           {value || '해당 없음'}
         </Box>
       )
+    },
+    {
+      field: 'detailCount',
+      headerName: '세부항목 수',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Chip
+          label={`${value}개`}
+          size="small"
+          color="primary"
+          variant="outlined"
+        />
+      )
     }
   ];
 
   // 상세보기 핸들러
-  const handleViewDetail = (row: PositionResponsibility) => {
-    setSelectedDetailData(row);
+  const handleViewDetail = (row: GroupedPositionResponsibilityRow) => {
+    // 그룹핑된 데이터에서 해당 직책의 모든 세부항목들을 가져오기
+    const groupedPosition = getPositionData(row.positionId);
+
+    // 다이얼로그에서 사용할 수 있는 형태로 데이터 변환
+    const dialogData = groupedPosition ? {
+      id: 0, // 그룹 대표 ID
+      classification: groupedPosition.classification, // 공통 항목
+      positionId: groupedPosition.positionId,
+      positionName: groupedPosition.positionName,
+      responsibilityOverview: groupedPosition.details[0]?.responsibilityOverview || '',
+      responsibilityStartDate: groupedPosition.details[0]?.responsibilityStartDate || '',
+      lastModifiedDate: groupedPosition.details[0]?.lastModifiedDate || '',
+      createdAt: groupedPosition.createdAt,
+      updatedAt: groupedPosition.updatedAt,
+      // 모든 세부항목들을 포함
+      allDetails: groupedPosition.details
+    } : null;
+
+    setSelectedDetailData(dialogData);
     setDialogMode('view');
     setDialogOpen(true);
   };
@@ -257,7 +424,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   };
 
   // 행 선택 핸들러
-  const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedData: PositionResponsibility[]) => {
+  const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedData: GroupedPositionResponsibilityRow[]) => {
     setSelectedIds(selectedRowIds.map(Number));
   };
 
@@ -405,10 +572,10 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             selectable
             multiSelect={false}
             selectedRows={selectedIds}
-            onRowSelectionChange={(selectedRows: (string | number)[], selectedData: PositionResponsibility[]) => {
+            onRowSelectionChange={(selectedRows: (string | number)[], selectedData: GroupedPositionResponsibilityRow[]) => {
               setSelectedIds(selectedRows.map(Number));
             }}
-            rowIdField="id"
+            rowIdField="positionId"
           />
         </Box>
       </PageContent>
