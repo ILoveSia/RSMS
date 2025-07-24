@@ -293,11 +293,9 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       if (dialogMode === 'create') {
         // 등록
         await createAuditProgMngt(request);
-        console.log('점검계획관리 등록 완료');
       } else if (dialogMode === 'edit' && request.auditProgMngtCd) {
         // 수정
         await updateAuditProgMngt(request.auditProgMngtCd, request);
-        console.log('점검계획관리 수정 완료');
       }
       
       handleDialogClose();
@@ -321,7 +319,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
   // 점검 대상 선정 완료 핸들러
   const handleTargetSelectionComplete = useCallback((selectedItems: InspectionTargetItem[]) => {
-    console.log('선택된 점검 대상:', selectedItems);
     setTargetSelectionOpen(false);
   }, []);
 

@@ -211,11 +211,9 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       
       if (dialogMode === 'edit' && selectedItem?.id) {
         // 수정 모드: PUT 요청
-        console.log('수정 모드: ID', selectedItem.id, '데이터 수정');
         result = await updateSubmissionHistory(selectedItem.id, data);
       } else {
         // 생성 모드: POST 요청
-        console.log('생성 모드: 새 데이터 생성');
         result = await submitSubmissionHistory(data);
       }
       

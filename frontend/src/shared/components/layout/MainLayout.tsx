@@ -83,7 +83,6 @@ const MainLayout: IComponent<IMainLayoutProps> = ({
 
   // 인증되지 않은 사용자
   if (!authState.isAuthenticated) {
-    console.log('❌ [MainLayout] 인증되지 않은 사용자');
     return (
       <div style={{
         display: 'flex',

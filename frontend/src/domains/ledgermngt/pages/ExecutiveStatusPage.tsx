@@ -75,7 +75,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     try {
       const data = await execOfficerApi.getAll();
       setRows(data);
-      console.log(data);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
       setErrorMessage('임원 현황 데이터를 불러오는 데 실패했습니다.');
@@ -169,7 +168,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     try {
       if (data.execofficerId) {
         // 수정
-        console.log('data', data)
         await execOfficerApi.update(data.execofficerId, data);
         setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
       } else {
@@ -196,7 +194,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   // 임원 상세 정보 핸들러
   const handleExecutiveDetail = (executive: ExecutiveStatusRow) => {
-    console.log('executive', executive)
     setSelectedExecutive(executive);
     setDialogMode('view');
     setDialogOpen(true);
@@ -226,7 +223,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        console.log('엑셀 업로드:', file.name);
         setError(null);
       }
     };

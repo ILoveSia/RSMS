@@ -123,11 +123,6 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        console.log('주기 데이터:', {
-          periodName: params.value,
-          periodCd: params.row.periodCd,
-          fullRow: params.row
-        });
         return params.value || params.row.periodCd;
       },
     },
@@ -145,12 +140,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        console.log('점검시기 데이터:', {
-          checkPeriodName: params.value,
-          checkPeriod: params.row.checkPeriod,
-          fullRow: params.row
-        });
-        return params.value || params.row.checkPeriod;
+        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
       },
     },
     {
@@ -209,12 +199,10 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
-    console.log('엑셀 다운로드');
   }, [rows]);
 
   const handleCreateHodOrder = useCallback(() => {
     // 부서장차수생성 로직
-    console.log('부서장차수생성');
     alert('부서장차수생성 기능은 추후 구현될 예정입니다.');
   }, []);
 

@@ -95,18 +95,6 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
       );
     }
 
-    if (!foundCode) {
-      console.log(`❌ 코드명 못찾음: ${groupCode}.${code}`);
-      console.log(
-        '🔍 GUBUN01 공통코드:',
-        codes.filter(c => c.groupCode === 'GUBUN01')
-      );
-      console.log(
-        '🔍 PID03 공통코드:',
-        codes.filter(c => c.groupCode === 'PID03')
-      );
-    }
-
     return foundCode?.codeName || code;
   };
 
@@ -123,15 +111,6 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
   // 공통코드 디버깅
   useEffect(() => {
     const codes = getCodesArray();
-    console.log('🔍 전체 공통코드 목록:', codes.length);
-    console.log(
-      '🔍 GUBUN01 공통코드:',
-      codes.filter(c => c.groupCode === 'GUBUN01')
-    );
-    console.log(
-      '🔍 PID03 공통코드:',
-      codes.filter(c => c.groupCode === 'PID03')
-    );
   }, [allCodes]);
 
   // 회의체 목록 로드

@@ -65,7 +65,6 @@ const PositionSelect: React.FC<PositionSelectProps> = ({
   // 직책 선택 핸들러
   const handleSelect = useCallback((position: PositionSearchResult) => {
     onChange(position);
-    console.log('선택된 직책:', position);
     setPositionSearchPopupOpen(false);
   }, [onChange]);
 

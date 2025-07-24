@@ -54,8 +54,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   const handleEmployeeSelect = (employee: EmployeeSearchResult) => {
     if (selectedPosition) {
       // TODO: API 호출하여 선택된 직원 정보 업데이트
-      console.log('Selected employee:', employee);
-      console.log('For position:', selectedPosition);
     }
     setEmployeeSearchOpen(false);
   };
@@ -94,8 +92,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       // 단일 부서만 처리
       const department = Array.isArray(departments) ? departments[0] : departments;
       // TODO: API 호출하여 선택된 부서 정보 업데이트
-      console.log('Selected department:', department);
-      console.log('For position:', selectedPosition);
     }
     setDepartmentSearchOpen(false);
   };
@@ -175,7 +171,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   };
 
   const handleCreateClick = () => {
-    console.log('handleCreateClick');
     setSelectedPositionId(null);
     setPositionDialogMode('create');
     setPositionDialogOpen(true);

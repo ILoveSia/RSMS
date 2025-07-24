@@ -109,8 +109,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
   // 데이터 초기화 및 로드
   useEffect(() => {
-    console.log("rowData", rowData);
-
     if ((mode === 'edit' || mode === 'view') && rowData && open) {
       // PositionResponsibilityStatusPage에서 넘어온 데이터 구조 처리
       // allDetails의 모든 항목을 처리
@@ -243,7 +241,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
       // 첫 번째 항목에서 책무 내용 가져오기 (모든 항목이 같은 responsibilityContent를 가짐)
       const responsibilityContent = response[0].responsibilityContent || '';
-      console.log("response", response)
       // 각 배열 항목을 details로 변환
       const details = response.map((item: ApiResponseItem, index: number) => ({
         // id: `${item.id}-${index}`, // 고유 ID 생성
@@ -252,10 +249,10 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         keyManagementTasks: item.responsibilityMgtSts || '',  // 실제 필드명 매핑
         relatedBasis: item.responsibilityRelEvid || '',       // 실제 필드명 매핑
       }));
-      console.log("details", details)
 
       // 검색으로 선택한 데이터는 formData에만 설정 (임시 데이터)
       setFormData({
+        id: responsibility.responsibilityId,
         responsibilityContent,
         relatedBasis: responsibility.responsibility_rel_evid,
         details,

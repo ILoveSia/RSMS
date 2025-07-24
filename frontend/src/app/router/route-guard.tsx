@@ -25,19 +25,9 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
   const isDevelopment = import.meta.env.MODE === 'development';
 
   // 디버깅 로그 추가
-  console.log('🛡️ [RouteGuard] 권한 체크 시작:', {
-    path: location.pathname,
-    requiresAuth: meta?.requiresAuth,
-    requiredRoles: meta?.roles,
-    isAuthenticated: authState.isAuthenticated,
-    userRoles: authState.user?.roles,
-    loading: authState.loading,
-    skipAuthInDev: SKIP_AUTH_IN_DEV && isDevelopment,
-  });
 
   // 개발 모드에서 인증 체크 건너뛰기
   if (SKIP_AUTH_IN_DEV && isDevelopment && meta?.requiresAuth) {
-    console.log('🚀 [RouteGuard] 개발 모드 - 인증 체크 건너뛰기');
     return <>{children}</>;
   }
 
@@ -65,7 +55,6 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
     if (location.pathname === '/login') {
       return <>{children}</>;
     }
-    console.log('❌ [RouteGuard] 인증 필요하지만 미인증 상태 -> 로그인 페이지로 리다이렉트');
     return <Navigate to='/login' state={{ from: location }} replace />;
   }
 
@@ -80,12 +69,6 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
 
   // 특정 역할이 필요한 페이지인 경우
   if (meta?.roles && meta.roles.length > 0) {
-    console.log('🔍 [RouteGuard] 역할 권한 체크 시작:', {
-      requiredRoles: meta.roles,
-      isAuthenticated: authState.isAuthenticated,
-      userRoles: authState.user?.roles,
-      user: authState.user,
-    });
 
     // 인증되지 않은 사용자는 로그인 페이지로
     if (!authState.isAuthenticated) {
@@ -94,11 +77,6 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
     }
 
     const hasRequiredRole = hasAnyRole(meta.roles);
-    console.log('🔍 [RouteGuard] 역할 권한 체크 결과:', {
-      requiredRoles: meta.roles,
-      userRoles: authState.user?.roles,
-      hasRequiredRole,
-    });
 
     if (!hasRequiredRole) {
       console.log('❌ [RouteGuard] 필요한 역할 권한 없음 -> 접근 거부 페이지 표시');

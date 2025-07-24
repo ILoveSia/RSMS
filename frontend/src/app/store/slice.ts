@@ -84,14 +84,11 @@ export const createBaseSlice = <T = unknown>(
 
 // Root Reducer 생성 함수 추가
 export const setRootReducer = (reducers: Record<string, unknown>, storeName: string) => {
-  console.log('🔧 [setRootReducer] 입력된 reducers:', reducers);
-  console.log('🔧 [setRootReducer] storeName:', storeName);
 
   // 각 도메인의 action 객체를 실제 reducer로 변환
   const processedReducers: Record<string, unknown> = {};
 
   Object.entries(reducers).forEach(([key, value]) => {
-    console.log(`🔧 [setRootReducer] 처리 중: ${key}`, value);
 
     if (value && typeof value === 'object') {
       // action 객체를 reducer 객체로 변환
@@ -100,7 +97,6 @@ export const setRootReducer = (reducers: Record<string, unknown>, storeName: str
       Object.entries(value as Record<string, unknown>).forEach(([actionKey, actionValue]) => {
         if (actionValue && typeof actionValue === 'object' && 'actionType' in actionValue) {
           const actionObj = actionValue as { actionType: string; url?: string };
-          console.log(`🔧 [setRootReducer] ${key}.${actionKey} 처리:`, actionObj);
 
           // 간단한 reducer 생성
           const slice = createSlice({
@@ -133,7 +129,6 @@ export const setRootReducer = (reducers: Record<string, unknown>, storeName: str
     }
   });
 
-  console.log('🔧 [setRootReducer] 최종 processedReducers:', processedReducers);
   return combineReducers(processedReducers);
 };
 

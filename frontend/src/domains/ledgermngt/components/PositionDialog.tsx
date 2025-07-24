@@ -325,10 +325,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       setError(null);
       try {
         const positionData: PositionData = await apiClient.get(`/positions/${id}`);
-        console.log(positionData, 'test 1');
         if (positionData) {
-          console.log(positionData, 'test 2');
-
           // 부서 코드에 해당하는 부서명 찾기
           let writeDeptName = '';
           if (positionData.writeDeptCd) {
@@ -361,7 +358,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
             writeDeptName: writeDeptName,
           });
 
-          console.log('test 3');
           const ownerDeptsData = positionData.ownerDepts || [];
           const meetingsData = positionData.meetings || [];
           const managersData = positionData.managers || [];
@@ -374,20 +370,20 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           setMeetings(
             meetingsData.length > 0
               ? meetingsData.map((m: any, i: any) => ({
-                  id: String(i + 1),
-                  ...m,
-                  memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
-                }))
+                id: String(i + 1),
+                ...m,
+                memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
+              }))
               : [
-                  {
-                    id: '1',
-                    meetingBodyId: '',
-                    meetingBodyName: '',
-                    memberGubun: '',
-                    meetingPeriod: '',
-                    deliberationContent: '',
-                  },
-                ]
+                {
+                  id: '1',
+                  meetingBodyId: '',
+                  meetingBodyName: '',
+                  memberGubun: '',
+                  meetingPeriod: '',
+                  deliberationContent: '',
+                },
+              ]
           );
           setManagers(
             managersData.length > 0
@@ -431,40 +427,40 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         setManagers([{ id: '1', empNo: '', empName: '', position: '' }]);
       }
     }
-  }, [open, mode, positionId]);
+  }, [open, mode, positionId, departments]);
 
   // 입력값 변경 핸들러
   const handleInputChange =
     (field: keyof FormData) =>
-    (
-      event:
-        | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-        | { target: { value: string } }
-    ) => {
-      const value = event.target.value;
+      (
+        event:
+          | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+          | { target: { value: string } }
+      ) => {
+        const value = event.target.value;
 
-      // 부서 선택 시 부서명도 함께 저장
-      if (field === 'writeDeptCd') {
-        const selectedDept = departments.find(dept => dept.value === value);
-        setFormData(prev => ({
-          ...prev,
-          [field]: value,
-          writeDeptName: selectedDept ? selectedDept.label : '',
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          [field]: value,
-        }));
-      }
+        // 부서 선택 시 부서명도 함께 저장
+        if (field === 'writeDeptCd') {
+          const selectedDept = departments.find(dept => dept.value === value);
+          setFormData(prev => ({
+            ...prev,
+            [field]: value,
+            writeDeptName: selectedDept ? selectedDept.label : '',
+          }));
+        } else {
+          setFormData(prev => ({
+            ...prev,
+            [field]: value,
+          }));
+        }
 
-      if (validationErrors[field]) {
-        setValidationErrors(prev => ({
-          ...prev,
-          [field]: '',
-        }));
-      }
-    };
+        if (validationErrors[field]) {
+          setValidationErrors(prev => ({
+            ...prev,
+            [field]: '',
+          }));
+        }
+      };
 
   // 소관부서 추가
   const addOwnerDept = () => {
@@ -508,9 +504,9 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       prev.map(meeting =>
         meeting.id === id
           ? {
-              ...meeting,
-              [field]: value,
-            }
+            ...meeting,
+            [field]: value,
+          }
           : meeting
       )
     );
@@ -535,12 +531,12 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         prev.map(meeting =>
           meeting.id === currentMeetingId
             ? {
-                ...meeting,
-                meetingBodyId: selectedMeeting.id,
-                meetingBodyName: selectedMeeting.name,
-                meetingPeriod: selectedMeeting.period || '',
-                deliberationContent: selectedMeeting.content || '',
-              }
+              ...meeting,
+              meetingBodyId: selectedMeeting.id,
+              meetingBodyName: selectedMeeting.name,
+              meetingPeriod: selectedMeeting.period || '',
+              deliberationContent: selectedMeeting.content || '',
+            }
             : meeting
         )
       );
@@ -587,11 +583,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         prev.map(manager =>
           manager.id === currentManagerId
             ? {
-                ...manager,
-                empNo: selectedEmployee.num,
-                empName: selectedEmployee.username,
-                position: selectedEmployee.jobRankCd,
-              }
+              ...manager,
+              empNo: selectedEmployee.num,
+              empName: selectedEmployee.username,
+              position: selectedEmployee.jobRankCd,
+            }
             : manager
         )
       );
@@ -622,10 +618,10 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
           prev.map(dept =>
             dept.id === currentOwnerDeptId
               ? {
-                  ...dept,
-                  deptCode: selectedDepartment.deptCode,
-                  deptName: selectedDepartment.deptName,
-                }
+                ...dept,
+                deptCode: selectedDepartment.deptCode,
+                deptName: selectedDepartment.deptName,
+              }
               : dept
           )
         );
@@ -659,13 +655,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     setLoading(true);
     setError(null);
 
-    // 저장 전 폼 데이터 로깅 (디버깅용)
-    console.log('저장할 폼 데이터:', formData);
-    console.log('선택된 부서:', {
-      코드: formData.writeDeptCd,
-      이름: formData.writeDeptName,
-    });
-
     const positionRequestData = {
       positionName: formData.positionName,
       writeDeptCd: formData.writeDeptCd,
@@ -676,13 +665,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
     try {
       let response: PositionData;
-      console.log(positionRequestData, mode, 'test 4');
       if (mode === 'create') {
         response = await apiClient.post('/positions', positionRequestData);
       } else {
         response = await apiClient.put(`/positions/${positionId}`, positionRequestData);
       }
-      console.log(response, 'test 5');
       if (onSave) {
         onSave(response); // ← 백엔드 응답 객체를 넘김
       }

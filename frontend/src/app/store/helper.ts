@@ -59,7 +59,6 @@ export const getStateByPath = <T = unknown>(state: unknown, path: string[]): T |
     if (current && typeof current === 'object' && key in current) {
       current = (current as Record<string, unknown>)[key];
     } else {
-      console.error(`[Store] Path not found: ${path.join('/')}`);
       return null;
     }
   }

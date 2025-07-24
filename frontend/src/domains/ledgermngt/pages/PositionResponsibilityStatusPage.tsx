@@ -171,23 +171,19 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
   // 데이터 로드 함수
   const fetchData = useCallback(async () => {
-    console.log("fetchdata in")
     setLoading(true);
     setError(null);
 
     try {
       let response = null;
       if (selectedPosition === null) {
-        console.log("selectedPosition is null")
         response = await fetch('/api/position-responsibilities');
       }
       else {
-        console.log("selectedPosition.positionsId", selectedPosition.positionsId)
         response = await fetch(`/api/position-responsibilities/${selectedPosition.positionsId}`);
       }
 
       const data = await response.json();
-      console.log("data", data)
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         id: item.respontibility_id ?? item.id ?? 0,
         classification: item.classification ?? '일반',
@@ -206,14 +202,11 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         responsibility_rel_evid: item.responsibility_rel_evid ?? '', // 관련 근거
       }));
 
-      console.log("원본 data:", mappedRows);
-
       // 원본 데이터 저장
       setOriginalData(mappedRows);
 
       // 데이터 그룹핑
       const grouped = groupDataByPositionId(mappedRows);
-      console.log("그룹핑된 data:", grouped);
 
       // 그룹핑 결과 예시 출력
       if (grouped.length > 0) {
@@ -226,7 +219,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       setRows(gridRows);
     }
     catch (err) {
-      console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
       setErrorDialogOpen(true);
     } finally {
