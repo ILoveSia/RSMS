@@ -119,7 +119,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       align: 'center',
       headerAlign: 'center',
     },
-    
+
     {
       field: 'execofficer_dt',
       headerName: '직책부여일',
@@ -139,7 +139,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       renderCell: ({ value }) => (
         <span style={{
           color: value === 'Y' ? '#dc3545' : value === 'N' ? '#28a745' : '#000000',
-          fontWeight: 'bold'
+          fontWeight: 'normal'
         }}>
           {value === 'Y' ? '있음' : value === 'N' ? '없음 ' : value || '해당없음'}
         </span>
@@ -317,14 +317,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
       <PageContent
         sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-        position: 'relative', // 좌우 패딩을 3으로 수정
-        py: 1,
-        px: 0,
-      }}
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          position: 'relative', // 좌우 패딩을 3으로 수정
+          py: 1,
+          px: 0,
+        }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -378,7 +378,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 다운로드
           </Button>
-          
+
         </Box>
 
         {/* 데이터 그리드 */}
