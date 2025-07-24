@@ -27,6 +27,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 export interface ResponsibilitySearchResult {
   responsibilityId: number;
   responsibilityContent: string;
+  responsibility_detail_content: string;
+  responsibility_mgt_sts: string;
+  responsibility_rel_evid: string;
 }
 
 // 팝업 Props 타입
@@ -90,6 +93,9 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
         resp => ({
           responsibilityId: resp.responsibilityId,
           responsibilityContent: resp.responsibilityContent,
+          responsibility_detail_content: resp.responsibilityDetailContent,
+          responsibility_mgt_sts: resp.responsibilityMgtSts,
+          responsibility_rel_evid: resp.responsibilityRelEvid,
         })
       );
       // 중복된 responsibility_id 제거

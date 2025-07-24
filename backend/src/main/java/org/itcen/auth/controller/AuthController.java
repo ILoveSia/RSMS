@@ -69,9 +69,7 @@ public class AuthController {
         try {
             AuthResponseDto.LogoutResponse response = authService.logout(httpRequest);
             
-            return ResponseEntity.ok(
-                    ApiResponse.success("로그아웃이 완료되었습니다.", response)
-            );
+            return ResponseEntity.ok(ApiResponse.success("로그아웃 성공", response));
         } catch (Exception e) {
             log.error("로그아웃 처리 중 오류 발생: {}", e.getMessage());
             return ResponseEntity.badRequest().body(

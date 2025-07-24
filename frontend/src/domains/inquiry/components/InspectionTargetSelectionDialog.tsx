@@ -48,9 +48,9 @@ interface InspectionTargetSelectionDialogProps {
  */
 const fetchInspectionTargets = async (ledgerOrdersHod: string): Promise<InspectionTargetItem[]> => {
   const response = await apiClient.get<InspectionTargetItem[]>(
-    `/api/inquiry/hod-ic-items?ledgerOrdersHod=${ledgerOrdersHod}`
+    `/inquiry/hod-ic-items?ledgerOrdersHod=${ledgerOrdersHod}`
   );
-  return response.data;
+  return response;
 };
 
 /**
