@@ -36,21 +36,22 @@ interface PositionResponsibility {
 
 // 그룹핑된 직책별 책무 데이터 타입 정의
 interface GroupedPositionResponsibility {
+  id: number;
   positionId: string;
   positionName: string;
-  classification: string; // 공통 항목으로 이동
+  classification: string;
   createdAt: string;
   updatedAt: string;
+  // 공통 항목들 (같은 직책 내에서 동일한 값)
+  responsibilityOverview: string;
+  responsibility_conent: string; // 책무 내용
+  responsibility_rel_evid: string; // 관련 근거
+  responsibilityStartDate: string;
+  lastModifiedDate: string;
+  // 개별 항목들만 details 배열에 (같은 직책 내에서도 다를 수 있는 값)
   details: Array<{
-    id: number;
-    responsibilityOverview: string;
-    responsibilityStartDate: string;
-    lastModifiedDate: string;
-    // 원본 API 데이터 필드들 추가
-    responsibility_conent: string; // 책무 내용
     responsibility_detail_content: string; // 세부내용
     responsibility_mgt_sts: string; // 주요 관리업무
-    responsibility_rel_evid: string; // 관련 근거
   }>;
 }
 
@@ -100,30 +101,31 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     const groupMap = new Map<string, GroupedPositionResponsibility>();
 
     data.forEach(item => {
-      const { positionId, positionName, createdAt, updatedAt, id, classification, responsibilityOverview, responsibilityStartDate, lastModifiedDate } = item;
+      const { id,positionId, positionName, createdAt, updatedAt, classification, responsibilityOverview, responsibilityStartDate, lastModifiedDate } = item;
 
       if (!groupMap.has(positionId)) {
         groupMap.set(positionId, {
+          id,
           positionId,
           positionName,
-          classification, // 첫 번째 항목의 classification을 공통으로 사용
+          classification,
           createdAt,
           updatedAt,
+          // 공통 항목들 (첫 번째 항목의 값을 공통으로 사용)
+          responsibilityOverview,
+          responsibility_conent: (item as any).responsibility_conent || '',
+          responsibility_rel_evid: (item as any).responsibility_rel_evid || '',
+          responsibilityStartDate: (item as any).responsibilityStartDate || '',
+          lastModifiedDate: (item as any).lastModifiedDate || '',
           details: []
         });
       }
 
       const group = groupMap.get(positionId)!;
+      // 개별 항목들만 details에 저장
       group.details.push({
-        id,
-        responsibilityOverview,
-        responsibilityStartDate,
-        lastModifiedDate,
-        // 원본 API 데이터 보존
-        responsibility_conent: (item as any).responsibility_conent || '',
         responsibility_detail_content: (item as any).responsibility_detail_content || '',
         responsibility_mgt_sts: (item as any).responsibility_mgt_sts || '',
-        responsibility_rel_evid: (item as any).responsibility_rel_evid || '',
       });
     });
 
@@ -148,9 +150,9 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         positionId: group.positionId,
         positionName: group.positionName,
         classification: group.classification, // 공통 항목으로 직접 사용
-        responsibilityOverview: formatWithCount(group.details.map(d => d.responsibilityOverview)),
-        responsibilityStartDate: group.details[0]?.responsibilityStartDate || '',
-        lastModifiedDate: group.details[0]?.lastModifiedDate || '',
+        responsibilityOverview: group.responsibilityOverview,
+        responsibilityStartDate: group.responsibilityStartDate,
+        lastModifiedDate: group.lastModifiedDate,
         detailCount: group.details.length
       };
     });
@@ -193,7 +195,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         responsibilityOverview: item.role_summ ?? '',
         responsibilityStartDate: item.created_at ?? '',
         responsibilityName: item.responsibility_name ?? '',
-        responsibility_detail_content: item.responsibility_detail_content?? '',
+        responsibility_detail_content: item.responsibility_detail_content ?? '',
         lastModifiedDate: item.updated_at ?? '',
         createdAt: item.created_at ?? '',
         updatedAt: item.updated_at ?? '',
@@ -214,15 +216,12 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
       // 그룹핑 결과 예시 출력
       if (grouped.length > 0) {
-        console.log("첫 번째 그룹 예시:", grouped[0]);
-        console.log("첫 번째 그룹의 세부사항들:", grouped[0].details);
       }
 
       setGroupedData(grouped);
 
       // 그룹핑된 데이터를 DataGrid용으로 변환
       const gridRows = convertToGridRows(grouped);
-      console.log("DataGrid용 변환된 데이터:", gridRows);
       setRows(gridRows);
     }
     catch (err) {
@@ -283,16 +282,17 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
               classification: groupedPosition.classification,
               positionId: groupedPosition.positionId,
               positionName: groupedPosition.positionName,
-              responsibilityOverview: groupedPosition.details[0]?.responsibilityOverview || '',
-              responsibilityStartDate: groupedPosition.details[0]?.responsibilityStartDate || '',
-              lastModifiedDate: groupedPosition.details[0]?.lastModifiedDate || '',
+              responsibilityOverview: groupedPosition.responsibilityOverview,
+              responsibilityStartDate: groupedPosition.responsibilityStartDate,
+              lastModifiedDate: groupedPosition.lastModifiedDate,
               createdAt: groupedPosition.createdAt,
               updatedAt: groupedPosition.updatedAt,
               // 그룹화된 데이터에서 직접 가져오기 (데이터 손실 없음)
-              responsibilityContent: groupedPosition.details[0]?.responsibility_conent || '', // 책무 내용
-              responsibility_detail_content: groupedPosition.details[0]?.responsibility_detail_content || '', // 세부내용
+              // 공통 항목들은 그룹에서 직접 가져오기
+              responsibilityContent: groupedPosition.responsibility_conent || '', // 책무 내용
+              relatedBasis: groupedPosition.responsibility_rel_evid || '', // 관련 근거
+              // 개별 항목들은 details[0]에서 가져오기
               keyManagementTasks: groupedPosition.details[0]?.responsibility_mgt_sts || '', // 주요 관리업무
-              relatedBasis: groupedPosition.details[0]?.responsibility_rel_evid || '', // 관련 근거
               // 모든 세부항목들을 포함
               allDetails: groupedPosition.details
             } : null;
@@ -384,16 +384,16 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       classification: groupedPosition.classification,
       positionId: groupedPosition.positionId,
       positionName: groupedPosition.positionName,
-      responsibilityOverview: groupedPosition.details[0]?.responsibilityOverview || '',
-      responsibilityStartDate: groupedPosition.details[0]?.responsibilityStartDate || '',
-      lastModifiedDate: groupedPosition.details[0]?.lastModifiedDate || '',
+      responsibilityOverview: groupedPosition.responsibilityOverview,
+      responsibilityStartDate: groupedPosition.responsibilityStartDate,
+      lastModifiedDate: groupedPosition.lastModifiedDate,
       createdAt: groupedPosition.createdAt,
       updatedAt: groupedPosition.updatedAt,
-      // 그룹화된 데이터에서 직접 가져오기 (데이터 손실 없음)
-      responsibilityContent: groupedPosition.details[0]?.responsibility_conent || '', // 책무 내용
-      responsibility_detail_content: groupedPosition.details[0]?.responsibility_detail_content || '', // 세부내용
+      // 공통 항목들은 그룹에서 직접 가져오기
+      responsibilityContent: groupedPosition.responsibility_conent || '', // 책무 내용
+      relatedBasis: groupedPosition.responsibility_rel_evid || '', // 관련 근거
+      // 개별 항목들은 details[0]에서 가져오기
       keyManagementTasks: groupedPosition.details[0]?.responsibility_mgt_sts || '', // 주요 관리업무
-      relatedBasis: groupedPosition.details[0]?.responsibility_rel_evid || '', // 관련 근거
       // 모든 세부항목들을 포함
       allDetails: groupedPosition.details
     } : null;

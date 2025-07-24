@@ -28,7 +28,7 @@ export interface ResponsibilityData {
 export interface ResponsibilityDetail {
   // id: string; // 프론트엔드에서 사용하는 임시 ID (required)
   responsibilityDetailId?: string; // 백엔드 ID (optional)
-  responsibilityDetailContent: string;
+  responsibility_detail_content: string;
   keyManagementTasks: string;
   relatedBasis: string;
 }
@@ -63,7 +63,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     responsibilityContent: '',
     details: [
       {
-        responsibilityDetailContent: '',
+        responsibility_detail_content: '',
         keyManagementTasks: '',
         relatedBasis: '',
       },
@@ -75,7 +75,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     responsibilityContent: '',
     details: [
       {
-        responsibilityDetailContent: '',
+        responsibility_detail_content: '',
         keyManagementTasks: '',
         relatedBasis: '',
       },
@@ -113,8 +113,8 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         details: [
           {
             responsibilityDetailId: String(rowData.id || ''),
-            responsibilityDetailContent: rowData.responsibility_detail_content || '', // 원본 데이터 표시
-            keyManagementTasks: rowData.keyManagementTasks || '', // 원본 데이터 표시
+            responsibility_detail_content: rowData.allDetails[0].responsibility_detail_content || '', // 원본 데이터 표시
+            keyManagementTasks: rowData.allDetails[0].responsibility_mgt_sts || '', // 원본 데이터 표시
             relatedBasis: rowData.relatedBasis || '', // 원본 데이터 표시
           }
         ]
@@ -131,7 +131,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         details: [
           {
             responsibilityDetailId: `temp-${Date.now()}`,
-            responsibilityDetailContent: '',
+            responsibility_detail_content: '',
             keyManagementTasks: '',
             relatedBasis: '',
           },
@@ -160,8 +160,8 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     }
 
     // 세부내용 검증
-    if (!formData.details[0]?.responsibilityDetailContent?.trim()) {
-      errors.responsibilityDetailContent = '책무 세부내용을 입력해주세요.';
+    if (!formData.details[0]?.responsibility_detail_content?.trim()) {
+      errors.responsibility_detail_content = '책무 세부내용을 입력해주세요.';
     }
 
     setValidationErrors(errors);
@@ -223,12 +223,12 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
       // 첫 번째 항목에서 책무 내용 가져오기 (모든 항목이 같은 responsibilityContent를 가짐)
       const responsibilityContent = response[0].responsibilityContent || '';
-
+      console.log("response",response)
       // 각 배열 항목을 details로 변환
       const details = response.map((item: ApiResponseItem, index: number) => ({
         // id: `${item.id}-${index}`, // 고유 ID 생성
         responsibilityDetailId: String(item.id),
-        responsibilityDetailContent: item.responsibilityDetailContent || '',
+        responsibility_detail_content: item.responsibilityDetailContent || '',
         keyManagementTasks: item.responsibilityMgtSts || '',  // 실제 필드명 매핑
         relatedBasis: item.responsibilityRelEvid || '',       // 실제 필드명 매핑
       }));
@@ -297,10 +297,10 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           />
 
           {/* 검증 오류 메시지 표시 */}
-          {(validationErrors.responsibilityContent || validationErrors.responsibilityDetailContent) && (
+          {(validationErrors.responsibilityContent || validationErrors.responsibility_detail_content) && (
             <Box sx={{ mb: 2, p: 1, bgcolor: 'error.light', borderRadius: 1 }}>
               <Typography variant="body2" color="error">
-                {validationErrors.responsibilityContent || validationErrors.responsibilityDetailContent}
+                {validationErrors.responsibilityContent || validationErrors.responsibility_detail_content}
               </Typography>
             </Box>
           )}
@@ -363,11 +363,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                   fullWidth
                   multiline
                   rows={4}
-                  value={formData.details[0]?.responsibilityDetailContent || ''}
+                  value={formData.details[0]?.responsibility_detail_content || ''}
                   onChange={(e) => {
                     const newDetails = [...formData.details];
                     if (newDetails[0]) {
-                      newDetails[0].responsibilityDetailContent = e.target.value;
+                      newDetails[0].responsibility_detail_content = e.target.value;
                       setFormData(prev => ({ ...prev, details: newDetails }));
                     }
                   }}
