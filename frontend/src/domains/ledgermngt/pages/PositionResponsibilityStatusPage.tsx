@@ -276,8 +276,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             // 다이얼로그에서 사용할 수 있는 형태로 데이터 변환
             // 원본 데이터에서 해당 positionId의 첫 번째 항목 찾기
             const originalItem = originalData.find(item => item.positionId === row.positionId);
-            console.log("originaltem", originalItem)
-            console.log("groupedPosition", groupedPosition)
             const dialogData = groupedPosition && originalItem ? {
               id: originalItem.id,
               classification: groupedPosition.classification,
@@ -354,28 +352,13 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         </Box>
       )
     },
-    {
-      field: 'detailCount',
-      headerName: '세부항목 수',
-      width: 100,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: ({ value }) => (
-        <Chip
-          label={`${value}개`}
-          size="small"
-          color="primary"
-          variant="outlined"
-        />
-      )
-    }
   ];
 
   // 상세보기 핸들러
   const handleViewDetail = (row: GroupedPositionResponsibilityRow) => {
     // 그룹핑된 데이터에서 해당 직책의 모든 세부항목들을 가져오기
     const groupedPosition = getPositionData(row.positionId);
-
+    
     // 원본 데이터에서 해당 positionId의 첫 번째 항목 찾기
     const originalItem = originalData.find(item => item.positionId === row.positionId);
 
