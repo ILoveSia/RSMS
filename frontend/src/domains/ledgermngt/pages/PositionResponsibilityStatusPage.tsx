@@ -71,6 +71,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     try {
       let response = null;
       if(selectedPosition===null){
+        console.log("selectedPosition is null")
         response = await fetch('/api/position-responsibilities');
       }
       else{
