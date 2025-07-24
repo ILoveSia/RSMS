@@ -28,12 +28,13 @@ export interface AuditProgramData {
   id?: number;                    // 점검 계획 ID (수정/조회 시 사용)
   planCode: string;              // 점검계획 코드 (필수)
   ledgerOrdersHod: string;       // 책무번호
-  locationName: string;          // 점검 위치명
+  auditTitle: string;            // 점검 회차명 (backend auditTitle 필드와 매핑)
   startDate: Date | null;        // 점검 시작일
   endDate: Date | null;          // 점검 종료일
   targetSelection: string;       // 점검 대상 선정 정보
   remarks: string;               // 비고
   targetItems?: InspectionTargetItem[]; // 선택된 점검 대상 항목들
+  targetItemIds?: number[];      // 선택된 점검 대상 항목 ID 목록 (backend 전송용)
 }
 
 /**
@@ -54,18 +55,36 @@ interface AuditProgMngtDialogProps {
 }
 
 /**
+ * 점검계획 코드 자동 생성 함수
+ * 
+ * 형식: AUDIT-YYYYMMDD-HHMMSS
+ */
+const generatePlanCode = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  return `AUDIT-${year}${month}${day}-${hours}${minutes}${seconds}`;
+};
+
+/**
  * 기본 점검 계획 데이터 생성 함수
  * 
  * 단일 책임: 초기 데이터 생성만 담당
  */
 const createDefaultAuditProgramData = (): AuditProgramData => ({
-  planCode: '',
+  planCode: generatePlanCode(),
   ledgerOrdersHod: '',
-  locationName: '',
+  auditTitle: '',
   startDate: new Date(),
   endDate: new Date(),
   targetSelection: '',
   remarks: '',
+  targetItemIds: [],
 });
 
 /**
@@ -98,9 +117,9 @@ const useFormValidation = (data: AuditProgramData): ValidationResult => {
       errors.ledgerOrdersHod = '책무번호는 필수 선택 항목입니다.';
     }
 
-    // 점검 위치명 필수 검증
-    if (!data.locationName?.trim()) {
-      errors.locationName = '점검 위치명은 필수 입력 항목입니다.';
+    // 점검 회차명 필수 검증
+    if (!data.auditTitle?.trim()) {
+      errors.auditTitle = '점검 회차명은 필수 입력 항목입니다.';
     }
 
     // 점검 기간 유효성 검증
@@ -163,6 +182,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
    */
   useEffect(() => {
     if (mode === 'create') {
+      // 새로운 점검계획 코드를 생성하여 설정
       setFormData(createDefaultAuditProgramData());
     } else if (initialData) {
       setFormData({ ...initialData });
@@ -177,6 +197,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
       setFormData(prev => ({
         ...prev,
         targetItems: selectedTargetItems,
+        targetItemIds: selectedTargetItems.map(item => item.id),
         targetSelection: `${selectedTargetItems.length}개 항목 선정됨`
       }));
     }
@@ -256,6 +277,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
     setFormData(prev => ({
       ...prev,
       targetItems: selectedItems,
+      targetItemIds: selectedItems.map(item => item.id),
       targetSelection: `${selectedItems.length}개 항목 선정됨`
     }));
     setTargetSelectionOpen(false);
@@ -287,10 +309,18 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
             value={formData.planCode}
             onChange={e => handleInputChange('planCode', e.target.value)}
             error={!!validation.errors.planCode}
-            helperText={validation.errors.planCode || '점검계획 코드를 입력하세요'}
-            placeholder="저장 후 자동 채번"
-            disabled={true}
-            sx={{ flex: 1 }}
+            helperText={validation.errors.planCode || '자동 생성된 점검계획 코드입니다'}
+            placeholder="자동 생성됨"
+            InputProps={{
+              readOnly: true,
+            }}
+            sx={{ 
+              flex: 1,
+              '& .MuiInputBase-input': {
+                backgroundColor: '#f5f5f5',
+                fontWeight: 600,
+              }
+            }}
           />
         </Box>
 
@@ -322,10 +352,10 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
             fullWidth
             required
             label="점검 회차명"
-            value={formData.locationName}
-            onChange={e => handleInputChange('locationName', e.target.value)}
-            error={!!validation.errors.locationName}
-            helperText={validation.errors.locationName || '점검 회차명을 입력하세요'}
+            value={formData.auditTitle}
+            onChange={e => handleInputChange('auditTitle', e.target.value)}
+            error={!!validation.errors.auditTitle}
+            helperText={validation.errors.auditTitle || '점검 회차명을 입력하세요'}
             placeholder="점검 회차명을 입력하세요"
             disabled={mode === 'view'}
             sx={{ flex: 1 }}

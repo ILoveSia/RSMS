@@ -16,7 +16,7 @@ import {
   DialogContent,
   Grid,
 } from '@mui/material';
-import { Select } from '@/shared/components/ui/form';
+import { Select, LedgerOrdersHodSelect } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
@@ -41,11 +41,17 @@ interface FormData {
   deptCd: string;
   deptName: string; // 부서명 표시용
 
+  // 책무번호
+  ledgerOrder: string; // 책무번호(원장차수)
+
   // 공통코드 관련 필드들
   fieldTypeCd: string; // 항목구분
   roleTypeCd: string; // 직무구분
   periodCd: string; // 주기
   checkPeriod: string; // 점검시기
+
+  // 조치활동ID
+  measureId: string; // 조치활동ID
 
   // 텍스트 필드들
   icTask: string; // 내부통제업무
@@ -61,10 +67,12 @@ const initialFormData: FormData = {
   responsibilityContent: '',
   deptCd: '',
   deptName: '',
+  ledgerOrder: '',
   fieldTypeCd: '',
   roleTypeCd: '',
   periodCd: '',
   checkPeriod: '',
+  measureId: '',
   icTask: '',
   measureDesc: '',
   measureType: '',
@@ -75,10 +83,11 @@ const initialFormData: FormData = {
 const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   open,
   onClose,
-  mode,
+  mode: initialMode,
   itemId,
   onSuccess,
 }) => {
+  const [mode, setMode] = useState<'create' | 'edit' | 'view'>(initialMode);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -291,11 +300,13 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         responsibilityId: data.responsibilityId,
         responsibilityContent: data.responsibilityContent || '',
         deptCd: data.deptCd,
-        deptName: '', // 부서명은 별도로 조회해야 함
+        deptName: data.deptName || '', // API에서 부서명 가져오기
+        ledgerOrder: data.ledgerOrder || '',
         fieldTypeCd: data.fieldTypeCd,
         roleTypeCd: data.roleTypeCd,
         periodCd: data.periodCd,
         checkPeriod: data.checkPeriod,
+        measureId: data.measureId || '',
         icTask: data.icTask,
         measureDesc: data.measureDesc,
         measureType: data.measureType,
@@ -345,6 +356,11 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
       }
     }
   }, [allCodes]);
+
+  // initialMode이 변경될 때 내부 mode 상태 업데이트
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
   // 데이터 로드
   useEffect(() => {
@@ -424,10 +440,12 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
       // 1. HodICItem 데이터 저장
       const requestData: HodICItemCreateRequest = {
         responsibilityId: formData.responsibilityId as number,
+        ledgerOrder: formData.ledgerOrder,
         deptCd: formData.deptCd,
         fieldTypeCd: formData.fieldTypeCd,
         roleTypeCd: formData.roleTypeCd,
         icTask: formData.icTask,
+        measureId: formData.measureId,
         measureDesc: formData.measureDesc,
         measureType: formData.measureType,
         periodCd: formData.periodCd,
@@ -503,24 +521,40 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     onClose();
   };
 
+  const handleModeChange = (newMode: 'create' | 'edit' | 'view') => {
+    setMode(newMode);
+  };
+
   return (
     <>
       <BaseDialog
         open={open}
         onClose={handleClose}
-        maxWidth='lg'
-        mode='create'
-        title='내부통제항목 등록'
-      // fullWidth
-      // PaperProps={{
-      //   sx: {
-      //     minHeight: '700px',
-      //     maxHeight: '90vh',
-      //   },
-      // }}
+        onSave={handleSave}
+        onModeChange={handleModeChange}
+        maxWidth='md'
+        mode={mode}
+        title={mode === 'create' ? '내부통제항목 등록' : mode === 'edit' ? '내부통제항목 수정' : '내부통제항목 조회'}
       >
 
-        <DialogContent sx={{ p: 3 }}>
+        <DialogContent sx={{ 
+          p: 3,
+          // view 모드에서 텍스트 스타일 진하게 통일
+          ...(isViewMode && {
+            '& .MuiTextField-root.Mui-disabled': {
+              '& .MuiInputBase-input.Mui-disabled': {
+                fontWeight: 700,
+                color: '#1a1a1a',
+                WebkitTextFillColor: '#1a1a1a',
+              },
+            },
+            '& .MuiSelect-select.Mui-disabled': {
+              fontWeight: 700,
+              color: '#1a1a1a',
+              WebkitTextFillColor: '#1a1a1a',
+            },
+          })
+        }}>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <CircularProgress />
@@ -584,6 +618,8 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                   </Box>
                 </Grid>
 
+                
+
                 {/* 항목구분 */}
                 <Grid item xs={12} sm={6}>
                   <Select
@@ -612,6 +648,31 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                     ]}
                     onChange={(value) => handleInputChange('roleTypeCd', value as string)}
                     disabled={isViewMode || !formData.fieldTypeCd}
+                  />
+                </Grid>
+                {/* 책무번호 */}
+                <Grid item xs={12} sm={6}>
+                  <LedgerOrdersHodSelect
+                    value={formData.ledgerOrder}
+                    onChange={(value) => handleInputChange('ledgerOrder', value)}
+                    disabled={isViewMode}
+                    includeAll={false}
+                    placeholder="선택"
+                    size="medium"
+                    sx={{ width: '100%' }}
+                    minWidth="100%"
+                    maxWidth="100%"
+                  />
+                </Grid>
+
+                {/* 조치활동ID */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label='조치활동ID'
+                    value={formData.measureId}
+                    onChange={e => handleInputChange('measureId', e.target.value)}
+                    disabled={isViewMode}
                   />
                 </Grid>
 

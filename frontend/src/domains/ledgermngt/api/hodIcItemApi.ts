@@ -50,7 +50,9 @@ export interface HodICItemDetail {
   fieldTypeCd: string;
   roleTypeCd: string;
   deptCd: string;
+  deptName?: string;
   icTask: string;
+  measureId: string;
   measureDesc: string;
   measureType: string;
   periodCd: string;
@@ -74,6 +76,7 @@ export interface HodICItemCreateRequest {
   roleTypeCd?: string;
   deptCd?: string;
   icTask?: string;
+  measureId?: string;
   measureDesc?: string;
   measureType?: string;
   periodCd?: string;
