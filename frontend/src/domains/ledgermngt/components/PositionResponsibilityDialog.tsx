@@ -201,7 +201,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           },
         ],
       };
-      console.log("initialData", initialData);
       // 원본 데이터와 현재 폼 데이터 모두 설정
       setOriginalFormData(initialData);
       setFormData(initialData);
@@ -253,7 +252,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       return;
     }
 
-    console.log("selectedResponsibilityData",selectedResponsibilityData)
     // 백엔드 DTO 구조에 맞게 데이터 변환
     const responsibilityRequestData = {
       positions_id: rowData?.positions_id || responsibilityId || 1,
@@ -261,7 +259,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
       role_summ: responsibilityOverview, // 책무 내용을 role_summ에 포함
     };
-    console.log(responsibilityRequestData);
     try {
       setLoading(true);
 
