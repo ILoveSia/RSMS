@@ -93,11 +93,12 @@ const convertToAuditProgramData = (row: AuditProgRow): AuditProgramData => {
     id: 0, // 임시 ID
     planCode: row.auditProgMngtCd,
     ledgerOrdersHod: row.ledgerOrdersHod,
-    locationName: row.auditTarget, // 감사대상을 위치명으로 매핑
+    auditTitle: row.auditTarget, // 감사대상을 점검회차명으로 매핑
     startDate,
     endDate,
     targetSelection: `${row.targetItemCount}개 항목 선정`, // 대상 항목 수를 문자열로 변환
     remarks: row.remarks || '',
+    targetItemIds: [], // 빈 배열로 초기화
   };
 };
 
@@ -281,21 +282,24 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       
       // AuditProgramData를 AuditProgMngtRequest로 변환
       const request: AuditProgMngtRequest = {
-        auditProgMngtCd: data.id ? String(data.id) : undefined,
         ledgerOrdersHod: data.ledgerOrdersHod,
+        auditTitle: data.auditTitle, // 점검회차명 추가
         auditStartDt: data.startDate ? data.startDate.toISOString().split('T')[0] : '',
         auditEndDt: data.endDate ? data.endDate.toISOString().split('T')[0] : '',
         auditStatusCd: 'AUDIT_APPLY', // 기본값: 점검신청
         auditContents: data.remarks,
-        targetItemIds: data.targetItems?.map(item => item.id) || []
+        targetItemIds: data.targetItemIds || [] // targetItemIds 사용
       };
       
       if (dialogMode === 'create') {
-        // 등록
+        // 등록 시 auditProgMngtCd는 자동 생성되므로 제외
         await createAuditProgMngt(request);
-      } else if (dialogMode === 'edit' && request.auditProgMngtCd) {
-        // 수정
-        await updateAuditProgMngt(request.auditProgMngtCd, request);
+        console.log('점검계획관리 등록 완료');
+      } else if (dialogMode === 'edit' && data.planCode) {
+        // 수정 시 auditProgMngtCd 추가
+        request.auditProgMngtCd = data.planCode;
+        await updateAuditProgMngt(data.planCode, request);
+        console.log('점검계획관리 수정 완료');
       }
       
       handleDialogClose();

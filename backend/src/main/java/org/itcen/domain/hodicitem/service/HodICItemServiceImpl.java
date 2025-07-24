@@ -68,6 +68,7 @@ public class HodICItemServiceImpl implements HodICItemService {
                 .roleTypeCd(createRequest.getRoleTypeCd())
                 .deptCd(createRequest.getDeptCd())
                 .icTask(createRequest.getIcTask())
+                .measureId(createRequest.getMeasureId())
                 .measureDesc(createRequest.getMeasureDesc())
                 .measureType(createRequest.getMeasureType())
                 .periodCd(createRequest.getPeriodCd())
@@ -100,6 +101,7 @@ public class HodICItemServiceImpl implements HodICItemService {
         hodICItem.setRoleTypeCd(updateRequest.getRoleTypeCd());
         hodICItem.setDeptCd(updateRequest.getDeptCd());
         hodICItem.setIcTask(updateRequest.getIcTask());
+        hodICItem.setMeasureId(updateRequest.getMeasureId());
         hodICItem.setMeasureDesc(updateRequest.getMeasureDesc());
         hodICItem.setMeasureType(updateRequest.getMeasureType());
         hodICItem.setPeriodCd(updateRequest.getPeriodCd());

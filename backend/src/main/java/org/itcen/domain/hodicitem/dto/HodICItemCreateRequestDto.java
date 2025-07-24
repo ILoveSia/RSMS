@@ -68,6 +68,11 @@ public class HodICItemCreateRequestDto {
     private String icTask;
 
     /**
+     * 조치활동ID
+     */
+    private String measureId;
+
+    /**
      * 조치활동내용
      */
     private String measureDesc;

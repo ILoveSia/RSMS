@@ -121,9 +121,17 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
       });
     }
 
+    // includeAll이 false인 경우 기본 placeholder 옵션 추가
+    if (!includeAll && placeholder) {
+      options.push({
+        value: '',
+        label: placeholder,
+      });
+    }
+
     // 에러 발생 시
     if (loadError) {
-      if (!includeAll) {
+      if (!includeAll && !placeholder) {
         options.push({
           value: 'error',
           label: '로드 실패',
@@ -135,7 +143,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
 
     // 로딩 중일 때 (전체 옵션은 유지)
     if (loading) {
-      if (!includeAll) {
+      if (!includeAll && !placeholder) {
         options.push({
           value: 'loading',
           label: '데이터 로딩 중...',
@@ -155,7 +163,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
       });
     } else {
       // 데이터가 없는 경우 (전체 옵션은 유지)
-      if (!includeAll) {
+      if (!includeAll && !placeholder) {
         options.push({
           value: 'no-data',
           label: '데이터 없음',
@@ -165,7 +173,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
     }
 
     return options;
-  }, [includeAll, allValue, allLabel, loading, loadError, ledgerOrdersHodOptions]);
+  }, [includeAll, allValue, allLabel, loading, loadError, ledgerOrdersHodOptions, placeholder]);
 
   // 값 변경 핸들러 - Select 컴포넌트의 onChange 타입에 맞춤
   const handleChange = useCallback(
@@ -189,7 +197,6 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
       options={getSelectOptions()}
       disabled={disabled} // loading 제거 - 로딩 중에도 "전체" 옵션 선택 가능
       error={error || !!loadError}
-      placeholder={placeholder}
       displayEmpty={true} // 빈 값도 표시되도록 설정
       sx={{
         minWidth,

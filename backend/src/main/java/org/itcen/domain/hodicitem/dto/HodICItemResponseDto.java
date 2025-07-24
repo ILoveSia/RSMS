@@ -86,6 +86,11 @@ public class HodICItemResponseDto {
     private String icTask;
 
     /**
+     * 조치활동ID
+     */
+    private String measureId;
+
+    /**
      * 조치활동내용
      */
     private String measureDesc;
@@ -157,6 +162,7 @@ public class HodICItemResponseDto {
                 .roleTypeCd(entity.getRoleTypeCd())
                 .deptCd(entity.getDeptCd())
                 .icTask(entity.getIcTask())
+                .measureId(entity.getMeasureId())
                 .measureDesc(entity.getMeasureDesc())
                 .measureType(entity.getMeasureType())
                 .periodCd(entity.getPeriodCd())
