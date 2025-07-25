@@ -36,7 +36,7 @@ const inquiryRoutes: DomainRoute[] = [
     },
   },
   {
-    path: '/inquiry/deficiency-status',
+    path: '/inquiry/non-employee',
     element: DeficiencyStatusPage,
     meta: {
       title: '미비점 현황',
