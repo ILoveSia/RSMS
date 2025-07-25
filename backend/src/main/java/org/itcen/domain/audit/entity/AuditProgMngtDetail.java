@@ -28,6 +28,9 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     @Column(name = "audit_prog_mngt_detail_id")
     private Long auditProgMngtDetailId;
 
+    @Column(name = "audit_prog_mngt_id", nullable = false)
+    private Long auditProgMngtId;
+
     @Column(name = "audit_prog_mngt_cd", length = 100, nullable = false)
     private String auditProgMngtCd;
 
@@ -53,8 +56,8 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     @Column(name = "audit_done_dt")
     private LocalDate auditDoneDt;
 
-    // HodIcItem과의 연관관계 설정
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hod_ic_item_id", insertable = false, updatable = false)
-    private HodIcItem hodIcItem;
+    // HodIcItem과의 연관관계 설정 (임시 주석처리 - 삭제 문제 해결 후 복원)
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "hod_ic_item_id", insertable = false, updatable = false)
+    // private HodIcItem hodIcItem;
 }

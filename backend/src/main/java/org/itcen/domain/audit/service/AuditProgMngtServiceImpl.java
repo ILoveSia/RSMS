@@ -59,6 +59,7 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         if (dto.getTargetItemIds() != null && !dto.getTargetItemIds().isEmpty()) {
             for (Long hodIcItemId : dto.getTargetItemIds()) {
                 AuditProgMngtDetail detail = AuditProgMngtDetail.builder()
+                        .auditProgMngtId(savedAuditProgMngt.getAuditProgMngtId())
                         .auditProgMngtCd(auditProgMngtCd)
                         .hodIcItemId(hodIcItemId)
                         .beforeAuditYn("N")
@@ -98,10 +99,11 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
 
         // 기존 상세 데이터 삭제 후 새로 등록
         if (dto.getTargetItemIds() != null) {
-            auditProgMngtDetailRepository.deleteByAuditProgMngtCd(dto.getAuditProgMngtCd());
+            auditProgMngtDetailRepository.deleteByAuditProgMngtId(savedAuditProgMngt.getAuditProgMngtId());
             
             for (Long hodIcItemId : dto.getTargetItemIds()) {
                 AuditProgMngtDetail detail = AuditProgMngtDetail.builder()
+                        .auditProgMngtId(savedAuditProgMngt.getAuditProgMngtId())
                         .auditProgMngtCd(dto.getAuditProgMngtCd())
                         .hodIcItemId(hodIcItemId)
                         .beforeAuditYn("N")
@@ -135,15 +137,33 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
     public void deleteAuditProgMngt(String auditProgMngtCd) {
         log.debug("점검계획 삭제: {}", auditProgMngtCd);
 
-        // 상세 데이터 먼저 삭제
-        auditProgMngtDetailRepository.deleteByAuditProgMngtCd(auditProgMngtCd);
-
-        // 메인 데이터 삭제
+        // 메인 데이터 조회
         AuditProgMngt auditProgMngt = auditProgMngtRepository.findByAuditProgMngtCd(auditProgMngtCd)
                 .orElseThrow(() -> new RuntimeException("점검계획을 찾을 수 없습니다: " + auditProgMngtCd));
 
-        auditProgMngtRepository.delete(auditProgMngt);
-        log.debug("점검계획 삭제 완료: {}", auditProgMngtCd);
+        Long auditProgMngtId = auditProgMngt.getAuditProgMngtId();
+        
+        log.debug("삭제 대상 ID: {}, 코드: {}", auditProgMngtId, auditProgMngtCd);
+
+        // 상세 데이터 먼저 삭제 (audit_prog_mngt_id 기준)
+        try {
+            auditProgMngtDetailRepository.deleteByAuditProgMngtId(auditProgMngtId);
+            log.debug("상세 데이터 삭제 완료: ID {}", auditProgMngtId);
+        } catch (Exception e) {
+            log.error("상세 데이터 삭제 중 오류: {}", e.getMessage());
+            // 상세 데이터가 없어도 메인 삭제는 진행
+        }
+
+        // 메인 데이터 삭제 (audit_prog_mngt_id 기준)
+        try {
+            auditProgMngtRepository.deleteById(auditProgMngtId);
+            log.debug("메인 데이터 삭제 완료: ID {}", auditProgMngtId);
+        } catch (Exception e) {
+            log.error("메인 데이터 삭제 중 오류: {}", e.getMessage());
+            throw new RuntimeException("점검계획 삭제 실패: " + auditProgMngtCd, e);
+        }
+        
+        log.debug("점검계획 삭제 완료: {} (ID: {})", auditProgMngtCd, auditProgMngtId);
     }
 
     /**
@@ -195,7 +215,7 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
                 .map(entity -> {
                     // 대상 점검항목수 계산
                     int targetItemCount = auditProgMngtDetailRepository
-                            .findByAuditProgMngtCd(entity.getAuditProgMngtCd()).size();
+                            .findByAuditProgMngtId(entity.getAuditProgMngtId()).size();
                     
                     return convertToStatusDto(entity, targetItemCount);
                 })
