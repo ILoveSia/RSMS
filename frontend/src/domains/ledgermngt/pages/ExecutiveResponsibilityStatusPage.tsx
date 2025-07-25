@@ -6,11 +6,10 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import type { DataGridColumn } from '@/shared/types/common';
 import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
@@ -23,7 +22,8 @@ interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
 }
 
-interface ExecutiveResponsibilityRow {
+// 개별 데이터 항목
+interface ExecutiveResponsibilityItem {
   id: number;
   position: string;          // 직책
   jobTitle?: string;         // 직위
@@ -34,6 +34,15 @@ interface ExecutiveResponsibilityRow {
   responsibilityDetail?: string; // 책무 세부내용
   managementDuty?: string;   // 책무이행을 위한 주요 관리의무
   relatedBasis?: string;     // 관련근거
+  execofficer_dt?: string;   // 임원 일자
+}
+
+// 그룹화된 데이터
+interface ExecutiveResponsibilityRow {
+  id: string;                // 그룹 ID (position 기반)
+  position: string;          // 직책
+  items: ExecutiveResponsibilityItem[]; // 해당 직책의 모든 데이터
+  count: number;             // 데이터 개수
 }
 
 
@@ -46,7 +55,37 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogData, setDialogData] = useState<any>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
-  
+
+  // 그룹화 함수
+  const groupDataByPosition = (data: ExecutiveResponsibilityItem[]): ExecutiveResponsibilityRow[] => {
+    const groupMap = new Map<string, ExecutiveResponsibilityItem[]>();
+
+    data.forEach(item => {
+      const position = item.position || '해당없음';
+      if (!groupMap.has(position)) {
+        groupMap.set(position, []);
+      }
+      groupMap.get(position)!.push(item);
+    });
+
+    return Array.from(groupMap.entries()).map(([position, items]) => ({
+      id: position,
+      position,
+      items,
+      count: items.length
+    }));
+  };
+
+  // 배열 값을 표시하는 헬퍼 함수
+  const renderArrayValue = (items: ExecutiveResponsibilityItem[], field: keyof ExecutiveResponsibilityItem): string => {
+    const values = items.map(item => item[field]).filter(Boolean);
+    const uniqueValues = [...new Set(values)];
+
+    if (uniqueValues.length === 0) return '해당없음';
+    if (uniqueValues.length === 1) return String(uniqueValues[0]);
+    return `${uniqueValues[0]} 외 ${uniqueValues.length - 1}개`;
+  };
+
   // 테이블 컬럼 정의
   const columns: DataGridColumn<ExecutiveResponsibilityRow>[] = [
     {
@@ -65,65 +104,72 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           }}
           onClick={() => handlePositionClick(row)}
         >
-          {value || '해당없음'}
+          {String(value || '해당없음')}
         </span>
       ),
     },
     {
-      field: 'jobRank',
+      field: 'jobRank' as keyof ExecutiveResponsibilityRow,
       headerName: '직위',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'jobRank'),
     },
     {
-      field: 'empNo',
+      field: 'empNo' as keyof ExecutiveResponsibilityRow,
       headerName: '사번',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'empNo'),
     },
     {
-      field: 'executiveName',
+      field: 'executiveName' as keyof ExecutiveResponsibilityRow,
       headerName: '성명',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'executiveName'),
     },
     {
-      field: 'responsibility',
+      field: 'responsibility' as keyof ExecutiveResponsibilityRow,
       headerName: '책무',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'responsibility'),
     },
     {
-      field: 'responsibilityDetail',
+      field: 'responsibilityDetail' as keyof ExecutiveResponsibilityRow,
       headerName: '책무 세부내용',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'responsibilityDetail'),
     },
     {
-      field: 'managementDuty',
+      field: 'managementDuty' as keyof ExecutiveResponsibilityRow,
       headerName: '책무이행을 위한 주요 관리의무',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'managementDuty'),
     },
     {
-      field: 'relatedBasis',
+      field: 'relatedBasis' as keyof ExecutiveResponsibilityRow,
       headerName: '관련근거',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'relatedBasis'),
     },
   ];
 
@@ -136,31 +182,32 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       setIsLoading(true);
 
       // API 호출 파라미터 구성
-      let transformedData:ExecutiveResponsibilityRow[] = [];
-      let data=null;
-      if(selectedPosition===null){
-      // 실제 API 호출
-      data = await executiveResponsibilityApi.getAll();
-      // API 응답을 페이지에서 사용하는 형태로 변환
+      let data = null;
+      if (selectedPosition === null) {
+        // 실제 API 호출
+        data = await executiveResponsibilityApi.getAll();
+      } else {
+        data = await executiveResponsibilityApi.getByPositionId(selectedPosition.positionsId);
+      }
 
-    }
-    else{
-     data = await executiveResponsibilityApi.getByPositionId(selectedPosition.positionsId);
-    }
-    transformedData= data.map((item: any) => ({
-      id: item.positionsId || 0,
-      position: item.positionNameMapped || '해당없음',
-      jobTitle: item.jobTitleCd || '해당없음',
-      empNo: item.num || '해당없음',
-      executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
-      responsibility: item.responsibilityContent || '해당없음', // 백엔드에 해당 필드가 없음
-      responsibilityDetail: item.responsibilityDetailContent || '해당없음', // 백엔드에 해당 필드가 없음
-      managementDuty: item.responsibilityMgtSts || '해당없음', // 백엔드에 해당 필드가 없음
-      relatedBasis: item.responsibilityRelEvid || '해당없음', // 백엔드에 해당 필드가 없음
-      jobRank: item.jobRankCd || '해당없음',
-      execofficer_dt: item.execofficer_dt || '해당없음'
-    }));
-      setRows(transformedData);
+      // API 응답을 개별 항목 형태로 변환
+      const transformedItems: ExecutiveResponsibilityItem[] = data.map((item: any) => ({
+        id: item.positionsId || 0,
+        position: item.positionNameMapped || '해당없음',
+        jobTitle: item.jobTitleCd || '해당없음',
+        empNo: item.num || '해당없음',
+        executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
+        responsibility: item.responsibilityContent || '해당없음',
+        responsibilityDetail: item.responsibilityDetailContent || '해당없음',
+        managementDuty: item.responsibilityMgtSts || '해당없음',
+        relatedBasis: item.responsibilityRelEvid || '해당없음',
+        jobRank: item.jobRankCd || '해당없음',
+        execofficer_dt: item.execofficer_dt || '해당없음'
+      }));
+
+      // 직책별로 그룹화
+      const groupedData = groupDataByPosition(transformedItems);
+      setRows(groupedData);
 
     } catch (err) {
       console.error('데이터 조회 실패:', err);
@@ -170,7 +217,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     } finally {
       setIsLoading(false);
     }
-  }, [ selectedPosition]);
+  }, [selectedPosition]);
 
   useEffect(() => {
     fetchExecutiveResponsibility();
@@ -212,14 +259,14 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
       <PageContent
         sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-        position: 'relative', // 좌우 패딩을 3으로 수정
-        py: 1,
-        px: 0,
-      }}
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          position: 'relative', // 좌우 패딩을 3으로 수정
+          py: 1,
+          px: 0,
+        }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -240,13 +287,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
-          {/* <ComboBox
-            value={selectedPosition}
-            onChange={(value) => setSelectedPosition(value as SelectOption)}
-            options={positionOptions}
-            size="small"
-            sx={{ minWidth: '200px' }}
-          /> */}
           <PositionSelect
             value={selectedPosition}
             onChange={setSelectedPosition}
