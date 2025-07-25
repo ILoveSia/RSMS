@@ -94,14 +94,20 @@ export const getAllAuditProgMngtStatusList = async (
   if (endDate) params.endDate = endDate;
   
   try {
-    const response = await apiClient.get<ApiResponse<AuditProgMngtStatusResponse[]>>('/audit-prog-mngt/status/all', { params });
-    console.log('API 응답 구조:', response);
+    const response = await apiClient.get<AuditProgMngtStatusResponse[]>('/audit-prog-mngt/status/all', { params });
+    console.log('API 전체 응답:', response);
+    console.log('API response.data:', response.data);
+    console.log('API response.data type:', typeof response.data);
+    console.log('API response.data is array:', Array.isArray(response.data));
     
-    // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
-    } else if (response.data && Array.isArray(response.data)) {
-      return response.data;
+    // Spring Boot에서 직접 List<AuditProgMngtDto>를 반환하므로 response.data가 배열이어야 함
+    if (Array.isArray(response)) {
+      console.log('응답 데이터 배열 길이:', response.length);
+      return response;
+    } else if (response && typeof response === 'object' && Array.isArray((response as any).data)) {
+      // 혹시 ApiResponse 구조로 감싸져 있는 경우
+      console.log('ApiResponse 구조로 감싸진 데이터 길이:', (response as any).data.length);
+      return (response as any).data;
     } else {
       console.error('예상하지 못한 응답 구조:', response);
       return [];

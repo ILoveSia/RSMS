@@ -27,6 +27,7 @@ import {
 
 // 점검계획관리 현황 데이터 인터페이스
 interface AuditProgRow {
+  id: string;                 // DataGrid용 고유 식별자 (auditProgMngtCd와 동일)
   auditProgMngtCd: string;    // 점검계획코드
   auditProgName: string;      // 점검계획명
   auditTypeName: string;      // 점검유형명
@@ -50,18 +51,19 @@ interface IAuditProgMngtStatusPageProps {
  */
 const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditProgRow => {
   return {
+    id: response.auditProgMngtCd, // DataGrid용 고유 식별자
     auditProgMngtCd: response.auditProgMngtCd,
-    auditProgName: response.auditProgName,
-    auditTypeName: response.auditTypeName,
-    ledgerOrdersHod: response.ledgerOrdersHod,
-    auditTarget: response.auditTarget,
-    auditPeriod: `${response.auditStartDate} ~ ${response.auditEndDate}`,
-    auditTeamLeader: response.auditTeamLeader,
-    auditTeamMembers: response.auditTeamMembers,
+    auditProgName: response.auditProgName || '', // null 방지
+    auditTypeName: response.auditTypeName || '', // null 방지
+    ledgerOrdersHod: response.ledgerOrdersHod || '', // null 방지
+    auditTarget: response.auditTarget || '', // null 방지
+    auditPeriod: `${response.auditStartDate || ''} ~ ${response.auditEndDate || ''}`,
+    auditTeamLeader: response.auditTeamLeader || '', // null 방지
+    auditTeamMembers: response.auditTeamMembers || '', // null 방지
     targetItemCount: response.targetItemCount || 0,
-    auditStatusName: response.auditStatusName,
-    remarks: response.remarks,
-    createdAt: response.createdAt,
+    auditStatusName: response.auditStatusName || '', // null 방지
+    remarks: response.remarks || '',
+    createdAt: response.createdAt || '', // null 방지
   };
 };
 
@@ -135,6 +137,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   // 점검 대상 선정 팝업 상태
   const [targetSelectionOpen, setTargetSelectionOpen] = useState(false);
   const [currentLedgerOrdersHod, setCurrentLedgerOrdersHod] = useState<string>('');
+  const [selectedTargetItems, setSelectedTargetItems] = useState<InspectionTargetItem[]>([]);
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<AuditProgRow>[] = [
@@ -224,9 +227,23 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         formatDate(endDate)
       );
       
-      // API 응답을 화면용 데이터로 변환
-      const convertedData = apiResponse.map(convertApiResponseToRow);
-      setAuditRows(convertedData);
+      console.log('API Response:', apiResponse);
+      console.log('API Response type:', typeof apiResponse);
+      console.log('API Response is array:', Array.isArray(apiResponse));
+      console.log('API Response length:', apiResponse?.length);
+      
+      if (apiResponse && Array.isArray(apiResponse)) {
+        console.log('First item:', apiResponse[0]);
+        
+        // API 응답을 화면용 데이터로 변환
+        const convertedData = apiResponse.map(convertApiResponseToRow);
+        console.log('Converted Data:', convertedData);
+        console.log('Converted Data length:', convertedData.length);
+        setAuditRows(convertedData);
+      } else {
+        console.error('API 응답이 배열이 아닙니다:', apiResponse);
+        setAuditRows([]);
+      }
       
     } catch (error) {
       console.error('점검계획관리 현황 조회 오류:', error);
@@ -265,6 +282,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     if (!isRegistrationMode) {
       setDialogMode('create');
       setSelectedItem(null);
+      setSelectedTargetItems([]); // 새로운 등록 시 선택된 항목 초기화
     }
   };
 
@@ -273,12 +291,18 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     setIsRegistrationMode(false);
     setSelectedItem(null);
     setDialogMode('create');
+    setSelectedTargetItems([]); // 선택된 점검 대상 항목 초기화
   };
 
   // 점검계획관리 등록/수정
   const handleSubmit = async (data: AuditProgramData): Promise<void> => {
     try {
       setIsLoading(true);
+      
+      console.log('=== 점검계획관리 등록/수정 데이터 ===');
+      console.log('받은 data:', data);
+      console.log('data.targetItemIds:', data.targetItemIds);
+      console.log('selectedTargetItems (페이지 상태):', selectedTargetItems);
       
       // AuditProgramData를 AuditProgMngtRequest로 변환
       const request: AuditProgMngtRequest = {
@@ -290,6 +314,9 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         auditContents: data.remarks,
         targetItemIds: data.targetItemIds || [] // targetItemIds 사용
       };
+      
+      console.log('API 요청 데이터:', request);
+      console.log('targetItemIds 길이:', request.targetItemIds?.length);
       
       if (dialogMode === 'create') {
         // 등록 시 auditProgMngtCd는 자동 생성되므로 제외
@@ -324,6 +351,8 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   // 점검 대상 선정 완료 핸들러
   const handleTargetSelectionComplete = useCallback((selectedItems: InspectionTargetItem[]) => {
     console.log('선택된 점검 대상:', selectedItems);
+    console.log('선택된 점검 대상 IDs:', selectedItems.map(item => item.id));
+    setSelectedTargetItems(selectedItems);
     setTargetSelectionOpen(false);
   }, []);
 
@@ -463,6 +492,14 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
               }
             }}
           />
+          
+          {/* 디버깅 정보 */}
+          {!isLoading && (
+            <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', fontSize: '12px', color: '#666' }}>
+              <div>Grid 데이터 개수: {auditRows.length}</div>
+              <div>첫 번째 데이터: {auditRows.length > 0 ? JSON.stringify(auditRows[0]) : '없음'}</div>
+            </Box>
+          )}
         </Box>
 
         {/* 점검계획관리 등록/수정 다이얼로그 */}
@@ -476,6 +513,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
             loading={isLoading}
             initialData={selectedItem ? convertToAuditProgramData(selectedItem) : null}
             onTargetSelection={handleTargetSelection}
+            selectedTargetItems={selectedTargetItems}
           />
         )}
 
