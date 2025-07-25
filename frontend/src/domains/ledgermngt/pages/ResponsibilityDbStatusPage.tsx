@@ -6,6 +6,7 @@ import { Button, DataGrid } from '@/shared/components/ui';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
+import ResponsibilitySelect from '@/shared/components/ui/form/ResponsibilitySelect';
 import PageContent from '@/shared/components/ui/layout/PageContent';
 import PageHeader from '@/shared/components/ui/layout/PageHeader';
 import { Groups as GroupsIcon } from '@mui/icons-material';
@@ -20,6 +21,32 @@ import { type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
 import responsibilityApi from '../api/responsibilityApi';
 
+// 그룹핑된 책무 데이터 타입 정의
+interface GroupedResponsibility {
+  responsibilityId: number;
+  responsibilityContent: string;
+  createdAt: string;
+  updatedAt: string;
+  details: Array<{
+    responsibilityDetailId: number;
+    responsibilityDetailContent: string;
+    responsibilityMgtSts: string;
+    responsibilityRelEvid: string;
+  }>;
+}
+
+// DataGrid에서 사용할 그룹핑된 행 데이터 타입
+interface GroupedResponsibilityRow {
+  responsibilityId: number;
+  responsibilityContent: string;
+  responsibilityDetailContent: string; // 콤마로 구분된 문자열
+  responsibilityMgtSts: string; // 콤마로 구분된 문자열
+  responsibilityRelEvid: string; // 콤마로 구분된 문자열
+  createdAt: string;
+  updatedAt: string;
+  detailCount: number; // 세부사항 개수
+}
+
 interface IResponsibilityDbStatusPageProps {
   className?: string;
 }
@@ -28,7 +55,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
   (): React.JSX.Element => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-    const [rows, setRows] = useState<ResponsibilityRow[]>([]);
+    const [rows, setRows] = useState<GroupedResponsibilityRow[]>([]);
     const [selectedResponsibilityId, setSelectedResponsibilityId] = useState<number | null>(null);
     const [selectedRowData, setSelectedRowData] = useState<ResponsibilityRow | null>(null);
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
@@ -36,10 +63,65 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [searchText, setSearchText] = useState<string>('');
-    const [selectedIds, setSelectedIds] = useState<number>();
+    const [selectedResponsibility, setSelectedResponsibility] = useState<any>(null);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [data, setData] = useState<ResponsibilityRow[]>([]);
+    const [groupedData, setGroupedData] = useState<GroupedResponsibility[]>([]);
 
     // 원장차수는 LedgerOrderSelect에서 자동 관리
+
+    // 데이터 그룹핑 함수
+    const groupDataByResponsibilityId = useCallback((data: ResponsibilityRow[]): GroupedResponsibility[] => {
+      const groupMap = new Map<number, GroupedResponsibility>();
+
+      data.forEach(item => {
+        const { responsibilityId, responsibilityContent, createdAt, updatedAt,
+          responsibilityDetailId, responsibilityDetailContent, responsibilityMgtSts, responsibilityRelEvid } = item;
+
+        if (!groupMap.has(responsibilityId)) {
+          groupMap.set(responsibilityId, {
+            responsibilityId,
+            responsibilityContent,
+            createdAt,
+            updatedAt,
+            details: []
+          });
+        }
+
+        const group = groupMap.get(responsibilityId)!;
+        group.details.push({
+          responsibilityDetailId,
+          responsibilityDetailContent,
+          responsibilityMgtSts,
+          responsibilityRelEvid
+        });
+      });
+
+      return Array.from(groupMap.values());
+    }, []);
+
+    // 그룹핑된 데이터를 DataGrid용 행 데이터로 변환
+    const convertToGridRows = useCallback((groupedData: GroupedResponsibility[]): GroupedResponsibilityRow[] => {
+      return groupedData.map(group => {
+        const formatWithCount = (items: string[]) => {
+          if (items.length === 1) {
+            return items[0];
+          }
+          return `${items[0]} 외 ${items.length - 1}개`;
+        };
+
+        return {
+          responsibilityId: group.responsibilityId,
+          responsibilityContent: group.responsibilityContent,
+          responsibilityDetailContent: formatWithCount(group.details.map(d => d.responsibilityDetailContent)),
+          responsibilityMgtSts: formatWithCount(group.details.map(d => d.responsibilityMgtSts)),
+          responsibilityRelEvid: formatWithCount(group.details.map(d => d.responsibilityRelEvid)),
+          createdAt: group.createdAt,
+          updatedAt: group.updatedAt,
+          detailCount: group.details.length
+        };
+      });
+    }, []);
 
     // 책무 목록 조회 (성능 최적화)
     const fetchResponsibilities = useCallback(async (searchId?: string) => {
@@ -48,20 +130,43 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
       try {
         const data = await responsibilityApi.getStatusList(searchId);
+
+        // 데이터 그룹핑
+        const grouped = groupDataByResponsibilityId(data);
+
         setData(data);
-        setRows(data);
+        setGroupedData(grouped);
+
+        // 그룹핑된 데이터를 DataGrid용으로 변환
+        const gridRows = convertToGridRows(grouped);
+        setRows(gridRows);
       } catch (err) {
         console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
         const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';
         setError(errorMessage);
       } finally {
         setLoading(false);
-      }
-    }, []);
+      }}, [groupDataByResponsibilityId, convertToGridRows]);
 
     useEffect(() => {
       fetchResponsibilities();
     }, [fetchResponsibilities]);
+
+    // 선택된 책무가 변경될 때 자동으로 데이터 다시 로드
+    useEffect(() => {
+      const searchId = selectedResponsibility?.responsibilityId?.toString() || '';
+      fetchResponsibilities(searchId);
+    }, [selectedResponsibility, fetchResponsibilities]);
+
+    // 그룹핑된 데이터 활용 유틸리티 함수들
+    const getResponsibilityById = useCallback((responsibilityId: number): GroupedResponsibility | undefined => {
+      return groupedData.find(item => item.responsibilityId === responsibilityId);
+    }, [groupedData]);
+
+    const getDetailsByResponsibilityId = useCallback((responsibilityId: number) => {
+      const responsibility = getResponsibilityById(responsibilityId);
+      return responsibility?.details || [];
+    }, [getResponsibilityById]);
 
     // 엑셀 다운로드 핸들러
     const handleExcelDownload = useCallback(async () => {
@@ -73,7 +178,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         const headers = [
           '책무 ID',
           '책무',
-          '책무 세부내용 ID',
           '책무 세부내용',
           '책무이행을 위한 주요 관리업무',
           '관련 근거',
@@ -90,12 +194,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           fgColor: { argb: 'FFB0C4DE' }, // lightsteelblue
         };
 
-        // 데이터 추가
+        // 그룹핑된 데이터 추가
         rows.forEach(row => {
           worksheet.addRow([
             row.responsibilityId,
             row.responsibilityContent,
-            row.responsibilityDetailId,
             row.responsibilityDetailContent,
             row.responsibilityMgtSts,
             row.responsibilityRelEvid,
@@ -106,7 +209,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
         // 컬럼 너비 자동 조정
         worksheet.columns.forEach(column => {
-          column.width = Math.max(column.width || 0, 15);
+          column.width = Math.max(column.width || 0, 20);
         });
 
         // 파일 생성 및 다운로드
@@ -114,7 +217,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         const blob = new Blob([excelBuffer], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         });
-        saveAs(blob, `책무_DB_현황_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        saveAs(blob, `책무_DB_현황_그룹핑_${new Date().toISOString().slice(0, 10)}.xlsx`);
       } catch (error) {
         console.error('엑셀 다운로드 실패:', error);
         setError('엑셀 다운로드 중 오류가 발생했습니다.');
@@ -122,16 +225,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     }, [rows]);
 
     // 컬럼 정의 (성능 최적화)
-    const columns: GridColDef<ResponsibilityRow>[] = useMemo(
+    const columns: GridColDef<GroupedResponsibilityRow>[] = useMemo(
       () => [
-        // {
-        //   field: 'responsibilityId',
-        //   headerName: '책무 ID',
-        //   width: 100,
-        //   sortable: false,
-        //   align: 'center',
-        //   cellClassName: 'wrap-text',
-        // },
         {
           field: 'responsibilityContent',
           headerName: '책무',
@@ -150,12 +245,22 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               onClick={e => {
                 e.stopPropagation();
 
-                // 선택된 행의 데이터 찾기
-                const selectedRow = rows.find(row => row.responsibilityId === params.row.responsibilityId);
+                // 그룹핑된 데이터에서 해당 책무의 모든 세부항목들을 가져오기
+                const groupedResponsibility = getResponsibilityById(params.row.responsibilityId);
+
+                // 다이얼로그에서 사용할 수 있는 형태로 데이터 변환
+                const dialogData = groupedResponsibility ? {
+                  responsibilityId: groupedResponsibility.responsibilityId,
+                  responsibilityContent: groupedResponsibility.responsibilityContent,
+                  createdAt: groupedResponsibility.createdAt,
+                  updatedAt: groupedResponsibility.updatedAt,
+                  // 모든 세부항목들을 포함
+                  allDetails: groupedResponsibility.details
+                } : null;
 
                 // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
                 setSelectedResponsibilityId(params.row.responsibilityId);
-                setSelectedRowData(selectedRow || null);
+                setSelectedRowData(dialogData);
                 setDialogMode('view');
                 setDialogOpen(true);
               }}
@@ -164,18 +269,17 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             </span>
           ),
         },
-        // {
-        //   field: 'responsibilityDetailId',
-        //   headerName: '책무 세부내용 ID',
-        //   width: 150,
-        //   cellClassName: 'wrap-text',
-        // },
         {
           field: 'responsibilityDetailContent',
           headerName: '책무 세부내용',
           width: 300,
           flex: 1,
           cellClassName: 'wrap-text',
+          renderCell: params => (
+            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {params.value}
+            </div>
+          ),
         },
         {
           field: 'responsibilityMgtSts',
@@ -183,6 +287,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           width: 300,
           flex: 2,
           cellClassName: 'wrap-text',
+          renderCell: params => (
+            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {params.value}
+            </div>
+          ),
         },
         {
           field: 'responsibilityRelEvid',
@@ -190,6 +299,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           width: 200,
           flex: 1,
           cellClassName: 'wrap-text',
+          renderCell: params => (
+            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              {params.value}
+            </div>
+          ),
         },
         {
           field: 'createdAt',
@@ -208,13 +322,14 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           cellClassName: 'wrap-text',
         },
       ],
-      [rows, setSelectedResponsibilityId, setSelectedRowData, setDialogMode, setDialogOpen]
+      [data, setSelectedResponsibilityId, setSelectedRowData, setDialogMode, setDialogOpen]
     );
 
     // 조회 버튼 클릭 핸들러
     const handleSearch = useCallback(() => {
-      fetchResponsibilities(searchText);
-    }, [searchText, fetchResponsibilities]);
+      const searchId = selectedResponsibility?.responsibilityId?.toString() || '';
+      fetchResponsibilities(searchId);
+    }, [selectedResponsibility, fetchResponsibilities]);
 
     // 등록 버튼 클릭 핸들러
     const handleCreateClick = useCallback(() => {
@@ -223,21 +338,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       setDialogOpen(true);
     }, []);
 
-    // '책무' 셀 클릭 시 상세조회 다이얼로그 오픈 (성능 최적화)
-    const handleResponsibilityCellClick = useCallback((responsibilityId: string) => {
-      console.log('클릭된 responsibilityId:', responsibilityId);
-      console.log('현재 rows 데이터:', rows);
 
-      // 선택된 행의 데이터 찾기
-      const selectedRow = rows.find(row => row.responsibilityId === Number(responsibilityId));
-      console.log('찾은 selectedRow:', selectedRow);
-
-      // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
-      setSelectedResponsibilityId(Number(responsibilityId));
-      setSelectedRowData(selectedRow || null);
-      setDialogMode('view');
-      setDialogOpen(true);
-    }, [rows]);
 
     // 다이얼로그 닫기 (성능 최적화)
     const handleDialogClose = useCallback(() => {
@@ -258,22 +359,26 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       setDialogMode(newMode);
     }, []);
 
-    // 검색 텍스트 변경 핸들러 (성능 최적화)
-    const handleSearchTextChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchText(e.target.value);
+    // 책무 선택 변경 핸들러
+    const handleResponsibilityChange = useCallback((responsibility: any) => {
+      setSelectedResponsibility(responsibility);
     }, []);
 
     const handleDelete = useCallback(() => {
-      if (selectedIds) {
+      if (selectedIds.length > 0) {
         try {
-          responsibilityApi.delete(data[selectedIds].responsibilityId);
-          fetchResponsibilities();
+          // 선택된 행의 responsibilityId를 찾기
+          const selectedRow = rows.find((_, index) => selectedIds.includes(index));
+          if (selectedRow) {
+            responsibilityApi.delete(selectedRow.responsibilityId);
+            fetchResponsibilities();
+          }
         } catch (error) {
           console.error('책무 삭제 실패:', error);
           setError('책무 삭제 중 오류가 발생했습니다.');
         }
       }
-    }, [selectedIds]);
+    }, [selectedIds, rows, fetchResponsibilities]);
 
     return (
       <PageContainer
@@ -322,10 +427,17 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               sx={{ minWidth: 150, maxWidth: 200 }}
             />
             <span
-              style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
-            >
-              책무 ID
-            </span>
+            style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
+          >
+            책무 ID
+          </span>
+            <ResponsibilitySelect
+              value={selectedResponsibility}
+              onChange={setSelectedResponsibility}
+              size='small'
+              sx={{ minWidth: 150, maxWidth: 200 }}
+            />
+            {/* 
             <TextField
               size='small'
               variant='outlined'
@@ -340,7 +452,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
                   </InputAdornment>
                 ),
               }}
-            />
+            /> */}
             <Box sx={{ flexGrow: 1 }} />
             <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
               조회
@@ -396,13 +508,13 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               onRowSelectionChange={selectedRows => {
                 setSelectedIds(selectedRows.map(id => Number(id)));
               }}
-              onRowClick={(row: ResponsibilityRow) => {
-                console.log('DataGrid onRowClick:', row);
-                setSelectedResponsibilityId(row.responsibilityId);
-                setSelectedRowData(row);
-                setDialogMode('view');
-                setDialogOpen(true);
-              }}
+            // onRowClick={(row: ResponsibilityRow) => {
+            //   console.log('DataGrid onRowClick:', row);
+            //   setSelectedResponsibilityId(row.responsibilityId);
+            //   setSelectedRowData(row);
+            //   setDialogMode('view');
+            //   setDialogOpen(true);
+            // }}
             />
           </Box>
         </PageContent>
@@ -415,7 +527,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           rowData={selectedRowData}
           onClose={handleDialogClose}
           onSave={handleDialogSave}
-          onChangeMode={handleModeChange}
+          onChangeMode={handleModeChange as any}
         />
       </PageContainer>
     );

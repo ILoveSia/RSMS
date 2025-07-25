@@ -143,19 +143,34 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     if ((mode === 'edit' || mode === 'view') && responsibilityId != null && open) {
       // 수정/조회 모드에서는 rowData가 있으면 우선 사용, 없으면 API 호출
       if (rowData) {
-        // ResponsibilityRow 타입에 맞게 데이터 로드
-        setFormData({
-          responsibilityContent: rowData.responsibilityContent || '',
-          details: [
-            {
-              id: String(rowData.responsibilityDetailId),
-              responsibilityDetailId: String(rowData.responsibilityDetailId),
-              responsibilityDetailContent: rowData.responsibilityDetailContent || '',
-              keyManagementTasks: rowData.responsibilityMgtSts || '',
-              relatedBasis: rowData.responsibilityRelEvid || '',
-            }
-          ]
-        });
+        // 그룹핑된 데이터인지 확인 (allDetails 배열이 있는 경우)
+        if (rowData.allDetails && Array.isArray(rowData.allDetails)) {
+          // 그룹핑된 여러 세부항목들을 모두 표시
+          setFormData({
+            responsibilityContent: rowData.responsibilityContent || '',
+            details: rowData.allDetails.map((detail: any, index: number) => ({
+              id: String(detail.responsibilityDetailId || index),
+              responsibilityDetailId: String(detail.responsibilityDetailId),
+              responsibilityDetailContent: detail.responsibilityDetailContent || '',
+              keyManagementTasks: detail.responsibilityMgtSts || '',
+              relatedBasis: detail.responsibilityRelEvid || '',
+            }))
+          });
+        } else {
+          // 단일 ResponsibilityRow 타입에 맞게 데이터 로드
+          setFormData({
+            responsibilityContent: rowData.responsibilityContent || '',
+            details: [
+              {
+                id: String(rowData.responsibilityDetailId),
+                responsibilityDetailId: String(rowData.responsibilityDetailId),
+                responsibilityDetailContent: rowData.responsibilityDetailContent || '',
+                keyManagementTasks: rowData.responsibilityMgtSts || '',
+                relatedBasis: rowData.responsibilityRelEvid || '',
+              }
+            ]
+          });
+        }
       } else {
         // rowData가 없으면 API 호출
         fetchDetails(responsibilityId.toString());
@@ -226,9 +241,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   };
 
   const handleSave = async () => {
-    console.log("handlesave in");
     if (!validateForm()) {
-      console.log("handlesave invalid");
       return;
     }
 

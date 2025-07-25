@@ -21,20 +21,18 @@ export class RouterUtil {
 	
 	// 페이지 이동
 	public static push(path: string, options?: { replace?: boolean; state?: unknown }): void {
-		if (!this.navigate) {
-			console.error('[Router] Navigate instance not set');
-			return;
-		}
-		this.navigate(path, options);
-	}
-	
-	// 뒤로 가기
-	public static goBack(): void {
-		if (!this.navigate) {
-			console.error('[Router] Navigate instance not set');
-			return;
-		}
-		this.navigate(-1);
+    if (!this.navigate) {
+      return;
+    }
+    this.navigate(path, options);
+  }
+  
+  // 뒤로 가기
+  public static goBack(): void {
+    if (!this.navigate) {
+      return;
+    }
+    this.navigate(-1);
 	}
 	
 	// 현재 경로 가져오기

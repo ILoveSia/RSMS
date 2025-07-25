@@ -75,7 +75,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     try {
       const data = await execOfficerApi.getAll();
       setRows(data);
-      console.log(data);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
       setErrorMessage('임원 현황 데이터를 불러오는 데 실패했습니다.');
@@ -119,7 +118,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       align: 'center',
       headerAlign: 'center',
     },
-    
+
     {
       field: 'execofficer_dt',
       headerName: '직책부여일',
@@ -139,7 +138,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       renderCell: ({ value }) => (
         <span style={{
           color: value === 'Y' ? '#dc3545' : value === 'N' ? '#28a745' : '#000000',
-          fontWeight: 'bold'
+          fontWeight: 'normal'
         }}>
           {value === 'Y' ? '있음' : value === 'N' ? '없음 ' : value || '해당없음'}
         </span>
@@ -169,7 +168,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     try {
       if (data.execofficerId) {
         // 수정
-        console.log('data', data)
         await execOfficerApi.update(data.execofficerId, data);
         setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
       } else {
@@ -196,7 +194,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   // 임원 상세 정보 핸들러
   const handleExecutiveDetail = (executive: ExecutiveStatusRow) => {
-    console.log('executive', executive)
     setSelectedExecutive(executive);
     setDialogMode('view');
     setDialogOpen(true);
@@ -226,7 +223,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        console.log('엑셀 업로드:', file.name);
         setError(null);
       }
     };
@@ -317,14 +313,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
       <PageContent
         sx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-        position: 'relative', // 좌우 패딩을 3으로 수정
-        py: 1,
-        px: 0,
-      }}
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          position: 'relative', // 좌우 패딩을 3으로 수정
+          py: 1,
+          px: 0,
+        }}
       >
         {/* 필터 영역 */}
         <Box sx={{
@@ -378,7 +374,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 다운로드
           </Button>
-          
+
         </Box>
 
         {/* 데이터 그리드 */}

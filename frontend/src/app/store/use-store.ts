@@ -85,7 +85,6 @@ export const useReduxState = <T = unknown>(statePath: string) => {
       if (current && typeof current === 'object' && key in current) {
         current = (current as Record<string, unknown>)[key];
       } else {
-        console.log(`🔍 [useReduxState] 키 ${key}를 찾을 수 없음`);
         return null;
       }
     }

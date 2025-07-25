@@ -42,11 +42,8 @@ public class MenuController {
     public ResponseEntity<List<MenuDto>> getAccessibleMenus(
             @RequestParam(defaultValue = "USER") String role) {
         
-        logger.info("접근 가능한 메뉴 조회 요청 - 역할: {}", role);
-        
         try {
             List<MenuDto> menus = menuService.getAccessibleMenusByRole(role);
-            logger.info("메뉴 조회 성공 - 개수: {}", menus.size());
             return ResponseEntity.ok(menus);
         } catch (Exception e) {
             logger.error("메뉴 조회 실패", e);
@@ -60,11 +57,8 @@ public class MenuController {
     @GetMapping("/hierarchy")
     public ResponseEntity<List<MenuDto>> getMenuHierarchy() {
         
-        logger.info("계층형 메뉴 구조 조회 요청");
-        
         try {
             List<MenuDto> menus = menuService.getMenuHierarchy();
-            logger.info("계층형 메뉴 조회 성공 - 개수: {}", menus.size());
             return ResponseEntity.ok(menus);
         } catch (Exception e) {
             logger.error("계층형 메뉴 조회 실패", e);
@@ -78,11 +72,8 @@ public class MenuController {
     @GetMapping("/root")
     public ResponseEntity<List<MenuDto>> getRootMenus() {
         
-        logger.info("최상위 메뉴 조회 요청");
-        
         try {
             List<MenuDto> menus = menuService.getRootMenus();
-            logger.info("최상위 메뉴 조회 성공 - 개수: {}", menus.size());
             return ResponseEntity.ok(menus);
         } catch (Exception e) {
             logger.error("최상위 메뉴 조회 실패", e);
@@ -96,11 +87,8 @@ public class MenuController {
     @GetMapping("/{parentId}/children")
     public ResponseEntity<List<MenuDto>> getChildMenus(@PathVariable Long parentId) {
         
-        logger.info("하위 메뉴 조회 요청 - 부모 ID: {}", parentId);
-        
         try {
             List<MenuDto> menus = menuService.getChildMenus(parentId);
-            logger.info("하위 메뉴 조회 성공 - 개수: {}", menus.size());
             return ResponseEntity.ok(menus);
         } catch (Exception e) {
             logger.error("하위 메뉴 조회 실패", e);
@@ -114,12 +102,9 @@ public class MenuController {
     @GetMapping("/code/{menuCode}")
     public ResponseEntity<MenuDto> getMenuByCode(@PathVariable String menuCode) {
         
-        logger.info("메뉴 코드로 조회 요청 - 코드: {}", menuCode);
-        
         try {
             MenuDto menu = menuService.getMenuByCode(menuCode);
             if (menu != null) {
-                logger.info("메뉴 조회 성공 - 코드: {}, 이름: {}", menuCode, menu.getMenuName());
                 return ResponseEntity.ok(menu);
             } else {
                 logger.warn("메뉴를 찾을 수 없음 - 코드: {}", menuCode);
@@ -137,11 +122,8 @@ public class MenuController {
     @GetMapping("/search")
     public ResponseEntity<List<MenuDto>> searchMenus(@RequestParam String keyword) {
         
-        logger.info("메뉴 검색 요청 - 키워드: {}", keyword);
-        
         try {
             List<MenuDto> menus = menuService.searchMenus(keyword);
-            logger.info("메뉴 검색 성공 - 키워드: {}, 개수: {}", keyword, menus.size());
             return ResponseEntity.ok(menus);
         } catch (Exception e) {
             logger.error("메뉴 검색 실패", e);
@@ -155,11 +137,8 @@ public class MenuController {
     @PostMapping("/reinitialize")
     public ResponseEntity<String> reinitializeMenus() {
         
-        logger.info("메뉴 강제 재초기화 요청");
-        
         try {
             menuInitializationService.forceReinitializeMenus();
-            logger.info("메뉴 강제 재초기화 완료");
             return ResponseEntity.ok("메뉴가 성공적으로 재초기화되었습니다.");
         } catch (Exception e) {
             logger.error("메뉴 강제 재초기화 실패", e);

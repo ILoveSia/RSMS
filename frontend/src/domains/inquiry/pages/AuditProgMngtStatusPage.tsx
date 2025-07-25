@@ -323,7 +323,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
   // 점검 대상 선정 완료 핸들러
   const handleTargetSelectionComplete = useCallback((selectedItems: InspectionTargetItem[]) => {
-    console.log('선택된 점검 대상:', selectedItems);
     setTargetSelectionOpen(false);
   }, []);
 

@@ -210,13 +210,11 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
     //   try {
     //     const parsedTabs = JSON.parse(storedTabs);
     //     if (Array.isArray(parsedTabs) && parsedTabs.length > 0) {
-    //       console.log('[TabContext] localStorage에서 탭 상태 복원 중...', parsedTabs);
     //       // Date 객체 복원 및 컴포넌트 재생성
     //       const restoredTabs = parsedTabs.map(tab => {
     //         let component = null;
     //         // 홈 탭의 경우 컴포넌트를 다시 생성
     //         if (tab.path === '/main') {
-    //           console.log('[TabContext] 홈 탭 컴포넌트 재생성 중...');
     //           // MainPage 동적 import
     //           const MainPage = React.lazy(() => import('@/domains/main/pages/MainPage'));
     //           component = <MainPage />;
@@ -228,7 +226,6 @@ export const TabProvider: React.FC<TabProviderProps> = ({ children }) => {
     //           lastActiveAt: new Date(tab.lastActiveAt),
     //         };
     //       });
-    //       console.log('[TabContext] 복원된 탭들:', restoredTabs);
     //       dispatch({ type: 'SET_TABS', payload: { tabs: restoredTabs } });
     //     }
     //   } catch (error) {

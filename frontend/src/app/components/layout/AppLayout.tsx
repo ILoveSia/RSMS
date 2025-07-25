@@ -91,7 +91,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   const handleLogout = () => {
     // 로그아웃 로직 구현
     handleProfileMenuClose();
-    console.log('로그아웃');
   };
 
   const drawer = (

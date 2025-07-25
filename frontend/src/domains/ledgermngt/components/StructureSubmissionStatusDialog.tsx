@@ -263,43 +263,19 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
     try {
       // 먼저 기본 데이터 저장하고 생성된 ID 받기
       const result = await onSubmit(registrationData);
-      console.log('저장 결과:', result); // 디버깅용 로그
-
-      // 디버깅: 첨부파일 업로드 조건 확인
-      console.log('첨부파일 업로드 조건 체크:', {
-        selectedFile: !!selectedFile,
-        selectedFileName: selectedFile?.name,
-        result: result,
-        resultId: result?.id,
-        mode: mode,
-        itemId: itemId
-      });
-
-      // 각 조건별 체크
-      console.log('조건별 체크:', {
-        'selectedFile 존재': !!selectedFile,
-        'result 존재': !!result,
-        'result.id 존재': !!(result && result.id),
-        'mode !== view': mode !== 'view',
-        '새 생성 조건 전체': !!(selectedFile && result && result.id && mode !== 'view'),
-        '수정 조건 전체': !!(selectedFile && itemId && mode === 'edit')
-      });
 
       // 새로 선택한 파일이 있으면 첨부파일 업로드
       if (selectedFile && mode !== 'view') {
         const targetEntityId = mode === 'edit' && itemId ? itemId : result?.id;
         
         if (targetEntityId) {
-          console.log(`첨부파일 업로드 시작 (${mode === 'edit' ? '수정' : '생성'}):`, targetEntityId);
           try {
             await uploadAttachment(selectedFile, {
               entityType: 'LEDGER_MGMT_STRUCTURE_SUBMISSION',
               entityId: targetEntityId,
               uploadedBy: 'system'
             });
-            console.log(`첨부파일 업로드 완료 (${mode === 'edit' ? '수정' : '생성'})`);
           } catch (uploadError) {
-            console.error(`첨부파일 업로드 실패 (${mode === 'edit' ? '수정' : '생성'}):`, uploadError);
             throw uploadError; // 에러를 다시 던져서 전체 처리 실패로 만듦
           }
         }
