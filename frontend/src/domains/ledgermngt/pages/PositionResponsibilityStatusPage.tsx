@@ -8,7 +8,7 @@ import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Button } from '@/shared/components/ui/button';
+import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
@@ -520,7 +520,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         <Box
           sx={{
             display: 'flex',
-            gap: '8px',
+            gap: 1,
             marginBottom: '6px',
             justifyContent: 'flex-end',
           }}
@@ -533,14 +533,12 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           >
             엑셀 업로드
           </Button>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleExcelDownload}
-            color="success"
-          >
-            엑셀 다운로드
-          </Button>
+          <ExcelDownloadButton
+            onDownload={handleExcelDownload}
+            filename="position_responsibility_status"
+            disabled={loading}
+            loading={loading}
+          />
           <Button
             variant="contained"
             size="small"

@@ -17,7 +17,7 @@ import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import ErrorDialog from '../../../app/components/ErrorDialog';
 import '../../../assets/scss/style.css';
-import { Button } from '../../../shared/components/ui/button';
+import { Button, ExcelDownloadButton } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
 import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
@@ -353,7 +353,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
         {/* 버튼 영역 */}
         <Box sx={{
           display: 'flex',
-          gap: '8px',
+          gap: 1,
           marginBottom: '6px',
           justifyContent: 'flex-end'
         }}>
@@ -365,15 +365,12 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 업로드
           </Button>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={handleExcelDownload}
+          <ExcelDownloadButton
+            onDownload={handleExcelDownload}
+            filename="executive_status"
             disabled={loading || rows.length === 0}
-          >
-            엑셀 다운로드
-          </Button>
+            loading={loading}
+          />
 
         </Box>
 

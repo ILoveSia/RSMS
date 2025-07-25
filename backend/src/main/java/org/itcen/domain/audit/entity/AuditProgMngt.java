@@ -52,7 +52,7 @@ public class AuditProgMngt extends BaseTimeEntity {
     private String auditContents;
 
     // AuditProgMngtDetail과의 연관관계 설정
-    @OneToMany(mappedBy = "auditProgMngtCd", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "auditProgMngt", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<AuditProgMngtDetail> details = new ArrayList<>();
 
@@ -61,6 +61,7 @@ public class AuditProgMngt extends BaseTimeEntity {
      */
     public void addDetail(AuditProgMngtDetail detail) {
         this.details.add(detail);
+        detail.setAuditProgMngt(this);
     }
 
     /**

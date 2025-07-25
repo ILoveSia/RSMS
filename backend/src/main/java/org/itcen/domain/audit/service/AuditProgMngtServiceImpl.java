@@ -64,8 +64,10 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
                         .hodIcItemId(hodIcItemId)
                         .beforeAuditYn("N")
                         .build();
-                auditProgMngtDetailRepository.save(detail);
+                savedAuditProgMngt.addDetail(detail);
             }
+            // cascade로 상세 항목들 자동 저장
+            auditProgMngtRepository.save(savedAuditProgMngt);
         }
 
         log.debug("점검계획 등록 완료: {}", auditProgMngtCd);
@@ -99,8 +101,10 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
 
         // 기존 상세 데이터 삭제 후 새로 등록
         if (dto.getTargetItemIds() != null) {
-            auditProgMngtDetailRepository.deleteByAuditProgMngtId(savedAuditProgMngt.getAuditProgMngtId());
+            // 기존 상세 항목들 모두 제거
+            savedAuditProgMngt.clearDetails();
             
+            // 새로운 상세 항목들 추가
             for (Long hodIcItemId : dto.getTargetItemIds()) {
                 AuditProgMngtDetail detail = AuditProgMngtDetail.builder()
                         .auditProgMngtId(savedAuditProgMngt.getAuditProgMngtId())
@@ -108,8 +112,11 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
                         .hodIcItemId(hodIcItemId)
                         .beforeAuditYn("N")
                         .build();
-                auditProgMngtDetailRepository.save(detail);
+                savedAuditProgMngt.addDetail(detail);
             }
+            
+            // 변경사항 저장 (cascade로 상세 항목들도 자동 저장)
+            auditProgMngtRepository.save(savedAuditProgMngt);
         }
 
         log.debug("점검계획 수정 완료: {}", dto.getAuditProgMngtCd());
@@ -145,23 +152,8 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         
         log.debug("삭제 대상 ID: {}, 코드: {}", auditProgMngtId, auditProgMngtCd);
 
-        // 상세 데이터 먼저 삭제 (audit_prog_mngt_id 기준)
-        try {
-            auditProgMngtDetailRepository.deleteByAuditProgMngtId(auditProgMngtId);
-            log.debug("상세 데이터 삭제 완료: ID {}", auditProgMngtId);
-        } catch (Exception e) {
-            log.error("상세 데이터 삭제 중 오류: {}", e.getMessage());
-            // 상세 데이터가 없어도 메인 삭제는 진행
-        }
-
-        // 메인 데이터 삭제 (audit_prog_mngt_id 기준)
-        try {
-            auditProgMngtRepository.deleteById(auditProgMngtId);
-            log.debug("메인 데이터 삭제 완료: ID {}", auditProgMngtId);
-        } catch (Exception e) {
-            log.error("메인 데이터 삭제 중 오류: {}", e.getMessage());
-            throw new RuntimeException("점검계획 삭제 실패: " + auditProgMngtCd, e);
-        }
+        // JPA cascade로 상세 데이터 자동 삭제됨
+        auditProgMngtRepository.deleteById(auditProgMngtId);
         
         log.debug("점검계획 삭제 완료: {} (ID: {})", auditProgMngtCd, auditProgMngtId);
     }

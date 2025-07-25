@@ -4,7 +4,7 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Button } from '@/shared/components/ui/button';
+import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { DatePicker } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -357,8 +357,46 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   }, []);
 
   // 모드 변경 핸들러
-  const handleModeChange = (mode: 'create' | 'edit' | 'view') => {
-    setDialogMode(mode);
+  const handleModeChange = (mode: 'create' | 'edit' | 'view' | 'onlyRead') => {
+    if (mode === 'onlyRead') {
+      setDialogMode('view');
+    } else {
+      setDialogMode(mode);
+    }
+  };
+
+  // 엑셀 다운로드 핸들러
+  const handleExcelDownload = async () => {
+    try {
+      console.log('점검계획관리 현황 엑셀 다운로드 시작');
+      
+      // 현재 표시된 데이터를 엑셀 형태로 변환
+      const excelData = auditRows.map(row => ({
+        '점검계획코드': row.auditProgMngtCd,
+        '점검계획명': row.auditProgName,
+        '점검유형': row.auditTypeName,
+        '책무번호': row.ledgerOrdersHod,
+        '점검대상': row.auditTarget,
+        '점검기간': row.auditPeriod,
+        '점검팀장': row.auditTeamLeader,
+        '점검팀원': row.auditTeamMembers,
+        '대상점검항목수': row.targetItemCount,
+        '점검상태': row.auditStatusName,
+        '비고': row.remarks,
+        '등록일자': row.createdAt,
+      }));
+      
+      console.log('엑셀 다운로드 데이터:', excelData);
+      
+      // TODO: 실제 엑셀 파일 생성 및 다운로드 로직 구현
+      // 예: XLSX 라이브러리 사용하여 파일 생성 후 다운로드
+      
+    } catch (error) {
+      console.error('엑셀 다운로드 오류:', error);
+      setErrorMessage('엑셀 다운로드 중 오류가 발생했습니다.');
+      setErrorDialogOpen(true);
+      throw error; // ExcelDownloadButton에서 에러 상태 처리
+    }
   };
 
   // 점검계획관리 삭제
@@ -446,27 +484,34 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         </Box>
 
         {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleRegistrationModeToggle}
-            color="success"
-            sx={{ mr: 1 }}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+          <ExcelDownloadButton
+            onDownload={handleExcelDownload}
+            filename="audit_prog_mngt_status"
             disabled={isLoading}
-          >
-            등록
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleDelete}
-            disabled={!selectedAuditIds.length || isLoading}
-            color="primary"
-            style={{ color: 'white' }}
-          >
-            삭제
-          </Button>
+            loading={isLoading}
+          />
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleRegistrationModeToggle}
+              color="success"
+              disabled={isLoading}
+            >
+              등록
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleDelete}
+              disabled={!selectedAuditIds.length || isLoading}
+              color="primary"
+              style={{ color: 'white' }}
+            >
+              삭제
+            </Button>
+          </Box>
         </Box>
 
         {/* 데이터 그리드 */}

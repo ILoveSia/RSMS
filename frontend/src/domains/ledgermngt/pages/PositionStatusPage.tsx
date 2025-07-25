@@ -6,6 +6,7 @@ import {
 } from '@/domains/common/components/search';
 import { Confirm } from '@/shared/components/modal';
 import { Button, DataGrid } from '@/shared/components/ui';
+import { ExcelDownloadButton } from '@/shared/components/ui/button';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -376,16 +377,13 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             </Button>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
-          <Button
-            variant='contained'
-            size='small'
-            color='success'
-            onClick={handleExcelDownload}
-            sx={{ mr: 1 }}
-          >
-            엑셀 다운로드
-          </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5, gap: 1 }}>
+          <ExcelDownloadButton
+            onDownload={handleExcelDownload}
+            filename="position_status"
+            disabled={loading}
+            loading={loading}
+          />
           <Button
             variant='contained'
             size='small'
