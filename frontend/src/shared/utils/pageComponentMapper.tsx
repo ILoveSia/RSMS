@@ -168,7 +168,7 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '점검 현황(월별)',
     icon: 'calendar_month',
   },
-  '/inquiry/employee': {
+  '/inquiry/non-employee': {
     component: () => import('@/domains/inquiry/pages/DeficiencyStatusPage'),
     title: '미흡상황 현황',
     icon: 'warning',
