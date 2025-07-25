@@ -92,7 +92,6 @@ export const getAllAuditProgMngtStatusList = async (
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
   
-  try {
     try {
     const response = await apiClient.get<ApiResponse<AuditProgMngtStatusResponse[]>>('/audit-prog-mngt/status/all', { params });
     
@@ -164,7 +163,6 @@ export const updateAuditProgMngt = async (
   auditProgMngtCd: string,
   data: AuditProgMngtRequest
 ): Promise<AuditProgMngtStatusResponse> => {
-  try {
     try {
     const response = await apiClient.put<ApiResponse<AuditProgMngtStatusResponse>>(`/audit-prog-mngt/${auditProgMngtCd}`, data);
     
