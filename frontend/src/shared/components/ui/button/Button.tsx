@@ -1,14 +1,4 @@
-/**
- * 공통 Button 컴포넌트
- * Material-UI Button을 래핑하여 프로젝트 표준 스타일과 기능을 제공합니다.
- *
- * @example
- * ```tsx
- * <Button variant="contained" color="primary" onClick={() => console.log('clicked')}>
- *   클릭하세요
- * </Button>
- * ```
- */
+
 import type { BaseComponentProps, Color, Size, Variant } from '@/shared/types/common';
 import { CircularProgress, Button as MuiButton } from '@mui/material';
 import type { ButtonProps as MuiButtonProps } from '@mui/material/Button';
@@ -52,6 +42,23 @@ export interface ButtonProps extends BaseComponentProps {
   target?: string;
 }
 
+// 그라데이션 스타일 생성을 위한 헬퍼 함수
+const createGradientStyle = (mainStart: string, mainEnd: string, hoverEnd: string) => ({
+  background: `linear-gradient(135deg, ${mainStart} 0%, ${mainEnd} 100%)`,
+  '&:hover': {
+    background: `linear-gradient(135deg, ${mainEnd} 0%, ${hoverEnd} 100%)`,
+  },
+});
+
+// 색상별 그라데이션 스타일 정의
+const colorStyles = {
+  primary: createGradientStyle('#527a8a', '#3e5b66', '#2d4349'),
+  secondary: createGradientStyle('#6b7c8f', '#4f5d6f', '#3a4552'),
+  success: createGradientStyle('#5f8a68', '#4a6b51', '#3a543e'),
+  warning: createGradientStyle('#c4945a', '#a67c47', '#8a6638'),
+  error: createGradientStyle('#b85c5c', '#9a4a4a', '#7d3b3b'),
+};
+
 /**
  * 공통 Button 컴포넌트
  */
@@ -92,13 +99,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     // 로딩 중일 때 아이콘 처리
     const processedStartIcon = loading ? (
-      <CircularProgress size={loadingSize} color='inherit' />
+      <CircularProgress size={loadingSize} color="inherit" />
     ) : (
       startIcon
     );
 
     const processedEndIcon =
-      loading && !startIcon ? <CircularProgress size={loadingSize} color='inherit' /> : endIcon;
+      loading && !startIcon ? <CircularProgress size={loadingSize} color="inherit" /> : endIcon;
 
     // 이벤트 핸들러
     const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -145,36 +152,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           pointerEvents: 'none',
         }),
         // 은행 프로젝트 스타일 강화
-        '&.MuiButton-containedPrimary': {
-          background: 'linear-gradient(135deg, #527a8a 0%, #3e5b66 100%)',
-          '&:hover': {
-            background: 'linear-gradient(135deg, #3e5b66 0%, #2d4349 100%)',
-          },
-        },
-        '&.MuiButton-containedSecondary': {
-          background: 'linear-gradient(135deg, #6b7c8f 0%, #4f5d6f 100%)',
-          '&:hover': {
-            background: 'linear-gradient(135deg, #4f5d6f 0%, #3a4552 100%)',
-          },
-        },
-        '&.MuiButton-containedSuccess': {
-          background: 'linear-gradient(135deg, #5f8a68 0%, #4a6b51 100%)',
-          '&:hover': {
-            background: 'linear-gradient(135deg, #4a6b51 0%, #3a543e 100%)',
-          },
-        },
-        '&.MuiButton-containedWarning': {
-          background: 'linear-gradient(135deg, #c4945a 0%, #a67c47 100%)',
-          '&:hover': {
-            background: 'linear-gradient(135deg, #a67c47 0%, #8a6638 100%)',
-          },
-        },
-        '&.MuiButton-containedError': {
-          background: 'linear-gradient(135deg, #b85c5c 0%, #9a4a4a 100%)',
-          '&:hover': {
-            background: 'linear-gradient(135deg, #9a4a4a 0%, #7d3b3b 100%)',
-          },
-        },
+        '&.MuiButton-containedPrimary': colorStyles.primary,
+        '&.MuiButton-containedSecondary': colorStyles.secondary,
+        '&.MuiButton-containedSuccess': colorStyles.success,
+        '&.MuiButton-containedWarning': colorStyles.warning,
+        '&.MuiButton-containedError': colorStyles.error,
         // 사용자 정의 스타일
         ...sx,
       },
@@ -192,3 +174,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export default Button;
+''
