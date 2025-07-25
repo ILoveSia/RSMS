@@ -16,7 +16,10 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Typography,
+  Tabs,
+  Tab
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { DatePicker } from '../../../shared/components';
@@ -39,6 +42,10 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const [employeeSearchPopupOpen, setEmployeeSearchPopupOpen] = useState(false);
   const [positionDetailsLoading, setPositionDetailsLoading] = useState(false);
   const [originalDate, setOriginalDate] = useState<Date | null>(null);
+  
+  // 탭 상태
+  const [currentTab, setCurrentTab] = useState(0);
+  
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes, setData: setAllCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
 
@@ -185,7 +192,13 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     }
     setLoading(false);
     setError(null);
+    setCurrentTab(0); // 다이얼로그 열릴 때 첫 번째 탭으로 초기화
   }, [data, open]);
+
+  // 탭 변경 핸들러
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
 
 
 
@@ -245,324 +258,366 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         // onModeChange={onChangeMode}
         loading={loading}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* 그룹화된 데이터인 경우 */}
-          {formData.isGrouped && (
-            <Box>
-              <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 1 }}>
-                직책: {formData.positionNameMapped}
-              </Box>
-              <TableContainer component={Paper} variant='outlined'>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>성명</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>직위</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>사번</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>책무</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>책무 세부내용</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>관리의무</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>관련근거</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(() => {
-                      const items = formData.groupItems || [];
-                      const rowSpans = calculateRowSpans(items);
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {/* 탭 헤더 */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Tabs value={currentTab} onChange={handleTabChange} aria-label="임원 책무 상세 탭">
+              <Tab label="기본 정보" />
+              <Tab label="소관부서 및 회의체" />
+              {formData.isGrouped && <Tab label="상세 목록" />}
+            </Tabs>
+          </Box>
 
-                      return items.map((item: any, index: number) => (
-                        <TableRow key={index}>
-                          {/* 성명 */}
-                          {rowSpans.executiveName[index] > 0 && (
-                            <TableCell
-                              rowSpan={rowSpans.executiveName[index]}
-                              sx={{
-                                verticalAlign: 'middle',
-                                borderRight: rowSpans.executiveName[index] > 1 ? '1px solid #e0e0e0' : undefined
-                              }}
-                            >
-                              {item.executiveName || '해당없음'}
-                            </TableCell>
-                          )}
-
-                          {/* 직위 */}
-                          {rowSpans.jobRank[index] > 0 && (
-                            <TableCell
-                              rowSpan={rowSpans.jobRank[index]}
-                              sx={{
-                                verticalAlign: 'middle',
-                                borderRight: rowSpans.jobRank[index] > 1 ? '1px solid #e0e0e0' : undefined
-                              }}
-                            >
-                              {getCodeName('JOB_RANK', item.jobRank) || item.jobRank || '해당없음'}
-                            </TableCell>
-                          )}
-
-                          {/* 사번 */}
-                          {rowSpans.empNo[index] > 0 && (
-                            <TableCell
-                              rowSpan={rowSpans.empNo[index]}
-                              sx={{
-                                verticalAlign: 'middle',
-                                borderRight: rowSpans.empNo[index] > 1 ? '1px solid #e0e0e0' : undefined
-                              }}
-                            >
-                              {item.empNo || '해당없음'}
-                            </TableCell>
-                          )}
-
-                          {/* 책무 */}
-                          {rowSpans.responsibility[index] > 0 && (
-                            <TableCell
-                              rowSpan={rowSpans.responsibility[index]}
-                              sx={{
-                                verticalAlign: 'middle',
-                                borderRight: rowSpans.responsibility[index] > 1 ? '1px solid #e0e0e0' : undefined
-                              }}
-                            >
-                              {item.responsibility || '해당없음'}
-                            </TableCell>
-                          )}
-
-                          {/* 책무 세부내용 */}
-                          {rowSpans.responsibilityDetail[index] > 0 && (
-                            <TableCell
-                              rowSpan={rowSpans.responsibilityDetail[index]}
-                              sx={{
-                                verticalAlign: 'middle',
-                                borderRight: rowSpans.responsibilityDetail[index] > 1 ? '1px solid #e0e0e0' : undefined
-                              }}
-                            >
-                              {item.responsibilityDetail || '해당없음'}
-                            </TableCell>
-                          )}
-
-                          {/* 관리의무 */}
-                          {rowSpans.managementDuty[index] > 0 && (
-                            <TableCell
-                              rowSpan={rowSpans.managementDuty[index]}
-                              sx={{
-                                verticalAlign: 'middle',
-                                borderRight: rowSpans.managementDuty[index] > 1 ? '1px solid #e0e0e0' : undefined
-                              }}
-                            >
-                              {item.managementDuty || '해당없음'}
-                            </TableCell>
-                          )}
-
-                          {/* 관련근거 */}
-                          {rowSpans.relatedBasis[index] > 0 && (
-                            <TableCell
-                              rowSpan={rowSpans.relatedBasis[index]}
-                              sx={{
-                                verticalAlign: 'middle',
-                                borderRight: rowSpans.relatedBasis[index] > 1 ? '1px solid #e0e0e0' : undefined
-                              }}
-                            >
-                              {item.relatedBasis || '해당없음'}
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ));
-                    })()}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
-
-          {/* 개별 데이터인 경우 (기존 UI) */}
-          {!formData.isGrouped && (
-            <>
-              {/* 첫 번째 행: 직책, 성명 */}
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <TextField
-                  label="직책"
-                  value={formData.positionNameMapped || ''}
-                  disabled={true}
-                  sx={{ flex: 1 }}
-                />
-                <TextField
-                  required
-                  label="성명"
-                  value={formData.executiveName || ''}
-                  disabled={true}
-                  sx={{ flex: 1 }}
-                />
-              </Box>
-            </>
-          )}
-
-          {!formData.isGrouped && (
-            <>
-              {/* 두 번째 행: 직위, 현 직책 부여일 */}
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <TextField
-                  label="직위"
-                  value={formData.employee?.jobRankCd
-                    ? getCodeName('JOB_RANK', formData.employee.jobRankCd)
-                    : formData.jobRankCd
-                      ? getCodeName('JOB_RANK', formData.jobRankCd)
-                      : ''}
-                  disabled={true}
-                  sx={{ flex: 1 }}
-                />
-                <DatePicker
-                  label="현 직책 부여일"
-                  value={originalDate}
-                  disabled={true}
-                  onChange={(date) => {
-                    setFormData((prev: any) => ({ ...prev, appointmentDate: date || new Date() }));
-                  }}
-                  sx={{ flex: 1 }}
-                />
-              </Box>
-
-              {/* 세 번째 행: 겸직여부, 겸직사항 */}
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
-                  <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
-                  <RadioGroup
-                    row
-                    value={formData.hasConcurrentPosition ? 'Y' : 'N'}
-                    name="hasConcurrentPosition"
-                  >
-                    <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
-                    <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
-                  </RadioGroup>
+          {/* 탭 내용 */}
+          <Box sx={{ flex: 1, overflow: 'auto' }}>
+            {/* 첫 번째 탭: 기본 정보 */}
+            {currentTab === 0 && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* 직책 정보 */}
+                <Box sx={{ fontWeight: 'bold', fontSize: '1.1rem', mb: 1, color: 'primary.main' }}>
+                  직책: {formData.positionNameMapped || '해당없음'}
                 </Box>
-                <TextField
-                  label="겸직사항"
-                  value={formData.concurrentPosition || ''}
-                  disabled={true}
-                  sx={{ flex: 1 }}
-                />
+
+                {/* 그룹화된 데이터인 경우 요약 정보 */}
+                {formData.isGrouped && (
+                  <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, border: '1px solid', borderColor: 'grey.200' }}>
+                    <Typography variant="h6" sx={{ mb: 1 }}>요약 정보</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      총 {formData.count || 0}건의 임원 책무 데이터가 있습니다.
+                    </Typography>
+                    {formData.groupItems && formData.groupItems.length > 0 && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="body2">
+                          • 대표 임원: {formData.groupItems[0].executiveName || '해당없음'}
+                        </Typography>
+                        <Typography variant="body2">
+                          • 주요 책무: {formData.groupItems[0].responsibility || '해당없음'}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* 개별 데이터인 경우 상세 정보 */}
+                {!formData.isGrouped && (
+                  <>
+                    {/* 첫 번째 행: 직책, 성명 */}
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <TextField
+                        label="직책"
+                        value={formData.positionNameMapped || ''}
+                        disabled={true}
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        required
+                        label="성명"
+                        value={formData.executiveName || ''}
+                        disabled={true}
+                        sx={{ flex: 1 }}
+                      />
+                    </Box>
+
+                    {/* 두 번째 행: 직위, 현 직책 부여일 */}
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <TextField
+                        label="직위"
+                        value={formData.employee?.jobRankCd
+                          ? getCodeName('JOB_RANK', formData.employee.jobRankCd)
+                          : formData.jobRankCd
+                            ? getCodeName('JOB_RANK', formData.jobRankCd)
+                            : ''}
+                        disabled={true}
+                        sx={{ flex: 1 }}
+                      />
+                      <DatePicker
+                        label="현 직책 부여일"
+                        value={originalDate}
+                        disabled={true}
+                        onChange={(date) => {
+                          setFormData((prev: any) => ({ ...prev, appointmentDate: date || new Date() }));
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                    </Box>
+
+                    {/* 세 번째 행: 겸직여부, 겸직사항 */}
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
+                        <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
+                        <RadioGroup
+                          row
+                          value={formData.hasConcurrentPosition ? 'Y' : 'N'}
+                          name="hasConcurrentPosition"
+                        >
+                          <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
+                          <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
+                        </RadioGroup>
+                      </Box>
+                      <TextField
+                        label="겸직사항"
+                        value={formData.concurrentPosition || ''}
+                        disabled={true}
+                        sx={{ flex: 1 }}
+                      />
+                    </Box>
+                  </>
+                )}
               </Box>
-            </>
-          )}
+            )}
 
-          {/* 소관부서 */}
-          <Box>
-            <Box
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
-            >
-              <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>소관부서</Box>
-              {positionDetailsLoading && <CircularProgress size={20} />}
-            </Box>
-            <TableContainer component={Paper} variant='outlined'>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableCell sx={{ fontWeight: 'bold', width: 430 }}>부서코드</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>부서명</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(formData.ownerDepts || []).map((dept: any, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          size='small'
-                          value={dept.deptCode || ''}
-                          disabled
-                          placeholder='부서코드'
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          size='small'
-                          value={dept.deptName || ''}
-                          disabled
-                          placeholder='부서명'
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(!formData.ownerDepts || formData.ownerDepts.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={2} align="center">
-                        {positionDetailsLoading ? '소관부서 정보를 불러오는 중...' : '소관부서 정보가 없습니다.'}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {/* 두 번째 탭: 소관부서 및 회의체 */}
+            {currentTab === 1 && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* 소관부서 */}
+                <Box>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+                  >
+                    <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>소관부서</Box>
+                    {positionDetailsLoading && <CircularProgress size={20} />}
+                  </Box>
+                  <TableContainer component={Paper} variant='outlined'>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                          <TableCell sx={{ fontWeight: 'bold', width: 430 }}>부서코드</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>부서명</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(formData.ownerDepts || []).map((dept: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                size='small'
+                                value={dept.deptCode || ''}
+                                disabled
+                                placeholder='부서코드'
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                size='small'
+                                value={dept.deptName || ''}
+                                disabled
+                                placeholder='부서명'
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {(!formData.ownerDepts || formData.ownerDepts.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={2} align="center">
+                              {positionDetailsLoading ? '소관부서 정보를 불러오는 중...' : '소관부서 정보가 없습니다.'}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+
+                {/* 주관회의체 */}
+                <Box>
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+                  >
+                    <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>주관회의체</Box>
+                    {positionDetailsLoading && <CircularProgress size={20} />}
+                  </Box>
+                  <TableContainer component={Paper} variant='outlined'>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                          <TableCell sx={{ fontWeight: 'bold' }}>회의체</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>위원장/위원</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>개최주기</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>주요 심의·의결사항</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(formData.meetings || []).map((meeting: any, index: number) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                size='small'
+                                value={meeting.meetingBodyName || ''}
+                                disabled
+                                placeholder='회의체명'
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                size='small'
+                                value={meeting.memberGubun || ''}
+                                disabled
+                                placeholder='위원장/위원'
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                size='small'
+                                value={meeting.meetingPeriod || ''}
+                                disabled
+                                placeholder='개최주기'
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <TextField
+                                fullWidth
+                                size='small'
+                                value={meeting.deliberationContent || ''}
+                                disabled
+                                placeholder='주요 심의·의결사항'
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {(!formData.meetings || formData.meetings.length === 0) && (
+                          <TableRow>
+                            <TableCell colSpan={4} align="center">
+                              {positionDetailsLoading ? '주관회의체 정보를 불러오는 중...' : '주관회의체 정보가 없습니다.'}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              </Box>
+            )}
+
+            {/* 세 번째 탭: 상세 목록 (그룹화된 데이터인 경우만) */}
+            {currentTab === 2 && formData.isGrouped && (
+              <Box>
+                <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 2 }}>
+                  임원별 상세 책무 목록 ({formData.count || 0}건)
+                </Box>
+                <TableContainer component={Paper} variant='outlined'>
+                  <Table size='small'>
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                        <TableCell sx={{ fontWeight: 'bold' }}>성명</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>직위</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>사번</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>책무</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>책무 세부내용</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>관리의무</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>관련근거</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(() => {
+                        const items = formData.groupItems || [];
+                        const rowSpans = calculateRowSpans(items);
+
+                        return items.map((item: any, index: number) => (
+                          <TableRow key={index}>
+                            {/* 성명 */}
+                            {rowSpans.executiveName[index] > 0 && (
+                              <TableCell
+                                rowSpan={rowSpans.executiveName[index]}
+                                sx={{
+                                  verticalAlign: 'middle',
+                                  borderRight: rowSpans.executiveName[index] > 1 ? '1px solid #e0e0e0' : undefined
+                                }}
+                              >
+                                {item.executiveName || '해당없음'}
+                              </TableCell>
+                            )}
+
+                            {/* 직위 */}
+                            {rowSpans.jobRank[index] > 0 && (
+                              <TableCell
+                                rowSpan={rowSpans.jobRank[index]}
+                                sx={{
+                                  verticalAlign: 'middle',
+                                  borderRight: rowSpans.jobRank[index] > 1 ? '1px solid #e0e0e0' : undefined
+                                }}
+                              >
+                                {getCodeName('JOB_RANK', item.jobRank) || item.jobRank || '해당없음'}
+                              </TableCell>
+                            )}
+
+                            {/* 사번 */}
+                            {rowSpans.empNo[index] > 0 && (
+                              <TableCell
+                                rowSpan={rowSpans.empNo[index]}
+                                sx={{
+                                  verticalAlign: 'middle',
+                                  borderRight: rowSpans.empNo[index] > 1 ? '1px solid #e0e0e0' : undefined
+                                }}
+                              >
+                                {item.empNo || '해당없음'}
+                              </TableCell>
+                            )}
+
+                            {/* 책무 */}
+                            {rowSpans.responsibility[index] > 0 && (
+                              <TableCell
+                                rowSpan={rowSpans.responsibility[index]}
+                                sx={{
+                                  verticalAlign: 'middle',
+                                  borderRight: rowSpans.responsibility[index] > 1 ? '1px solid #e0e0e0' : undefined
+                                }}
+                              >
+                                {item.responsibility || '해당없음'}
+                              </TableCell>
+                            )}
+
+                            {/* 책무 세부내용 */}
+                            {rowSpans.responsibilityDetail[index] > 0 && (
+                              <TableCell
+                                rowSpan={rowSpans.responsibilityDetail[index]}
+                                sx={{
+                                  verticalAlign: 'middle',
+                                  borderRight: rowSpans.responsibilityDetail[index] > 1 ? '1px solid #e0e0e0' : undefined
+                                }}
+                              >
+                                {item.responsibilityDetail || '해당없음'}
+                              </TableCell>
+                            )}
+
+                            {/* 관리의무 */}
+                            {rowSpans.managementDuty[index] > 0 && (
+                              <TableCell
+                                rowSpan={rowSpans.managementDuty[index]}
+                                sx={{
+                                  verticalAlign: 'middle',
+                                  borderRight: rowSpans.managementDuty[index] > 1 ? '1px solid #e0e0e0' : undefined
+                                }}
+                              >
+                                {item.managementDuty || '해당없음'}
+                              </TableCell>
+                            )}
+
+                            {/* 관련근거 */}
+                            {rowSpans.relatedBasis[index] > 0 && (
+                              <TableCell
+                                rowSpan={rowSpans.relatedBasis[index]}
+                                sx={{
+                                  verticalAlign: 'middle',
+                                  borderRight: rowSpans.relatedBasis[index] > 1 ? '1px solid #e0e0e0' : undefined
+                                }}
+                              >
+                                {item.relatedBasis || '해당없음'}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ));
+                      })()}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            )}
           </Box>
-
-          {/* 주관회의체 */}
-          <Box>
-            <Box
-              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
-            >
-              <Box sx={{ fontWeight: 'bold', fontSize: '1rem' }}>주관회의체</Box>
-              {positionDetailsLoading && <CircularProgress size={20} />}
-            </Box>
-            <TableContainer component={Paper} variant='outlined'>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                    <TableCell sx={{ fontWeight: 'bold' }}>회의체</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>위원장/위원</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>개최주기</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>주요 심의·의결사항</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(formData.meetings || []).map((meeting: any, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          size='small'
-                          value={meeting.meetingBodyName || ''}
-                          disabled
-                          placeholder='회의체명'
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          size='small'
-                          value={meeting.memberGubun || ''}
-                          disabled
-                          placeholder='위원장/위원'
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          size='small'
-                          value={meeting.meetingPeriod || ''}
-                          disabled
-                          placeholder='개최주기'
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          fullWidth
-                          size='small'
-                          value={meeting.deliberationContent || ''}
-                          disabled
-                          placeholder='주요 심의·의결사항'
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(!formData.meetings || formData.meetings.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center">
-                        {positionDetailsLoading ? '주관회의체 정보를 불러오는 중...' : '주관회의체 정보가 없습니다.'}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-
         </Box>
 
         {error && (
