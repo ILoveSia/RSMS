@@ -7,6 +7,7 @@ import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { Modal } from '@/shared/components/ui/feedback';
 import { ComboBox } from '@/shared/components/ui/form';
+import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -29,7 +30,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inspectionRound, setInspectionRound] = useState<string>('2024-001');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('전체');
+  const [departmentFilter, setDepartmentFilter] = useState<DepartmentSearchResult | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // 오류 다이얼로그 상태
@@ -41,12 +42,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     { value: '2024-001', label: '2024-001' },
     { value: '2024-002', label: '2024-002' },
     { value: '2024-003', label: '2024-003' },
-  ]);
-  const [departmentOptions, setDepartmentOptions] = useState([
-    { value: '전체', label: '전체' },
-    { value: '영업부', label: '영업부' },
-    { value: '인사부', label: '인사부' },
-    { value: '재무부', label: '재무부' },
   ]);
 
   // 데이터 로드 함수
@@ -97,10 +92,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       // 점검회차 목록 조회
       const rounds = await deficiencyStatusApi.getInspectionRoundList();
       setInspectionRoundOptions(rounds);
-
-      // 부서 목록 조회
-      const departments = await deficiencyStatusApi.getDepartmentList();
-      setDepartmentOptions(departments);
     } catch (error) {
       // 에러 시 기본값 유지
     }
@@ -257,11 +248,11 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             sx={{ minWidth: '200px' }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          <ComboBox
+          <DepartmentSelect
             value={departmentFilter}
-            onChange={(value) => setDepartmentFilter(value as string)}
-            options={departmentOptions}
+            onChange={setDepartmentFilter}
             size="small"
+            placeholder="부서 선택"
             sx={{ minWidth: '200px' }}
           />
           <Button
