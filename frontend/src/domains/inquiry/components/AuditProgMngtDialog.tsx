@@ -136,6 +136,11 @@ const useFormValidation = (data: AuditProgramData): ValidationResult => {
       errors.endDate = '종료일은 시작일보다 늦어야 합니다.';
     }
 
+    // 점검 대상 항목 필수 검증
+    if (!data.targetItemIds || data.targetItemIds.length === 0) {
+      errors.targetSelection = '점검 대상 항목을 선정해주세요.';
+    }
+
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
@@ -412,7 +417,11 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
             variant="subtitle2" 
             sx={{ 
               fontWeight: 600,
-              color: 'var(--bank-text-primary)'
+              color: 'var(--bank-text-primary)',
+              '&::after': {
+                content: '" *"',
+                color: 'red'
+              }
             }}
           >
             점검 대상 선정
@@ -420,11 +429,14 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <TextField
               fullWidth
+              required
               label="선정된 점검 대상"
               value={formData.targetSelection}
               onChange={e => handleInputChange('targetSelection', e.target.value)}
               placeholder="점검 대상을 선정하세요"
               disabled={true}
+              error={!!validation.errors.targetSelection}
+              helperText={validation.errors.targetSelection || '점검 대상 항목을 선정해주세요'}
               sx={{ flex: 1 }}
             />
             <Button

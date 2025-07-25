@@ -7,6 +7,7 @@ import org.itcen.domain.audit.service.AuditProgMngtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -89,6 +90,60 @@ public class AuditProgMngtController {
         
         log.info("점검계획 삭제 완료: {}", auditProgMngtCd);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 점검계획 다중 삭제
+     * 
+     * @param request 삭제할 점검계획코드 목록
+     * @return 삭제 결과
+     */
+    @PostMapping("/multiple/delete")
+    public ResponseEntity<Void> deleteMultipleAuditProgMngt(
+            @RequestBody DeleteMultipleRequest request,
+            HttpServletRequest httpRequest) {
+        log.info("점검계획 다중 삭제 요청: {}", request);
+        log.info("요청 객체 상세: request={}, auditProgMngtCds={}", request, request.getAuditProgMngtCds());
+        log.info("Content-Type: {}", httpRequest.getContentType());
+        
+        if (request.getAuditProgMngtCds() == null || request.getAuditProgMngtCds().isEmpty()) {
+            throw new RuntimeException("삭제할 점검계획 코드가 없습니다.");
+        }
+        
+        for (String auditProgMngtCd : request.getAuditProgMngtCds()) {
+            auditProgMngtService.deleteAuditProgMngt(auditProgMngtCd);
+        }
+        
+        log.info("점검계획 다중 삭제 완료: {}건", request.getAuditProgMngtCds().size());
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 다중 삭제 요청 DTO
+     */
+    public static class DeleteMultipleRequest {
+        private List<String> auditProgMngtCds;
+        
+        public DeleteMultipleRequest() {
+            // 기본 생성자 (Jackson 역직렬화용)
+        }
+        
+        public DeleteMultipleRequest(List<String> auditProgMngtCds) {
+            this.auditProgMngtCds = auditProgMngtCds;
+        }
+        
+        public List<String> getAuditProgMngtCds() {
+            return auditProgMngtCds;
+        }
+        
+        public void setAuditProgMngtCds(List<String> auditProgMngtCds) {
+            this.auditProgMngtCds = auditProgMngtCds;
+        }
+        
+        @Override
+        public String toString() {
+            return "DeleteMultipleRequest{auditProgMngtCds=" + auditProgMngtCds + "}";
+        }
     }
 
     /**

@@ -16,5 +16,6 @@ CREATE TABLE public.audit_prog_mngt_detail (
     updated_id varchar(100)                             NULL,               -- 수정자 ID
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP    NULL,               -- 생성일시
     updated_at timestamptz DEFAULT CURRENT_TIMESTAMP    NULL,               -- 수정일시
+    imp_pl_status_cd                varchar(10) NULL,                       -- 개선계획상태코드(계획작성,계획결재요청,계획결재완료,이행작성,이행결재요청,이행결재완료) PLAN_IMP
     CONSTRAINT audit_prog_mngt_detail_pkey PRIMARY KEY (audit_prog_mngt_detail_id)
 )

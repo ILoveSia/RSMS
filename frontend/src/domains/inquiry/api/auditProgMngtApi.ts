@@ -148,10 +148,12 @@ export const createAuditProgMngt = async (
 ): Promise<{ auditProgMngtCd: string }> => {
   try {
     const response = await apiClient.post<ApiResponse<{ auditProgMngtCd: string }>>('/audit-prog-mngt', data);
+
+    console.log('점검계획관리 등록 응답-------------:', response);
     
     // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
+    if (response && (response as any).auditProgMngtCd) {
+      return { auditProgMngtCd: (response as any).auditProgMngtCd };
     } else if (response.data && response.data.auditProgMngtCd) {
       return { auditProgMngtCd: response.data.auditProgMngtCd };
     } else {
@@ -208,8 +210,11 @@ export const deleteMultipleAuditProgMngt = async (
   auditProgMngtCds: string[]
 ): Promise<void> => {
   try {
-    const response = await apiClient.delete('/audit-prog-mngt/multiple', {
-      data: { auditProgMngtCds }
+    console.log('삭제 요청 데이터:', { auditProgMngtCds });
+    console.log('삭제 요청 auditProgMngtCds:', auditProgMngtCds);
+    
+    const response = await apiClient.post('/audit-prog-mngt/multiple/delete', {
+      auditProgMngtCds
     });
   } catch (error) {
     console.error('점검계획관리 다중 삭제 오류:', error);

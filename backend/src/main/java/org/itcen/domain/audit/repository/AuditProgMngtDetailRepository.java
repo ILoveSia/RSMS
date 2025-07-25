@@ -2,6 +2,9 @@ package org.itcen.domain.audit.repository;
 
 import org.itcen.domain.audit.entity.AuditProgMngtDetail;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,4 +27,16 @@ public interface AuditProgMngtDetailRepository extends JpaRepository<AuditProgMn
      * 점검계획코드로 상세 삭제
      */
     void deleteByAuditProgMngtCd(String auditProgMngtCd);
+    
+    /**
+     * 점검계획ID로 상세 목록 조회
+     */
+    List<AuditProgMngtDetail> findByAuditProgMngtId(Long auditProgMngtId);
+    
+    /**
+     * 점검계획ID로 상세 삭제
+     */
+    @Modifying
+    @Query("DELETE FROM AuditProgMngtDetail d WHERE d.auditProgMngtId = :auditProgMngtId")
+    void deleteByAuditProgMngtId(@Param("auditProgMngtId") Long auditProgMngtId);
 }
