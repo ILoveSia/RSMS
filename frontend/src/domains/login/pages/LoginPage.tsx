@@ -241,7 +241,6 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         '/auth/login',
         loginRequestData
       );
-      console.log('✅ [API] 로그인 API 호출 성공:', response);
 
       // ApiResponse 래퍼 구조인지 확인하여 적절히 처리
       let userData: LoginResponseData;
@@ -249,13 +248,11 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         const apiResponse = response as ApiResponse<LoginResponseData>;
         if (apiResponse.success && apiResponse.data) {
           userData = apiResponse.data;
-          console.log('✅ [로그인] ApiResponse 래퍼에서 데이터 추출:', userData);
         } else {
           throw new Error(apiResponse.message || '로그인에 실패했습니다.');
         }
       } else {
         userData = response as LoginResponseData;
-        console.log('✅ [로그인] 직접 데이터 사용:', userData);
       }
 
       const userForStore: LoginUser = {

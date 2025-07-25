@@ -188,27 +188,25 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         loading={loading}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {/* 첫 번째 행: 직책, 직위 */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <FormControl fullWidth>
-              <TextField label="직책"
-                value={formData.positionNameMapped || ''}
-                disabled={true}
-              />
-            </FormControl>
+          {/* 첫 번째 행: 직책, 성명 */}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <TextField
-              fullWidth
+              label="직책"
+              value={formData.positionNameMapped || ''}
+              disabled={true}
+              sx={{ flex: 1 }}
+            />
+            <TextField
               required
               label="성명"
-              disabled={true}
               value={formData.executiveName || ''}
-              onChange={e => handleInputChange('executiveName', e.target.value)}
+              disabled={true}
+              sx={{ flex: 1 }}
             />
-
           </Box>
 
-          {/* 두 번째 행: 성명, 현 직책 부여일 */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          {/* 두 번째 행: 직위, 현 직책 부여일 */}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <TextField
               label="직위"
               value={formData.employee?.jobRankCd
@@ -217,7 +215,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                   ? getCodeName('JOB_RANK', formData.jobRankCd)
                   : ''}
               disabled={true}
-              sx={{ width: '50%' }} />
+              sx={{ flex: 1 }}
+            />
             <DatePicker
               label="현 직책 부여일"
               value={originalDate}
@@ -225,29 +224,29 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               onChange={(date) => {
                 setFormData((prev: any) => ({ ...prev, appointmentDate: date || new Date() }));
               }}
+              sx={{ flex: 1 }}
             />
           </Box>
 
-          {/* 세 번째 행: 겸직여부 */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <RadioGroup
-              row
-              value={formData.hasConcurrentPosition ? 'Y' : 'N'}
-              // onChange={e => handleInputChange('hasConcurrentPosition', (e as React.ChangeEvent<HTMLInputElement>).target.value === 'Y')}
-              name="hasConcurrentPosition"
-            >
-              <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
-              <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
-            </RadioGroup>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                fullWidth
-                label="겸직사항"
-                value={formData.concurrentPosition || ''}
-                onChange={e => handleInputChange('concurrentPosition', e.target.value)}
-                disabled={true}
-              />
+          {/* 세 번째 행: 겸직여부, 겸직사항 */}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
+              <RadioGroup
+                row
+                value={formData.hasConcurrentPosition ? 'Y' : 'N'}
+                name="hasConcurrentPosition"
+              >
+                <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
+                <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
+              </RadioGroup>
             </Box>
+            <TextField
+              label="겸직사항"
+              value={formData.concurrentPosition || ''}
+              disabled={true}
+              sx={{ flex: 1 }}
+            />
           </Box>
 
           {/* 소관부서 */}

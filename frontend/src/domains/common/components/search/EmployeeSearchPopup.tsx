@@ -93,12 +93,10 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     if (!code) return '';
     const codeList = usableGroupedCodes[groupCode];
     if (!codeList || !Array.isArray(codeList)) {
-      console.log(`코드 목록 없음 또는 잘못된 형식 - 그룹: ${groupCode}`);
       return code;
     }
     const codeItem = codeList.find(item => item.code === code);
     if (!codeItem) {
-      console.log(`매칭되는 코드 없음 - 그룹: ${groupCode}, 코드: ${code}`);
       return code;
     }
     return codeItem.codeName;
@@ -192,14 +190,6 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
 
         setEmployees(transformedEmployees);
 
-        // 검색 결과의 코드값들 로깅
-        console.log(
-          '변환된 직급/부서 정보:',
-          transformedEmployees.map(emp => ({
-            jobRank: { code: emp.jobRankCd, name: getCodeName('JOB_RANK', emp.jobRankCd) },
-            dept: { code: emp.deptCd, name: emp.deptName },
-          }))
-        );
       } else {
         setEmployees([]);
       }

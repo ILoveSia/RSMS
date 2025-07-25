@@ -124,19 +124,14 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   // 항목구분 공통코드 가져오기
   const getFieldTypeCodes = useCallback(() => {
     const codes = getCodesArray();
-    console.log('전체 공통코드:', codes);
-    console.log('항목구분 코드 요청');
 
     // 공통코드에서 FIELD_TYPE 필터링
     const filteredCodes = codes
       .filter(code => code.groupCode === 'FIELD_TYPE' && code.useYn === 'Y')
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
-    console.log('필터링된 항목구분 코드:', filteredCodes);
-
     // 필터링된 코드가 없으면 하드코딩된 기본값 반환
     if (filteredCodes.length === 0) {
-      console.log('항목구분 코드가 없어 하드코딩된 값 사용');
       return [
         { code: 'CRT', codeName: '공통항목', groupCode: 'FIELD_TYPE', useYn: 'Y', sortOrder: 1 },
         { code: 'URT', codeName: '고유항목', groupCode: 'FIELD_TYPE', useYn: 'Y', sortOrder: 2 },
@@ -150,7 +145,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   const getCommonCodeOptions = useCallback(
     (groupCode: string): SelectOption[] => {
       const codes = getCodesArray();
-      console.log(`${groupCode} 공통코드 옵션 요청`);
 
       // 항목구분인 경우 별도 처리
       if (groupCode === 'FIELD_TYPE') {
@@ -159,7 +153,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
           value: code.code,
           label: code.codeName,
         }));
-        console.log('항목구분 최종 옵션:', options);
         return options;
       }
 
@@ -169,11 +162,8 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
           code => code.groupCode === groupCode && code.useYn === 'Y'
         );
 
-        console.log('필터링된 주기 코드:', filteredCodes);
-
         // 필터링된 코드가 없으면 하드코딩된 기본값 반환
         if (filteredCodes.length === 0) {
-          console.log('주기 코드가 없어 하드코딩된 값 사용');
           return [
             { value: 'PRD01', label: '년' },
             { value: 'PRD02', label: '반기' },
@@ -199,11 +189,8 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
           code => code.groupCode === groupCode && code.useYn === 'Y'
         );
 
-        console.log('필터링된 점검시기 코드:', filteredCodes);
-
         // 필터링된 코드가 없으면 하드코딩된 기본값 반환
         if (filteredCodes.length === 0) {
-          console.log('점검시기 코드가 없어 하드코딩된 값 사용');
           return [
             { value: 'MON01', label: '1월' },
             { value: 'MON02', label: '2월' },
@@ -249,16 +236,13 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
 
   // 직무구분 옵션 - 항목구분에 따라 동적 변경
   const getRoleTypeOptions = useCallback((): SelectOption[] => {
-    console.log('직무구분 옵션 요청, 현재 항목구분:', formData.fieldTypeCd);
 
     // 공통항목(CRT)인 경우
     if (formData.fieldTypeCd === 'CRT') {
       const options = getCommonCodeOptions('COM_ROLE_TYPE');
-      console.log('COM_ROLE_TYPE 옵션:', options);
 
       // 옵션이 없으면 하드코딩된 기본값 반환
       if (options.length === 0) {
-        console.log('COM_ROLE_TYPE 코드가 없어 하드코딩된 값 사용');
         return [
           { value: 'CRT01', label: '내부통제 공통(준법)' },
           { value: 'CRT02', label: '내부통제 공통(HR)' },
@@ -271,11 +255,9 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     // 고유항목(URT)인 경우
     else if (formData.fieldTypeCd === 'URT') {
       const options = getCommonCodeOptions('UNI_ROLE_TYPE');
-      console.log('UNI_ROLE_TYPE 옵션:', options);
 
       // 옵션이 없으면 하드코딩된 기본값 반환
       if (options.length === 0) {
-        console.log('UNI_ROLE_TYPE 코드가 없어 하드코딩된 값 사용');
         return [
           { value: 'URT01', label: '부서고유' },
           { value: 'URT02', label: '부서별 (공통)' },
@@ -348,7 +330,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     ) {
       try {
         const parsedCodes = JSON.parse(storedCommonCodes);
-        console.log('localStorage에서 공통코드 복원:', parsedCodes);
         // 여기서 setAllCodes를 사용할 수 없으므로 Redux 액션을 통해 업데이트해야 함
       } catch (error) {
         console.error('localStorage 공통코드 복원 실패:', error);

@@ -1,24 +1,22 @@
 /**
- * 직책 선택 컴포넌트
- * - POST 방식 직책 검색 지원
- * - 검색 팝업을 통한 직책 선택
+ * 책무 선택 컴포넌트
+ * - POST 방식 책무 검색 지원
+ * - 검색 팝업을 통한 책무 선택
  * - 로딩 상태 및 에러 처리
  */
-import { positionApi, type PositionSearchRequest, type PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import IconButton from '@mui/material/IconButton';
-import { PositionSearchPopup } from '@/domains/common/components';
 import type { SxProps, Theme } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useCallback, useState } from 'react';
 import SearchIcon from '@mui/icons-material/Search';
+import ResponsibilitySearchPopup, { type ResponsibilitySearchResult } from '@/domains/common/components/search/ResponsibilitySearchPopup';
 
-
-export interface PositionSelectProps {
-  /** 선택된 직책 정보 */
-  value?: PositionSearchResult | null;
+export interface ResponsibilitySelectProps {
+  /** 선택된 책무 정보 */
+  value?: ResponsibilitySearchResult | null;
   /** 값 변경 핸들러 */
-  onChange: (value: PositionSearchResult | null) => void;
+  onChange: (value: ResponsibilitySearchResult | null) => void;
   /** 컴포넌트 크기 */
   size?: 'small' | 'medium';
   /** 커스텀 스타일 */
@@ -35,40 +33,35 @@ export interface PositionSelectProps {
   minWidth?: number | string;
   /** 최대 너비 */
   maxWidth?: number | string;
-  /** 초기 검색 조건 */
-  initialSearchParams?: PositionSearchRequest;
   /** 에러 발생 콜백 */
-  searchParams?: PositionSearchRequest;
   onError?: (error: string) => void;
 }
-const PositionSelect: React.FC<PositionSelectProps> = ({
+const ResponsibilitySelect: React.FC<ResponsibilitySelectProps> = ({
   value = null,
   onChange,
   size = 'small',
   sx,
-  placeholder = '직책을 선택하세요',
+  placeholder = '책무를 선택하세요',
   disabled = false,
   error = false,
   helperText,
   minWidth = 200,
   maxWidth = 300,
-  searchParams,
-  initialSearchParams,
   onError,
 }) => {
-  const [positionSearchPopupOpen, setPositionSearchPopupOpen] = useState<boolean>(false);
+  const [responsibilitySearchPopupOpen, setResponsibilitySearchPopupOpen] = useState<boolean>(false);
 
   const handleSearch = useCallback(() => {
-    setPositionSearchPopupOpen(true);
+    setResponsibilitySearchPopupOpen(true);
   }, []);
 
-  // 직책 선택 핸들러
-  const handleSelect = useCallback((position: PositionSearchResult) => {
-    onChange(position);
-    setPositionSearchPopupOpen(false);
+  // 책무 선택 핸들러
+  const handleSelect = useCallback((responsibility: ResponsibilitySearchResult) => {
+    onChange(responsibility);
+    setResponsibilitySearchPopupOpen(false);
   }, [onChange]);
 
-  // 직책 선택 해제 핸들러
+  // 책무 선택 해제 핸들러
   const handleClear = useCallback(() => {
     onChange(null);
   }, [onChange]);
@@ -76,7 +69,7 @@ const PositionSelect: React.FC<PositionSelectProps> = ({
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ...sx }}>
       <TextField
-        value={value?.positionsNm || ''}
+        value={value?.responsibilityContent || ''}
         size={size}
         disabled={disabled}
         placeholder={placeholder}
@@ -95,13 +88,13 @@ const PositionSelect: React.FC<PositionSelectProps> = ({
       <IconButton onClick={handleSearch} disabled={disabled}>
         <SearchIcon />
       </IconButton>
-      <PositionSearchPopup
-        open={positionSearchPopupOpen}
-        onClose={() => setPositionSearchPopupOpen(false)}
+      <ResponsibilitySearchPopup
+        open={responsibilitySearchPopupOpen}
+        onClose={() => setResponsibilitySearchPopupOpen(false)}
         onSelect={handleSelect}
       />
     </Box>
   );
 };
 
-export default PositionSelect;
+export default ResponsibilitySelect;

@@ -65,7 +65,6 @@ export const getAuditProgMngtStatusList = async (
 ): Promise<AuditProgMngtStatusResponse[]> => {
   try {
     const response = await apiClient.get<ApiResponse<AuditProgMngtStatusResponse[]>>('/audit-prog-mngt/status', { params });
-    console.log('점검계획관리 현황 조회 응답:', response);
     
     // 응답 구조 확인 후 적절한 데이터 반환
     if (response.data && response.data.data) {
@@ -126,7 +125,6 @@ export const getAuditProgMngtByCode = async (
 ): Promise<AuditProgMngtStatusResponse> => {
   try {
     const response = await apiClient.get<ApiResponse<AuditProgMngtStatusResponse>>(`/audit-prog-mngt/${auditProgMngtCd}`);
-    console.log('점검계획관리 상세 조회 응답:', response);
     
     // 응답 구조 확인 후 적절한 데이터 반환
     if (response.data && response.data.data) {
@@ -150,7 +148,6 @@ export const createAuditProgMngt = async (
 ): Promise<{ auditProgMngtCd: string }> => {
   try {
     const response = await apiClient.post<ApiResponse<{ auditProgMngtCd: string }>>('/audit-prog-mngt', data);
-    console.log('점검계획관리 등록 응답:', response);
     
     // 응답 구조 확인 후 적절한 데이터 반환
     if (response.data && response.data.data) {
@@ -173,9 +170,8 @@ export const updateAuditProgMngt = async (
   auditProgMngtCd: string,
   data: AuditProgMngtRequest
 ): Promise<AuditProgMngtStatusResponse> => {
-  try {
+    try {
     const response = await apiClient.put<ApiResponse<AuditProgMngtStatusResponse>>(`/audit-prog-mngt/${auditProgMngtCd}`, data);
-    console.log('점검계획관리 수정 응답:', response);
     
     // 응답 구조 확인 후 적절한 데이터 반환
     if (response.data && response.data.data) {
@@ -199,7 +195,6 @@ export const deleteAuditProgMngt = async (
 ): Promise<void> => {
   try {
     const response = await apiClient.delete(`/audit-prog-mngt/${auditProgMngtCd}`);
-    console.log('점검계획관리 삭제 응답:', response);
   } catch (error) {
     console.error('점검계획관리 삭제 오류:', error);
     throw error;
@@ -216,7 +211,6 @@ export const deleteMultipleAuditProgMngt = async (
     const response = await apiClient.delete('/audit-prog-mngt/multiple', {
       data: { auditProgMngtCds }
     });
-    console.log('점검계획관리 다중 삭제 응답:', response);
   } catch (error) {
     console.error('점검계획관리 다중 삭제 오류:', error);
     throw error;

@@ -85,15 +85,11 @@ export async function submitSubmissionHistory(
     remarks: data.remarks?.value || null,
     attachmentFile: file?.name || null
   };
-
-  console.log('제출 요청 데이터:', requestData);
   
   const response = await apiClient.post<any>('/submissions', requestData);
-  console.log('제출 응답:', response);
   
   // API 클라이언트가 자동으로 ApiResponse wrapper를 unwrap하므로
   // response는 이미 SubmissionDto 데이터입니다
-  console.log('응답 ID:', response?.id);
   
   if (!response || !response.id) {
     throw new Error('서버에서 유효한 ID를 반환하지 않았습니다.');
@@ -123,14 +119,11 @@ export async function updateSubmissionHistory(
     attachmentFile: file?.name || null
   };
 
-  console.log('수정 요청 데이터:', requestData);
   
   const response = await apiClient.put<any>(`/submissions/${id}`, requestData);
-  console.log('수정 응답:', response);
   
   // API 클라이언트가 자동으로 ApiResponse wrapper를 unwrap하므로
   // response는 이미 SubmissionDto 데이터입니다
-  console.log('응답 ID:', response?.id);
   
   if (!response || !response.id) {
     throw new Error('서버에서 유효한 ID를 반환하지 않았습니다.');

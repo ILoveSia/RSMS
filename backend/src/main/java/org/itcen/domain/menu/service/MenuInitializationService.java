@@ -37,17 +37,13 @@ public class MenuInitializationService implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        logger.info("메뉴 초기화 시작");
-        
         // 이미 메뉴가 존재하는지 확인
         if (menuRepository.count() > 0) {
-            logger.info("메뉴 데이터가 이미 존재합니다. 초기화를 건너뜁니다.");
             return;
         }
         
         try {
             initializeMenus();
-            logger.info("메뉴 초기화 완료");
         } catch (Exception e) {
             logger.error("메뉴 초기화 중 오류 발생", e);
             throw e;
@@ -60,14 +56,10 @@ public class MenuInitializationService implements CommandLineRunner {
      */
     @Transactional
     public void forceReinitializeMenus() {
-        logger.info("메뉴 강제 재초기화 시작");
-        
         try {
             // 기존 메뉴가 있는지 확인
             long existingMenuCount = menuRepository.count();
             if (existingMenuCount > 0) {
-                logger.info("기존 메뉴 {} 개 발견. 안전한 방법으로 삭제 시도", existingMenuCount);
-                
                 // 모든 메뉴 조회 후 하위 메뉴부터 개별 삭제
                 List<Menu> allMenus = menuRepository.findAll();
                 
@@ -80,17 +72,13 @@ public class MenuInitializationService implements CommandLineRunner {
                     .sorted((a, b) -> b.compareTo(a)) // 내림차순
                     .forEach(level -> {
                         List<Menu> menusAtLevel = menusByLevel.get(level);
-                        logger.info("레벨 {} 메뉴 {} 개 삭제 중", level, menusAtLevel.size());
                         menuRepository.deleteAll(menusAtLevel);
                         menuRepository.flush(); // 즉시 반영
                     });
-                
-                logger.info("기존 메뉴 데이터 삭제 완료");
             }
             
             // 새 메뉴 생성
             initializeMenus();
-            logger.info("메뉴 강제 재초기화 완료");
         } catch (Exception e) {
             logger.error("메뉴 강제 재초기화 중 오류 발생", e);
             throw e;
@@ -106,8 +94,6 @@ public class MenuInitializationService implements CommandLineRunner {
         
         // 하위 메뉴 생성
         createSubMenus(savedRootMenus);
-        
-        logger.info("총 {} 개의 최상위 메뉴가 생성되었습니다.", savedRootMenus.size());
     }
     
     /**
@@ -263,7 +249,6 @@ public class MenuInitializationService implements CommandLineRunner {
         subMenus.add(structureSubmissionMgmt);
         
         menuRepository.saveAll(subMenus);
-        logger.info("책무구조 원장 관리 하위 메뉴 {} 개 생성 완료", subMenus.size());
     }
     
     /**

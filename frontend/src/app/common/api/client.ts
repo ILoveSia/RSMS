@@ -151,7 +151,6 @@ class ApiClient {
     if (data && typeof data === 'object' && 'data' in data && 'success' in data) {
       const apiResponse = data as { data: T; success: boolean; message?: string };
       if (apiResponse.success) {
-        logger.debug('API 응답 성공:', { status: response.status, data: apiResponse.data });
         return apiResponse.data;
       } else {
         const error: ApiError = {
@@ -164,7 +163,6 @@ class ApiClient {
       }
     }
 
-    logger.debug('API 응답 성공:', { status: response.status, data });
     return data as T;
   }
 
@@ -217,12 +215,6 @@ class ApiClient {
       credentials: 'include', // 세션 쿠키 포함
       signal: controller.signal,
     };
-
-    logger.debug('API 요청 시작:', {
-      method: requestOptions.method || 'GET',
-      url,
-      options: finalRequestOptions,
-    });
 
     try {
       const response = await fetch(url, finalRequestOptions);

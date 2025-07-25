@@ -153,7 +153,6 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
     try {
       const apiDepartments = await DepartmentApi.getActive();
       const convertedDepartments = apiDepartments.map(convertApiDepartmentToComponent);
-      console.log(convertedDepartments,"convertedDepartments 12341234");
       setDepartments(convertedDepartments);
       setFilteredDepartments(convertedDepartments);
     } catch (err) {

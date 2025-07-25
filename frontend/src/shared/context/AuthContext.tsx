@@ -99,7 +99,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         }
       } else {
-        console.log('ℹ️ [AuthContext] localStorage에 메뉴 데이터 없음');
       }
     } catch (error) {
       console.error('❌ [AuthContext] 메뉴 데이터 복원 실패:', error);
@@ -115,7 +114,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const userDataStr = localStorage.getItem('user');
       if (userDataStr) {
         const userData = JSON.parse(userDataStr);
-        console.log('📱 [AuthContext] localStorage에서 사용자 정보 로드:', userData);
 
         // 사용자 데이터를 User 인터페이스에 맞게 변환
         const user: User = {
@@ -137,7 +135,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           restoreMenuData();
         }, 100);
       } else {
-        console.log('❌ [AuthContext] localStorage에 사용자 정보 없음');
         setAuthState({
           isAuthenticated: false,
           loading: false,
@@ -153,8 +150,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // LoginPage에서 사용할 인증된 사용자 설정 메서드
+  // LoginPage에서 사용할 인증된 사용자 설정 메서드
   const setAuthenticatedUser = (user: User) => {
-    console.log('🔐 [AuthContext] setAuthenticatedUser 호출됨:', user);
 
     // roles 배열이 없으면 role 기반으로 생성
     const userWithRoles: User = {
@@ -183,7 +180,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // 로그인 함수 (기존 로직 유지 - 테스트용)
   const login = async (email: string, _password: string) => {
     try {
-      console.log('🔑 [AuthContext] 직접 로그인 시도:', email);
 
       // 사용자 데이터 설정
       const userData: User = {
@@ -211,7 +207,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         loading: false,
       });
 
-      console.log('✅ [AuthContext] 직접 로그인 완료:', userData);
     } catch (error) {
       console.error('❌ [AuthContext] 로그인 오류:', error);
       throw error;
@@ -220,7 +215,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 로그아웃 함수
   const logout = () => {
-    console.log('🚪 [AuthContext] 로그아웃 처리');
 
     // localStorage에서 사용자 정보와 메뉴 정보 모두 제거
     localStorage.removeItem('user');
@@ -237,29 +231,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isAuthenticated: false,
       loading: false,
     });
-    console.log('✅ [AuthContext] 로그아웃 완료 - 모든 데이터 정리');
   };
 
   // 특정 역할 권한 확인
   const hasRole = (role: string): boolean => {
     const result = authState.user?.roles?.includes(role) || false;
-    console.log(`🔍 [AuthContext] hasRole(${role}):`, result, 'user roles:', authState.user?.roles);
     return result;
   };
 
   // 여러 역할 중 하나라도 있는지 확인
   const hasAnyRole = (roles: string[]): boolean => {
     if (!authState.user?.roles) {
-      console.log('🔍 [AuthContext] hasAnyRole: 사용자 roles 없음');
       return false;
     }
     const result = roles.some(role => authState.user!.roles!.includes(role));
-    console.log(
-      `🔍 [AuthContext] hasAnyRole(${roles.join(', ')}):`,
-      result,
-      'user roles:',
-      authState.user.roles
-    );
     return result;
   };
 

@@ -40,8 +40,6 @@ public class MenuService {
      * 사용자 역할에 따른 접근 가능한 메뉴 조회
      */
     public List<MenuDto> getAccessibleMenusByRole(String role) {
-        logger.info("역할별 접근 가능한 메뉴 조회 - 역할: {}", role);
-        
         // fetch join을 사용하여 N+1 쿼리 문제 해결
         List<Menu> menus = menuRepository.findMenusWithPermissionsByRole(role);
         
@@ -50,8 +48,6 @@ public class MenuService {
                 .filter(menu -> menu.getPermissions().stream()
                         .anyMatch(p -> role.equals(p.getRoleName()) && p.getCanRead()))
                 .collect(Collectors.toList());
-        
-        logger.info("조회된 메뉴 개수: {}", accessibleMenus.size());
         
         // 메뉴가 없는 경우 디버깅 정보 출력
         if (accessibleMenus.isEmpty()) {
@@ -100,8 +96,6 @@ public class MenuService {
      * 계층형 메뉴 구조 조회
      */
     public List<MenuDto> getMenuHierarchy() {
-        logger.debug("계층형 메뉴 구조 조회");
-        
         List<Menu> rootMenus = menuRepository.findByParentIsNullAndIsActiveTrueOrderBySortOrderAsc();
         
         return rootMenus.stream()
@@ -113,8 +107,6 @@ public class MenuService {
      * 최상위 메뉴 조회
      */
     public List<MenuDto> getRootMenus() {
-        logger.debug("최상위 메뉴 조회");
-        
         List<Menu> rootMenus = menuRepository.findByParentIsNullAndIsActiveTrueOrderBySortOrderAsc();
         return MenuDto.fromList(rootMenus);
     }
@@ -123,8 +115,6 @@ public class MenuService {
      * 특정 부모 메뉴의 하위 메뉴 조회
      */
     public List<MenuDto> getChildMenus(Long parentId) {
-        logger.debug("하위 메뉴 조회 - 부모 ID: {}", parentId);
-        
         List<Menu> childMenus = menuRepository.findByParentIdAndIsActiveTrueOrderBySortOrderAsc(parentId);
         return MenuDto.fromList(childMenus);
     }
@@ -133,8 +123,6 @@ public class MenuService {
      * 메뉴 코드로 메뉴 조회
      */
     public MenuDto getMenuByCode(String menuCode) {
-        logger.debug("메뉴 코드로 조회 - 코드: {}", menuCode);
-        
         Optional<Menu> menu = menuRepository.findByMenuCode(menuCode);
         return menu.map(MenuDto::from).orElse(null);
     }
@@ -143,8 +131,6 @@ public class MenuService {
      * 메뉴 검색
      */
     public List<MenuDto> searchMenus(String keyword) {
-        logger.debug("메뉴 검색 - 키워드: {}", keyword);
-        
         List<Menu> menus = menuRepository.searchMenusByKeyword(keyword);
         return MenuDto.fromList(menus);
     }
@@ -153,8 +139,6 @@ public class MenuService {
      * 메뉴 ID로 메뉴 조회
      */
     public MenuDto getMenuById(Long id) {
-        logger.debug("메뉴 ID로 조회 - ID: {}", id);
-        
         Optional<Menu> menu = menuRepository.findById(id);
         return menu.map(MenuDto::from).orElse(null);
     }
@@ -163,8 +147,6 @@ public class MenuService {
      * 특정 레벨의 메뉴 조회
      */
     public List<MenuDto> getMenusByLevel(Integer level) {
-        logger.debug("레벨별 메뉴 조회 - 레벨: {}", level);
-        
         List<Menu> menus = menuRepository.findByMenuLevelAndIsActiveTrueOrderBySortOrderAsc(level);
         return MenuDto.fromList(menus);
     }
@@ -173,8 +155,6 @@ public class MenuService {
      * 메뉴 URL로 메뉴 조회
      */
     public MenuDto getMenuByUrl(String menuUrl) {
-        logger.debug("메뉴 URL로 조회 - URL: {}", menuUrl);
-        
         Optional<Menu> menu = menuRepository.findByMenuUrlAndIsActiveTrue(menuUrl);
         return menu.map(MenuDto::from).orElse(null);
     }
@@ -183,8 +163,6 @@ public class MenuService {
      * 활성화된 모든 메뉴 조회
      */
     public List<MenuDto> getAllActiveMenus() {
-        logger.debug("활성화된 모든 메뉴 조회");
-        
         List<Menu> menus = menuRepository.findByIsActiveTrueOrderByMenuLevelAscSortOrderAsc();
         return MenuDto.fromList(menus);
     }
@@ -193,8 +171,6 @@ public class MenuService {
      * 표시 가능한 모든 메뉴 조회
      */
     public List<MenuDto> getAllVisibleMenus() {
-        logger.debug("표시 가능한 모든 메뉴 조회");
-        
         List<Menu> menus = menuRepository.findByIsActiveTrueAndIsVisibleTrueOrderByMenuLevelAscSortOrderAsc();
         return MenuDto.fromList(menus);
     }
@@ -222,8 +198,6 @@ public class MenuService {
      * 메뉴 코드 존재 여부 확인
      */
     public boolean existsByMenuCode(String menuCode) {
-        logger.debug("메뉴 코드 존재 여부 확인 - 코드: {}", menuCode);
-        
         return menuRepository.existsByMenuCode(menuCode);
     }
     
@@ -231,8 +205,6 @@ public class MenuService {
      * 특정 부모 메뉴의 활성 하위 메뉴 개수 조회
      */
     public long countActiveChildrenByParentId(Long parentId) {
-        logger.debug("활성 하위 메뉴 개수 조회 - 부모 ID: {}", parentId);
-        
         return menuRepository.countActiveChildrenByParentId(parentId);
     }
 } 

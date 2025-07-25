@@ -160,8 +160,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       jobRank: item.jobRankCd || '해당없음',
       execofficer_dt: item.execofficer_dt || '해당없음'
     }));
-    console.log('data', data)
-      console.log('transformedData', transformedData)
       setRows(transformedData);
 
     } catch (err) {
@@ -181,7 +179,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   // 직책 클릭 핸들러
   const handlePositionClick = (row: ExecutiveResponsibilityRow) => {
     // TODO: 직책 상세 정보 다이얼로그 표시 또는 페이지 이동 구현
-    console.log("row", row);
     setDialogData(row);
     setDialogOpen(true);
   };
