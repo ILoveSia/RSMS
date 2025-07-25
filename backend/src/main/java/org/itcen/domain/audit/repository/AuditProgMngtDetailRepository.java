@@ -39,4 +39,9 @@ public interface AuditProgMngtDetailRepository extends JpaRepository<AuditProgMn
     @Modifying
     @Query("DELETE FROM AuditProgMngtDetail d WHERE d.auditProgMngtId = :auditProgMngtId")
     void deleteByAuditProgMngtId(@Param("auditProgMngtId") Long auditProgMngtId);
+    
+    /**
+     * 점검결과상태코드로 상세 목록 조회 (미흡상황 조회용)
+     */
+    List<AuditProgMngtDetail> findByAuditResultStatusCd(String auditResultStatusCd);
 }

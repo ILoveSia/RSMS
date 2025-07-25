@@ -41,4 +41,9 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
      * 점검시작일이 특정 날짜 이전인 데이터 조회
      */
     List<AuditProgMngt> findByAuditStartDtLessThanEqual(LocalDate endDate);
+    
+    /**
+     * 점검계획ID 목록으로 조회 (미흡상황 조회용)
+     */
+    List<AuditProgMngt> findByAuditProgMngtIdIn(List<Long> auditProgMngtIds);
 }

@@ -94,25 +94,17 @@ export const getAllAuditProgMngtStatusList = async (
   
   try {
     const response = await apiClient.get<AuditProgMngtStatusResponse[]>('/audit-prog-mngt/status/all', { params });
-    console.log('API 전체 응답:', response);
-    console.log('API response.data:', response.data);
-    console.log('API response.data type:', typeof response.data);
-    console.log('API response.data is array:', Array.isArray(response.data));
     
     // Spring Boot에서 직접 List<AuditProgMngtDto>를 반환하므로 response.data가 배열이어야 함
     if (Array.isArray(response)) {
-      console.log('응답 데이터 배열 길이:', response.length);
       return response;
     } else if (response && typeof response === 'object' && Array.isArray((response as any).data)) {
       // 혹시 ApiResponse 구조로 감싸져 있는 경우
-      console.log('ApiResponse 구조로 감싸진 데이터 길이:', (response as any).data.length);
       return (response as any).data;
     } else {
-      console.error('예상하지 못한 응답 구조:', response);
       return [];
     }
   } catch (error) {
-    console.error('API 호출 오류:', error);
     throw error;
   }
 };
@@ -148,8 +140,6 @@ export const createAuditProgMngt = async (
 ): Promise<{ auditProgMngtCd: string }> => {
   try {
     const response = await apiClient.post<ApiResponse<{ auditProgMngtCd: string }>>('/audit-prog-mngt', data);
-
-    console.log('점검계획관리 등록 응답-------------:', response);
     
     // 응답 구조 확인 후 적절한 데이터 반환
     if (response && (response as any).auditProgMngtCd) {
@@ -160,7 +150,6 @@ export const createAuditProgMngt = async (
       throw new Error('유효하지 않은 응답 구조');
     }
   } catch (error) {
-    console.error('점검계획관리 등록 오류:', error);
     throw error;
   }
 };
@@ -184,7 +173,6 @@ export const updateAuditProgMngt = async (
       throw new Error('유효하지 않은 응답 구조');
     }
   } catch (error) {
-    console.error('점검계획관리 수정 오류:', error);
     throw error;
   }
 };
@@ -196,9 +184,8 @@ export const deleteAuditProgMngt = async (
   auditProgMngtCd: string
 ): Promise<void> => {
   try {
-    const response = await apiClient.delete(`/audit-prog-mngt/${auditProgMngtCd}`);
+    await apiClient.delete(`/audit-prog-mngt/${auditProgMngtCd}`);
   } catch (error) {
-    console.error('점검계획관리 삭제 오류:', error);
     throw error;
   }
 };
@@ -210,14 +197,10 @@ export const deleteMultipleAuditProgMngt = async (
   auditProgMngtCds: string[]
 ): Promise<void> => {
   try {
-    console.log('삭제 요청 데이터:', { auditProgMngtCds });
-    console.log('삭제 요청 auditProgMngtCds:', auditProgMngtCds);
-    
-    const response = await apiClient.post('/audit-prog-mngt/multiple/delete', {
+    await apiClient.post('/audit-prog-mngt/multiple/delete', {
       auditProgMngtCds
     });
   } catch (error) {
-    console.error('점검계획관리 다중 삭제 오류:', error);
     throw error;
   }
 };

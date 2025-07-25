@@ -15,124 +15,137 @@ import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
+import deficiencyStatusApi, { type DeficiencyStatusResponse } from '../api/deficiencyStatusApi';
 
 interface IDeficiencyStatusPageProps {
   className?: string;
 }
 
-// 미흡상황 데이터 타입 정의
-interface DeficiencyRow {
-  id: number;
-  improvementPlan: string;
-  implementationResult: string;
-  inspector: string;
-  deficiencyContent: string;
-  writeDate: string;
-}
+// 미흡상황 데이터 타입 정의 (API 응답 타입 사용)
+type DeficiencyRow = DeficiencyStatusResponse;
 
 const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX.Element => {
   const [rows, setRows] = useState<DeficiencyRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [inspectionRound, setInspectionRound] = useState<string>('2024-001');
-  const [departmentFilter, setDepartmentFilter] = useState<string>('');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('전체');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // 옵션 데이터 상태
+  const [inspectionRoundOptions, setInspectionRoundOptions] = useState([
+    { value: '2024-001', label: '2024-001' },
+    { value: '2024-002', label: '2024-002' },
+    { value: '2024-003', label: '2024-003' },
+  ]);
+  const [departmentOptions, setDepartmentOptions] = useState([
+    { value: '전체', label: '전체' },
+    { value: '영업부', label: '영업부' },
+    { value: '인사부', label: '인사부' },
+    { value: '재무부', label: '재무부' },
+  ]);
+
   // 데이터 로드 함수
   const fetchDeficiencies = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const params = new URLSearchParams();
-    if (departmentFilter !== '전체') {
-      params.append('department', departmentFilter);
-    }
-
     try {
-      // 임시 테스트 데이터 (실제 구현 시 API 호출로 대체)
-      const mockData: DeficiencyRow[] = [
-        {
-          id: 1,
-          improvementPlan: '일일 리스크 보고서 작성 프로세스 재정비 및 체크리스트 구축',
-          implementationResult: '진행중 (75% 완료)',
-          inspector: '김점검',
-          deficiencyContent: '시장리스크 모니터링 보고서 미제출',
-          writeDate: '2024-01-15'
-        },
-        {
-          id: 2,
-          improvementPlan: '월간 준법점검 절차 매뉴얼 재작성 및 담당자 교육 실시',
-          implementationResult: '계획수립 완료',
-          inspector: '이감사',
-          deficiencyContent: '준법점검 절차서 미비 및 점검 주기 불일치',
-          writeDate: '2024-01-20'
-        },
-        {
-          id: 3,
-          improvementPlan: '내부통제 평가 기준 재정립 및 평가지표 개선',
-          implementationResult: '완료',
-          inspector: '박감독',
-          deficiencyContent: '통제활동 평가 기준 미달 및 문서화 부족',
-          writeDate: '2024-01-10'
-        }
-      ];
+      console.log('=== 미흡상황 현황 API 호출 시작 ===');
 
-      setRows(mockData);
+      // 실제 API 호출
+      const data = await deficiencyStatusApi.getAllDeficiencyStatusList();
+
+      console.log('API 응답 데이터:', data);
+      console.log('API 응답 데이터 타입:', typeof data);
+      console.log('API 응답 데이터 길이:', Array.isArray(data) ? data.length : 'Not Array');
+
+      if (Array.isArray(data)) {
+        console.log('첫 번째 데이터 항목:', data[0]);
+
+        // 백엔드 응답 데이터를 프론트엔드 형식에 맞게 매핑
+        const mappedData = data.map(item => ({
+          ...item,
+          id: item.auditProgMngtDetailId || item.id, // ID 매핑
+        }));
+
+        console.log('매핑된 데이터 첫 번째 항목:', mappedData[0]);
+        console.log('테이블에 설정될 데이터 건수:', mappedData.length);
+
+        setRows(mappedData);
+      } else {
+        console.warn('예상하지 못한 응답 형태:', data);
+        setRows([]);
+      }
+
     } catch (err) {
+      console.error('미흡상황 현황 API 호출 실패:', err);
       setError('미흡상황 현황 데이터를 불러오는 데 실패했습니다.');
-      console.error(err);
+      setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [departmentFilter]);
+  }, [departmentFilter, inspectionRound]);
+
+  // 옵션 데이터 로드 함수
+  const fetchOptions = useCallback(async () => {
+    try {
+      // 점검회차 목록 조회
+      const rounds = await deficiencyStatusApi.getInspectionRoundList();
+      setInspectionRoundOptions(rounds);
+
+      // 부서 목록 조회
+      const departments = await deficiencyStatusApi.getDepartmentList();
+      setDepartmentOptions(departments);
+    } catch (error) {
+      // 에러 시 기본값 유지
+    }
+  }, []);
 
   useEffect(() => {
+    fetchOptions();
     fetchDeficiencies();
-  }, [fetchDeficiencies]);
+  }, [fetchOptions, fetchDeficiencies]);
 
   // 컬럼 정의
   const columns: DataGridColumn<DeficiencyRow>[] = [
     {
       field: 'improvementPlan',
-      headerName: '개선계획',
-      width: 300,
-      flex: 2,
-      renderCell: ({ row }) => (
-        <span
-          style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDeficiencyClick(row.id);
-          }}
-        >
-          {row.improvementPlan}
-        </span>
-      ),
-    },
-    {
-      field: 'implementationResult',
-      headerName: '이행결과',
-      width: 150,
+      headerName: '개선현황',
+      width: 200,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value }) => {
-        const stringValue = String(value);
+      renderCell: ({ row }) => {
+        const status = String(row.improvementPlan);
+        const getStatusColor = (status: string) => {
+          if (status.includes('완료')) return '#2e7d32'; // 녹색
+          if (status.includes('이행중')) return '#ed6c02'; // 주황색
+          if (status.includes('수립완료')) return '#1976d2'; // 파란색
+          if (status.includes('수립중')) return '#9c27b0'; // 보라색
+          return '#666666'; // 기본 회색
+        };
+
         return (
           <span
             style={{
-              color: stringValue.includes('완료') ? '#2e7d32' :
-                     stringValue.includes('진행중') ? '#ed6c02' : '#1976d2',
-              fontWeight: 'bold'
+              color: getStatusColor(status),
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeficiencyClick(row.id);
             }}
           >
-            {value}
+            {status}
           </span>
         );
-      }
+      },
     },
     {
       field: 'inspector',
@@ -203,18 +216,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     setErrorMessage('');
   };
 
-  const inspectionRoundOptions = [
-    { value: '2024-001', label: '2024-001' },
-    { value: '2024-002', label: '2024-002' },
-    { value: '2024-003', label: '2024-003' },
-  ];
 
-  const departmentOptions = [
-    { value: '전체', label: '전체' },
-    { value: '영업부', label: '영업부' },
-    { value: '인사부', label: '인사부' },
-    { value: '재무부', label: '재무부' },
-  ];
 
   return (
     <PageContainer>

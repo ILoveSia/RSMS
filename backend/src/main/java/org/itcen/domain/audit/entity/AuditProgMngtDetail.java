@@ -51,7 +51,10 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     private String beforeAuditYn = "N";
 
     @Column(name = "audit_detail_coantent", length = 1000)
-    private String auditDetailContent;
+    private String auditDetailCoantent;
+
+    @Column(name = "imp_pl_status_cd", length = 10)
+    private String impPlStatusCd;
 
     @Column(name = "audit_done_dt")
     private LocalDate auditDoneDt;
