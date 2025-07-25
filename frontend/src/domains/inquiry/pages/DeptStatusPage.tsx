@@ -7,6 +7,7 @@ import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
+import DepartmentSelect from '@/shared/components/ui/form/DepartmentSelect';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -14,6 +15,7 @@ import type { DataGridColumn, SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
+import type { DepartmentSearchResult } from '@/shared/types/common';
 
 interface IDeptStatusPageProps {
   className?: string;
@@ -223,9 +225,16 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             sx={{ minWidth: '200px' }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          <ComboBox
+          {/* <ComboBox
             value={selectedDepartment}
             onChange={(value) => setSelectedDepartment(value as SelectOption)}
+            options={departmentOptions}
+            size="small"
+            sx={{ minWidth: '200px' }}
+          /> */}
+          <DepartmentSelect
+            value={selectedDepartment}
+            onChange={(value) => setSelectedDepartment(value as DepartmentSearchResult)}
             options={departmentOptions}
             size="small"
             sx={{ minWidth: '200px' }}
