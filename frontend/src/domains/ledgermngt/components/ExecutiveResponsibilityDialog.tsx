@@ -146,7 +146,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   useEffect(() => {
     if (data && open) {
       setLoading(true);
-      
+
       // 그룹화된 데이터인지 확인 (items 배열이 있으면 그룹화된 데이터)
       if (data.items && Array.isArray(data.items)) {
         // 그룹화된 데이터 처리
@@ -157,7 +157,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
           groupItems: data.items,
           count: data.count || data.items.length
         });
-        
+
         // 첫 번째 항목의 ID로 직책 상세 정보 조회
         if (data.items.length > 0 && data.items[0].id) {
           fetchPositionDetails(data.items[0].id);
@@ -194,23 +194,23 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const calculateRowSpans = (items: any[]) => {
     const columns = ['executiveName', 'jobRank', 'empNo', 'responsibility', 'responsibilityDetail', 'managementDuty', 'relatedBasis'];
     const rowSpans: { [key: string]: number[] } = {};
-    
+
     columns.forEach(column => {
       rowSpans[column] = [];
       let currentSpan = 1;
-      
+
       for (let i = 0; i < items.length; i++) {
         if (i === 0) {
           // 첫 번째 행
           rowSpans[column][i] = 1;
         } else {
-          const currentValue = column === 'jobRank' 
+          const currentValue = column === 'jobRank'
             ? getCodeName('JOB_RANK', items[i][column]) || items[i][column] || '해당없음'
             : items[i][column] || '해당없음';
           const prevValue = column === 'jobRank'
-            ? getCodeName('JOB_RANK', items[i-1][column]) || items[i-1][column] || '해당없음'
-            : items[i-1][column] || '해당없음';
-          
+            ? getCodeName('JOB_RANK', items[i - 1][column]) || items[i - 1][column] || '해당없음'
+            : items[i - 1][column] || '해당없음';
+
           if (currentValue === prevValue) {
             // 이전 행과 같은 값
             rowSpans[column][i] = 0; // 병합되어 숨겨짐
@@ -231,7 +231,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         }
       }
     });
-    
+
     return rowSpans;
   };
 
@@ -269,14 +269,14 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                     {(() => {
                       const items = formData.groupItems || [];
                       const rowSpans = calculateRowSpans(items);
-                      
+
                       return items.map((item: any, index: number) => (
                         <TableRow key={index}>
                           {/* 성명 */}
                           {rowSpans.executiveName[index] > 0 && (
-                            <TableCell 
+                            <TableCell
                               rowSpan={rowSpans.executiveName[index]}
-                              sx={{ 
+                              sx={{
                                 verticalAlign: 'middle',
                                 borderRight: rowSpans.executiveName[index] > 1 ? '1px solid #e0e0e0' : undefined
                               }}
@@ -284,12 +284,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               {item.executiveName || '해당없음'}
                             </TableCell>
                           )}
-                          
+
                           {/* 직위 */}
                           {rowSpans.jobRank[index] > 0 && (
-                            <TableCell 
+                            <TableCell
                               rowSpan={rowSpans.jobRank[index]}
-                              sx={{ 
+                              sx={{
                                 verticalAlign: 'middle',
                                 borderRight: rowSpans.jobRank[index] > 1 ? '1px solid #e0e0e0' : undefined
                               }}
@@ -297,12 +297,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               {getCodeName('JOB_RANK', item.jobRank) || item.jobRank || '해당없음'}
                             </TableCell>
                           )}
-                          
+
                           {/* 사번 */}
                           {rowSpans.empNo[index] > 0 && (
-                            <TableCell 
+                            <TableCell
                               rowSpan={rowSpans.empNo[index]}
-                              sx={{ 
+                              sx={{
                                 verticalAlign: 'middle',
                                 borderRight: rowSpans.empNo[index] > 1 ? '1px solid #e0e0e0' : undefined
                               }}
@@ -310,12 +310,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               {item.empNo || '해당없음'}
                             </TableCell>
                           )}
-                          
+
                           {/* 책무 */}
                           {rowSpans.responsibility[index] > 0 && (
-                            <TableCell 
+                            <TableCell
                               rowSpan={rowSpans.responsibility[index]}
-                              sx={{ 
+                              sx={{
                                 verticalAlign: 'middle',
                                 borderRight: rowSpans.responsibility[index] > 1 ? '1px solid #e0e0e0' : undefined
                               }}
@@ -323,12 +323,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               {item.responsibility || '해당없음'}
                             </TableCell>
                           )}
-                          
+
                           {/* 책무 세부내용 */}
                           {rowSpans.responsibilityDetail[index] > 0 && (
-                            <TableCell 
+                            <TableCell
                               rowSpan={rowSpans.responsibilityDetail[index]}
-                              sx={{ 
+                              sx={{
                                 verticalAlign: 'middle',
                                 borderRight: rowSpans.responsibilityDetail[index] > 1 ? '1px solid #e0e0e0' : undefined
                               }}
@@ -336,12 +336,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               {item.responsibilityDetail || '해당없음'}
                             </TableCell>
                           )}
-                          
+
                           {/* 관리의무 */}
                           {rowSpans.managementDuty[index] > 0 && (
-                            <TableCell 
+                            <TableCell
                               rowSpan={rowSpans.managementDuty[index]}
-                              sx={{ 
+                              sx={{
                                 verticalAlign: 'middle',
                                 borderRight: rowSpans.managementDuty[index] > 1 ? '1px solid #e0e0e0' : undefined
                               }}
@@ -349,12 +349,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               {item.managementDuty || '해당없음'}
                             </TableCell>
                           )}
-                          
+
                           {/* 관련근거 */}
                           {rowSpans.relatedBasis[index] > 0 && (
-                            <TableCell 
+                            <TableCell
                               rowSpan={rowSpans.relatedBasis[index]}
-                              sx={{ 
+                              sx={{
                                 verticalAlign: 'middle',
                                 borderRight: rowSpans.relatedBasis[index] > 1 ? '1px solid #e0e0e0' : undefined
                               }}
