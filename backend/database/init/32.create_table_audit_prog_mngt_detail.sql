@@ -3,6 +3,7 @@
 -- DROP TABLE public.audit_prog_mngt_detail;
 CREATE TABLE public.audit_prog_mngt_detail (
     audit_prog_mngt_detail_id       bigserial           NOT NULL,           -- 점검계획관리상세ID
+    audit_prog_mngt_id              int8                NOT NULL,           -- 점검계획관리ID
     audit_prog_mngt_cd              varchar(100)        NOT NULL,           -- 점검계획코드
     hod_ic_item_id                  int8                NOT NULL,           -- 부서장 내부통제 항목 id
     audit_men_id                    varchar(100)        NULL,               -- 점검자 지정
