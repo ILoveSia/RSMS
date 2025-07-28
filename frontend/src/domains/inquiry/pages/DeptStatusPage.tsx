@@ -27,6 +27,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { hodICItemApi, type HodICItemRow } from '@/domains/ledgermngt/api/hodIcItemApi';
 import { DepartmentApi, type Department } from '@/domains/common/api/departmentApi';
+import type { Department as SearchPopupDepartment } from '@/domains/common/components/search/DepartmentSearchPopup';
 
 interface IDeptStatusPageProps {
   className?: string;
@@ -59,6 +60,10 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [rows, setRows] = useState<DeptStatusRow[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  
+  // 프론트엔드 필터링을 위한 상태
+  const [allHodICItems, setAllHodICItems] = useState<HodICItemRow[]>([]);
+  const [filteredHodICItems, setFilteredHodICItems] = useState<HodICItemRow[]>([]);
 
   // 옵션 데이터
   const roundOptions: SelectOption[] = [
@@ -201,36 +206,86 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     fetchDepartments();
   }, [fetchDepartments]);
 
-  // 데이터 조회
-  const fetchDeptStatus = useCallback(async () => {
+  // 초기 데이터 로드 (한 번만)
+  const loadAllData = useCallback(async () => {
     try {
       setIsLoading(true);
       
-      // hod_ic_item 데이터 조회
-      const hodICItems = await hodICItemApi.getHodICItemStatusList(
+      // 모든 hod_ic_item 데이터 조회 (필터 없이)
+      const allItems = await hodICItemApi.getHodICItemStatusList(
         selectedRound?.value as string,
-        selectedDepartment?.value as string
+        undefined // 부서 필터 없이 모든 데이터
       );
       
-      // departments 데이터가 로드된 후에만 처리
-      if (departments.length > 0) {
-        // 데이터 처리 및 통계 계산
-        const processedData = processHodICItemData(hodICItems);
-        setRows(processedData);
-      }
+      setAllHodICItems(allItems);
       
     } catch (err) {
-      console.error('데이터 조회 실패:', err);
-      setErrorMessage('데이터 조회에 실패했습니다.');
+      console.error('데이터 로드 실패:', err);
+      setErrorMessage('데이터 로드에 실패했습니다.');
       setErrorDialogOpen(true);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedRound, selectedDepartment, departments]);
+  }, [selectedRound]);
+
+  // 프론트엔드 필터링 함수
+  const applyFilters = useCallback(() => {
+    let filtered = allHodICItems;
+    
+    // 부서 필터링
+    if (selectedDepartment?.deptCode) {
+      filtered = filtered.filter(item => item.deptCd === selectedDepartment.deptCode);
+    }
+    
+    setFilteredHodICItems(filtered);
+    
+    // departments 데이터가 로드된 후에만 처리
+    if (departments.length > 0) {
+      // 데이터 처리 및 통계 계산
+      const processedData = processHodICItemData(filtered);
+      setRows(processedData);
+    }
+  }, [allHodICItems, selectedRound, selectedDepartment, departments]);
+
+  // 그리드에 있는 부서 목록 추출 (allHodICItems 사용)
+  const getAvailableDepartments = useCallback((): SearchPopupDepartment[] => {
+    if (allHodICItems.length === 0) {
+      return [];
+    }
+    
+    // 부서별로 그룹화하여 실제 부서만 추출
+    const deptGroups = allHodICItems.reduce((acc, item) => {
+      const deptCd = item.deptCd || '미분류';
+      if (!acc[deptCd]) {
+        acc[deptCd] = [];
+      }
+      acc[deptCd].push(item);
+      return acc;
+    }, {} as Record<string, HodICItemRow[]>);
+    
+    return Object.keys(deptGroups).map(deptCd => {
+      const dept = departments.find(d => d.departmentId === deptCd);
+      return {
+        id: dept?.departmentId || '',
+        deptCode: dept?.departmentId || '',
+        deptName: dept?.departmentName || deptCd,
+        useYn: 'Y',
+        isActive: true,
+        createdId: '',
+        updatedId: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+    });
+  }, [allHodICItems, departments]);
 
   useEffect(() => {
-    fetchDeptStatus();
-  }, [fetchDeptStatus]);
+    loadAllData();
+  }, [loadAllData]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleErrorDialogClose = () => {
     setErrorDialogOpen(false);
@@ -281,11 +336,12 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             onChange={(value) => setSelectedDepartment(value)}
             size="small"
             sx={{ minWidth: '200px' }}
+            availableDepartments={getAvailableDepartments()}
           />
           <Button
             variant="contained"
             size="small"
-            onClick={fetchDeptStatus}
+            onClick={applyFilters}
             color="primary"
           >
             조회

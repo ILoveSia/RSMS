@@ -49,6 +49,8 @@ export interface DepartmentSelectProps {
   /** 에러 발생 콜백 */
   searchParams?: DepartmentSearchRequest;
   onError?: (error: string) => void;
+  /** 사용 가능한 부서 목록 (없으면 모든 활성 부서 사용) */
+  availableDepartments?: DepartmentSearchResult[];
 }
 
 const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
@@ -65,6 +67,7 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   searchParams,
   initialSearchParams,
   onError,
+  availableDepartments,
 }) => {
   const [departmentSearchPopupOpen, setDepartmentSearchPopupOpen] = useState<boolean>(false);
 
@@ -117,6 +120,7 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
         onSelect={handleSelect}
         title="부서 선택"
         multiSelect={false}
+        availableDepartments={availableDepartments}
       />
     </Box>
   );

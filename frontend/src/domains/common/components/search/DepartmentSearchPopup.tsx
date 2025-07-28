@@ -46,6 +46,7 @@ export interface DepartmentSearchPopupProps {
   onClose: () => void;
   onSelect: (departments: Department | Department[]) => void;
   selectedDepartments?: Department[]; // 기존 선택된 부서들
+  availableDepartments?: Department[]; // 사용 가능한 부서 목록 (없으면 모든 활성 부서 사용)
 }
 
 // API 부서 데이터를 컴포넌트 부서 타입으로 변환
@@ -70,6 +71,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   onClose,
   onSelect,
   selectedDepartments: _selectedDepartments = [], // eslint-disable-line @typescript-eslint/no-unused-vars
+  availableDepartments,
 }) => {
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -146,13 +148,22 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   ];
 
   // 부서 목록 조회
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const apiDepartments = await DepartmentApi.getActive();
-      const convertedDepartments = apiDepartments.map(convertApiDepartmentToComponent);
+      let convertedDepartments: Department[];
+      
+      if (availableDepartments) {
+        // prop으로 전달된 부서 목록 사용
+        convertedDepartments = availableDepartments;
+      } else {
+        // 기존 방식: API에서 모든 활성 부서 조회
+        const apiDepartments = await DepartmentApi.getActive();
+        convertedDepartments = apiDepartments.map(convertApiDepartmentToComponent);
+      }
+      
       setDepartments(convertedDepartments);
       setFilteredDepartments(convertedDepartments);
     } catch (err) {
@@ -161,7 +172,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [availableDepartments]);
 
   // 검색 기능
   const handleSearch = useCallback(() => {
@@ -194,7 +205,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
       // 팝업이 열릴 때마다 선택 초기화
       setSelectedRows([]);
     }
-  }, [open]);
+  }, [open, availableDepartments, fetchDepartments]);
 
   // 행 더블클릭 핸들러 (단일 선택)
   const handleRowDoubleClick = (params: GridRowParams) => {
