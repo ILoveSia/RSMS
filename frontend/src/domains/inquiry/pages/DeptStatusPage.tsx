@@ -65,14 +65,6 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     { value: '2024-001', label: '2024년 1차 점검' },
     { value: '2024-002', label: '2024년 2차 점검' },
   ];
-
-  const departmentOptions: SelectOption[] = [
-    { value: 'all', label: '전체' },
-    { value: 'risk', label: '리스크관리부' },
-    { value: 'compliance', label: '준법지원부' },
-    { value: 'internal', label: '내부통제부' },
-  ];
-
   /**
    * 부서 코드를 부서명으로 변환
    */
