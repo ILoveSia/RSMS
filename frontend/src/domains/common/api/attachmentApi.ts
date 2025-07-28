@@ -62,7 +62,7 @@ export async function getAttachments(entityType: string, entityId: number): Prom
  */
 export async function downloadAttachment(attachmentId: number): Promise<Blob> {
   // Blob 응답을 위해 fetch API를 직접 사용
-  const response = await fetch(`/api/attachments/download/${attachmentId}`, {
+  const response = await fetch(`/attachments/download/${attachmentId}`, {
     method: 'GET',
     credentials: 'include'
   });

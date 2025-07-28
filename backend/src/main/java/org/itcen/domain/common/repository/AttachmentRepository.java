@@ -105,4 +105,5 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
      */
     @Query("SELECT a FROM Attachment a WHERE a.createdAt < :beforeDate ORDER BY a.createdAt ASC")
     List<Attachment> findByCreatedAtBefore(@Param("beforeDate") java.time.LocalDateTime beforeDate);
+
 }

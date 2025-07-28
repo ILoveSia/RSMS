@@ -315,13 +315,30 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
 
   const isViewMode = mode === 'view';
 
+  // 다이얼로그 닫기 핸들러 - 파일 상태 초기화 포함
+  const handleClose = () => {
+    // 파일 관련 상태 초기화
+    setSelectedFile(null);
+    setUploadingFile(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    // registrationData의 attachmentFile도 초기화
+    setRegistrationData(prev => ({
+      ...prev,
+      attachmentFile: ''
+    }));
+    
+    onClose();
+  };
+
   return (
     <BaseDialog
       open={open}
       mode={mode}
       title={getTitle()}
       maxWidth="sm"
-      onClose={onClose}
+      onClose={handleClose}
       loading={loading}
       customActions={
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', }}>
@@ -351,7 +368,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           <Button
             variant="contained"
             size="medium"
-            onClick={onClose}
+            onClick={handleClose}
             color="secondary"
           >
             {isViewMode ? '닫기' : '취소'}

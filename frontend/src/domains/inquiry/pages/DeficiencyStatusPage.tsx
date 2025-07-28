@@ -210,6 +210,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     if (selectedRow) {
       const implementationData: ImplementationResultData = {
         id: selectedRow.id,
+        auditProgMngtId: selectedRow.auditProgMngtId,  // 점검계획 ID 추가
         deficiencyContent: selectedRow.deficiencyContent || '',
         improvementPlan: selectedRow.improvementPlan || '',
         auditDetailCoantent: selectedRow.auditDetailCoantent || '',
@@ -367,6 +368,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             selectedRows={selectedIds}
             selectable={true}
             multiSelect={false}
+            disableColumnSort={true}
             onRowSelectionChange={(selectedIds: (string | number)[], _selectedData: DeficiencyRow[]) => {
               setSelectedIds(selectedIds.map(id => Number(id)));
             }}
@@ -388,6 +390,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           onClose={handleImplementationDialogClose}
           data={selectedImplementationData}
           onSave={handleImplementationSave}
+          mode="edit"
         />
       </PageContent>
     </PageContainer>

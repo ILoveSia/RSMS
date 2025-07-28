@@ -112,4 +112,5 @@ public interface AttachmentService {
      * @return 첨부파일 목록
      */
     List<AttachmentDto.Response> getAttachmentsByUploader(String uploadedBy);
+
 }
