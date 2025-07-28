@@ -151,6 +151,11 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
       // 첨부파일 목록 새로고침
       try {
         await loadAttachments();
+        // 파일 삭제 후 선택된 파일도 초기화
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       } catch (refreshError) {
         console.error('첨부파일 목록 새로고침 실패:', refreshError);
         setErrorMessage('파일이 삭제되었지만 목록 새로고침에 실패했습니다.');
@@ -183,8 +188,8 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
       // 먼저 기본 데이터 저장
       await onSave(updatedData);
 
-      // 새로 선택한 파일이 있으면 첨부파일 업로드
-      if (selectedFile && mode !== 'view' && data.auditProgMngtId) {
+      // 새로 선택한 파일이 있고, 기존 파일이 없을 때만 첨부파일 업로드
+      if (selectedFile && mode !== 'view' && data.auditProgMngtId && attachments.length === 0) {
         try {
           await uploadAttachment(selectedFile, {
             entityType: 'audit_prog_mngt_detail',
@@ -305,8 +310,8 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
           책무구조도 첨부
         </Typography>
         <Box>
-          {/* 새 파일 업로드 (create/edit 모드) */}
-          {mode !== 'view' && (
+          {/* 새 파일 업로드 (create/edit 모드) - 기존 파일이 없을 때만 표시 */}
+          {mode !== 'view' && attachments.length === 0 && (
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ mb: 1, fontSize: '0.8rem', color: '#666' }}>새 파일 업로드</Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
@@ -331,6 +336,15 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
                   </Box>
                 )}
               </Box>
+            </Box>
+          )}
+
+          {/* 기존 파일이 있을 때 안내 메시지 */}
+          {mode !== 'view' && attachments.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography sx={{ fontSize: '0.8rem', color: '#666', fontStyle: 'italic' }}>
+                이미 첨부된 파일이 있습니다. 새 파일을 업로드하려면 기존 파일을 먼저 삭제해주세요.
+              </Typography>
             </Box>
           )}
 
