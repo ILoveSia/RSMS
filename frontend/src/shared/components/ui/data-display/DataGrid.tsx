@@ -129,6 +129,124 @@ const convertColumnsToMuiFormat = <T,>(columns: DataGridColumn<T>[]): GridColDef
 };
 
 /**
+ * 페이지네이션 설정 생성
+ */
+const createPaginationConfig = (
+  data: any[],
+  page: number,
+  pageSize: number,
+  pagination?: Partial<PaginationProps>
+) => {
+  const defaultPagination = {
+    page,
+    pageSize,
+    pageSizeOptions: [5, 10, 20, 30],
+    totalItems: data.length,
+    totalPages: Math.ceil(data.length / pageSize),
+    onPageChange: () => {},
+    onPageSizeChange: () => {}
+  };
+
+  return pagination || defaultPagination;
+};
+
+/**
+ * 페이지네이션된 데이터 계산
+ */
+const calculatePaginatedData = (
+  data: any[],
+  page: number,
+  pageSize: number,
+  serverSide: boolean,
+  pagination?: Partial<PaginationProps>
+) => {
+  if (serverSide || pagination) return data;
+
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  return data.slice(start, end);
+};
+
+/**
+ * 행 데이터에 ID 추가
+ */
+const processRowData = <T,>(data: T[], rowIdField: keyof T) => {
+  return data.map((row, index) => ({
+    ...row,
+    _gridId: row[rowIdField] ?? index,
+  }));
+};
+
+/**
+ * 커스텀 페이지네이션 컴포넌트
+ */
+const CustomPagination = ({
+  paginationConfig,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  hideFooter,
+  hideFooterPagination
+}: {
+  paginationConfig: any;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  hideFooter?: boolean;
+  hideFooterPagination?: boolean;
+}) => {
+  if (hideFooter || hideFooterPagination) return null;
+
+  const { totalItems = 0, totalPages = 0, pageSizeOptions = [5, 10, 20, 30] } = paginationConfig;
+
+  const handlePageChange = (_: React.ChangeEvent<unknown>, newPage: number) => {
+    onPageChange(newPage);
+  };
+
+  const handlePageSizeChange = (event: any) => {
+    const newPageSize = Number(event.target.value);
+    onPageSizeChange(newPageSize);
+  };
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        p: 2,
+        backgroundColor: 'background.paper',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <FormControl size='small' sx={{ minWidth: 120, '& .MuiOutlinedInput-notchedOutline': { borderWidth: '1px' } }}>
+          <InputLabel>페이지 크기</InputLabel>
+          <Select value={pageSize} label='페이지 크기' onChange={handlePageSizeChange}>
+            {pageSizeOptions.map((size: number) => (
+              <MenuItem key={size} value={size}>
+                {size}개씩 보기
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Typography variant='body2' color='text.secondary'>
+          총 {totalItems}개 항목
+        </Typography>
+      </Box>
+      <Pagination
+        count={totalPages}
+        page={page}
+        onChange={handlePageChange}
+        color='primary'
+        size='small'
+      />
+    </Box>
+  );
+};
+
+/**
  * 공통 DataGrid 컴포넌트
  */
 const DataGrid = <T extends Record<string, any>>({
@@ -175,42 +293,26 @@ const DataGrid = <T extends Record<string, any>>({
   const [sortModel, setSortModel] = useState<GridSortModel>([]);
   const [filterModel, setFilterModel] = useState<GridFilterModel>({ items: [] });
 
-  // 기본 페이지네이션 설정
-  const defaultPagination = useMemo(() => ({
-    page,
-    pageSize,
-    pageSizeOptions: [5, 10, 20, 30],
-    totalItems: data.length,
-    totalPages: Math.ceil(data.length / pageSize),
-    onPageChange: (newPage: number) => setPage(newPage),
-    onPageSizeChange: (newPageSize: number) => {
-      setPageSize(newPageSize);
-      setPage(1);
-    }
-  }), [data.length, page, pageSize]);
-
-  // 실제 사용할 페이지네이션 설정
-  const paginationConfig = pagination || defaultPagination;
+  // 페이지네이션 설정
+  const paginationConfig = useMemo(() => 
+    createPaginationConfig(data, page, pageSize, pagination), 
+    [data.length, page, pageSize, pagination]
+  );
 
   // 페이지네이션된 데이터 계산
-  const paginatedData = useMemo(() => {
-    if (serverSide || pagination) return data;
-
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    return data.slice(start, end);
-  }, [data, page, pageSize, serverSide, pagination]);
+  const paginatedData = useMemo(() => 
+    calculatePaginatedData(data, page, pageSize, serverSide, pagination), 
+    [data, page, pageSize, serverSide, pagination]
+  );
 
   // 컬럼 변환
   const muiColumns = useMemo(() => convertColumnsToMuiFormat(columns), [columns]);
 
   // 행 데이터에 ID 추가
-  const processedData = useMemo(() => {
-    return paginatedData.map((row, index) => ({
-      ...row,
-      _gridId: row[rowIdField] ?? index,
-    }));
-  }, [paginatedData, rowIdField]);
+  const processedData = useMemo(() => 
+    processRowData(paginatedData, rowIdField), 
+    [paginatedData, rowIdField]
+  );
 
   // 이벤트 핸들러
   const handleRowClick: GridEventListener<'rowClick'> = params => {
@@ -239,57 +341,15 @@ const DataGrid = <T extends Record<string, any>>({
   };
 
   // 페이지네이션 핸들러
-  const handlePageChange = (_: React.ChangeEvent<unknown>, newPage: number) => {
+  const handlePageChange = (newPage: number) => {
     setPage(newPage);
     paginationConfig.onPageChange?.(newPage);
   };
 
-  const handlePageSizeChange = (event: any) => {
-    const newPageSize = Number(event.target.value);
+  const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
+    setPage(1);
     paginationConfig.onPageSizeChange?.(newPageSize);
-  };
-
-  // 커스텀 페이지네이션 컴포넌트
-  const CustomPagination = () => {
-    if (hideFooter || hideFooterPagination) return null;
-
-    const { totalItems = 0, totalPages = 0, pageSizeOptions = [5, 10, 20, 30] } = paginationConfig;
-
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          p: 2,
-          backgroundColor: 'background.paper',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <FormControl size='small' sx={{ minWidth: 120, '& .MuiOutlinedInput-notchedOutline': { borderWidth: '1px' } }}>
-            <InputLabel>페이지 크기</InputLabel>
-            <Select value={pageSize} label='페이지 크기' onChange={handlePageSizeChange}>
-              {pageSizeOptions.map(size => (
-                <MenuItem key={size} value={size}>
-                  {size}개씩 보기
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Typography variant='body2' color='text.secondary'>
-            총 {totalItems}개 항목
-          </Typography>
-        </Box>
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={handlePageChange}
-          color='primary'
-          size='small'
-        />
-      </Box>
-    );
   };
 
   return (
@@ -359,7 +419,15 @@ const DataGrid = <T extends Record<string, any>>({
               {...props}
             />
           </Box>
-          <CustomPagination />
+          <CustomPagination
+            paginationConfig={paginationConfig}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            hideFooter={hideFooter}
+            hideFooterPagination={hideFooterPagination}
+          />
         </>
       )}
     </Box>
