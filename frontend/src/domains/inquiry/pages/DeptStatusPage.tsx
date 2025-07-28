@@ -5,17 +5,28 @@
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
-import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import DepartmentSelect from '@/shared/components/ui/form/DepartmentSelect';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import type { SelectOption } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { 
+  Box, 
+  Chip, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper,
+  Typography
+} from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
-import type { DepartmentSearchResult } from '@/shared/types/common';
+import { hodICItemApi, type HodICItemRow } from '@/domains/ledgermngt/api/hodIcItemApi';
+import { DepartmentApi, type Department } from '@/domains/common/api/departmentApi';
 
 interface IDeptStatusPageProps {
   className?: string;
@@ -24,20 +35,30 @@ interface IDeptStatusPageProps {
 interface DeptStatusRow {
   id: number;
   department: string;        // 부서명
-  totalItems: number;        // 총 항목 수
-  completedItems: number;    // 완료 항목 수
-  completionRate: number;    // 완료율
-  status: string;           // 상태
-  lastInspectionDate: string; // 최종 점검일
+  
+  // 점검 결과
+  totalItems: number;        // 전체
+  appropriateItems: number;  // 적정
+  deficientItems: number;    // 미흡
+  excludedItems: number;     // 점검제외
+  appropriateRate: number;   // 적정 수행률(%)
+  
+  // 개선계획 등록 현황
+  deficientItemsForPlan: number;  // 미흡사항
+  registeredPlans: number;        // 등록
+  unregisteredPlans: number;      // 미등록
+  registrationRate: number;       // 등록률(%)
 }
 
 const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   // 상태 관리
   const [selectedRound, setSelectedRound] = useState<SelectOption | null>(null);
-  const [selectedDepartment, setSelectedDepartment] = useState<SelectOption | null>(null);
+  const [selectedDepartment, setSelectedDepartment] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorDialogOpen, setErrorDialogOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [rows, setRows] = useState<DeptStatusRow[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   // 옵션 데이터
   const roundOptions: SelectOption[] = [
@@ -52,122 +73,160 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     { value: 'internal', label: '내부통제부' },
   ];
 
-  // 테이블 컬럼 정의
-  const columns: DataGridColumn<DeptStatusRow>[] = [
-    {
-      field: 'department',
-      headerName: '부서명',
-      flex: 1,
-      minWidth: 150,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'totalItems',
-      headerName: '총 항목 수',
-      flex: 1,
-      minWidth: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: ({ value }) => `${value}개`
-    },
-    {
-      field: 'completedItems',
-      headerName: '완료 항목 수',
-      flex: 1,
-      minWidth: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: ({ value }) => `${value}개`
-    },
-    {
-      field: 'completionRate',
-      headerName: '완료율',
-      flex: 1,
-      minWidth: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: ({ value }) => `${value}%`
-    },
-    {
-      field: 'status',
-      headerName: '상태',
-      flex: 1,
-      minWidth: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: ({ value }) => {
-        let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' = 'default';
+  /**
+   * 부서 코드를 부서명으로 변환
+   */
+  const getDepartmentName = (deptCd: string): string => {
+    const department = departments.find(dept => dept.departmentId === deptCd);
+    return department ? department.departmentName : deptCd;
+  };
 
-        switch (value) {
-          case '진행중':
-            color = 'warning';
-            break;
-          case '완료':
-            color = 'success';
-            break;
-          case '미시작':
-            color = 'error';
-            break;
-          default:
-            color = 'default';
-        }
+  /**
+   * 부서 목록 조회
+   */
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const deptList = await DepartmentApi.getAll();
+      setDepartments(deptList);
+    } catch (err) {
+      console.error('부서 목록 조회 실패:', err);
+    }
+  }, []);
 
-        return (
-          <Chip
-            label={value}
-            color={color}
-            size="small"
-          />
-        );
+  /**
+   * hod_ic_item 데이터를 부서별로 그룹화하여 통계 계산
+   */
+  const processHodICItemData = (items: HodICItemRow[]): DeptStatusRow[] => {
+    // 부서별로 그룹화
+    const groupedByDept = items.reduce((acc, item) => {
+      const deptCd = item.deptCd || '미분류';
+      if (!acc[deptCd]) {
+        acc[deptCd] = [];
       }
-    },
-    {
-      field: 'lastInspectionDate',
-      headerName: '최종 점검일',
-      flex: 1,
-      minWidth: 150,
-      align: 'center',
-      headerAlign: 'center',
-    },
-  ];
+      acc[deptCd].push(item);
+      return acc;
+    }, {} as Record<string, HodICItemRow[]>);
 
-  // 임시 데이터
-  const [rows, setRows] = useState<DeptStatusRow[]>([
-    {
-      id: 1,
-      department: '리스크관리부',
-      totalItems: 25,
-      completedItems: 20,
-      completionRate: 80,
-      status: '진행중',
-      lastInspectionDate: '2024-03-15'
-    },
-    {
-      id: 2,
-      department: '준법지원부',
-      totalItems: 30,
-      completedItems: 30,
-      completionRate: 100,
-      status: '완료',
-      lastInspectionDate: '2024-03-20'
-    },
-    {
-      id: 3,
-      department: '내부통제부',
-      totalItems: 28,
-      completedItems: 0,
-      completionRate: 0,
-      status: '미시작',
-      lastInspectionDate: '-'
-    },
-  ]);
+    // 각 부서별 통계 계산
+    const deptRows = Object.entries(groupedByDept).map(([deptCd, items], index) => {
+      const totalItems = items.length;
+      
+      // 실제 점검 결과 통계 계산
+      let appropriateItems = 0;
+      let deficientItems = 0;
+      let excludedItems = 0;
+      
+      items.forEach(item => {
+        const statusCd = item.auditResultStatusCd;
+        if (statusCd === '적정') {
+          appropriateItems++;
+        } else if (statusCd === '미흡') {
+          deficientItems++;
+        } else if (statusCd === '제외') {
+          excludedItems++;
+        } else {
+          // 공란이거나 기타 상태는 미흡으로 처리
+          deficientItems++;
+        }
+      });
+      
+      const appropriateRate = totalItems > 0 ? Math.round((appropriateItems / totalItems) * 100) : 0;
+      
+      // 개선계획 등록 현황 통계 (임시 로직)
+      const deficientItemsForPlan = deficientItems;
+      const registeredPlans = Math.floor(deficientItemsForPlan * 0.7); // 70% 등록
+      const unregisteredPlans = deficientItemsForPlan - registeredPlans;
+      const registrationRate = deficientItemsForPlan > 0 ? Math.round((registeredPlans / deficientItemsForPlan) * 100) : 0;
+
+      return {
+        id: index + 1,
+        department: getDepartmentName(deptCd), // 부서명으로 변환
+        totalItems,
+        appropriateItems,
+        deficientItems,
+        excludedItems,
+        appropriateRate,
+        deficientItemsForPlan,
+        registeredPlans,
+        unregisteredPlans,
+        registrationRate
+      };
+    });
+
+    // 합계 행 계산
+    if (deptRows.length > 0) {
+      const totals = deptRows.reduce((acc, row) => {
+        acc.totalItems += row.totalItems;
+        acc.appropriateItems += row.appropriateItems;
+        acc.deficientItems += row.deficientItems;
+        acc.excludedItems += row.excludedItems;
+        acc.deficientItemsForPlan += row.deficientItemsForPlan;
+        acc.registeredPlans += row.registeredPlans;
+        acc.unregisteredPlans += row.unregisteredPlans;
+        return acc;
+      }, {
+        totalItems: 0,
+        appropriateItems: 0,
+        deficientItems: 0,
+        excludedItems: 0,
+        deficientItemsForPlan: 0,
+        registeredPlans: 0,
+        unregisteredPlans: 0
+      });
+
+      // 전체 적정 수행률 계산
+      const totalAppropriateRate = totals.totalItems > 0 
+        ? Math.round((totals.appropriateItems / totals.totalItems) * 100) 
+        : 0;
+
+      // 전체 등록률 계산
+      const totalRegistrationRate = totals.deficientItemsForPlan > 0 
+        ? Math.round((totals.registeredPlans / totals.deficientItemsForPlan) * 100) 
+        : 0;
+
+      const totalRow: DeptStatusRow = {
+        id: deptRows.length + 1,
+        department: '합계',
+        totalItems: totals.totalItems,
+        appropriateItems: totals.appropriateItems,
+        deficientItems: totals.deficientItems,
+        excludedItems: totals.excludedItems,
+        appropriateRate: totalAppropriateRate,
+        deficientItemsForPlan: totals.deficientItemsForPlan,
+        registeredPlans: totals.registeredPlans,
+        unregisteredPlans: totals.unregisteredPlans,
+        registrationRate: totalRegistrationRate
+      };
+
+      return [...deptRows, totalRow];
+    }
+
+    return deptRows;
+  };
+
+  // 부서 목록 조회
+  useEffect(() => {
+    fetchDepartments();
+  }, [fetchDepartments]);
 
   // 데이터 조회
   const fetchDeptStatus = useCallback(async () => {
     try {
       setIsLoading(true);
-      // TODO: API 호출 구현
+      
+      // hod_ic_item 데이터 조회
+      const hodICItems = await hodICItemApi.getHodICItemStatusList(
+        selectedRound?.value as string,
+        selectedDepartment?.value as string
+      );
+      
+      // departments 데이터가 로드된 후에만 처리
+      if (departments.length > 0) {
+        // 데이터 처리 및 통계 계산
+        const processedData = processHodICItemData(hodICItems);
+        setRows(processedData);
+      }
+      
     } catch (err) {
       console.error('데이터 조회 실패:', err);
       setErrorMessage('데이터 조회에 실패했습니다.');
@@ -175,7 +234,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedRound, selectedDepartment]);
+  }, [selectedRound, selectedDepartment, departments]);
 
   useEffect(() => {
     fetchDeptStatus();
@@ -225,17 +284,9 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             sx={{ minWidth: '200px' }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          {/* <ComboBox
-            value={selectedDepartment}
-            onChange={(value) => setSelectedDepartment(value as SelectOption)}
-            options={departmentOptions}
-            size="small"
-            sx={{ minWidth: '200px' }}
-          /> */}
           <DepartmentSelect
             value={selectedDepartment}
-            onChange={(value) => setSelectedDepartment(value as DepartmentSearchResult)}
-            options={departmentOptions}
+            onChange={(value) => setSelectedDepartment(value)}
             size="small"
             sx={{ minWidth: '200px' }}
           />
@@ -249,16 +300,148 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           </Button>
         </Box>
 
-        {/* 데이터 그리드 */}
-        <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-          <DataGrid
-            data={rows}
-            columns={columns}
-            loading={isLoading}
-            error={null}
-            // selectable={true}
-            // multiSelect={true}
-          />
+        {/* 계층적 헤더 테이블 */}
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          <TableContainer component={Paper} sx={{ maxHeight: '100%' }}>
+            <Table stickyHeader size="small">
+              <TableHead>
+                {/* 첫 번째 행: 메인 헤더 */}
+                <TableRow>
+                  <TableCell 
+                    rowSpan={2} 
+                    align="center" 
+                    sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd',
+                      minWidth: 120
+                    }}
+                  >
+                    부서
+                  </TableCell>
+                  <TableCell 
+                    colSpan={5} 
+                    align="center" 
+                    sx={{ 
+                      backgroundColor: '#e3f2fd', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    점검 결과
+                  </TableCell>
+                  <TableCell 
+                    colSpan={4} 
+                    align="center" 
+                    sx={{ 
+                      backgroundColor: '#e8f5e8', 
+                      fontWeight: 'bold',
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    개선계획 등록 현황
+                  </TableCell>
+                </TableRow>
+                
+                {/* 두 번째 행: 서브 헤더 */}
+                <TableRow>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    전체
+                  </TableCell>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    적정
+                  </TableCell>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    미흡
+                  </TableCell>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    점검제외
+                  </TableCell>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    적정 수행률(%)
+                  </TableCell>
+                  <TableCell 
+                    align="center" 
+                    sx={{ 
+                      backgroundColor: '#f5f5f5', 
+                      border: '1px solid #ddd'
+                    }}
+                  >
+                    미흡사항
+                  </TableCell>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    등록
+                  </TableCell>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    미등록
+                  </TableCell>
+                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                    등록률(%)
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow 
+                    key={row.id} 
+                    hover
+                    sx={row.department === '합계' ? {
+                      backgroundColor: '#f0f8ff',
+                      fontWeight: 'bold',
+                      '& td': {
+                        borderTop: '2px solid #1976d2',
+                        fontWeight: 'bold'
+                      }
+                    } : {}}
+                  >
+                    <TableCell 
+                      align="center" 
+                      sx={{ 
+                        fontWeight: 'bold',
+                        border: '1px solid #ddd',
+                        backgroundColor: row.department === '합계' ? '#e3f2fd' : '#fafafa'
+                      }}
+                    >
+                      {row.department}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.totalItems}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.appropriateItems}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.deficientItems}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.excludedItems}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.appropriateRate}%
+                    </TableCell>
+                    <TableCell 
+                      align="center" 
+                      sx={{ 
+                        border: '1px solid #ddd'
+                      }}
+                    >
+                      {row.deficientItemsForPlan}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.registeredPlans}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.unregisteredPlans}
+                    </TableCell>
+                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+                      {row.registrationRate}%
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Box>
 
         {/* 에러 다이얼로그 */}

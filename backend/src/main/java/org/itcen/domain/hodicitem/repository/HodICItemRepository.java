@@ -24,7 +24,7 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
      * 결재상태 조회 (Native Query 사용)
      */
     @Query(value = """
-                SELECT
+                SELECT DISTINCT
                     h.hod_ic_item_id as "hodIcItemId",
                     r.responsibility_id as "responsibilityId",
                     r.responsibility_content as "responsibilityContent",
@@ -46,7 +46,8 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                     h.created_at as "createdAt",
                     h.updated_at as "updatedAt",
                     COALESCE(a.appr_stat_cd, 'NONE') as "approvalStatus",
-                    h.ledger_order as "ledgerOrder"
+                    h.ledger_order as "ledgerOrder",
+                    apd.audit_result_status_cd as "auditResultStatusCd"
                 FROM hod_ic_item h
                 INNER JOIN responsibility r ON h.responsibility_id = r.responsibility_id
                 LEFT JOIN departments d ON h.dept_cd = d.department_id
@@ -55,6 +56,7 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                 LEFT JOIN common_code cc3 ON h.period_cd = cc3.code AND cc3.group_code = 'PERIOD' AND cc3.use_yn = 'Y'
                 LEFT JOIN common_code cc4 ON h.check_period = cc4.code AND cc4.group_code = 'MONTH' AND cc4.use_yn = 'Y'
                 LEFT JOIN approval a ON h.approval_id = a.approval_id
+                LEFT JOIN audit_prog_mngt_detail apd ON h.hod_ic_item_id = apd.hod_ic_item_id
                 WHERE (:ledgerOrder IS NULL OR h.ledger_order = :ledgerOrder)
                   AND (:fieldType IS NULL OR h.field_type_cd = :fieldType)
                 ORDER BY h.hod_ic_item_id

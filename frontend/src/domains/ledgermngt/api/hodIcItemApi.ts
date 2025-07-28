@@ -35,6 +35,7 @@ export interface HodICItemRow {
   updatedAt: string;
   approvalStatus: string;
   ledgerOrder: string;
+  auditResultStatusCd?: string; // 점검결과상태코드
 }
 
 // 부서장 내부통제 항목 상세 정보 타입

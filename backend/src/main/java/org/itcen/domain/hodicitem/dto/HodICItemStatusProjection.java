@@ -124,4 +124,9 @@ public interface HodICItemStatusProjection {
      * 책무번호(원장차수)
      */
     String getLedgerOrder();
+
+    /**
+     * 점검결과상태코드 (audit_prog_mngt_detail 테이블에서)
+     */
+    String getAuditResultStatusCd();
 }
