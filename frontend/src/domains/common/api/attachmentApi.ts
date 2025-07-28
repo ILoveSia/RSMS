@@ -36,7 +36,7 @@ export async function uploadAttachment(
   formData.append('uploadedBy', request.uploadedBy);
 
   const response = await apiClient.post('/attachments/upload/single', formData);
-
+  console.log("response",response);
   if (response.success !== false) {
     return response.data || response;
   } else {

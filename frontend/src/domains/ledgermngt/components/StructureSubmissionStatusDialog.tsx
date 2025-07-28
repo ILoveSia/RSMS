@@ -12,6 +12,7 @@ import type { SelectOption } from '@/shared/types/common';
 import { AttachFile as AttachFileIcon, Delete as DeleteIcon, Download as DownloadIcon } from '@mui/icons-material';
 import { Box, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
+
 interface RegistrationData {
   submitHistCd: string;
   execofficerId?: string | null; // 직원 ID 추가
@@ -154,8 +155,9 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
 
     try {
       setUploadingFile(true);
+      console.log("selectedFile",selectedFile);
       await uploadAttachment(selectedFile, {
-        entityType: 'LEDGER_MGMT_STRUCTURE_SUBMISSION',
+        entityType: 'audit_prog_mngt_detail',
         entityId: itemId,
         uploadedBy: 'system'
       });
