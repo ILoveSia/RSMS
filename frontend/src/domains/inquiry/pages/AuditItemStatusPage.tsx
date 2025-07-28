@@ -19,6 +19,8 @@ import {
 import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { getAuditItemStatusList, type AuditItemStatusResponse } from '../api/auditItemApi';
+import { assignAuditor, type AuditorAssignmentRequest } from '../api/auditorApi';
+import AuditorAssignmentDialog from '../components/AuditorAssignmentDialog';
 
 // 항목별 점검 현황 데이터 인터페이스
 interface AuditItemRow {
@@ -75,6 +77,9 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
 
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
+
+  // 점검자 지정 다이얼로그 상태
+  const [auditorDialogOpen, setAuditorDialogOpen] = useState(false);
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<AuditItemRow>[] = [
@@ -256,7 +261,46 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       return;
     }
     console.log('점검자 지정:', selectedItemIds);
-    // TODO: 점검자 지정 다이얼로그 열기
+    setAuditorDialogOpen(true);
+  };
+
+  // 점검자 지정 저장 핸들러
+  const handleAuditorAssignment = async (auditorEmpNo: string, auditorName: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+
+      // API 요청 데이터 구성
+      const assignmentRequest: AuditorAssignmentRequest = {
+        hodIcItemIds: selectedItemIds,
+        auditorEmpNo,
+        auditorName
+      };
+
+      console.log('점검자 지정 요청:', assignmentRequest);
+
+      // 점검자 지정 API 호출
+      const result = await assignAuditor(assignmentRequest);
+
+      console.log('점검자 지정 완료:', result);
+
+      // 성공 메시지 표시
+      alert(result.message || '점검자 지정이 완료되었습니다.');
+
+      // 다이얼로그 닫기
+      setAuditorDialogOpen(false);
+      setSelectedItemIds([]);
+
+      // 데이터 새로고침
+      await handleFetchAuditItems();
+
+    } catch (error) {
+      console.error('점검자 지정 오류:', error);
+      setErrorMessage('점검자 지정 중 오류가 발생했습니다.');
+      setErrorDialogOpen(true);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // 점검 결과 작성 핸들러
@@ -340,6 +384,11 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             disabled={!selectedItemIds.length || isLoading}
             color="secondary"
             startIcon={<PersonIcon />}
+            sx={{ 
+              color: 'white !important', 
+              '& .MuiSvgIcon-root': { color: 'white' },
+              '& .MuiButton-root': { color: 'white !important' }
+            }}
           >
             점검자지정
           </Button>
@@ -350,6 +399,11 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             disabled={!selectedItemIds.length || isLoading}
             color="success"
             startIcon={<EditIcon />}
+            sx={{ 
+              color: 'white !important', 
+              '& .MuiSvgIcon-root': { color: 'white' },
+              '& .MuiButton-root': { color: 'white !important' }
+            }}
           >
             점검결과작성
           </Button>
@@ -401,6 +455,15 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             </Box>
           )}
         </Box>
+
+        {/* 점검자 지정 다이얼로그 */}
+        <AuditorAssignmentDialog
+          open={auditorDialogOpen}
+          onClose={() => setAuditorDialogOpen(false)}
+          onAssign={handleAuditorAssignment}
+          selectedItemIds={selectedItemIds}
+          loading={isLoading}
+        />
 
         {/* 에러 다이얼로그 */}
         <ErrorDialog
