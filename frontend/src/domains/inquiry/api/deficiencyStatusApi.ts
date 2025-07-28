@@ -24,8 +24,9 @@ export interface DeficiencyStatusResponse {
   beforeAuditYn?: string;           // 이전회차 동일건 여부
   auditDetailCoantent?: string;     // 개선계획 세부내용 (오타 그대로)
   auditDoneDt?: string;             // 이행완료 예정일자
+  auditDoneContent?: string;        // 이행결과 내용
   impPlStatusCd?: string;           // 개선계획상태코드
-  
+
   // 화면 표시용 필드
   id: number;                       // auditProgMngtDetailId 매핑용
   deficiencyContent: string;        // 미흡사항 (audit_result 매핑)
@@ -38,7 +39,7 @@ export interface DeficiencyStatusResponse {
   completionDate?: string;          // 완료일자
   statusCode: string;               // 상태코드
   statusName: string;               // 상태명
-  
+
   // audit_prog_mngt 테이블 관련 필드
   auditProgMngtCd?: string;         // 점검계획코드
   ledgerOrdersHod?: string;         // 책무번호
@@ -47,7 +48,7 @@ export interface DeficiencyStatusResponse {
   auditEndDt?: string;              // 점검종료일
   auditStatusCd?: string;           // 점검상태코드
   auditContents?: string;           // 점검내용
-  
+
   // 추가 정보 필드
   inspectionRound: string;          // 점검회차
   department: string;               // 부서
@@ -118,11 +119,13 @@ export const getDeficiencyStatusList = async (
   params: DeficiencyStatusRequest
 ): Promise<DeficiencyStatusResponse[]> => {
   try {
-    const response = await apiClient.get<ApiResponse<DeficiencyStatusResponse[]>>('/deficiency-status', { params });
-    
+    const response = await apiClient.get<ApiResponse<DeficiencyStatusResponse[]>>('/deficiency-status', { 
+      params: params as Record<string, string | number>
+    });
+
     // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
+    if (response.data && response.data) {
+      return response.data;
     } else if (response.data && Array.isArray(response.data)) {
       return response.data;
     } else {
@@ -145,20 +148,22 @@ export const getAllDeficiencyStatusList = async (
   const params: Record<string, string> = {};
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
-  
+
   try {
+    console.log('API 호출 시작 - URL: /deficiency-status/all, params:', params);
     const response = await apiClient.get<DeficiencyStatusResponse[]>('/deficiency-status/all', { params });
-    
-    // Spring Boot에서 직접 List<DeficiencyStatusDto>를 반환하므로 response.data가 배열이어야 함
+    console.log('API 응답 원본:', response);
+
+    // apiClient가 이미 응답을 처리했으므로 response가 직접 배열이어야 함
     if (Array.isArray(response)) {
+      console.log('응답이 배열임, 길이:', response.length);
       return response;
-    } else if (response && typeof response === 'object' && Array.isArray((response as any).data)) {
-      // 혹시 ApiResponse 구조로 감싸져 있는 경우
-      return (response as any).data;
     } else {
+      console.log('응답이 배열이 아님, 타입:', typeof response, '값:', response);
       return [];
     }
   } catch (error) {
+    console.error('API 호출 에러:', error);
     throw error;
   }
 };
@@ -171,10 +176,10 @@ export const getDeficiencyStatusById = async (
 ): Promise<DeficiencyStatusResponse> => {
   try {
     const response = await apiClient.get<ApiResponse<DeficiencyStatusResponse>>(`/deficiency-status/${id}`);
-    
+
     // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
+    if (response.data && (response.data as any).data) {
+      return (response.data as any).data;
     } else if (response.data) {
       return response.data;
     } else {
@@ -194,12 +199,12 @@ export const createDeficiencyStatus = async (
 ): Promise<{ id: number }> => {
   try {
     const response = await apiClient.post<ApiResponse<{ id: number }>>('/deficiency-status', data);
-    
+
     // 응답 구조 확인 후 적절한 데이터 반환
-    if (response && (response as any).id) {
-      return { id: (response as any).id };
-    } else if (response.data && response.data.id) {
-      return { id: response.data.id };
+    if (response.data && (response.data as any).id) {
+      return { id: (response.data as any).id };
+    } else if (response.data && (response.data as any).data && (response.data as any).data.id) {
+      return { id: (response.data as any).data.id };
     } else {
       throw new Error('유효하지 않은 응답 구조');
     }
@@ -217,10 +222,10 @@ export const updateDeficiencyStatus = async (
 ): Promise<DeficiencyStatusResponse> => {
   try {
     const response = await apiClient.put<ApiResponse<DeficiencyStatusResponse>>(`/deficiency-status/${id}`, data);
-    
+
     // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
+    if (response.data && (response.data as any).data) {
+      return (response.data as any).data;
     } else if (response.data) {
       return response.data;
     } else {
@@ -305,10 +310,10 @@ export const approveDeficiencyStatus = async (
 export const getInspectionRoundList = async (): Promise<{ value: string; label: string }[]> => {
   try {
     const response = await apiClient.get<ApiResponse<string[]>>('/deficiency-status/inspection-rounds');
-    
-    const rounds = response.data && response.data.data ? response.data.data : response.data || [];
-    
-    return rounds.map(round => ({
+
+    const rounds = response.data && (response.data as any).data ? (response.data as any).data : response.data || [];
+
+    return (rounds as string[]).map((round: string) => ({
       value: round,
       label: round
     }));
@@ -328,12 +333,12 @@ export const getInspectionRoundList = async (): Promise<{ value: string; label: 
 export const getDepartmentList = async (): Promise<{ value: string; label: string }[]> => {
   try {
     const response = await apiClient.get<ApiResponse<string[]>>('/deficiency-status/departments');
-    
-    const departments = response.data && response.data.data ? response.data.data : response.data || [];
-    
+
+    const departments = response.data && (response.data as any).data ? (response.data as any).data : response.data || [];
+
     return [
       { value: '전체', label: '전체' },
-      ...departments.map(dept => ({
+      ...(departments as string[]).map((dept: string) => ({
         value: dept,
         label: dept
       }))
@@ -348,6 +353,7 @@ export const getDepartmentList = async (): Promise<{ value: string; label: strin
     ];
   }
 };
+
 
 export default {
   getDeficiencyStatusList,

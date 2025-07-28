@@ -17,6 +17,7 @@ import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 import deficiencyStatusApi, { type DeficiencyStatusResponse } from '../api/deficiencyStatusApi';
+import ImplementationResultDialog, { type ImplementationResultData } from '../components/ImplementationResultDialog';
 
 interface IDeficiencyStatusPageProps {
   className?: string;
@@ -37,6 +38,10 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // 이행결과 작성 다이얼로그 상태
+  const [implementationDialogOpen, setImplementationDialogOpen] = useState(false);
+  const [selectedImplementationData, setSelectedImplementationData] = useState<ImplementationResultData | undefined>();
+
   // 옵션 데이터 상태
   const [inspectionRoundOptions, setInspectionRoundOptions] = useState([
     { value: '2024-001', label: '2024-001' },
@@ -46,34 +51,39 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
 
   // 데이터 로드 함수
   const fetchDeficiencies = useCallback(async () => {
+    console.log('fetchDeficiencies 시작');
     setLoading(true);
     setError(null);
 
     try {
-
       // 실제 API 호출
+      console.log('API 호출 시작: getAllDeficiencyStatusList');
       const data = await deficiencyStatusApi.getAllDeficiencyStatusList();
+      console.log('API 응답 데이터:', data);
+      console.log('데이터 타입:', typeof data, 'Array인가?', Array.isArray(data));
 
       if (Array.isArray(data)) {
-
         // 백엔드 응답 데이터를 프론트엔드 형식에 맞게 매핑
         const mappedData = data.map(item => ({
           ...item,
           id: item.auditProgMngtDetailId || item.id, // ID 매핑
         }));
 
-
+        console.log("매핑된 데이터:", mappedData);
+        console.log("매핑된 데이터 개수:", mappedData.length);
         setRows(mappedData);
       } else {
+        console.log('데이터가 배열이 아님, 빈 배열로 설정');
         setRows([]);
       }
-
     } catch (err) {
       console.error('미흡상황 현황 API 호출 실패:', err);
+      console.error('에러 상세:', err);
       setError('미흡상황 현황 데이터를 불러오는 데 실패했습니다.');
       setRows([]);
     } finally {
       setLoading(false);
+      console.log('fetchDeficiencies 완료');
     }
   }, [departmentFilter, inspectionRound]);
 
@@ -143,6 +153,21 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       flex: 1
     },
     {
+      field: 'auditDoneContent',
+      headerName: '이행결과',
+      width: 200,
+      flex: 1,
+      renderCell: ({ value }) => (
+        <span style={{
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
+          {value || '-'}
+        </span>
+      )
+    },
+    {
       field: 'writeDate',
       headerName: '작성일자',
       width: 110,
@@ -158,7 +183,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   };
 
   // 개선계획 셀 클릭 핸들러
-  const handleDeficiencyClick = (deficiencyId: number) => {
+  const handleDeficiencyClick = (_deficiencyId: number) => {
     // TODO: 상세조회 다이얼로그 구현
   };
 
@@ -179,7 +204,22 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       setErrorDialogOpen(true);
       return;
     }
-    // TODO: 이행결과 작성 다이얼로그 구현
+
+    // 선택된 첫 번째 항목의 데이터 가져오기
+    const selectedRow = rows.find(row => row.id === selectedIds[0]);
+    if (selectedRow) {
+      const implementationData: ImplementationResultData = {
+        id: selectedRow.id,
+        deficiencyContent: selectedRow.deficiencyContent || '',
+        improvementPlan: selectedRow.improvementPlan || '',
+        auditDetailCoantent: selectedRow.auditDetailCoantent || '',
+        auditDoneContent: selectedRow.auditDoneContent || '',
+        auditDoneDt: selectedRow.auditDoneDt || '',
+        implementationStatus: selectedRow.statusName || '완료',
+      };
+      setSelectedImplementationData(implementationData);
+      setImplementationDialogOpen(true);
+    }
   };
 
   // 승인하기 버튼 클릭 핸들러
@@ -198,7 +238,36 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     setErrorMessage('');
   };
 
+  // 이행결과 저장 핸들러
+  const handleImplementationSave = async (data: ImplementationResultData) => {
+    try {
+      // 실제 API 호출로 이행결과 저장
+      const requestData = {
+        ids: [data.id],
+        implementationResult: data.auditDoneContent || '',
+        completionDate: data.auditDoneDt || '',
+        statusCode: '완료', // 기본값으로 완료 설정
+        remarks: ''
+      };
 
+      await deficiencyStatusApi.updateImplementationResult(requestData);
+
+      // 성공 시 데이터 다시 로드
+      await fetchDeficiencies();
+
+      // 선택 해제
+      setSelectedIds([]);
+    } catch (error) {
+      console.error('이행결과 저장 실패:', error);
+      throw error;
+    }
+  };
+
+  // 이행결과 다이얼로그 닫기
+  const handleImplementationDialogClose = () => {
+    setImplementationDialogOpen(false);
+    setSelectedImplementationData(undefined);
+  };
 
   return (
     <PageContainer>
@@ -231,7 +300,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>점검회차</span>
           <ComboBox
-
             value={inspectionRound}
             onChange={(value) => setInspectionRound(value as string)}
             options={inspectionRoundOptions}
@@ -299,7 +367,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             selectedRows={selectedIds}
             selectable={true}
             multiSelect={false}
-            onRowSelectionChange={(selectedIds: (string | number)[], selectedData: DeficiencyRow[]) => {
+            onRowSelectionChange={(selectedIds: (string | number)[], _selectedData: DeficiencyRow[]) => {
               setSelectedIds(selectedIds.map(id => Number(id)));
             }}
           />
@@ -313,6 +381,14 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         >
           <Typography>{errorMessage}</Typography>
         </Modal>
+
+        {/* 이행결과 작성 다이얼로그 */}
+        <ImplementationResultDialog
+          open={implementationDialogOpen}
+          onClose={handleImplementationDialogClose}
+          data={selectedImplementationData}
+          onSave={handleImplementationSave}
+        />
       </PageContent>
     </PageContainer>
   );

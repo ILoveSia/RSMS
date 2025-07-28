@@ -59,6 +59,9 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     @Column(name = "audit_done_dt")
     private LocalDate auditDoneDt;
 
+    @Column(name = "audit_done_content")
+    private String auditDoneContent;
+
     // AuditProgMngt와의 연관관계 설정
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "audit_prog_mngt_id", insertable = false, updatable = false)
@@ -69,6 +72,27 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
      */
     public void setAuditProgMngt(AuditProgMngt auditProgMngt) {
         this.auditProgMngt = auditProgMngt;
+    }
+
+    /**
+     * 이행결과 내용 설정
+     */
+    public void setAuditDoneContent(String auditDoneContent) {
+        this.auditDoneContent = auditDoneContent;
+    }
+
+    /**
+     * 이행완료 예정일자 설정
+     */
+    public void setAuditDoneDt(LocalDate auditDoneDt) {
+        this.auditDoneDt = auditDoneDt;
+    }
+
+    /**
+     * 개선계획상태코드 설정
+     */
+    public void setImpPlStatusCd(String impPlStatusCd) {
+        this.impPlStatusCd = impPlStatusCd;
     }
 
     // HodIcItem과의 연관관계 설정 (임시 주석처리 - 삭제 문제 해결 후 복원)

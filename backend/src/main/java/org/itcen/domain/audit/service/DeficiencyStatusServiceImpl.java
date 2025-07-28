@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -81,11 +80,12 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
                             .beforeAuditYn(detail.getBeforeAuditYn())
                             .auditDetailCoantent(detail.getAuditDetailCoantent())
                             .auditDoneDt(detail.getAuditDoneDt())
+                            .auditDoneContent(detail.getAuditDoneContent()) // 이행결과 내용 추가
                             .impPlStatusCd(detail.getImpPlStatusCd()) // 개선계획상태코드 추가
                             
                             // 화면 표시용 필드 매핑
-                            .deficiencyContent(audit.getAuditContents() != null && !audit.getAuditContents().trim().isEmpty() 
-                                    ? audit.getAuditContents() : "점검내용 미입력") // auditContents를 deficiencyContent로 매핑
+                            .deficiencyContent(detail.getAuditDetailCoantent() != null && !detail.getAuditDetailCoantent().trim().isEmpty() 
+                                    ? detail.getAuditDetailCoantent() : "미흡사항 미입력") // auditDetailCoantent를 deficiencyContent로 매핑
                             .improvementPlan(getImprovementStatusByCode(detail.getImpPlStatusCd())) // imp_pl_status_cd 기반 개선현황
                             .implementationResult(getImplementationResultByStatus(detail.getAuditResultStatusCd()))
                             .dueDate(detail.getAuditDoneDt()) // audit_done_dt를 dueDate로 매핑
@@ -166,7 +166,42 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
     @Transactional
     public void updateImplementationResult(List<Long> ids, String implementationResult, 
             String completionDate, String statusCode, String remarks) {
-        // TODO: 이행결과 작성 구현
+        log.info("이행결과 작성 시작 - ids: {}, implementationResult: {}", ids, implementationResult);
+        
+        try {
+            for (Long id : ids) {
+                AuditProgMngtDetail detail = auditProgMngtDetailRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("미흡상황 데이터를 찾을 수 없습니다. ID: " + id));
+                
+                // 이행결과 내용 업데이트
+                detail.setAuditDoneContent(implementationResult);
+                
+                // 완료일자가 있으면 업데이트
+                if (completionDate != null && !completionDate.trim().isEmpty()) {
+                    try {
+                        LocalDate doneDate = LocalDate.parse(completionDate);
+                        detail.setAuditDoneDt(doneDate);
+                    } catch (Exception e) {
+                        log.warn("완료일자 파싱 실패: {}", completionDate);
+                    }
+                }
+                
+                // 상태코드 업데이트 (이행작성 상태로 변경)
+                if (statusCode != null && !statusCode.trim().isEmpty()) {
+                    // 개선계획상태코드를 이행작성으로 변경
+                    detail.setImpPlStatusCd("PLI04"); // PLI04: 이행작성
+                }
+                
+                auditProgMngtDetailRepository.save(detail);
+                log.info("이행결과 업데이트 완료 - ID: {}", id);
+            }
+            
+            log.info("이행결과 작성 완료 - 총 {}건", ids.size());
+            
+        } catch (Exception e) {
+            log.error("이행결과 작성 중 오류 발생", e);
+            throw new RuntimeException("이행결과 작성 중 오류가 발생했습니다.", e);
+        }
     }
 
     @Override
