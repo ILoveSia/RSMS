@@ -86,7 +86,7 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   }, [onChange]);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ...sx }}>
+    <Box sx={{ ...sx }}>
       <TextField
         value={value?.deptName || ''}
         size={size}
@@ -97,16 +97,20 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
         sx={{ minWidth, maxWidth }}
         InputProps={{
           readOnly: true,
-          endAdornment: value && (
-            <IconButton size="small" onClick={handleClear} disabled={disabled}>
-              ×
-            </IconButton>
+          endAdornment: (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {value && (
+                <IconButton size="small" onClick={handleClear} disabled={disabled}>
+                  ×
+                </IconButton>
+              )}
+              <IconButton size="small" onClick={handleSearch} disabled={disabled}>
+                <SearchIcon />
+              </IconButton>
+            </Box>
           ),
         }}
       />
-      <IconButton onClick={handleSearch} disabled={disabled}>
-        <SearchIcon />
-      </IconButton>
       <DepartmentSearchPopup
         open={departmentSearchPopupOpen}
         onClose={() => setDepartmentSearchPopupOpen(false)}

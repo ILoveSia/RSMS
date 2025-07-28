@@ -67,7 +67,7 @@ const ResponsibilitySelect: React.FC<ResponsibilitySelectProps> = ({
   }, [onChange]);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ...sx }}>
+    <Box sx={{ ...sx }}>
       <TextField
         value={value?.responsibilityContent || ''}
         size={size}
@@ -78,16 +78,20 @@ const ResponsibilitySelect: React.FC<ResponsibilitySelectProps> = ({
         sx={{ minWidth, maxWidth }}
         InputProps={{
           readOnly: true,
-          endAdornment: value && (
-            <IconButton size="small" onClick={handleClear} disabled={disabled}>
-              ×
-            </IconButton>
+          endAdornment: (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {value && (
+                <IconButton size="small" onClick={handleClear} disabled={disabled}>
+                  ×
+                </IconButton>
+              )}
+              <IconButton size="small" onClick={handleSearch} disabled={disabled}>
+                <SearchIcon />
+              </IconButton>
+            </Box>
           ),
         }}
       />
-      <IconButton onClick={handleSearch} disabled={disabled}>
-        <SearchIcon />
-      </IconButton>
       <ResponsibilitySearchPopup
         open={responsibilitySearchPopupOpen}
         onClose={() => setResponsibilitySearchPopupOpen(false)}

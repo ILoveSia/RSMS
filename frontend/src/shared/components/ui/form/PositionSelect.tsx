@@ -85,21 +85,27 @@ const PositionSelect: React.FC<PositionSelectProps> = ({
         sx={{ minWidth, maxWidth }}
         InputProps={{
           readOnly: true,
-          endAdornment: value && (
+          endAdornment: (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {value && (
             <IconButton size="small" onClick={handleClear} disabled={disabled}>
               ×
-            </IconButton>
+            </IconButton>  
+          )}
+            <IconButton onClick={handleSearch} disabled={disabled}>
+            
+        <SearchIcon />
+      </IconButton>
+            </Box>
           ),
         }}
       />
-      <IconButton onClick={handleSearch} disabled={disabled}>
-        <SearchIcon />
-      </IconButton>
       <PositionSearchPopup
         open={positionSearchPopupOpen}
         onClose={() => setPositionSearchPopupOpen(false)}
         onSelect={handleSelect}
       />
+      
     </Box>
   );
 };
