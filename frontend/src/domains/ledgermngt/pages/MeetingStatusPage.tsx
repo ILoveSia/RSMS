@@ -6,7 +6,7 @@ import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
 import type { CommonCode } from '@/app/types/common';
 import { Confirm } from '@/shared/components/modal';
-import { Button } from '@/shared/components/ui/button';
+import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -424,17 +424,14 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
         </Box>
 
         {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, flexShrink: 0 }}>
-          <Button
-            variant='contained'
-            color='success'
-            size='small'
-            onClick={handleExcelDownload}
-            sx={{ mr: 1 }}
-          >
-            엑셀 다운로드
-          </Button>
-          <Button variant='contained' size='small' onClick={handleCreateClick} sx={{ mr: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, flexShrink: 0, gap: 1 }}>
+          <ExcelDownloadButton
+            onDownload={handleExcelDownload}
+            filename="meeting_status"
+            disabled={loading}
+            loading={loading}
+          />
+          <Button variant='contained' size='small' onClick={handleCreateClick}>
             등록
           </Button>
           <Button variant='contained' size='small' color='error' onClick={handleDelete}>

@@ -59,6 +59,18 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     @Column(name = "audit_done_dt")
     private LocalDate auditDoneDt;
 
+    // AuditProgMngt와의 연관관계 설정
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "audit_prog_mngt_id", insertable = false, updatable = false)
+    private AuditProgMngt auditProgMngt;
+
+    /**
+     * 부모 엔티티 설정 (양방향 관계)
+     */
+    public void setAuditProgMngt(AuditProgMngt auditProgMngt) {
+        this.auditProgMngt = auditProgMngt;
+    }
+
     // HodIcItem과의 연관관계 설정 (임시 주석처리 - 삭제 문제 해결 후 복원)
     // @ManyToOne(fetch = FetchType.LAZY)
     // @JoinColumn(name = "hod_ic_item_id", insertable = false, updatable = false)

@@ -3,6 +3,7 @@
  */
 import '@/assets/scss/style.css';
 import { Button, DataGrid } from '@/shared/components/ui';
+import { ExcelDownloadButton } from '@/shared/components/ui/button';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
@@ -460,29 +461,25 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           </Box>
 
           {/* 버튼 영역 */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-            <Button
-              variant='contained'
-              size='small'
-              color='success'
-              sx={{ mr: 1 }}
-              onClick={handleExcelDownload}
-            >
-              엑셀 다운로드
-            </Button>
-            <Button variant='contained' size='small' color='warning' sx={{ mr: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
+            <ExcelDownloadButton
+              onDownload={handleExcelDownload}
+              filename="responsibility_db_status"
+              disabled={loading}
+              loading={loading}
+            />
+            <Button variant='contained' size='small' color='warning'>
               변경 이력
             </Button>
             <Button
               variant='contained'
               size='small'
               color='primary'
-              sx={{ mr: 1 }}
               onClick={handleCreateClick}
             >
               등록
             </Button>
-            <Button variant='contained' size='small' color='error' sx={{ mr: 1 }} onClick={handleDelete}>
+            <Button variant='contained' size='small' color='error' onClick={handleDelete}>
               삭제
             </Button>
           </Box>

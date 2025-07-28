@@ -164,8 +164,8 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'calendar_alt',
   },
   '/inquiry/monthly-status': {
-    component: () => import('@/domains/inquiry/pages/MonthlyStatusPage'),
-    title: '점검 현황(월별)',
+    component: () => import('@/domains/inquiry/pages/AuditItemStatusPage'),
+    title: '점검 현황(항목별)',
     icon: 'calendar_month',
   },
   '/inquiry/non-employee': {
