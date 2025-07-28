@@ -50,17 +50,11 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     setError(null);
 
     try {
-      console.log('=== 미흡상황 현황 API 호출 시작 ===');
 
       // 실제 API 호출
       const data = await deficiencyStatusApi.getAllDeficiencyStatusList();
 
-      console.log('API 응답 데이터:', data);
-      console.log('API 응답 데이터 타입:', typeof data);
-      console.log('API 응답 데이터 길이:', Array.isArray(data) ? data.length : 'Not Array');
-
       if (Array.isArray(data)) {
-        console.log('첫 번째 데이터 항목:', data[0]);
 
         // 백엔드 응답 데이터를 프론트엔드 형식에 맞게 매핑
         const mappedData = data.map(item => ({
@@ -68,12 +62,9 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           id: item.auditProgMngtDetailId || item.id, // ID 매핑
         }));
 
-        console.log('매핑된 데이터 첫 번째 항목:', mappedData[0]);
-        console.log('테이블에 설정될 데이터 건수:', mappedData.length);
 
         setRows(mappedData);
       } else {
-        console.warn('예상하지 못한 응답 형태:', data);
         setRows([]);
       }
 
@@ -307,6 +298,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             error={error}
             selectedRows={selectedIds}
             selectable={true}
+            multiSelect={false}
             onRowSelectionChange={(selectedIds: (string | number)[], selectedData: DeficiencyRow[]) => {
               setSelectedIds(selectedIds.map(id => Number(id)));
             }}
