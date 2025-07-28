@@ -51,16 +51,12 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
 
   // 데이터 로드 함수
   const fetchDeficiencies = useCallback(async () => {
-    console.log('fetchDeficiencies 시작');
     setLoading(true);
     setError(null);
 
     try {
       // 실제 API 호출
-      console.log('API 호출 시작: getAllDeficiencyStatusList');
       const data = await deficiencyStatusApi.getAllDeficiencyStatusList();
-      console.log('API 응답 데이터:', data);
-      console.log('데이터 타입:', typeof data, 'Array인가?', Array.isArray(data));
 
       if (Array.isArray(data)) {
         // 백엔드 응답 데이터를 프론트엔드 형식에 맞게 매핑
@@ -69,21 +65,15 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           id: item.auditProgMngtDetailId || item.id, // ID 매핑
         }));
 
-        console.log("매핑된 데이터:", mappedData);
-        console.log("매핑된 데이터 개수:", mappedData.length);
         setRows(mappedData);
       } else {
-        console.log('데이터가 배열이 아님, 빈 배열로 설정');
         setRows([]);
       }
     } catch (err) {
-      console.error('미흡상황 현황 API 호출 실패:', err);
-      console.error('에러 상세:', err);
       setError('미흡상황 현황 데이터를 불러오는 데 실패했습니다.');
       setRows([]);
     } finally {
       setLoading(false);
-      console.log('fetchDeficiencies 완료');
     }
   }, [departmentFilter, inspectionRound]);
 
@@ -271,7 +261,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       // 선택 해제
       setSelectedIds([]);
     } catch (error) {
-      console.error('이행결과 저장 실패:', error);
       throw error;
     }
   };
