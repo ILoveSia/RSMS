@@ -97,3 +97,6 @@ backend/uploads
 .kiro/
 *storybook.log
 storybook-static
+docker-compose.yml
+docker-compose.dev.yml
+docker-compose.db.yml

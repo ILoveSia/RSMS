@@ -6,7 +6,7 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { Select } from '@/shared/components/ui/form';
+import { LedgerOrdersHodSelect, CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -18,13 +18,14 @@ import {
 } from '@mui/icons-material';
 import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
+import { getAuditItemStatusList, type AuditItemStatusResponse } from '../api/auditItemApi';
 
 // 항목별 점검 현황 데이터 인터페이스
 interface AuditItemRow {
-  id: string;                           // 부서장 내부통제 항목 ID
-  hodIcItemId: string;                  // 부서장 내부통제 항목 ID
+  id: string;                           // DataGrid용 고유 식별자
+  hodIcItemId: number;                  // 부서장 내부통제 항목 ID
   responsibilityContent: string;        // 책무
-  executiveInCharge: string;            // 소관임원 (미정)
+  positionsNm: string;                  // 직책명
   deptCd: string;                       // 부서
   fieldTypeCd: string;                  // 항목구분
   roleTypeCd: string;                   // 직무구분
@@ -34,6 +35,25 @@ interface AuditItemRow {
   impPlStatusCd: string;                // 점검진행상태
 }
 
+/**
+ * API 응답을 AuditItemRow로 변환하는 함수
+ */
+const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRow => {
+  return {
+    id: response.hodIcItemId.toString(), // DataGrid용 고유 식별자
+    hodIcItemId: response.hodIcItemId,
+    responsibilityContent: response.responsibilityContent || '',
+    positionsNm: response.positionsNm || '',
+    deptCd: response.deptCd || '',
+    fieldTypeCd: response.fieldTypeCd || '',
+    roleTypeCd: response.roleTypeCd || '',
+    icTask: response.icTask || '',
+    auditMenId: response.auditMenId || '',
+    auditResultStatusCd: response.auditResultStatusCd || '',
+    impPlStatusCd: response.impPlStatusCd || '',
+  };
+};
+
 interface IAuditItemStatusPageProps {
   className?: string;
 }
@@ -41,8 +61,9 @@ interface IAuditItemStatusPageProps {
 const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.Element => {
   
   // 검색 조건 상태
-  const [selectedResponsibility, setSelectedResponsibility] = useState<string>('');
-  const [selectedAuditResult, setSelectedAuditResult] = useState<string>('');
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
+  const [selectedImpPlStatus, setSelectedImpPlStatus] = useState<string>('ALL');
+
 
   // 항목별 점검 현황 데이터
   const [auditItemRows, setAuditItemRows] = useState<AuditItemRow[]>([]);
@@ -55,27 +76,11 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
 
-  // 콤보박스 옵션 (임시 데이터)
-  const responsibilityOptions = [
-    { value: '', label: '전체' },
-    { value: 'RESP001', label: '책무001' },
-    { value: 'RESP002', label: '책무002' },
-    { value: 'RESP003', label: '책무003' },
-  ];
-
-  const auditResultOptions = [
-    { value: '', label: '전체' },
-    { value: 'SUITABLE', label: '적정' },
-    { value: 'INADEQUATE', label: '미흡' },
-    { value: 'EXCLUDED', label: '제외' },
-    { value: 'IN_PROGRESS', label: '진행중' },
-  ];
-
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<AuditItemRow>[] = [
     {
       field: 'hodIcItemId',
-      headerName: '부서장 내부통제 항목ID',
+      headerName: '부서장\n내부통제 항목ID',
       width: 180,
     },
     {
@@ -84,8 +89,8 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       width: 200,
     },
     {
-      field: 'executiveInCharge',
-      headerName: '소관임원',
+      field: 'positionsNm',
+      headerName: '책무별 직책',
       width: 120,
     },
     {
@@ -164,40 +169,31 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     try {
       setIsLoading(true);
       
-      // TODO: 실제 API 호출로 대체
-      console.log('검색 조건:', { selectedResponsibility, selectedAuditResult });
+      console.log('검색 조건:', { selectedLedgerOrder, selectedImpPlStatus });
       
-      // 임시 데이터
-      const mockData: AuditItemRow[] = [
-        {
-          id: '1',
-          hodIcItemId: 'HOD001',
-          responsibilityContent: '리스크관리 책무',
-          executiveInCharge: '미정',
-          deptCd: 'DEPT001',
-          fieldTypeCd: 'FIELD001',
-          roleTypeCd: 'ROLE001',
-          icTask: '내부통제 업무 1',
-          auditMenId: 'USER001',
-          auditResultStatusCd: 'SUITABLE',
-          impPlStatusCd: 'IMPL_APPROVAL_COMP',
-        },
-        {
-          id: '2',
-          hodIcItemId: 'HOD002',
-          responsibilityContent: '컴플라이언스 책무',
-          executiveInCharge: '미정',
-          deptCd: 'DEPT002',
-          fieldTypeCd: 'FIELD002',
-          roleTypeCd: 'ROLE002',
-          icTask: '내부통제 업무 2',
-          auditMenId: 'USER002',
-          auditResultStatusCd: 'INADEQUATE',
-          impPlStatusCd: 'PLAN_APPROVAL_REQ',
-        },
-      ];
+      // 실제 API 호출
+      const apiResponse = await getAuditItemStatusList({
+        ledgerOrdersHod: selectedLedgerOrder === 'ALL' ? '' : selectedLedgerOrder,
+        auditResultStatusCd: selectedImpPlStatus === 'ALL' ? '' : selectedImpPlStatus
+      });
       
-      setAuditItemRows(mockData);
+      console.log('API Response:', apiResponse);
+      console.log('API Response type:', typeof apiResponse);
+      console.log('API Response is array:', Array.isArray(apiResponse));
+      console.log('API Response length:', apiResponse?.length);
+      
+      if (apiResponse && Array.isArray(apiResponse)) {
+        console.log('First item:', apiResponse[0]);
+        
+        // API 응답을 화면용 데이터로 변환
+        const convertedData = apiResponse.map(convertApiResponseToRow);
+        console.log('Converted Data:', convertedData);
+        console.log('Converted Data length:', convertedData.length);
+        setAuditItemRows(convertedData);
+      } else {
+        console.error('API 응답이 배열이 아닙니다:', apiResponse);
+        setAuditItemRows([]);
+      }
       
     } catch (error) {
       console.error('항목별 점검 현황 조회 오류:', error);
@@ -206,7 +202,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     } finally {
       setIsLoading(false);
     }
-  }, [selectedResponsibility, selectedAuditResult]);
+  }, [selectedLedgerOrder, selectedImpPlStatus, selectedImpPlStatus]);
 
   // 초기 로드 시 자동 조회
   useEffect(() => {
@@ -229,7 +225,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       const excelData = auditItemRows.map(row => ({
         '부서장내부통제항목ID': row.hodIcItemId,
         '책무': row.responsibilityContent,
-        '소관임원': row.executiveInCharge,
+        '책무별직책': row.positionsNm,
         '부서': row.deptCd,
         '항목구분': row.fieldTypeCd,
         '직무구분': row.roleTypeCd,
@@ -305,19 +301,16 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
           alignItems: 'center'
         }}>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Select
-              label="책무번호"
-              value={selectedResponsibility}
-              onChange={setSelectedResponsibility}
-              options={responsibilityOptions}
-              size="small"
-              sx={{ width: '200px' }}
+            <LedgerOrdersHodSelect
+              value={selectedLedgerOrder}
+              onChange={setSelectedLedgerOrder}
+              size='small'
+              sx={{ minWidth: 150, maxWidth: 200 }}
             />
-            <Select
-              label="점검결과"
-              value={selectedAuditResult}
-              onChange={setSelectedAuditResult}
-              options={auditResultOptions}
+            <CommonCodeSelect
+              groupCode="PLAN_IMP"
+              value={selectedImpPlStatus}
+              onChange={setSelectedImpPlStatus}
               size="small"
               sx={{ width: '200px' }}
             />
@@ -381,6 +374,21 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               height: '650px',
               '& .MuiDataGrid-virtualScroller': {
                 overflow: 'auto'
+              },
+              '& .MuiDataGrid-columnHeaders': {
+                minHeight: '80px !important'
+              },
+              '& .MuiDataGrid-columnHeader[data-field="hodIcItemId"]': {
+                '& .MuiDataGrid-columnHeaderTitle': {
+                  whiteSpace: 'pre-line',
+                  lineHeight: '1.3',
+                  textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  wordBreak: 'keep-all'
+                }
               }
             }}
           />

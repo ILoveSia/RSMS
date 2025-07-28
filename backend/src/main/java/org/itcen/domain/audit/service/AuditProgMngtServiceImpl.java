@@ -2,6 +2,7 @@ package org.itcen.domain.audit.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.dto.AuditProgMngtDto;
 import org.itcen.domain.audit.entity.AuditProgMngt;
 import org.itcen.domain.audit.entity.AuditProgMngtDetail;
@@ -251,6 +252,31 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         dto.setUpdatedAt(entity.getUpdatedAt().toLocalDate().toString());
         
         return dto;
+    }
+
+    /**
+     * 점검 현황(항목별) 조회
+     * 
+     * audit_prog_mngt와 audit_prog_mngt_detail 조인 후
+     * hod_ic_item과 responsibility, positions 조인
+     * role_resp_status는 left outer 조인
+     */
+    @Override
+    public List<AuditItemStatusResponseDto> getAuditItemStatus(String ledgerOrdersHod, String auditResultStatusCd) {
+        log.debug("점검 현황(항목별) 조회 - ledgerOrdersHod: {}, auditResultStatusCd: {}", 
+                ledgerOrdersHod, auditResultStatusCd);
+
+        // 빈 문자열을 null로 변환 (Optional 조건 처리를 위해)
+        String finalLedgerOrdersHod = (ledgerOrdersHod != null && ledgerOrdersHod.trim().isEmpty()) ? null : ledgerOrdersHod;
+        String finalAuditResultStatusCd = (auditResultStatusCd != null && auditResultStatusCd.trim().isEmpty()) ? null : auditResultStatusCd;
+
+        List<AuditItemStatusResponseDto> result = auditProgMngtRepository.findAuditItemStatus(
+                finalLedgerOrdersHod, 
+                finalAuditResultStatusCd
+        );
+
+        log.debug("점검 현황(항목별) 조회 결과: {}건", result.size());
+        return result;
     }
 
     /**
