@@ -1,5 +1,6 @@
 package org.itcen.domain.audit.service;
 
+import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.dto.AuditProgMngtDto;
 
 import java.util.List;
@@ -63,4 +64,17 @@ public interface AuditProgMngtService {
      * @return 점검계획관리 현황 목록
      */
     List<AuditProgMngtDto> getAuditProgMngtStatus(String auditTypeCd, String auditStatusCd, String auditTeamLeader, String startDate, String endDate);
+
+    /**
+     * 점검 현황(항목별) 조회
+     * 
+     * audit_prog_mngt와 audit_prog_mngt_detail 조인 후
+     * hod_ic_item과 responsibility, positions 조인
+     * role_resp_status는 left outer 조인
+     * 
+     * @param ledgerOrdersHod 원장차수 (조회조건)
+     * @param auditResultStatusCd 점검결과 (조회조건)
+     * @return 점검 현황(항목별) 목록
+     */
+    List<AuditItemStatusResponseDto> getAuditItemStatus(String ledgerOrdersHod, String auditResultStatusCd);
 }

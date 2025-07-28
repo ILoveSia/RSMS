@@ -1,7 +1,10 @@
 package org.itcen.domain.audit.repository;
 
+import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.entity.AuditProgMngt;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -43,7 +46,40 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
     List<AuditProgMngt> findByAuditStartDtLessThanEqual(LocalDate endDate);
     
     /**
-     * 점검계획ID 목록으로 조회 (미흡상황 조회용)
+     * 점검 현황(항목별) 조회
+     * 
+     * audit_prog_mngt와 audit_prog_mngt_detail 조인 후
+     * hod_ic_item과 responsibility, role_resp_status, positions 조인
+     * 
+     * 조회조건: ledger_orders_hod(원장차수), audit_result_status_cd(점검결과)
      */
-    List<AuditProgMngt> findByAuditProgMngtIdIn(List<Long> auditProgMngtIds);
+    @Query("""
+        SELECT new org.itcen.domain.audit.dto.AuditItemStatusResponseDto(
+            hi.hodIcItemId,
+            COALESCE(r.responsibilityContent, ''),
+            COALESCE(p.positionsNm, '미정'),
+            COALESCE(hi.deptCd, ''),
+            COALESCE(hi.fieldTypeCd, ''),
+            COALESCE(hi.roleTypeCd, ''),
+            COALESCE(hi.icTask, ''),
+            COALESCE(apd.auditMenId, ''),
+            COALESCE(apd.auditResultStatusCd, ''),
+            COALESCE(rrs.roleSumm, ''),
+            COALESCE(apm.ledgerOrdersHod, ''),
+            COALESCE(apd.auditResult, '')
+        )
+        FROM org.itcen.domain.audit.entity.AuditProgMngt apm
+        INNER JOIN org.itcen.domain.audit.entity.AuditProgMngtDetail apd ON apm.auditProgMngtId = apd.auditProgMngtId
+        INNER JOIN org.itcen.domain.audit.entity.HodIcItem hi ON apd.hodIcItemId = hi.hodIcItemId
+        LEFT JOIN org.itcen.domain.responsibility.entity.Responsibility r ON hi.responsibilityId = r.id
+        LEFT JOIN org.itcen.domain.audit.entity.RoleRespStatus rrs ON r.id = rrs.responsibilityId
+        LEFT JOIN org.itcen.domain.positions.entity.Position p ON rrs.positionsId = p.positionsId
+        WHERE (:ledgerOrdersHod IS NULL OR :ledgerOrdersHod = '' OR apm.ledgerOrdersHod = :ledgerOrdersHod)
+        AND (:auditResultStatusCd IS NULL OR :auditResultStatusCd = '' OR apd.auditResultStatusCd = :auditResultStatusCd)
+        ORDER BY apm.auditProgMngtCd, apd.auditProgMngtDetailId
+        """)
+    List<AuditItemStatusResponseDto> findAuditItemStatus(
+        @Param("ledgerOrdersHod") String ledgerOrdersHod,
+        @Param("auditResultStatusCd") String auditResultStatusCd
+    );
 }

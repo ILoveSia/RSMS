@@ -2,6 +2,7 @@ package org.itcen.domain.audit.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.dto.AuditProgMngtDto;
 import org.itcen.domain.audit.service.AuditProgMngtService;
 import org.springframework.http.ResponseEntity;
@@ -190,5 +191,30 @@ public class AuditProgMngtController {
         
         log.info("점검계획관리 현황 조회 완료 - 건수: {}", statusList.size());
         return ResponseEntity.ok(statusList);
+    }
+
+    /**
+     * 점검 현황(항목별) 조회 API
+     * 
+     * audit_prog_mngt와 audit_prog_mngt_detail 조인 후
+     * hod_ic_item과 responsibility, positions 조인
+     * role_resp_status는 left outer 조인
+     * 
+     * @param ledgerOrdersHod 원장차수 (조회조건, 선택적)
+     * @param auditResultStatusCd 점검결과 (조회조건, 선택적)
+     * @return 점검 현황(항목별) 목록
+     */
+    @GetMapping("/item-status")
+    public ResponseEntity<List<AuditItemStatusResponseDto>> getAuditItemStatus(
+            @RequestParam(required = false) String ledgerOrdersHod,
+            @RequestParam(required = false) String auditResultStatusCd) {
+        log.info("점검 현황(항목별) 조회 요청 - ledgerOrdersHod: {}, auditResultStatusCd: {}", 
+                ledgerOrdersHod, auditResultStatusCd);
+        
+        List<AuditItemStatusResponseDto> itemStatusList = auditProgMngtService.getAuditItemStatus(
+                ledgerOrdersHod, auditResultStatusCd);
+        
+        log.info("점검 현황(항목별) 조회 완료 - 건수: {}", itemStatusList.size());
+        return ResponseEntity.ok(itemStatusList);
     }
 }
