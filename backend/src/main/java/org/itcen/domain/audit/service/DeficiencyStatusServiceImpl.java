@@ -63,53 +63,10 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
             List<DeficiencyStatusDto> result = new ArrayList<>();
             
             for (AuditProgMngtDetail detail : deficiencyDetails) {
-                AuditProgMngt audit = auditProgMngts.stream()
-                        .filter(a -> a.getAuditProgMngtId().equals(detail.getAuditProgMngtId()))
-                        .findFirst()
-                        .orElse(null);
+                AuditProgMngt audit = findMatchingAudit(auditProgMngts, detail.getAuditProgMngtId());
                 
                 if (audit != null) {
-                    DeficiencyStatusDto dto = DeficiencyStatusDto.builder()
-                            // detail 테이블 정보 (실제 DB 컬럼)
-                            .auditProgMngtDetailId(detail.getAuditProgMngtDetailId())
-                            .auditProgMngtId(detail.getAuditProgMngtId())
-                            .hodIcItemId(detail.getHodIcItemId())
-                            .auditMenId(detail.getAuditMenId())
-                            .auditResult(detail.getAuditResult())
-                            .auditResultStatusCd(detail.getAuditResultStatusCd())
-                            .beforeAuditYn(detail.getBeforeAuditYn())
-                            .auditDetailCoantent(detail.getAuditDetailCoantent())
-                            .auditDoneDt(detail.getAuditDoneDt())
-                            .auditDoneContent(detail.getAuditDoneContent()) // 이행결과 내용 추가
-                            .impPlStatusCd(detail.getImpPlStatusCd()) // 개선계획상태코드 추가
-                            
-                            // 화면 표시용 필드 매핑
-                            .deficiencyContent(detail.getAuditDetailCoantent() != null && !detail.getAuditDetailCoantent().trim().isEmpty() 
-                                    ? detail.getAuditDetailCoantent() : "미흡사항 미입력") // auditDetailCoantent를 deficiencyContent로 매핑
-                            .improvementPlan(getImprovementStatusByCode(detail.getImpPlStatusCd())) // imp_pl_status_cd 기반 개선현황
-                            .implementationResult(getImplementationResultByStatus(detail.getAuditResultStatusCd()))
-                            .dueDate(detail.getAuditDoneDt()) // audit_done_dt를 dueDate로 매핑
-                            .inspector(detail.getAuditMenId() != null ? detail.getAuditMenId() : "점검자미정")
-                            .inspectorId(detail.getAuditMenId())
-                            
-                            // audit 테이블 정보
-                            .auditProgMngtCd(audit.getAuditProgMngtCd())
-                            .ledgerOrdersHod(audit.getLedgerOrdersHod())
-                            .auditTitle(audit.getAuditTitle())
-                            .auditStartDt(audit.getAuditStartDt())
-                            .auditEndDt(audit.getAuditEndDt())
-                            .auditStatusCd(audit.getAuditStatusCd())
-                            .auditContents(audit.getAuditContents() != null && !audit.getAuditContents().trim().isEmpty() 
-                                    ? audit.getAuditContents() : "점검내용 미입력")
-                            
-                            // 추가 정보
-                            .inspectionRound(audit.getAuditTitle()) // auditTitle을 inspectionRound로 사용
-                            .department("부서미정") // TODO: 실제 부서 정보 매핑 필요
-                            .statusCode(detail.getAuditResultStatusCd())
-                            .statusName(getStatusName(detail.getAuditResultStatusCd()))
-                            .writeDate(audit.getAuditStartDt() != null ? audit.getAuditStartDt().toString() : null)
-                            .build();
-                    
+                    DeficiencyStatusDto dto = buildDeficiencyStatusDto(detail, audit);
                     result.add(dto);
                 }
             }
@@ -121,6 +78,90 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
             log.error("미흡상황 현황 조회 중 오류 발생", e);
             throw new RuntimeException("미흡상황 현황 조회 중 오류가 발생했습니다.", e);
         }
+    }
+
+    /**
+     * 매칭되는 점검계획 찾기
+     */
+    private AuditProgMngt findMatchingAudit(List<AuditProgMngt> auditProgMngts, Long auditProgMngtId) {
+        return auditProgMngts.stream()
+                .filter(a -> a.getAuditProgMngtId().equals(auditProgMngtId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * 미흡상황 DTO 생성
+     */
+    private DeficiencyStatusDto buildDeficiencyStatusDto(AuditProgMngtDetail detail, AuditProgMngt audit) {
+        return DeficiencyStatusDto.builder()
+                // detail 테이블 정보 (실제 DB 컬럼)
+                .auditProgMngtDetailId(detail.getAuditProgMngtDetailId())
+                .auditProgMngtId(detail.getAuditProgMngtId())
+                .hodIcItemId(detail.getHodIcItemId())
+                .auditMenId(detail.getAuditMenId())
+                .auditResult(detail.getAuditResult())
+                .auditResultStatusCd(detail.getAuditResultStatusCd())
+                .beforeAuditYn(detail.getBeforeAuditYn())
+                .auditDetailCoantent(detail.getAuditDetailCoantent())
+                .auditDoneDt(detail.getAuditDoneDt())
+                .auditDoneContent(detail.getAuditDoneContent())
+                .impPlStatusCd(detail.getImpPlStatusCd())
+                
+                // 화면 표시용 필드 매핑
+                .deficiencyContent(getDeficiencyContent(detail.getAuditDetailCoantent()))
+                .improvementPlan(getImprovementStatusByCode(detail.getImpPlStatusCd()))
+                .implementationResult(getImplementationResultByStatus(detail.getAuditResultStatusCd()))
+                .dueDate(detail.getAuditDoneDt())
+                .inspector(getInspectorName(detail.getAuditMenId()))
+                .inspectorId(detail.getAuditMenId())
+                
+                // audit 테이블 정보
+                .auditProgMngtCd(audit.getAuditProgMngtCd())
+                .ledgerOrdersHod(audit.getLedgerOrdersHod())
+                .auditTitle(audit.getAuditTitle())
+                .auditStartDt(audit.getAuditStartDt())
+                .auditEndDt(audit.getAuditEndDt())
+                .auditStatusCd(audit.getAuditStatusCd())
+                .auditContents(getAuditContents(audit.getAuditContents()))
+                
+                // 추가 정보
+                .inspectionRound(audit.getAuditTitle())
+                .department("부서미정") // TODO: 실제 부서 정보 매핑 필요
+                .statusCode(detail.getAuditResultStatusCd())
+                .statusName(getStatusName(detail.getAuditResultStatusCd()))
+                .writeDate(getWriteDate(audit.getAuditStartDt()))
+                .build();
+    }
+
+    /**
+     * 미흡사항 내용 반환
+     */
+    private String getDeficiencyContent(String auditDetailContent) {
+        return auditDetailContent != null && !auditDetailContent.trim().isEmpty() 
+                ? auditDetailContent : "미흡사항 미입력";
+    }
+
+    /**
+     * 점검자 이름 반환
+     */
+    private String getInspectorName(String auditMenId) {
+        return auditMenId != null ? auditMenId : "점검자미정";
+    }
+
+    /**
+     * 점검내용 반환
+     */
+    private String getAuditContents(String auditContents) {
+        return auditContents != null && !auditContents.trim().isEmpty() 
+                ? auditContents : "점검내용 미입력";
+    }
+
+    /**
+     * 작성일자 반환
+     */
+    private String getWriteDate(LocalDate auditStartDt) {
+        return auditStartDt != null ? auditStartDt.toString() : null;
     }
 
     @Override

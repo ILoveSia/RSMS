@@ -99,15 +99,13 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
     }
   }, [open, data, mode, loadAttachments]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // 파일 검증 함수
+  const validateFile = (file: File): boolean => {
     // 파일 크기 검증
     if (file.size > MAX_FILE_SIZE) {
       setErrorMessage('파일 크기는 10MB를 초과할 수 없습니다.');
       setErrorDialogOpen(true);
-      return;
+      return false;
     }
 
     // 파일 타입 검증
@@ -115,10 +113,48 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
     if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
       setErrorMessage('허용된 파일 형식은 PDF, DOC, DOCX입니다.');
       setErrorDialogOpen(true);
-      return;
+      return false;
     }
 
-    setSelectedFile(file);
+    return true;
+  };
+
+  // 파일 업로드 함수
+  const uploadSelectedFile = async (): Promise<boolean> => {
+    if (!selectedFile || mode === 'view' || !data?.auditProgMngtId || attachments.length > 0) {
+      return true;
+    }
+
+    try {
+      await uploadAttachment(selectedFile, {
+        entityType: 'audit_prog_mngt_detail',
+        entityId: data.auditProgMngtId,
+        uploadedBy: 'system'
+      });
+      return true;
+    } catch (uploadError) {
+      console.error('첨부파일 업로드 실패:', uploadError);
+      setErrorMessage('첨부파일 업로드에 실패했습니다.');
+      setErrorDialogOpen(true);
+      return false;
+    }
+  };
+
+  // 파일 상태 초기화 함수
+  const clearFileState = () => {
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (validateFile(file)) {
+      setSelectedFile(file);
+    }
   };
 
 
@@ -151,11 +187,7 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
       // 첨부파일 목록 새로고침
       try {
         await loadAttachments();
-        // 파일 삭제 후 선택된 파일도 초기화
-        setSelectedFile(null);
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
+        clearFileState();
       } catch (refreshError) {
         console.error('첨부파일 목록 새로고침 실패:', refreshError);
         setErrorMessage('파일이 삭제되었지만 목록 새로고침에 실패했습니다.');
@@ -166,6 +198,7 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
       setErrorDialogOpen(true);
     }
   };
+
   // 저장 핸들러
   const handleSave = useCallback(async () => {
     if (!data) return;
@@ -188,27 +221,14 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
       // 먼저 기본 데이터 저장
       await onSave(updatedData);
 
-      // 새로 선택한 파일이 있고, 기존 파일이 없을 때만 첨부파일 업로드
-      if (selectedFile && mode !== 'view' && data.auditProgMngtId && attachments.length === 0) {
-        try {
-          await uploadAttachment(selectedFile, {
-            entityType: 'audit_prog_mngt_detail',
-            entityId: data.auditProgMngtId,
-            uploadedBy: 'system'
-          });
-        } catch (uploadError) {
-          console.error('첨부파일 업로드 실패:', uploadError);
-          setErrorMessage('첨부파일 업로드에 실패했습니다.');
-          setErrorDialogOpen(true);
-          return;
-        }
+      // 파일 업로드 처리
+      const uploadSuccess = await uploadSelectedFile();
+      if (!uploadSuccess) {
+        return;
       }
 
       // 파일 선택 상태 초기화
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      clearFileState();
 
       onClose(); // 성공 시 다이얼로그 닫기
     } catch (error) {
@@ -218,7 +238,7 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [data, auditDoneContent, auditDoneDt, onSave, onClose, selectedFile, mode]);
+  }, [data, auditDoneContent, auditDoneDt, onSave, onClose, selectedFile, mode, attachments.length]);
 
   return (
     <>
