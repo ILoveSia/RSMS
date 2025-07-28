@@ -68,6 +68,93 @@ export interface ComboBoxProps extends FormComponentProps {
 }
 
 /**
+ * 옵션 값 반환
+ */
+const getOptionValue = (option: SelectOption | string): SelectOption | string => {
+  if (typeof option === 'string') return option;
+  return option.value !== undefined ? option.value : option;
+};
+
+/**
+ * 현재 값 반환
+ */
+const getCurrentValue = (value: ComboBoxProps['value'], multiple: boolean) => {
+  if (value === null || value === undefined) return multiple ? [] : null;
+  return value;
+};
+
+/**
+ * 옵션 라벨 반환
+ */
+const getOptionLabel = (option: SelectOption | string): string => {
+  if (typeof option === 'string') return option;
+  return option.label || String(option.value);
+};
+
+/**
+ * 옵션 동등성 비교
+ */
+const isOptionEqualToValue = (
+  option: SelectOption | string,
+  value: SelectOption | string
+): boolean => {
+  const optionValue = getOptionValue(option);
+  const valueToCompare = getOptionValue(value);
+  
+  if (typeof optionValue === 'object' && typeof valueToCompare === 'object') {
+    return optionValue.value === valueToCompare.value;
+  }
+  
+  return optionValue === valueToCompare;
+};
+
+/**
+ * 기본 태그 렌더링
+ */
+const defaultRenderTags = (value: (SelectOption | string)[], getTagProps: any) => {
+  return value.map((option, index) => {
+    const label = getOptionLabel(option);
+    return (
+      <Chip
+        key={index}
+        label={label}
+        size="small"
+        {...getTagProps({ index })}
+      />
+    );
+  });
+};
+
+/**
+ * 기본 입력 렌더링
+ */
+const defaultRenderInput = (params: any, props: ComboBoxProps) => {
+  return (
+    <TextField
+      {...params}
+      label={props.label}
+      error={props.error}
+      helperText={props.helperText}
+      required={props.required}
+      disabled={props.disabled}
+      fullWidth={props.fullWidth}
+      variant={props.variant}
+      size={props.size}
+      placeholder={props.placeholder}
+      InputProps={{
+        ...params.InputProps,
+        endAdornment: (
+          <>
+            {props.loading ? <CircularProgress color="inherit" size={20} /> : null}
+            {params.InputProps.endAdornment}
+          </>
+        ),
+      }}
+    />
+  );
+};
+
+/**
  * 공통 ComboBox 컴포넌트
  */
 const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
@@ -99,9 +186,9 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
       clearOnEscape = true,
       clearOnBlur = false,
       disableClearable = false,
-      disableCloseOnSelect,
+      disableCloseOnSelect = false,
       includeInputInList = false,
-      limitTags = -1,
+      limitTags,
       openOnFocus = false,
       selectOnFocus = false,
       onChange,
@@ -117,57 +204,9 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
     },
     ref
   ) => {
-    // 값 변환 헬퍼 함수
-    const getOptionValue = (option: SelectOption | string): SelectOption | string => {
-      if (typeof option === 'string') {
-        return freeSolo ? option : options.find(opt => opt.value === option) || option;
-      }
-      return option;
-    };
-
-    // 현재 값을 Autocomplete 형식으로 변환
-    const getCurrentValue = () => {
-      if (!value) return multiple ? [] : null;
-
-      if (multiple) {
-        const values = Array.isArray(value) ? value : [value];
-        return values.map(getOptionValue);
-      }
-
-      return getOptionValue(value as SelectOption | string);
-    };
-
-    // 옵션 레이블 가져오기
-    const getOptionLabel = (option: SelectOption | string): string => {
-      if (typeof option === 'string') {
-        if (freeSolo) return option;
-        const foundOption = options.find(opt => opt.value === option);
-        return foundOption ? foundOption.label : option;
-      }
-      return option.label || String(option.value);
-    };
-
-    // 옵션 비교 함수
-    const isOptionEqualToValue = (
-      option: SelectOption | string,
-      value: SelectOption | string
-    ): boolean => {
-      if (typeof option === 'string' && typeof value === 'string') {
-        return option === value;
-      }
-      if (typeof option === 'object' && typeof value === 'object') {
-        return option.value === value.value;
-      }
-      if (typeof option === 'string' && typeof value === 'object') {
-        return option === String(value.value);
-      }
-      if (typeof option === 'object' && typeof value === 'string') {
-        return String(option.value) === value;
-      }
-      return false;
-    };
-
-    // 값 변경 핸들러
+    /**
+     * 변경 핸들러
+     */
     const handleChange = (
       event: React.SyntheticEvent,
       newValue: SelectOption | SelectOption[] | string | string[] | null
@@ -175,105 +214,56 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
       onChange?.(newValue);
     };
 
-    // 입력 값 변경 핸들러
+    /**
+     * 입력 변경 핸들러
+     */
     const handleInputChange = (event: React.SyntheticEvent, value: string, reason: string) => {
-      if (reason === 'input') {
-        onInputChange?.(value);
-      }
+      onInputChange?.(value);
     };
 
-    // 기본 태그 렌더링
-    const defaultRenderTags = (value: (SelectOption | string)[], getTagProps: any) => {
-      return value.map((option, index) => (
-        <Chip
-          variant='outlined'
-          label={getOptionLabel(option)}
-          size={size === 'small' ? 'small' : 'medium'}
-          {...getTagProps({ index })}
-          key={typeof option === 'string' ? option : option.value}
-        />
-      ));
-    };
-
-    // 기본 입력 렌더링
-    const defaultRenderInput = (params: any) => (
-      <TextField
-        {...params}
-        label={label}
-        sx={{
-          cursor: 'pointer',
-          '& input': { cursor: 'pointer' },
-          '& .MuiOutlinedInput-root': { cursor: 'pointer' },
-          '& .MuiInputBase-root': { cursor: 'pointer' },
-        }}
-        placeholder={placeholder}
-        error={error}
-        helperText={helperText}
-        required={required}
-        variant={variant}
-        size={size}
-        fullWidth={fullWidth}
-        InputProps={{
-          ...params.InputProps,
-          endAdornment: (
-            <>
-              {loading ? <CircularProgress color='inherit' size={20} /> : null}
-              {params.InputProps.endAdornment}
-            </>
-          ),
-        }}
-      />
-    );
-
-    // Autocomplete props
-    const autocompleteProps: Partial<
-      AutocompleteProps<SelectOption | string, boolean, boolean, boolean>
-    > = {
-      multiple,
-      freeSolo,
-      loading,
-      disabled,
-      autoComplete,
-      autoHighlight,
-      autoSelect,
-      clearOnEscape,
-      clearOnBlur,
-      disableClearable,
-      disableCloseOnSelect: disableCloseOnSelect ?? (multiple ? true : false),
-      includeInputInList,
-      limitTags,
-      openOnFocus,
-      selectOnFocus,
-      noOptionsText,
-      loadingText,
-      filterOptions,
-    };
+    const currentValue = getCurrentValue(value, multiple);
 
     return (
-      <Box
+      <Autocomplete
         ref={ref}
+        value={currentValue}
+        options={options}
+        multiple={multiple}
+        freeSolo={freeSolo}
+        loading={loading}
+        disabled={disabled}
+        fullWidth={fullWidth}
+        getOptionValue={getOptionValue}
+        getOptionLabel={getOptionLabel}
+        isOptionEqualToValue={isOptionEqualToValue}
+        filterOptions={filterOptions}
+        noOptionsText={noOptionsText}
+        loadingText={loadingText}
+        renderOption={renderOption}
+        renderTags={renderTags || defaultRenderTags}
+        renderInput={renderInput || ((params) => defaultRenderInput(params, { label, error, helperText, required, disabled, fullWidth, variant, size, placeholder, loading }))}
+        onChange={handleChange}
+        onInputChange={handleInputChange}
+        onOpen={onOpen}
+        onClose={onClose}
+        autoComplete={autoComplete}
+        autoHighlight={autoHighlight}
+        autoSelect={autoSelect}
+        clearOnEscape={clearOnEscape}
+        clearOnBlur={clearOnBlur}
+        disableClearable={disableClearable}
+        disableCloseOnSelect={disableCloseOnSelect}
+        includeInputInList={includeInputInList}
+        limitTags={limitTags}
+        openOnFocus={openOnFocus}
+        selectOnFocus={selectOnFocus}
         className={className}
         style={style}
-        sx={sx}
+        id={id}
         data-testid={dataTestId}
+        sx={sx}
         {...props}
-      >
-        <Autocomplete
-          {...autocompleteProps}
-          options={options}
-          value={getCurrentValue()}
-          getOptionLabel={getOptionLabel}
-          isOptionEqualToValue={isOptionEqualToValue}
-          renderOption={renderOption}
-          renderTags={renderTags || defaultRenderTags}
-          renderInput={renderInput || defaultRenderInput}
-          onChange={handleChange}
-          onInputChange={handleInputChange}
-          onOpen={onOpen}
-          onClose={onClose}
-          id={id}
-        />
-      </Box>
+      />
     );
   }
 );
