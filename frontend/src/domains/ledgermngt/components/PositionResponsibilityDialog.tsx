@@ -133,6 +133,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       setResponsibilityOverview(rowData.responsibilityOverview || '');
       setRelatedBasis(rowData.relatedBasis || '');
       setOriginalRelatedBasis(rowData.relatedBasis || '');
+      setSelectedResponsibilityData({responsibility_id: rowData.id || '', 
+        responsibilityContent: rowData.responsibilityContent || '', 
+        responsibilityDetailContent: rowData.responsibilityDetailContent || '', 
+        responsibilityRelEvid: rowData.responsibilityRelEvid || '',
+        responsibilityMgtSts: rowData.responsibilityMgtSts || ''});
 
       setOriginalFormData(initialData);
       setFormData(initialData);
@@ -194,7 +199,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     // 백엔드 DTO 구조에 맞게 데이터 변환
     const responsibilityRequestData = {
       positions_id: rowData?.positionId || responsibilityId || 1,
-      responsibility_id: selectedResponsibilityData[0]?.id || 'null',
+      responsibility_id: selectedResponsibilityData[0]?.id || rowData.allDetails[0].responsibility_id||'null',
       updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
       role_summ: responsibilityOverview, // 책무 내용을 role_summ에 포함
     };
@@ -243,7 +248,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       const responsibilityContent = response[0].responsibilityContent || '';
       // 각 배열 항목을 details로 변환
       const details = response.map((item: ApiResponseItem, index: number) => ({
-        // id: `${item.id}-${index}`, // 고유 ID 생성
+        id: `${item.id}-${index}`, // 고유 ID 생성
         responsibilityDetailId: String(item.id),
         responsibility_detail_content: item.responsibilityDetailContent || '',
         keyManagementTasks: item.responsibilityMgtSts || '',  // 실제 필드명 매핑
@@ -252,9 +257,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
       // 검색으로 선택한 데이터는 formData에만 설정 (임시 데이터)
       setFormData({
-        id: responsibility.responsibilityId,
         responsibilityContent,
-        relatedBasis: responsibility.responsibility_rel_evid,
         details,
       });
     } catch (err) {

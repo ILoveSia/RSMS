@@ -55,7 +55,7 @@ public class PositionResponsibilityService {
     }
     public List<PositionResponsibilityDto> getAll() {
         String sql =
-                "SELECT p.positions_id, p.positions_nm, r.role_summ, p.positions_id as responsibility_id, r.created_at, r.updated_at, r2.responsibility_content, r3.responsibility_detail_content, r3.responsibility_mgt_sts, r3.responsibility_rel_evid "
+                "SELECT p.positions_id, p.positions_nm, r.role_summ,r.responsibility_id, r.created_at, r.updated_at, r2.responsibility_content, r3.responsibility_detail_content, r3.responsibility_mgt_sts, r3.responsibility_rel_evid "
                         + "FROM positions p "
                         + "LEFT JOIN role_resp_status r ON p.positions_id = r.positions_id "
                         + "LEFT JOIN responsibility r2 ON r.responsibility_id = r2.responsibility_id "

@@ -53,6 +53,7 @@ interface GroupedPositionResponsibility {
   details: Array<{
     responsibility_detail_content: string; // 세부내용
     responsibility_mgt_sts: string; // 주요 관리업무
+    responsibility_id: string; // 책무 번호
   }>;
 }
 
@@ -127,6 +128,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       group.details.push({
         responsibility_detail_content: (item as any).responsibility_detail_content || '',
         responsibility_mgt_sts: (item as any).responsibility_mgt_sts || '',
+        responsibility_id: (item as any).responsibility_id || '',
       });
     });
 
@@ -185,7 +187,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
       const data = await response.json();
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
-        id: item.respontibility_id ?? item.id ?? 0,
+        responsibility_id: item.respontibility_id ?? item.id ?? 0,
         classification: item.classification ?? '일반',
         positionId: String(item.positions_id ?? ''),
         positionName: item.positions_name ?? '',
