@@ -31,7 +31,7 @@ import {
   Settings as SettingsIcon
 } from '@mui/icons-material';
 import { Box, IconButton, Menu, MenuItem, Tab, Tabs, Typography, useTheme } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 // 아이콘 매핑 시스템
 const ICON_MAPPING: { [key: string]: React.ComponentType<any> } = {
@@ -65,6 +65,7 @@ const TabBar: React.FC<TabBarProps> = ({
 }) => {
   const theme = useTheme();
   const { canCloseTab, closeOtherTabs, closeAllTabs } = useTabContext();
+  const tabsRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
@@ -73,6 +74,16 @@ const TabBar: React.FC<TabBarProps> = ({
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
     onTabClick(newValue);
+  };
+
+  const handleWheel = (event: React.WheelEvent) => {
+    if (tabsRef.current) {
+      const scrollContainer = tabsRef.current.querySelector('.MuiTabs-scroller');
+      if (scrollContainer) {
+        const scrollAmount = event.deltaY > 0 ? 100 : -100;
+        scrollContainer.scrollLeft += scrollAmount;
+      }
+    }
   };
 
   const handleTabRightClick = (event: React.MouseEvent, tabId: string) => {
@@ -163,7 +174,9 @@ const TabBar: React.FC<TabBarProps> = ({
 
   return (
     <Box
+      ref={tabsRef}
       className={`tab-bar ${className}`}
+      onWheel={handleWheel}
       sx={{
         borderBottom: 1,
         borderColor: 'divider',
@@ -171,6 +184,7 @@ const TabBar: React.FC<TabBarProps> = ({
         minHeight: 48,
         display: 'flex',
         alignItems: 'center',
+        overflow: 'hidden',
       }}
     >
       <Tabs
@@ -182,11 +196,19 @@ const TabBar: React.FC<TabBarProps> = ({
         sx={{
           flexGrow: 1,
           '& .MuiTab-root': {
-            maxWidth: maxTabWidth,
+            width: 120,
+            maxWidth: 120,
             minWidth: 120,
             textTransform: 'none',
             fontSize: '0.875rem',
             padding: '8px 12px',
+          },
+          '& .MuiTabs-scroller': {
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
           },
         }}
       >
