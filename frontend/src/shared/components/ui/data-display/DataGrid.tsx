@@ -107,7 +107,7 @@ const convertColumnsToMuiFormat = <T,>(columns: DataGridColumn<T>[]): GridColDef
     filterable: false, // 필터 기능 비활성화
     editable: col.editable,
     align: col.align,
-    headerAlign: col.headerAlign,
+    headerAlign: col.headerAlign || 'center', // 기본값을 중앙정렬로 설정
     renderCell: col.renderCell
       ? params =>
           col.renderCell?.({
