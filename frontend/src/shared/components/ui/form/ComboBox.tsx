@@ -15,9 +15,8 @@
  * ```
  */
 import type { FormComponentProps, SelectOption, Size } from '@/shared/types/common';
-import { Autocomplete, Box, Chip, CircularProgress } from '@mui/material';
+import { Autocomplete, Chip, CircularProgress } from '@mui/material';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import type { AutocompleteProps } from '@mui/material/Autocomplete';
 import React from 'react';
 
 export interface ComboBoxProps extends FormComponentProps {
@@ -68,14 +67,6 @@ export interface ComboBoxProps extends FormComponentProps {
 }
 
 /**
- * 옵션 값 반환
- */
-const getOptionValue = (option: SelectOption | string): SelectOption | string => {
-  if (typeof option === 'string') return option;
-  return option.value !== undefined ? option.value : option;
-};
-
-/**
  * 현재 값 반환
  */
 const getCurrentValue = (value: ComboBoxProps['value'], multiple: boolean) => {
@@ -98,20 +89,17 @@ const isOptionEqualToValue = (
   option: SelectOption | string,
   value: SelectOption | string
 ): boolean => {
-  const optionValue = getOptionValue(option);
-  const valueToCompare = getOptionValue(value);
-  
-  if (typeof optionValue === 'object' && typeof valueToCompare === 'object') {
-    return optionValue.value === valueToCompare.value;
+  if (typeof option === 'object' && typeof value === 'object') {
+    return option.value === value.value;
   }
   
-  return optionValue === valueToCompare;
+  return option === value;
 };
 
 /**
  * 기본 태그 렌더링
  */
-const defaultRenderTags = (value: (SelectOption | string)[], getTagProps: any) => {
+const defaultRenderTags = (value: SelectOption[], getTagProps: any) => {
   return value.map((option, index) => {
     const label = getOptionLabel(option);
     return (
@@ -128,7 +116,7 @@ const defaultRenderTags = (value: (SelectOption | string)[], getTagProps: any) =
 /**
  * 기본 입력 렌더링
  */
-const defaultRenderInput = (params: any, props: ComboBoxProps) => {
+const defaultRenderInput = (params: any, props: Partial<ComboBoxProps>) => {
   return (
     <TextField
       {...params}
@@ -204,24 +192,38 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
     },
     ref
   ) => {
-    /**
-     * 변경 핸들러
-     */
+    // 현재 값 계산
+    const currentValue = getCurrentValue(value, multiple);
+
+    // 변경 핸들러
     const handleChange = (
       event: React.SyntheticEvent,
-      newValue: SelectOption | SelectOption[] | string | string[] | null
+      newValue: any,
+      reason?: string,
+      details?: any
     ) => {
       onChange?.(newValue);
     };
 
-    /**
-     * 입력 변경 핸들러
-     */
+    // 입력 변경 핸들러
     const handleInputChange = (event: React.SyntheticEvent, value: string, reason: string) => {
       onInputChange?.(value);
     };
 
-    const currentValue = getCurrentValue(value, multiple);
+    // 기본 입력 렌더링 함수
+    const defaultInputRenderer = (params: any) => 
+      defaultRenderInput(params, { 
+        label, 
+        error, 
+        helperText, 
+        required, 
+        disabled, 
+        fullWidth, 
+        variant, 
+        size, 
+        placeholder, 
+        loading 
+      });
 
     return (
       <Autocomplete
@@ -233,7 +235,6 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
         loading={loading}
         disabled={disabled}
         fullWidth={fullWidth}
-        getOptionValue={getOptionValue}
         getOptionLabel={getOptionLabel}
         isOptionEqualToValue={isOptionEqualToValue}
         filterOptions={filterOptions}
@@ -241,7 +242,7 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
         loadingText={loadingText}
         renderOption={renderOption}
         renderTags={renderTags || defaultRenderTags}
-        renderInput={renderInput || ((params) => defaultRenderInput(params, { label, error, helperText, required, disabled, fullWidth, variant, size, placeholder, loading }))}
+        renderInput={renderInput || defaultInputRenderer}
         onChange={handleChange}
         onInputChange={handleInputChange}
         onOpen={onOpen}
