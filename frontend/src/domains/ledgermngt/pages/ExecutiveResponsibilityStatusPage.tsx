@@ -176,6 +176,10 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   // 데이터 상태 관리
   const [rows, setRows] = useState<ExecutiveResponsibilityRow[]>([]);
 
+  // 프론트엔드 필터링을 위한 상태
+  const [allExecutiveData, setAllExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
+  const [filteredExecutiveData, setFilteredExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
+
   // 데이터 조회
   const fetchExecutiveResponsibility = useCallback(async () => {
     try {
@@ -207,7 +211,8 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
       // 직책별로 그룹화
       const groupedData = groupDataByPosition(transformedItems);
-      setRows(groupedData);
+      setAllExecutiveData(transformedItems); // 모든 데이터를 저장
+      setRows(groupedData); // 그룹화된 데이터를 표시
 
     } catch (err) {
       console.error('데이터 조회 실패:', err);
@@ -219,9 +224,65 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     }
   }, [selectedPosition]);
 
+  // 모든 데이터 로드 (한 번만)
+  const loadAllData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // 모든 데이터를 한 번만 로드
+      const data = await executiveResponsibilityApi.getAll();
+
+      // API 응답을 개별 항목 형태로 변환
+      const transformedItems: ExecutiveResponsibilityItem[] = data.map((item: any) => ({
+        id: item.positionsId || 0,
+        position: item.positionNameMapped || '해당없음',
+        jobTitle: item.jobTitleCd || '해당없음',
+        empNo: item.num || '해당없음',
+        executiveName: item.empId || '해당없음',
+        responsibility: item.responsibilityContent || '해당없음',
+        responsibilityDetail: item.responsibilityDetailContent || '해당없음',
+        managementDuty: item.responsibilityMgtSts || '해당없음',
+        relatedBasis: item.responsibilityRelEvid || '해당없음',
+        jobRank: item.jobRankCd || '해당없음',
+        execofficer_dt: item.execofficer_dt || '해당없음'
+      }));
+
+      setAllExecutiveData(transformedItems);
+
+    } catch (err) {
+      console.error('데이터 조회 실패:', err);
+      setErrorMessage('임원별 책무 현황 데이터를 불러오는데 실패했습니다.');
+      setErrorDialogOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // 프론트엔드 필터링 함수
+  const applyFilters = useCallback(() => {
+    let filtered = allExecutiveData;
+    
+    // 직책 필터링
+    if (selectedPosition?.positionsId) {
+      filtered = filtered.filter(item => item.position === selectedPosition.positionsNm);
+    }
+    
+    setFilteredExecutiveData(filtered);
+    
+    // 필터링된 데이터를 그룹핑
+    const groupedData = groupDataByPosition(filtered);
+    setRows(groupedData);
+  }, [allExecutiveData, selectedPosition]);
+
   useEffect(() => {
-    fetchExecutiveResponsibility();
-  }, [fetchExecutiveResponsibility]);
+    loadAllData();
+  }, [loadAllData]);
+
+  useEffect(() => {
+    if (allExecutiveData.length > 0) {
+      applyFilters();
+    }
+  }, [applyFilters, allExecutiveData]);
 
   // 직책 클릭 핸들러
   const handlePositionClick = (row: ExecutiveResponsibilityRow) => {
@@ -296,7 +357,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           <Button
             variant="contained"
             size="small"
-            onClick={fetchExecutiveResponsibility}
+            onClick={applyFilters}
             color="primary"
           >
             조회
