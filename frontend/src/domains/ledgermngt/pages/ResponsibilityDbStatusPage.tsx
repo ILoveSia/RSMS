@@ -407,18 +407,22 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       setSelectedResponsibility(responsibility);
     }, []);
 
-    const handleDelete = useCallback(() => {
+    const handleDelete = useCallback(async () => {
       if (selectedIds.length > 0) {
         try {
+          setLoading(true);
           // 선택된 행의 responsibilityId를 찾기
           const selectedRow = rows.find((_, index) => selectedIds.includes(index));
           if (selectedRow) {
-            responsibilityApi.delete(selectedRow.responsibilityId);
-            loadAllData(); // 모든 데이터를 다시 로드
+            await responsibilityApi.delete(selectedRow.responsibilityId);
+            await loadAllData(); // 삭제 완료 후 데이터 새로고침
+            setSelectedIds([]); // 선택 해제
           }
         } catch (error) {
           console.error('책무 삭제 실패:', error);
           setError('책무 삭제 중 오류가 발생했습니다.');
+        } finally {
+          setLoading(false);
         }
       }
     }, [selectedIds, rows, loadAllData]);
