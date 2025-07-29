@@ -64,6 +64,9 @@ export interface ComboBoxProps extends FormComponentProps {
   limitTags?: number;
   openOnFocus?: boolean;
   selectOnFocus?: boolean;
+
+  /** 읽기전용/수정용 모드 설정 */
+  mode?: 'readonly' | 'editable';
 }
 
 /**
@@ -133,7 +136,7 @@ const defaultRenderInput = (params: any, props: Partial<ComboBoxProps>) => {
       error={props.error}
       helperText={props.helperText}
       required={props.required}
-      disabled={props.disabled}
+      mode={props.mode}
       fullWidth={props.fullWidth}
       variant={props.variant}
       size={props.size}
@@ -195,14 +198,17 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
       className,
       style,
       id,
-      'data-testid': dataTestId,
       sx,
+      mode = 'editable',
       ...props
     },
     ref
   ) => {
     // 현재 값 계산
     const currentValue = getCurrentValue(value, multiple);
+
+    // mode에 따라 disabled 상태 결정
+    const isDisabled = mode === 'readonly' || disabled;
 
     // 변경 핸들러
     const handleChange = (
@@ -222,16 +228,19 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
     // 기본 입력 렌더링 함수
     const defaultInputRenderer = (params: any) => 
       defaultRenderInput(params, { 
-        label, 
-        error, 
-        helperText, 
-        required, 
-        disabled, 
-        fullWidth, 
-        variant, 
-        size, 
-        placeholder, 
-        loading 
+        label,
+        placeholder,
+        error,
+        helperText,
+        required,
+        disabled: isDisabled,
+        fullWidth,
+        variant,
+        size,
+        className,
+        style,
+        id,
+        mode // Passed mode to defaultRenderInput
       });
 
     return (
@@ -242,7 +251,7 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
         multiple={multiple}
         freeSolo={freeSolo}
         loading={loading}
-        disabled={disabled}
+        disabled={isDisabled}
         fullWidth={fullWidth}
         getOptionLabel={getOptionLabel}
         isOptionEqualToValue={isOptionEqualToValue}
@@ -270,7 +279,6 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
         className={className}
         style={style}
         id={id}
-        data-testid={dataTestId}
         sx={sx}
         {...props}
       />

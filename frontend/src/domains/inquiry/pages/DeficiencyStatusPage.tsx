@@ -306,6 +306,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             onChange={(value) => setInspectionRound(value as string)}
             options={inspectionRoundOptions}
             size="small"
+            mode="editable"
             sx={{ minWidth: '200px' }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>

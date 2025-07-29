@@ -435,6 +435,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             ]}
             onChange={value => setFilterDivision(value as string)}
             size='small'
+            mode="editable"
             sx={{ width: 140 }}
           />
           <Button

@@ -64,7 +64,7 @@ const TextField: React.FC<TextFieldProps> = ({
           '& .MuiInputBase-root': {
             backgroundColor: 'background.paper',
             '&.Mui-disabled': {
-              backgroundColor: 'action.hover',
+              backgroundColor: '#f5f5f5 !important',
               '& .MuiInputBase-input': {
                 color: value ? 'text.primary' : 'text.disabled',
                 fontStyle: value ? 'normal' : 'italic',

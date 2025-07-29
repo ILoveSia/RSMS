@@ -291,6 +291,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             value={ledgerOrderOptions.find(option => option.value === ledgerOrder) || ledgerOrderOptions[0]}
             onChange={value => setLedgerOrder((value as SelectOption)?.value?.toString() || '')}
             size="small"
+            mode="editable"
             sx={{ width: '130px' }}
           />
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
