@@ -272,7 +272,7 @@ const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
                         value={progress}
                         sx={{ mt: 1 }}
                       />
-                    )}
+              )}
                   </Box>
                 }
               />

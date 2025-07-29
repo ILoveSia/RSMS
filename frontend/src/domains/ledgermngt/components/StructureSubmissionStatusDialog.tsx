@@ -393,7 +393,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           value={registrationData.submitHistCd}
           placeholder="자동생성됩니다"
           size="small"
-          disabled={true}
+          mode="readonly"
           sx={{ backgroundColor: '#f5f5f5' }}
         />
 
@@ -406,7 +406,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
             value={registrationData.executiveName?.label || ''}
             placeholder="제출 대상 임원을 선택하세요"
             size="small"
-            disabled={true}
+            mode="readonly"
             sx={{ minWidth: '300px', backgroundColor: '#f5f5f5' }}
           />
           {mode !== 'view' && (
@@ -429,7 +429,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
             value={registrationData.position?.label || ''}
             placeholder="직책을 선택하세요"
             size="small"
-            disabled={true}
+            mode="readonly"
             sx={{ minWidth: '300px', backgroundColor: '#f5f5f5' }}
           />
           {mode !== 'view' && (

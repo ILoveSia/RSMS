@@ -5,6 +5,7 @@ import React from 'react';
 /**
  * 공통 TextField 컴포넌트
  * - MUI TextField를 래핑하여 label, error, helperText, required 등 주요 props를 지원
+ * - mode prop을 통해 읽기전용과 수정용을 일관된 디자인으로 통일
  * - label이 있으면 shrink: true로 항상 위에 고정
  * - 나머지 props는 모두 그대로 전달
  */
@@ -20,6 +21,10 @@ export interface TextFieldProps extends Omit<MuiTextFieldProps, 'variant' | 'siz
   variant?: 'outlined' | 'filled' | 'standard';
   size?: 'small' | 'medium';
   sx?: SxProps<Theme>;
+  /** 읽기전용/수정용 모드 설정 */
+  mode?: 'readonly' | 'editable';
+  /** 읽기전용일 때 표시할 placeholder 텍스트 */
+  readonlyPlaceholder?: string;
 }
 
 const TextField: React.FC<TextFieldProps> = ({
@@ -34,8 +39,47 @@ const TextField: React.FC<TextFieldProps> = ({
   variant = 'outlined',
   size = 'medium',
   sx,
+  mode = 'editable',
+  readonlyPlaceholder = '데이터가 없습니다',
   ...props
 }) => {
+  // 읽기전용 모드일 때 MUI TextField를 disabled 상태로 사용
+  if (mode === 'readonly') {
+    return (
+      <MuiTextField
+        label={label}
+        value={value || readonlyPlaceholder}
+        error={error}
+        helperText={helperText}
+        required={required}
+        disabled={true} // 읽기전용이므로 항상 disabled
+        fullWidth={fullWidth}
+        variant={variant}
+        size={size}
+        InputLabelProps={label ? { shrink: true } : undefined}
+        // 읽기전용일 때는 onChange 제거
+        onChange={undefined}
+        // 읽기전용 스타일링
+        sx={{
+          '& .MuiInputBase-root': {
+            backgroundColor: 'background.paper',
+            '&.Mui-disabled': {
+              backgroundColor: 'action.hover',
+              '& .MuiInputBase-input': {
+                color: value ? 'text.primary' : 'text.disabled',
+                fontStyle: value ? 'normal' : 'italic',
+                WebkitTextFillColor: value ? 'inherit' : 'text.disabled',
+              },
+            },
+          },
+          ...sx,
+        }}
+        {...props}
+      />
+    );
+  }
+
+  // 수정용 모드일 때 (기존 MUI TextField 사용)
   return (
     <MuiTextField
       label={label}

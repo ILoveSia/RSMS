@@ -300,7 +300,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
             <TextField
               label="직책"
               value={formData.positionNameMapped || ''}
-              disabled={mode === 'view'}
+              mode={'readonly'}
               sx={{ flex: 1 }}
             />
             <TextField
@@ -308,7 +308,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               label="성명"
               value={formData.executiveName || ''}
               onChange={e => handleInputChange('executiveName', e.target.value)}
-              disabled={mode === 'view'}
+              mode={'readonly'}
               sx={{ flex: 1 }}
             />
             {mode !== 'view' && (
@@ -327,7 +327,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                 : formData.jobRankCd
                   ? getCodeName('JOB_RANK', formData.jobRankCd)
                   : ''}
-              disabled={true}
+              mode="readonly"
               sx={{ flex: 1 }}
             />
             <DatePicker
@@ -363,7 +363,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               label="겸직사항"
               value={formData.concurrentPosition || ''}
               onChange={e => handleInputChange('concurrentPosition', e.target.value)}
-              disabled={mode === 'view' || !formData.hasConcurrentPosition}
+              mode={mode === 'view' || !formData.hasConcurrentPosition ? 'readonly' : 'editable'}
               sx={{ flex: 1 }}
             />
           </Box>
@@ -392,8 +392,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                           fullWidth
                           size='small'
                           value={dept.deptCode || ''}
-                          disabled
-                          placeholder='부서코드'
+                          mode="readonly"
+                          readonlyPlaceholder="부서코드"
                         />
                       </TableCell>
                       <TableCell>
@@ -401,8 +401,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                           fullWidth
                           size='small'
                           value={dept.deptName || ''}
-                          disabled
-                          placeholder='부서명'
+                          mode="readonly"
+                          readonlyPlaceholder="부서명"
                         />
                       </TableCell>
                     </TableRow>
@@ -445,8 +445,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                           fullWidth
                           size='small'
                           value={meeting.meetingBodyName || ''}
-                          disabled
-                          placeholder='회의체명'
+                          mode="readonly"
+                          readonlyPlaceholder="회의체명"
                         />
                       </TableCell>
                       <TableCell>
@@ -454,8 +454,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                           fullWidth
                           size='small'
                           value={meeting.memberGubun || ''}
-                          disabled
-                          placeholder='위원장/위원'
+                          mode="readonly"
+                          readonlyPlaceholder="위원장/위원"
                         />
                       </TableCell>
                       <TableCell>
@@ -463,8 +463,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                           fullWidth
                           size='small'
                           value={meeting.meetingPeriod || ''}
-                          disabled
-                          placeholder='개최주기'
+                          mode="readonly"
+                          readonlyPlaceholder="개최주기"
                         />
                       </TableCell>
                       <TableCell>
@@ -472,8 +472,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                           fullWidth
                           size='small'
                           value={meeting.deliberationContent || ''}
-                          disabled
-                          placeholder='주요 심의·의결사항'
+                          mode="readonly"
+                          readonlyPlaceholder="주요 심의·의결사항"
                         />
                       </TableCell>
                     </TableRow>

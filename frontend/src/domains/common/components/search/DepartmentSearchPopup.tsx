@@ -160,7 +160,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
         convertedDepartments = availableDepartments;
       } else {
         // 기존 방식: API에서 모든 활성 부서 조회
-        const apiDepartments = await DepartmentApi.getActive();
+      const apiDepartments = await DepartmentApi.getActive();
         convertedDepartments = apiDepartments.map(convertApiDepartmentToComponent);
       }
       

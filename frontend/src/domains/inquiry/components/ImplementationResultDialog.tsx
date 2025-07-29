@@ -254,57 +254,37 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
       >
         {/* 미흡사항 정보 */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-            미흡사항
-          </Typography>
-          <Box sx={{
-            p: 2,
-            bgcolor: 'grey.50',
-            borderRadius: 1,
-            border: '1px solid',
-            borderColor: 'grey.300'
-          }}>
-            <Typography variant="body2">
-              {data?.deficiencyContent || '미흡사항 내용이 없습니다.'}
-            </Typography>
-          </Box>
+          <TextField
+            fullWidth
+            label="미흡사항"
+            value={data?.deficiencyContent || ''}
+            mode="readonly"
+            readonlyPlaceholder="미흡사항"
+          />
         </Box>
 
         {/* 개선계획 세부내용 */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-            개선계획 세부내용
-          </Typography>
-          <Box sx={{
-            p: 2,
-            bgcolor: 'grey.50',
-            borderRadius: 1,
-            border: '1px solid',
-            borderColor: 'grey.300'
-          }}>
-            <Typography variant="body2">
-              {data?.auditDetailCoantent || '개선계획 세부내용이 없습니다.'}
-            </Typography>
-          </Box>
+          <TextField
+            fullWidth
+            label="개선계획 세부내용"
+            value={data?.improvementPlan || ''}
+            mode="readonly"
+            readonlyPlaceholder="개선계획 세부내용"
+          />
         </Box>
 
         {/* 이행완료 예정일자 (읽기 전용) */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>
-            이행완료 예정일자
-          </Typography>
-          <Box sx={{
-            p: 2,
-            bgcolor: 'grey.50',
-            borderRadius: 1,
-            border: '1px solid',
-            borderColor: 'grey.300'
-          }}>
-            <Typography variant="body2">
-              {auditDoneDt ? auditDoneDt.toLocaleDateString('ko-KR') : '예정일자가 설정되지 않았습니다.'}
-            </Typography>
-          </Box>
+          <TextField
+            fullWidth
+            label="이행완료 예정일자"
+            value={auditDoneDt ? auditDoneDt.toLocaleDateString('ko-KR') : ''}
+            mode="readonly"
+            readonlyPlaceholder="이행완료 예정일자"
+          />
         </Box>
+
 
         <Divider sx={{ my: 2 }} />
 
@@ -316,6 +296,7 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
           <TextField
             multiline
             rows={4}
+            mode="editable"
             fullWidth
             value={auditDoneContent}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAuditDoneContent(e.target.value)}

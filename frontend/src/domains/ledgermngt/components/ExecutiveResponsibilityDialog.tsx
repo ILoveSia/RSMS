@@ -17,9 +17,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
-  Tabs,
-  Tab
+  Typography
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { DatePicker } from '../../../shared/components';
@@ -43,8 +41,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const [positionDetailsLoading, setPositionDetailsLoading] = useState(false);
   const [originalDate, setOriginalDate] = useState<Date | null>(null);
   
-  // 탭 상태
-  const [currentTab, setCurrentTab] = useState(0);
+
   
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes, setData: setAllCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
@@ -192,13 +189,10 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     }
     setLoading(false);
     setError(null);
-    setCurrentTab(0); // 다이얼로그 열릴 때 첫 번째 탭으로 초기화
+
   }, [data, open]);
 
-  // 탭 변경 핸들러
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
-  };
+
 
 
 
@@ -258,30 +252,20 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         // onModeChange={onChangeMode}
         loading={loading}
       >
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          {/* 탭 헤더 */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={currentTab} onChange={handleTabChange} aria-label="임원 책무 상세 탭">
-              <Tab label="기본 정보" />
-              <Tab label="소관부서 및 회의체" />
-              {formData.isGrouped && <Tab label="상세 목록" />}
-            </Tabs>
-          </Box>
-
-          {/* 탭 내용 */}
-          <Box sx={{ flex: 1, overflow: 'auto' }}>
-            {/* 첫 번째 탭: 기본 정보 */}
-            {currentTab === 0 && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {/* 직책 정보 */}
                 <Box sx={{ fontWeight: 'bold', fontSize: '1.1rem', mb: 1, color: 'primary.main' }}>
-                  직책: {formData.positionNameMapped || '해당없음'}
+                  임원 책무 상세정보
                 </Box>
 
                 {/* 그룹화된 데이터인 경우 요약 정보 */}
                 {formData.isGrouped && (
                   <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1, border: '1px solid', borderColor: 'grey.200' }}>
-                    <Typography variant="h6" sx={{ mb: 1 }}>요약 정보</Typography>
+                    <Typography variant="h6" sx={{ mb: 1 }}>직책 정보</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      직책: {formData.positionNameMapped || '해당없음'}
+                    </Typography>
                     <Typography variant="body2" color="text.secondary">
                       총 {formData.count || 0}건의 임원 책무 데이터가 있습니다.
                     </Typography>
@@ -306,14 +290,14 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                       <TextField
                         label="직책"
                         value={formData.positionNameMapped || ''}
-                        disabled={true}
+                        mode="readonly"
                         sx={{ flex: 1 }}
                       />
                       <TextField
                         required
                         label="성명"
                         value={formData.executiveName || ''}
-                        disabled={true}
+                        mode="readonly"
                         sx={{ flex: 1 }}
                       />
                     </Box>
@@ -327,7 +311,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                           : formData.jobRankCd
                             ? getCodeName('JOB_RANK', formData.jobRankCd)
                             : ''}
-                        disabled={true}
+                        mode="readonly"
                         sx={{ flex: 1 }}
                       />
                       <DatePicker
@@ -357,18 +341,17 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                       <TextField
                         label="겸직사항"
                         value={formData.concurrentPosition || ''}
-                        disabled={true}
+                        mode="readonly"
                         sx={{ flex: 1 }}
                       />
                     </Box>
                   </>
                 )}
               </Box>
-            )}
+            
 
-            {/* 두 번째 탭: 소관부서 및 회의체 */}
-            {currentTab === 1 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* 소관부서 및 회의체 */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {/* 소관부서 */}
                 <Box>
                   <Box
@@ -393,8 +376,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                                 fullWidth
                                 size='small'
                                 value={dept.deptCode || ''}
-                                disabled
-                                placeholder='부서코드'
+                                mode="readonly"
+                                readonlyPlaceholder="부서코드"
                               />
                             </TableCell>
                             <TableCell>
@@ -402,8 +385,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                                 fullWidth
                                 size='small'
                                 value={dept.deptName || ''}
-                                disabled
-                                placeholder='부서명'
+                                mode="readonly"
+                                readonlyPlaceholder="부서명"
                               />
                             </TableCell>
                           </TableRow>
@@ -446,8 +429,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                                 fullWidth
                                 size='small'
                                 value={meeting.meetingBodyName || ''}
-                                disabled
-                                placeholder='회의체명'
+                                mode="readonly"
+                                readonlyPlaceholder="회의체명"
                               />
                             </TableCell>
                             <TableCell>
@@ -455,8 +438,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                                 fullWidth
                                 size='small'
                                 value={meeting.memberGubun || ''}
-                                disabled
-                                placeholder='위원장/위원'
+                                mode="readonly"
+                                readonlyPlaceholder="위원장/위원"
                               />
                             </TableCell>
                             <TableCell>
@@ -464,8 +447,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                                 fullWidth
                                 size='small'
                                 value={meeting.meetingPeriod || ''}
-                                disabled
-                                placeholder='개최주기'
+                                mode="readonly"
+                                readonlyPlaceholder="개최주기"
                               />
                             </TableCell>
                             <TableCell>
@@ -473,8 +456,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                                 fullWidth
                                 size='small'
                                 value={meeting.deliberationContent || ''}
-                                disabled
-                                placeholder='주요 심의·의결사항'
+                                mode="readonly"
+                                readonlyPlaceholder="주요 심의·의결사항"
                               />
                             </TableCell>
                           </TableRow>
@@ -491,10 +474,10 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                   </TableContainer>
                 </Box>
               </Box>
-            )}
+            
 
-            {/* 세 번째 탭: 상세 목록 (그룹화된 데이터인 경우만) */}
-            {currentTab === 2 && formData.isGrouped && (
+            {/* 상세 목록 (그룹화된 데이터인 경우만) */}
+            {formData.isGrouped && (
               <Box>
                 <Box sx={{ fontWeight: 'bold', fontSize: '1rem', mb: 2 }}>
                   임원별 상세 책무 목록 ({formData.count || 0}건)
@@ -618,7 +601,6 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               </Box>
             )}
           </Box>
-        </Box>
 
         {error && (
           <Box sx={{ color: 'error.main', mt: 2, textAlign: 'center' }}>

@@ -277,7 +277,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
             label="회의체명"
             value={formData.meetingName || ''}
             onChange={e => handleInputChange('meetingName', e.target.value)}
-            disabled={mode === 'view'}
+            mode={mode === 'view' ? 'readonly' : 'editable'}
             placeholder="회의체명을 입력하세요"
             error={validationErrors.meetingName}
             helperText={validationErrors.meetingName ? '필수 입력 항목입니다.' : ''}
@@ -289,7 +289,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
             label="주요 심의·의결사항"
             value={formData.content || ''}
             onChange={e => handleInputChange('content', e.target.value)}
-            disabled={mode === 'view'}
+            mode={mode === 'view' ? 'readonly' : 'editable'}
             multiline
             rows={4}
             placeholder="주요 심의·의결사항을 입력하세요"
@@ -302,13 +302,15 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
                 fullWidth
                 label="등록일시"
                 value={meetingBody.createdAt || ''}
-                disabled
+                mode="readonly"
+                readonlyPlaceholder="등록일시가 없습니다"
               />
               <TextField
                 fullWidth
                 label="수정일시"
                 value={meetingBody.updatedAt || ''}
-                disabled
+                mode="readonly"
+                readonlyPlaceholder="수정일시가 없습니다"
               />
             </Box>
           )}

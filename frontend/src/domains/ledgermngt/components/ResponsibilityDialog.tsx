@@ -399,7 +399,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                   multiline
                   value={formData.responsibilityContent}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsibilityContent: e.target.value }))}
-                  disabled={mode!=='create'}
+                  mode={mode === 'view' ? 'readonly' : 'editable'}
                   error={!!validationErrors.responsibilityContent}
                   helperText={validationErrors.responsibilityContent}
                   placeholder="책무 내용을 입력하세요"
@@ -427,7 +427,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                           onChange={(e) =>
                             handleDetailChange(detail.id || '', 'responsibilityDetailContent', e.target.value)
                           }
-                          disabled={mode === 'view'}
+                          mode={mode === 'view' ? 'readonly' : 'editable'}
                           error={!!validationErrors[`detail_${detail.id}_content`]}
                           helperText={validationErrors[`detail_${detail.id}_content`]}
                           placeholder="책무 세부내용을 입력하세요"
@@ -444,7 +444,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                             onChange={(e) =>
                               handleDetailChange(detail.id || '', 'keyManagementTasks', e.target.value)
                             }
-                            disabled={mode === 'view'}
+                            mode={mode === 'view' ? 'readonly' : 'editable'}
                             error={!!validationErrors[`detail_${detail.id}_tasks`]}
                             helperText={validationErrors[`detail_${detail.id}_tasks`]}
                             placeholder="주요 관리의무를 입력하세요"
@@ -488,7 +488,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                   onChange={(e) =>
                     handleDetailChange(formData.details[0]?.id || '', 'relatedBasis', e.target.value)
                   }
-                  disabled={mode === 'view'}
+                  mode={mode === 'view' ? 'readonly' : 'editable'}
                   error={!!validationErrors[`detail_${formData.details[0]?.id}_basis`]}
                   helperText={validationErrors[`detail_${formData.details[0]?.id}_basis`]}
                   placeholder="관련 근거를 입력하세요"

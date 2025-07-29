@@ -434,7 +434,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
               value={formData.targetSelection}
               onChange={e => handleInputChange('targetSelection', e.target.value)}
               placeholder="점검 대상을 선정하세요"
-              disabled={true}
+              mode="readonly"
               error={!!validation.errors.targetSelection}
               helperText={validation.errors.targetSelection || '점검 대상 항목을 선정해주세요'}
               sx={{ flex: 1 }}

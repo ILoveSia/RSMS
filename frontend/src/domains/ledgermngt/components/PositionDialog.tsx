@@ -754,7 +754,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               onChange={handleInputChange('positionName')}
               error={!!validationErrors.positionName}
               helperText={validationErrors.positionName}
-              disabled={mode === 'view'}
+              mode={mode === 'view' ? 'readonly' : 'editable'}
               placeholder='직책명을 입력하세요'
             />
           </Box>
@@ -837,8 +837,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                             fullWidth
                             size='small'
                             value={dept.deptCode}
-                            disabled
-                            placeholder='부서를 선택하세요'
+                            mode="readonly"
+                            readonlyPlaceholder="부서를 선택하세요"
                           />
                           {mode !== 'view' && (
                             <Button
@@ -857,8 +857,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           fullWidth
                           size='small'
                           value={dept.deptName}
-                          disabled
-                          placeholder='부서를 선택하면 자동 입력됩니다'
+                          mode="readonly"
+                          readonlyPlaceholder="부서를 선택하면 자동 입력됩니다"
                         />
                       </TableCell>
                       {mode !== 'view' && (
@@ -920,11 +920,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                             fullWidth
                             size='small'
                             value={meeting.meetingBodyName}
-                            onChange={e =>
-                              handleMeetingChange(meeting.id, 'meetingBodyName', e.target.value)
-                            }
-                            disabled={mode === 'view'}
-                            placeholder='회의체명을 입력하세요'
+                            mode="readonly"
+                            readonlyPlaceholder="회의체를 검색하여 선택하세요"
                           />
                           {mode !== 'view' && (
                             <Button
@@ -961,8 +958,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                         <TextField
                           size='small'
                           value={meeting.meetingPeriod}
-                          disabled
-                          placeholder='자동 입력'
+                          mode="readonly"
+                          readonlyPlaceholder="자동 입력"
                           sx={{ width: 100 }}
                         />
                       </TableCell>
@@ -971,8 +968,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           fullWidth
                           size='small'
                           value={meeting.deliberationContent}
-                          disabled
-                          placeholder='자동 입력'
+                          mode="readonly"
+                          readonlyPlaceholder="자동 입력"
                         />
                       </TableCell>
                       {mode !== 'view' && (
@@ -1034,7 +1031,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                             size='small'
                             value={manager.empNo}
                             onChange={e => handleManagerChange(manager.id, 'empNo', e.target.value)}
-                            disabled={mode === 'view'}
+                            mode={mode === 'view' ? 'readonly' : 'editable'}
                             placeholder='사번을 입력하세요'
                           />
                           {mode !== 'view' && (
@@ -1054,8 +1051,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           fullWidth
                           size='small'
                           value={manager.empName}
-                          disabled
-                          placeholder='자동 입력'
+                          mode="readonly"
+                          readonlyPlaceholder="자동 입력"
                         />
                       </TableCell>
                       <TableCell>
@@ -1063,8 +1060,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                           fullWidth
                           size='small'
                           value={manager.position}
-                          disabled
-                          placeholder='자동 입력'
+                          mode="readonly"
+                          readonlyPlaceholder="자동 입력"
                         />
                       </TableCell>
                       {mode !== 'view' && (

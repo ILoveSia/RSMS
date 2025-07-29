@@ -298,7 +298,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           {/* 직책 정보 */}
           <TextField
             sx={{ height: '100%', width: '100%', mb: 3 }}
-            disabled={true}
+            mode="readonly"
             multiline
             rows={2}
             label="직책"
@@ -369,7 +369,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                   multiline
                   value={formData.responsibilityContent}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsibilityContent: e.target.value }))}
-                  disabled={true}
+                  mode="readonly"
                   placeholder="책무 내용을 입력하거나 검색을 통해 선택해주세요"
                   sx={{
                     '& .MuiInputBase-root': {
@@ -397,7 +397,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                             newDetails[index].responsibility_detail_content = e.target.value;
                             setFormData(prev => ({ ...prev, details: newDetails }));
                           }}
-                          disabled={true}
+                          mode="readonly"
                           error={!!validationErrors[`detail_${index}_content`]}
                           helperText={validationErrors[`detail_${index}_content`]}
                           placeholder="책무 세부내용을 입력하세요"
@@ -416,9 +416,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                               newDetails[index].keyManagementTasks = e.target.value;
                               setFormData(prev => ({ ...prev, details: newDetails }));
                             }}
-                            disabled={true}
-                            error={!!validationErrors[`detail_${index}_tasks`]}
-                            helperText={validationErrors[`detail_${index}_tasks`]}
+                            mode="readonly"
+                            error={!!validationErrors[`detail_${index}_content`]}
+                            helperText={validationErrors[`detail_${index}_content`]}
                             placeholder="주요 관리업무를 입력하세요"
                           />
                           {mode !== 'view' && (
@@ -475,7 +475,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                   multiline
                   value={relatedBasis}
                   onChange={(e) => setRelatedBasis(e.target.value)}
-                  disabled={true}
+                  mode="readonly"
                   placeholder="관련 근거를 입력하세요"
                   sx={{
                     '& .MuiInputBase-root': {

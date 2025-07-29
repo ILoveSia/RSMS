@@ -95,33 +95,33 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
 
   // 상태 색상 반환 함수
   const getStatusColor = (status: string): string => {
-    if (status.includes('완료')) return '#2e7d32'; // 녹색
-    if (status.includes('이행중')) return '#ed6c02'; // 주황색
-    if (status.includes('수립완료')) return '#1976d2'; // 파란색
-    if (status.includes('수립중')) return '#9c27b0'; // 보라색
-    return '#666666'; // 기본 회색
-  };
+          if (status.includes('완료')) return '#2e7d32'; // 녹색
+          if (status.includes('이행중')) return '#ed6c02'; // 주황색
+          if (status.includes('수립완료')) return '#1976d2'; // 파란색
+          if (status.includes('수립중')) return '#9c27b0'; // 보라색
+          return '#666666'; // 기본 회색
+        };
 
   // 개선현황 셀 렌더링 함수
   const renderImprovementPlanCell = ({ row }: { row: DeficiencyRow }) => {
     const status = String(row.improvementPlan);
-    
-    return (
-      <span
-        style={{
-          color: getStatusColor(status),
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          textDecoration: 'underline'
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleDeficiencyClick(row.id);
-        }}
-      >
-        {status}
-      </span>
-    );
+
+        return (
+          <span
+            style={{
+              color: getStatusColor(status),
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeficiencyClick(row.id);
+            }}
+          >
+            {status}
+          </span>
+        );
   };
 
   // 이행결과 셀 렌더링 함수
