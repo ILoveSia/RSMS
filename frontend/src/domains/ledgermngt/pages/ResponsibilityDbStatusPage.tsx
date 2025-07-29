@@ -69,6 +69,10 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const [data, setData] = useState<ResponsibilityRow[]>([]);
     const [groupedData, setGroupedData] = useState<GroupedResponsibility[]>([]);
 
+    // 프론트엔드 필터링을 위한 상태
+    const [allResponsibilityData, setAllResponsibilityData] = useState<ResponsibilityRow[]>([]);
+    const [filteredResponsibilityData, setFilteredResponsibilityData] = useState<ResponsibilityRow[]>([]);
+
     // 원장차수는 LedgerOrderSelect에서 자동 관리
 
     // 데이터 그룹핑 함수
@@ -124,6 +128,46 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       });
     }, []);
 
+    // 모든 데이터 로드 (한 번만)
+    const loadAllData = useCallback(async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await responsibilityApi.getStatusList();
+
+        setAllResponsibilityData(data);
+        
+      } catch (err) {
+        console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
+        const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    }, []);
+
+    // 프론트엔드 필터링 함수
+    const applyFilters = useCallback(() => {
+      let filtered = allResponsibilityData;
+      
+      // 책무 필터링
+      if (selectedResponsibility?.responsibilityId) {
+        filtered = filtered.filter(item => item.responsibilityId === selectedResponsibility.responsibilityId);
+      }
+      
+      setFilteredResponsibilityData(filtered);
+      setData(filtered); // 기존 data 상태도 업데이트
+      
+      // 데이터 그룹핑
+      const grouped = groupDataByResponsibilityId(filtered);
+      setGroupedData(grouped);
+
+      // 그룹핑된 데이터를 DataGrid용으로 변환
+      const gridRows = convertToGridRows(grouped);
+      setRows(gridRows);
+    }, [allResponsibilityData, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows]);
+
     // 책무 목록 조회 (성능 최적화)
     const fetchResponsibilities = useCallback(async (searchId?: string) => {
       setLoading(true);
@@ -150,14 +194,13 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       }}, [groupDataByResponsibilityId, convertToGridRows]);
 
     useEffect(() => {
-      fetchResponsibilities();
-    }, [fetchResponsibilities]);
+      loadAllData();
+    }, [loadAllData]);
 
     // 선택된 책무가 변경될 때 자동으로 데이터 다시 로드
     useEffect(() => {
-      const searchId = selectedResponsibility?.responsibilityId?.toString() || '';
-      fetchResponsibilities(searchId);
-    }, [selectedResponsibility, fetchResponsibilities]);
+      applyFilters();
+    }, [applyFilters]);
 
     // 그룹핑된 데이터 활용 유틸리티 함수들
     const getResponsibilityById = useCallback((responsibilityId: number): GroupedResponsibility | undefined => {
@@ -328,9 +371,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // 조회 버튼 클릭 핸들러
     const handleSearch = useCallback(() => {
-      const searchId = selectedResponsibility?.responsibilityId?.toString() || '';
-      fetchResponsibilities(searchId);
-    }, [selectedResponsibility, fetchResponsibilities]);
+      applyFilters();
+    }, [applyFilters]);
 
     // 등록 버튼 클릭 핸들러
     const handleCreateClick = useCallback(() => {
@@ -352,8 +394,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const handleDialogSave = useCallback(() => {
 
       handleDialogClose();
-      fetchResponsibilities(); // 목록 새로고침
-    }, [handleDialogClose, fetchResponsibilities]);
+      loadAllData(); // 모든 데이터를 다시 로드하여 필터링 및 그룹핑 적용
+    }, [handleDialogClose, loadAllData]);
 
     // 다이얼로그 모드 변경
     const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view') => {
@@ -372,14 +414,14 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           const selectedRow = rows.find((_, index) => selectedIds.includes(index));
           if (selectedRow) {
             responsibilityApi.delete(selectedRow.responsibilityId);
-            fetchResponsibilities();
+            loadAllData(); // 모든 데이터를 다시 로드
           }
         } catch (error) {
           console.error('책무 삭제 실패:', error);
           setError('책무 삭제 중 오류가 발생했습니다.');
         }
       }
-    }, [selectedIds, rows, fetchResponsibilities]);
+    }, [selectedIds, rows, loadAllData]);
 
     return (
       <PageContainer
