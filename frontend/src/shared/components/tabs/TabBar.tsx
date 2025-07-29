@@ -8,9 +8,52 @@
  */
 import type { TabBarProps } from '@/app/types/tab';
 import { useTabContext } from '@/shared/context/TabContext';
-import { Close as CloseIcon, Home as HomeIcon, MoreHoriz as MoreIcon } from '@mui/icons-material';
+import { 
+  Close as CloseIcon, 
+  Home as HomeIcon, 
+  MoreHoriz as MoreIcon,
+  MeetingRoom as MeetingRoomIcon,
+  Person as PersonIcon,
+  Storage as DatabaseIcon,
+  Work as WorkIcon,
+  ListAlt as ListAltIcon,
+  BusinessCenter as BusinessCenterIcon,
+  Analytics as AnalyticsIcon,
+  Hub as NetworkNodeIcon,
+  Upload as UploadIcon,
+  Business as BusinessIcon,
+  Assessment as AssessmentIcon,
+  Search as SearchIcon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Group as GroupIcon,
+  Settings as SettingsIcon
+} from '@mui/icons-material';
 import { Box, IconButton, Menu, MenuItem, Tab, Tabs, Typography, useTheme } from '@mui/material';
 import React, { useState } from 'react';
+
+// 아이콘 매핑 시스템
+const ICON_MAPPING: { [key: string]: React.ComponentType<any> } = {
+  'home': HomeIcon,
+  'meeting_room': MeetingRoomIcon,
+  'person': PersonIcon,
+  'database': DatabaseIcon,
+  'Work': WorkIcon,
+  'list_alt': ListAltIcon,
+  'business_center': BusinessCenterIcon,
+  'analytics': AnalyticsIcon,
+  'network_node': NetworkNodeIcon,
+  'upload': UploadIcon,
+  'business': BusinessIcon,
+  'assessment': AssessmentIcon,
+  'search': SearchIcon,
+  'assignment': AssignmentIcon,
+  'check_circle': CheckCircleIcon,
+  'schedule': ScheduleIcon,
+  'group': GroupIcon,
+  'settings': SettingsIcon,
+};
 
 const TabBar: React.FC<TabBarProps> = ({
   tabs,
@@ -63,9 +106,21 @@ const TabBar: React.FC<TabBarProps> = ({
 
   const renderTabIcon = (tab: (typeof tabs)[0]) => {
     if (tab.icon) {
+      // 아이콘 매핑에서 해당 아이콘 컴포넌트 찾기
+      const IconComponent = ICON_MAPPING[tab.icon];
+      
+      if (IconComponent) {
+        return (
+          <Box component='span' sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
+            <IconComponent fontSize='small' />
+          </Box>
+        );
+      }
+      
+      // 매핑되지 않은 아이콘의 경우 기본 아이콘 표시
       return (
         <Box component='span' sx={{ mr: 1, display: 'flex', alignItems: 'center' }}>
-          {tab.id === 'home' ? <HomeIcon fontSize='small' /> : tab.icon}
+          {tab.id === 'home' ? <HomeIcon fontSize='small' /> : <SettingsIcon fontSize='small' />}
         </Box>
       );
     }
