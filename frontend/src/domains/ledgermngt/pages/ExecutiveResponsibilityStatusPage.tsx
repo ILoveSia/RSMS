@@ -180,49 +180,29 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [allExecutiveData, setAllExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
   const [filteredExecutiveData, setFilteredExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
 
-  // 데이터 조회
-  const fetchExecutiveResponsibility = useCallback(async () => {
-    try {
-      setIsLoading(true);
+  // API 데이터를 변환하는 함수
+  const transformApiData = useCallback((data: any[]): ExecutiveResponsibilityItem[] => {
+    return data.map((item: any) => ({
+      id: item.positionsId || 0,
+      position: item.positionNameMapped || '해당없음',
+      jobTitle: item.jobTitleCd || '해당없음',
+      empNo: item.num || '해당없음',
+      executiveName: item.empId || '해당없음',
+      responsibility: item.responsibilityContent || '해당없음',
+      responsibilityDetail: item.responsibilityDetailContent || '해당없음',
+      managementDuty: item.responsibilityMgtSts || '해당없음',
+      relatedBasis: item.responsibilityRelEvid || '해당없음',
+      jobRank: item.jobRankCd || '해당없음',
+      execofficer_dt: item.execofficer_dt || '해당없음'
+    }));
+  }, []);
 
-      // API 호출 파라미터 구성
-      let data = null;
-      if (selectedPosition === null) {
-        // 실제 API 호출
-        data = await executiveResponsibilityApi.getAll();
-      } else {
-        data = await executiveResponsibilityApi.getByPositionId(selectedPosition.positionsId);
-      }
-
-      // API 응답을 개별 항목 형태로 변환
-      const transformedItems: ExecutiveResponsibilityItem[] = data.map((item: any) => ({
-        id: item.positionsId || 0,
-        position: item.positionNameMapped || '해당없음',
-        jobTitle: item.jobTitleCd || '해당없음',
-        empNo: item.num || '해당없음',
-        executiveName: item.empId || '해당없음', // empId를 이름으로 사용 (실제로는 별도 필드 필요)
-        responsibility: item.responsibilityContent || '해당없음',
-        responsibilityDetail: item.responsibilityDetailContent || '해당없음',
-        managementDuty: item.responsibilityMgtSts || '해당없음',
-        relatedBasis: item.responsibilityRelEvid || '해당없음',
-        jobRank: item.jobRankCd || '해당없음',
-        execofficer_dt: item.execofficer_dt || '해당없음'
-      }));
-
-      // 직책별로 그룹화
-      const groupedData = groupDataByPosition(transformedItems);
-      setAllExecutiveData(transformedItems); // 모든 데이터를 저장
-      setRows(groupedData); // 그룹화된 데이터를 표시
-
-    } catch (err) {
-      console.error('데이터 조회 실패:', err);
-      setErrorMessage('임원별 책무 현황 데이터를 불러오는데 실패했습니다.');
-      setErrorDialogOpen(true);
-      setRows([]); // 에러 시 빈 배열로 초기화
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedPosition]);
+  // 에러 처리 함수
+  const handleError = useCallback((error: any, message: string) => {
+    console.error('데이터 조회 실패:', error);
+    setErrorMessage(message);
+    setErrorDialogOpen(true);
+  }, []);
 
   // 모든 데이터 로드 (한 번만)
   const loadAllData = useCallback(async () => {
@@ -233,33 +213,24 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       const data = await executiveResponsibilityApi.getAll();
 
       // API 응답을 개별 항목 형태로 변환
-      const transformedItems: ExecutiveResponsibilityItem[] = data.map((item: any) => ({
-        id: item.positionsId || 0,
-        position: item.positionNameMapped || '해당없음',
-        jobTitle: item.jobTitleCd || '해당없음',
-        empNo: item.num || '해당없음',
-        executiveName: item.empId || '해당없음',
-        responsibility: item.responsibilityContent || '해당없음',
-        responsibilityDetail: item.responsibilityDetailContent || '해당없음',
-        managementDuty: item.responsibilityMgtSts || '해당없음',
-        relatedBasis: item.responsibilityRelEvid || '해당없음',
-        jobRank: item.jobRankCd || '해당없음',
-        execofficer_dt: item.execofficer_dt || '해당없음'
-      }));
-
+      const transformedItems = transformApiData(data);
       setAllExecutiveData(transformedItems);
 
     } catch (err) {
-      console.error('데이터 조회 실패:', err);
-      setErrorMessage('임원별 책무 현황 데이터를 불러오는데 실패했습니다.');
-      setErrorDialogOpen(true);
+      handleError(err, '임원별 책무 현황 데이터를 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
+  }, [transformApiData, handleError]);
+
+  // 데이터 그룹핑 및 표시 함수
+  const updateDisplayData = useCallback((data: ExecutiveResponsibilityItem[]) => {
+    const groupedData = groupDataByPosition(data);
+    setRows(groupedData);
   }, []);
 
-  // 프론트엔드 필터링 함수
-  const applyFilters = useCallback(() => {
+  // 필터링된 데이터를 그룹핑하여 표시
+  const applyFiltersAndUpdate = useCallback(() => {
     let filtered = allExecutiveData;
     
     // 직책 필터링
@@ -268,11 +239,24 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     }
     
     setFilteredExecutiveData(filtered);
-    
-    // 필터링된 데이터를 그룹핑
-    const groupedData = groupDataByPosition(filtered);
-    setRows(groupedData);
-  }, [allExecutiveData, selectedPosition]);
+    updateDisplayData(filtered);
+  }, [allExecutiveData, selectedPosition, updateDisplayData]);
+
+  // 다이얼로그 관련 함수들
+  const handlePositionClick = useCallback((row: ExecutiveResponsibilityRow) => {
+    setDialogData(row);
+    setDialogOpen(true);
+  }, []);
+
+  const handleErrorDialogClose = useCallback(() => {
+    setErrorDialogOpen(false);
+    setErrorMessage('');
+  }, []);
+
+  const handleDialogClose = useCallback(() => {
+    setDialogOpen(false);
+    setDialogData(null);
+  }, []);
 
   useEffect(() => {
     loadAllData();
@@ -280,21 +264,9 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
   useEffect(() => {
     if (allExecutiveData.length > 0) {
-      applyFilters();
+      applyFiltersAndUpdate();
     }
-  }, [applyFilters, allExecutiveData]);
-
-  // 직책 클릭 핸들러
-  const handlePositionClick = (row: ExecutiveResponsibilityRow) => {
-    // TODO: 직책 상세 정보 다이얼로그 표시 또는 페이지 이동 구현
-    setDialogData(row);
-    setDialogOpen(true);
-  };
-
-  const handleErrorDialogClose = () => {
-    setErrorDialogOpen(false);
-    setErrorMessage('');
-  };
+  }, [applyFiltersAndUpdate, allExecutiveData]);
 
   return (
     <PageContainer
@@ -357,7 +329,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           <Button
             variant="contained"
             size="small"
-            onClick={applyFilters}
+            onClick={applyFiltersAndUpdate}
             color="primary"
           >
             조회
@@ -392,10 +364,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       />
       <ExecutiveResponsibilityDialog
         open={dialogOpen}
-        onClose={() => {
-          setDialogOpen(false);
-          setDialogData(null);
-        }}
+        onClose={handleDialogClose}
         data={dialogData}
       />
     </PageContainer>
