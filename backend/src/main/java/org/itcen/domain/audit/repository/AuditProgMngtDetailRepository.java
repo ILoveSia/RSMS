@@ -46,4 +46,9 @@ public interface AuditProgMngtDetailRepository extends JpaRepository<AuditProgMn
     @Modifying
     @Query("UPDATE AuditProgMngtDetail d SET d.auditMenId = :auditorEmpNo WHERE d.hodIcItemId = :hodIcItemId")
     int updateAuditorByHodIcItemId(@Param("hodIcItemId") Long hodIcItemId, @Param("auditorEmpNo") String auditorEmpNo);
+    
+    /**
+     * 점검결과상태코드로 상세 목록 조회
+     */
+    List<AuditProgMngtDetail> findByAuditResultStatusCd(String auditResultStatusCd);
 }

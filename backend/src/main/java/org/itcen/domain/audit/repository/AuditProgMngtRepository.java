@@ -82,4 +82,9 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
         @Param("ledgerOrdersHod") String ledgerOrdersHod,
         @Param("auditResultStatusCd") String auditResultStatusCd
     );
+    
+    /**
+     * 점검계획ID 목록으로 점검계획 목록 조회
+     */
+    List<AuditProgMngt> findByAuditProgMngtIdIn(List<Long> auditProgMngtIds);
 }
