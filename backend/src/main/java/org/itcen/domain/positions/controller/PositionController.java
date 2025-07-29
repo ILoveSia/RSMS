@@ -1,6 +1,5 @@
 package org.itcen.domain.positions.controller;
 
-import java.util.ArrayList;
 import java.util.List;
 import org.itcen.common.dto.ApiResponse;
 import org.itcen.domain.positions.dto.PositionDto;
@@ -132,27 +131,6 @@ public class PositionController {
             @PathVariable("id") Long id) {
         List<PositionMeetingDto> meetings = positionService.getPositionMeetings(id);
         return ResponseEntity.ok(ApiResponse.success(meetings));
-    }
-
-    /**
-     * 사용자별 회의체 목록 조회
-     */
-    @GetMapping("/employee/{employeeId}/meetings")
-    public ResponseEntity<ApiResponse<List<PositionMeetingDto>>> getEmployeeMeetings(
-            @PathVariable("employeeId") String employeeId) {
-        List<PositionMeetingDto> positionMeetings = new ArrayList<>();
-        // 현재는 임시로 빈 목록 반환
-        return ResponseEntity.ok(ApiResponse.success(positionMeetings));
-    }
-
-    /**
-     * 사용자별 소관부서 목록 조회
-     */
-    @GetMapping("/employee/{employeeId}/owner-departments")
-    public ResponseEntity<ApiResponse<List<PositionDetailDto.OwnerDeptInfo>>> getEmployeeOwnerDepartments(
-            @PathVariable("employeeId") String employeeId) {
-        // 현재는 임시로 빈 목록 반환
-        return ResponseEntity.ok(ApiResponse.success(new ArrayList<>()));
     }
 
     /**
