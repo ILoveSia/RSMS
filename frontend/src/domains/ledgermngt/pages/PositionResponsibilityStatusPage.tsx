@@ -78,6 +78,10 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 필터 상태
   const [selectedPosition, setSelectedPosition] = useState<PositionSearchResult | null>(null);
 
+  // 프론트엔드 필터링을 위한 상태
+  const [allPositionData, setAllPositionData] = useState<PositionResponsibility[]>([]);
+  const [filteredPositionData, setFilteredPositionData] = useState<PositionResponsibility[]>([]);
+
   // 선택된 행
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -171,21 +175,16 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     return position?.details || [];
   }, [getPositionData]);
 
-  // 데이터 로드 함수
-  const fetchData = useCallback(async () => {
+  // 모든 데이터 로드 (한 번만)
+  const loadAllData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      let response = null;
-      if (selectedPosition === null) {
-        response = await fetch('/api/position-responsibilities');
-      }
-      else {
-        response = await fetch(`/api/position-responsibilities/${selectedPosition.positionsId}`);
-      }
-
+      // 모든 데이터를 한 번만 로드
+      const response = await fetch('/api/position-responsibilities');
       const data = await response.json();
+      
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         responsibility_id: item.respontibility_id ?? item.id ?? 0,
         classification: item.classification ?? '일반',
@@ -204,33 +203,44 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         responsibility_rel_evid: item.responsibility_rel_evid ?? '', // 관련 근거
       }));
 
-      // 원본 데이터 저장
-      setOriginalData(mappedRows);
-
-      // 데이터 그룹핑
-      const grouped = groupDataByPositionId(mappedRows);
-
-      // 그룹핑 결과 예시 출력
-      if (grouped.length > 0) {
-      }
-
-      setGroupedData(grouped);
-
-      // 그룹핑된 데이터를 DataGrid용으로 변환
-      const gridRows = convertToGridRows(grouped);
-      setRows(gridRows);
-    }
-    catch (err) {
+      setAllPositionData(mappedRows);
+      
+    } catch (err) {
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
       setErrorDialogOpen(true);
     } finally {
       setLoading(false);
     }
-  }, [selectedPosition, pageInfo.page, pageInfo.size, groupDataByPositionId, convertToGridRows]);
+  }, []);
+
+  // 프론트엔드 필터링 함수
+  const applyFilters = useCallback(() => {
+    let filtered = allPositionData;
+    
+    // 직책 필터링
+    if (selectedPosition?.positionsId) {
+      filtered = filtered.filter(item => item.positionId === String(selectedPosition.positionsId));
+    }
+    
+    setFilteredPositionData(filtered);
+    setOriginalData(filtered); // originalData도 업데이트
+    
+    // 필터링된 데이터를 그룹핑
+    const grouped = groupDataByPositionId(filtered);
+    setGroupedData(grouped);
+    
+    // 그룹핑된 데이터를 DataGrid용으로 변환
+    const gridRows = convertToGridRows(grouped);
+    setRows(gridRows);
+  }, [allPositionData, selectedPosition, groupDataByPositionId, convertToGridRows]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    loadAllData();
+  }, [loadAllData]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   // 컬럼 정의
   const columns: DataGridColumn<GroupedPositionResponsibilityRow>[] = [
@@ -387,7 +397,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // TODO: API 호출로 데이터 저장
 
       // 목록 새로고침
-      await fetchData();
+      await loadAllData(); // 모든 데이터를 다시 로드하여 필터링 및 그룹핑 적용
     } catch (err) {
       setErrorMessage('데이터 저장에 실패했습니다.');
       setErrorDialogOpen(true);
@@ -511,7 +521,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           <Button
             variant="contained"
             size="small"
-            onClick={fetchData}
+            onClick={applyFilters}
             color="primary"
           >
             조회
