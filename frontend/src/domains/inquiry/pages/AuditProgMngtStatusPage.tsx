@@ -484,7 +484,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         </Box>
 
         {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
           <Box sx={{ display: 'flex', gap: 1 }}>
           <ExcelDownloadButton 
             onDownload={handleExcelDownload}

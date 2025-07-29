@@ -320,9 +320,7 @@ export const getInspectionRoundList = async (): Promise<{ value: string; label: 
   } catch (error) {
     // 에러 시 기본값 반환
     return [
-      { value: '2024-001', label: '2024-001' },
-      { value: '2024-002', label: '2024-002' },
-      { value: '2024-003', label: '2024-003' },
+      { value: 'ERROR', label: 'ERROR' }
     ];
   }
 };
@@ -346,10 +344,7 @@ export const getDepartmentList = async (): Promise<{ value: string; label: strin
   } catch (error) {
     // 에러 시 기본값 반환
     return [
-      { value: '전체', label: '전체' },
-      { value: '영업부', label: '영업부' },
-      { value: '인사부', label: '인사부' },
-      { value: '재무부', label: '재무부' },
+      { value: 'ERROR', label: 'ERROR' }
     ];
   }
 };
