@@ -20,6 +20,8 @@ import type { DatePickerProps as DatePickerPropsType } from './types';
 // DatePicker 컴포넌트 자체 Props 타입 정의
 export interface DatePickerProps extends DatePickerPropsType {
   onClose?: () => void;
+  /** 읽기전용/수정용 모드 설정 */
+  mode?: 'readonly' | 'editable';
 }
 
 /**
@@ -87,6 +89,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
       fullWidth = false,
       className,
       sx,
+      mode = 'editable',
       ...props
     },
     ref
@@ -97,6 +100,9 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     const [currentView, setCurrentView] = useState<'year' | 'month' | 'day'>(openTo);
 
     const open = Boolean(anchorEl);
+
+    // mode에 따라 disabled 상태 결정
+    const isDisabled = mode === 'readonly' || disabled;
 
     // 날짜 포맷팅
     const formatDate = (date: Date | null) => {
@@ -115,7 +121,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
 
     // 입력 필드 클릭 핸들러
     const handleInputClick = (event: React.MouseEvent<HTMLElement>) => {
-      if (!disabled && !readOnly) {
+      if (!isDisabled && !readOnly) {
         setAnchorEl(event.currentTarget);
       }
     };
@@ -224,7 +230,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         error={error}
         helperText={helperText}
         required={required}
-        disabled={disabled}
+        mode={mode}
         fullWidth={fullWidth}
         variant={variant}
         size={size}
@@ -232,7 +238,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
           readOnly: true,
           endAdornment: (
             <InputAdornment position='end'>
-              <IconButton onClick={handleInputClick} disabled={disabled}>
+              <IconButton onClick={handleInputClick} disabled={isDisabled}>
                 <CalendarIcon />
               </IconButton>
             </InputAdornment>
@@ -249,7 +255,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
       return renderInput({
         value: formatDate(value ?? null),
         onClick: handleInputClick,
-        disabled,
+        disabled: isDisabled,
         error,
         helperText,
         label,

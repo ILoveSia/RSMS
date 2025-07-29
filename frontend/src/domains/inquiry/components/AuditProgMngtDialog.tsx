@@ -391,7 +391,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
               label="시작일"
               error={!!validation.errors.startDate}
               helperText={validation.errors.startDate}
-              disabled={mode === 'view'}
+              mode={mode === 'view' ? 'readonly' : 'editable'}
               maxDate={formData.endDate ?? undefined}
             />
             <Typography sx={{ color: 'var(--bank-text-primary)', fontWeight: 600 }}>
@@ -405,7 +405,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
               label="종료일"
               error={!!validation.errors.endDate}
               helperText={validation.errors.endDate}
-              disabled={mode === 'view'}
+              mode={mode === 'view' ? 'readonly' : 'editable'}
               minDate={formData.startDate ?? undefined}
             />
           </Box>

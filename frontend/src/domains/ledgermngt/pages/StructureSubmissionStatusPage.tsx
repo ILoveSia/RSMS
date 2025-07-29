@@ -300,6 +300,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               onChange={setStartDate}
               maxDate={endDate ?? undefined}
               size="small"
+              mode="editable"
               sx={{ width: '200px' }}
             />
             <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
@@ -309,6 +310,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               value={endDate}
               onChange={setEndDate}
               size="small"
+              mode="editable"
               sx={{ width: '200px' }}
             />
           </Box>

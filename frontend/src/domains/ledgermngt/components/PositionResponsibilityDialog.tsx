@@ -309,6 +309,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           <TextField
             sx={{ height: '100%', width: '100%', mb: 3 }}
             multiline
+            mode={mode === 'view' ? 'readonly' : 'editable'}
             rows={2}
             label="책무 개요"
             disabled={mode === 'view'}
@@ -369,7 +370,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                   multiline
                   value={formData.responsibilityContent}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsibilityContent: e.target.value }))}
-                  mode="readonly"
+                  mode='readonly'
                   placeholder="책무 내용을 입력하거나 검색을 통해 선택해주세요"
                   sx={{
                     '& .MuiInputBase-root': {

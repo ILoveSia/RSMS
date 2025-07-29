@@ -453,6 +453,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
             setRegistrationData(prev => ({ ...prev, submissionDate: date || new Date() }));
           }}
           size="small"
+          mode={mode === 'view' ? 'readonly' : 'editable'}
         />
 
         {/* 책무구조도 첨부 */}

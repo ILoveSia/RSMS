@@ -461,6 +461,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
               onChange={setStartDate}
               maxDate={endDate ?? undefined}
               size="small"
+              mode="editable"
               sx={{ width: '200px' }}
             />
             <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
@@ -470,6 +471,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
               value={endDate}
               onChange={setEndDate}
               size="small"
+              mode="editable"
               sx={{ width: '200px' }}
             />
           </Box>

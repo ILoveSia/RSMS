@@ -317,7 +317,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                       <DatePicker
                         label="현 직책 부여일"
                         value={originalDate}
-                        disabled={true}
+                        mode="readonly"
                         onChange={(date) => {
                           setFormData((prev: any) => ({ ...prev, appointmentDate: date || new Date() }));
                         }}

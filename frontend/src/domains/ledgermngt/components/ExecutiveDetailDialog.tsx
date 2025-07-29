@@ -333,7 +333,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
             <DatePicker
               label="현 직책 부여일"
               value={originalDate}
-              disabled={mode === 'view'}
+              mode={mode === 'view' ? 'readonly' : 'editable'}
               onChange={(date) => {
                 setOriginalDate(date)
                 setFormData((prev: any) => ({ ...prev, execofficer_dt: date || new Date() }));
