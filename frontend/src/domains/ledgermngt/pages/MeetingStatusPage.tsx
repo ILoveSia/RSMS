@@ -19,6 +19,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../../assets/scss/style.css';
+import apiClient from '@/app/common/api/client';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 import MeetingBodyDialog from '../components/MeetingBodyDialog';
 
@@ -28,15 +29,35 @@ interface IMeetingStatusPageProps {
 
 const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): React.JSX.Element => {
   // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<{
-    data: CommonCode[];
-    setData: (newData: CommonCode[]) => void;
-  }>('codeStore/allCodes');
+  const { data: allCodes, setData: setAllCodes } = useReduxState<CommonCode[]>('codeStore/allCodes');
+
+  // 공통코드 로드 함수
+  const loadCommonCodes = useCallback(async () => {
+    try {
+      const response = await apiClient.get<CommonCode[]>('/common-codes');
+      
+      let commonCodesData: CommonCode[];
+      if (response && typeof response === 'object' && 'data' in response) {
+        commonCodesData = (response as any).data;
+      } else {
+        commonCodesData = response as CommonCode[];
+      }
+      
+      if (setAllCodes && typeof setAllCodes === 'function') {
+        setAllCodes(commonCodesData);
+      }
+    } catch (error) {
+      console.error('Failed to load common codes:', error);
+    }
+  }, [setAllCodes]);
 
   // 공통코드 배열 추출 함수
   const getCodesArray = useCallback((): CommonCode[] => {
-    if (!allCodes) return [];
-    return Array.isArray(allCodes) ? allCodes : allCodes.data || [];
+    if (!allCodes) {
+      return [];
+    }
+    const result = Array.isArray(allCodes) ? allCodes : (allCodes as any).data || [];
+    return result;
   }, [allCodes]);
 
   // 공통코드 헬퍼 함수
@@ -219,6 +240,14 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
     }
   }, [allCodes, setAllCodes]);
 
+  // 컴포넌트 마운트 시 공통코드 로드
+  useEffect(() => {
+    const codesArray = getCodesArray();
+    if (codesArray.length === 0) {
+      loadCommonCodes();
+    }
+  }, [loadCommonCodes, getCodesArray]);
+
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     fetchMeetingBodies();
@@ -248,8 +277,8 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
   }, [fetchMeetingBodies]);
 
   // 다이얼로그 모드 변경 핸들러
-  const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view') => {
-    setDialogMode(newMode);
+  const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view' | 'onlyRead') => {
+    setDialogMode(newMode as 'create' | 'edit' | 'view');
   }, []);
 
   // 삭제 버튼 클릭 시: 모달만 띄움

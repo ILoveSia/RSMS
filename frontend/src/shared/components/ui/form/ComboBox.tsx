@@ -89,8 +89,17 @@ const isOptionEqualToValue = (
   option: SelectOption | string,
   value: SelectOption | string
 ): boolean => {
+  if (typeof option === 'string' && typeof value === 'string') {
+    return option === value;
+  }
   if (typeof option === 'object' && typeof value === 'object') {
     return option.value === value.value;
+  }
+  if (typeof option === 'object' && typeof value === 'string') {
+    return option.value === value;
+  }
+  if (typeof option === 'string' && typeof value === 'object') {
+    return option === value.value;
   }
   
   return option === value;

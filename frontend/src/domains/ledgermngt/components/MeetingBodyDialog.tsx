@@ -39,9 +39,15 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
 
   // 공통코드 배열 추출 함수
   const getCodesArray = (): CommonCode[] => {
-    if (!allCodes) return [];
-    if (Array.isArray(allCodes)) return allCodes;
-    if ('data' in allCodes && Array.isArray(allCodes.data)) return allCodes.data;
+    if (!allCodes) {
+      return [];
+    }
+    if (Array.isArray(allCodes)) {
+      return allCodes;
+    }
+    if ('data' in allCodes && Array.isArray(allCodes.data)) {
+      return allCodes.data;
+    }
     return [];
   };
 
@@ -85,10 +91,14 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
 
   // Select 컴포넌트용 변경 핸들러
   const handleSelectChange = (field: keyof MeetingBody) => (value: string | number | string[] | number[]) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value as string,
-    }));
+    
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value as string,
+      };
+      return newData;
+    });
 
     // 입력 시 해당 필드의 검증 에러 제거
     if (validationErrors[field]) {
@@ -206,7 +216,11 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Box sx={{ flex: 1 }}>
               <Select
-                value={formData.gubun}
+                value={(() => {
+                  const meetingBodyCodes = getMeetingBodyCodes();
+                  const hasValue = meetingBodyCodes.some(code => code.code === formData.gubun);
+                  return hasValue ? formData.gubun : '';
+                })()}
                 label='구분 *'
                 onChange={handleSelectChange('gubun')}
                 disabled={mode === 'view'}
@@ -229,7 +243,11 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
             </Box>
             <Box sx={{ flex: 1 }}>
               <Select
-                value={formData.meetingPeriod}
+                value={(() => {
+                  const periodCodes = getPeriodCodes();
+                  const hasValue = periodCodes.some(code => code.code === formData.meetingPeriod);
+                  return hasValue ? formData.meetingPeriod : '';
+                })()}
                 label='개최주기'
                 onChange={handleSelectChange('meetingPeriod')}
                 disabled={mode === 'view'}
