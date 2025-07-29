@@ -229,6 +229,52 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     input.click();
   };
 
+  // 엑셀 워크시트 설정
+  const setupWorksheet = (worksheet: ExcelJS.Worksheet) => {
+    // 헤더 설정
+    const headers = ['직책', '사원ID', '직책부여일', '겸직여부', '겸직사항'];
+    worksheet.addRow(headers);
+
+    // 헤더 스타일 설정
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFB0C4DE' }, // lightsteelblue
+    };
+  };
+
+  // 엑셀 데이터 추가
+  const addDataToWorksheet = (worksheet: ExcelJS.Worksheet, data: ExecutiveStatusRow[]) => {
+    data.forEach(row => {
+      worksheet.addRow([
+        row.positionNameMapped,
+        row.empId,
+        row.execofficer_dt,
+        row.dualYn === 'Y' ? '있음' : '없음',
+        row.dualDetails || '해당없음'
+      ]);
+    });
+  };
+
+  // 엑셀 컬럼 너비 조정
+  const adjustColumnWidths = (worksheet: ExcelJS.Worksheet) => {
+    worksheet.columns.forEach((column) => {
+      if (column && column.width !== undefined) {
+        column.width = Math.max(column.width, 15);
+      }
+    });
+  };
+
+  // 엑셀 파일 생성 및 다운로드
+  const downloadExcelFile = async (workbook: ExcelJS.Workbook, filename: string) => {
+    const excelBuffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    saveAs(blob, filename);
+  };
+
   // 엑셀 다운로드 핸들러 (ExcelJS 사용)
   const handleExcelDownload = async () => {
     if (!rows || rows.length === 0) {
@@ -241,42 +287,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('임원현황');
 
-      // 헤더 설정
-      const headers = ['직책', '사원ID', '직책부여일', '겸직여부', '겸직사항'];
-      worksheet.addRow(headers);
-
-      // 헤더 스타일 설정
-      worksheet.getRow(1).font = { bold: true };
-      worksheet.getRow(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFB0C4DE' }, // lightsteelblue
-      };
-
+      // 워크시트 설정
+      setupWorksheet(worksheet);
+      
       // 데이터 추가
-      rows.forEach(row => {
-        worksheet.addRow([
-          row.positionNameMapped,
-          row.empId,
-          row.execofficer_dt,
-          row.dualYn === 'Y' ? '있음' : '없음',
-          row.dualDetails || '해당없음'
-        ]);
-      });
-
-      // 컬럼 너비 자동 조정
-      worksheet.columns.forEach((column) => {
-        if (column && column.width !== undefined) {
-          column.width = Math.max(column.width, 15);
-        }
-      });
+      addDataToWorksheet(worksheet, rows);
+      
+      // 컬럼 너비 조정
+      adjustColumnWidths(worksheet);
 
       // 파일 생성 및 다운로드
-      const excelBuffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([excelBuffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-      saveAs(blob, `임원현황_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      const filename = `임원현황_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      await downloadExcelFile(workbook, filename);
     } catch (error) {
       console.error('엑셀 다운로드 실패:', error);
       setError('엑셀 다운로드 중 오류가 발생했습니다.');

@@ -68,27 +68,29 @@ const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditPr
 };
 
 /**
+ * 감사기간 문자열을 Date 객체로 파싱하는 함수
+ */
+const parsePeriod = (periodStr: string): { startDate: Date | null; endDate: Date | null } => {
+  try {
+    const parts = periodStr.split(' ~ ');
+    if (parts.length === 2) {
+      return {
+        startDate: new Date(parts[0]),
+        endDate: new Date(parts[1])
+      };
+    }
+  } catch (error) {
+    console.error('날짜 파싱 오류:', error);
+  }
+  return { startDate: null, endDate: null };
+};
+
+/**
  * AuditProgRow를 AuditProgramData로 변환하는 함수
  * 
  * 책임: 기존 데이터 구조와 다이얼로그 데이터 구조 간 변환
  */
 const convertToAuditProgramData = (row: AuditProgRow): AuditProgramData => {
-  // 감사기간 문자열을 Date 객체로 파싱
-  const parsePeriod = (periodStr: string): { startDate: Date | null; endDate: Date | null } => {
-    try {
-      const parts = periodStr.split(' ~ ');
-      if (parts.length === 2) {
-        return {
-          startDate: new Date(parts[0]),
-          endDate: new Date(parts[1])
-        };
-      }
-    } catch (error) {
-      console.error('날짜 파싱 오류:', error);
-    }
-    return { startDate: null, endDate: null };
-  };
-
   const { startDate, endDate } = parsePeriod(row.auditPeriod);
 
   return {
@@ -365,26 +367,31 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     }
   };
 
+  // 엑셀 데이터 변환
+  const convertToExcelData = (rows: AuditProgRow[]) => {
+    return rows.map(row => ({
+      '점검계획코드': row.auditProgMngtCd,
+      '점검계획명': row.auditProgName,
+      '점검유형': row.auditTypeName,
+      '책무번호': row.ledgerOrdersHod,
+      '점검대상': row.auditTarget,
+      '점검기간': row.auditPeriod,
+      '점검팀장': row.auditTeamLeader,
+      '점검팀원': row.auditTeamMembers,
+      '대상점검항목수': row.targetItemCount,
+      '점검상태': row.auditStatusName,
+      '비고': row.remarks,
+      '등록일자': row.createdAt,
+    }));
+  };
+
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = async () => {
     try {
       console.log('점검계획관리 현황 엑셀 다운로드 시작');
       
       // 현재 표시된 데이터를 엑셀 형태로 변환
-      const excelData = auditRows.map(row => ({
-        '점검계획코드': row.auditProgMngtCd,
-        '점검계획명': row.auditProgName,
-        '점검유형': row.auditTypeName,
-        '책무번호': row.ledgerOrdersHod,
-        '점검대상': row.auditTarget,
-        '점검기간': row.auditPeriod,
-        '점검팀장': row.auditTeamLeader,
-        '점검팀원': row.auditTeamMembers,
-        '대상점검항목수': row.targetItemCount,
-        '점검상태': row.auditStatusName,
-        '비고': row.remarks,
-        '등록일자': row.createdAt,
-      }));
+      const excelData = convertToExcelData(auditRows);
       
       console.log('엑셀 다운로드 데이터:', excelData);
       

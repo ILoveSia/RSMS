@@ -31,146 +31,93 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
 
   // 부서장 원장차수 관련 상태는 LedgerOrdersHodSelect에서 자동 관리됨
 
+  // 기본 컬럼 스타일 헬퍼 함수
+  const createBasicColumn = (
+    field: keyof HodICItemRow,
+    headerName: string,
+    width: number,
+    align: 'left' | 'center' | 'right' = 'center'
+  ): DataGridColumn<HodICItemRow> => ({
+    field,
+    headerName,
+    width,
+    align,
+    headerAlign: 'center',
+  });
+
+  // fallback 값이 있는 컬럼 헬퍼 함수
+  const createFallbackColumn = (
+    field: keyof HodICItemRow,
+    headerName: string,
+    width: number,
+    fallbackField: keyof HodICItemRow
+  ): DataGridColumn<HodICItemRow> => ({
+    field,
+    headerName,
+    width,
+    align: 'center',
+    headerAlign: 'center',
+    renderCell: params => params.value || params.row[fallbackField],
+  });
+
+  // 클릭 가능한 책무내용 컬럼
+  const createResponsibilityContentColumn = (): DataGridColumn<HodICItemRow> => ({
+    field: 'responsibilityContent',
+    headerName: '책무내용',
+    width: 150,
+    flex: 1,
+    align: 'left',
+    headerAlign: 'center',
+    renderCell: params => (
+      <Box
+        component="span"
+        sx={{
+          color: 'var(--bank-primary)',
+          textDecoration: 'underline',
+          cursor: 'pointer',
+          '&:hover': {
+            color: 'var(--bank-primary-dark)',
+          },
+        }}
+        onClick={() => handleRowClick(params.row)}
+      >
+        {params.value}
+      </Box>
+    ),
+  });
+
+  // 날짜 포맷팅 컬럼 헬퍼 함수
+  const createDateColumn = (
+    field: keyof HodICItemRow,
+    headerName: string,
+    width: number
+  ): DataGridColumn<HodICItemRow> => ({
+    field,
+    headerName,
+    width,
+    align: 'center',
+    headerAlign: 'center',
+    renderCell: params => {
+      return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+    },
+  });
+
   // 컬럼 정의 - API 응답 구조에 맞게 수정
   const columns: DataGridColumn<HodICItemRow>[] = [
-    {
-      field: 'responsibilityId',
-      headerName: '책무ID',
-      width: 80,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'responsibilityContent',
-      headerName: '책무내용',
-      width: 150,
-      flex: 1,
-      align: 'left',
-      headerAlign: 'center',
-      renderCell: params => {
-        return (
-          <Box
-            component="span"
-            sx={{
-              color: 'var(--bank-primary)',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              '&:hover': {
-                color: 'var(--bank-primary-dark)',
-              },
-            }}
-            onClick={() => handleRowClick(params.row)}
-          >
-            {params.value}
-          </Box>
-        );
-      },
-    },
-    {
-      field: 'deptName',
-      headerName: '부서명',
-      width: 100,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        return params.value || params.row.deptCd;
-      },
-    },
-    {
-      field: 'fieldTypeName',
-      headerName: '항목구분',
-      width: 90,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        return params.value || params.row.fieldTypeCd;
-      },
-    },
-    {
-      field: 'roleTypeName',
-      headerName: '직무구분',
-      width: 90,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        return params.value || params.row.roleTypeCd;
-      },
-    },
-    {
-      field: 'icTask',
-      headerName: '내부통제 업무',
-      width: 120,
-      align: 'left',
-      headerAlign: 'center',
-    },
-    {
-      field: 'measureDesc',
-      headerName: '조치활동',
-      width: 120,
-      align: 'left',
-      headerAlign: 'center',
-    },
-    {
-      field: 'measureType',
-      headerName: '조치유형',
-      width: 80,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'periodName',
-      headerName: '주기',
-      width: 70,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        return params.value || params.row.periodCd;
-      },
-    },
-    {
-      field: 'supportDoc',
-      headerName: '관련근거',
-      width: 100,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'checkPeriodName',
-      headerName: '점검시기',
-      width: 80,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
-      },
-    },
-    {
-      field: 'checkWay',
-      headerName: '점검방법',
-      width: 100,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
-      field: 'createdAt',
-      headerName: '등록일자',
-      width: 100,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
-      },
-    },
-    {
-      field: 'updatedAt',
-      headerName: '최종수정일자',
-      width: 100,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
-      },
-    },
+    createBasicColumn('responsibilityId', '책무ID', 80),
+    createResponsibilityContentColumn(),
+    createFallbackColumn('deptName', '부서명', 100, 'deptCd'),
+    createFallbackColumn('fieldTypeName', '항목구분', 90, 'fieldTypeCd'),
+    createFallbackColumn('roleTypeName', '직무구분', 90, 'roleTypeCd'),
+    createBasicColumn('icTask', '내부통제 업무', 120, 'left'),
+    createBasicColumn('measureDesc', '조치활동', 120, 'left'),
+    createBasicColumn('measureType', '조치유형', 80),
+    createFallbackColumn('periodName', '주기', 70, 'periodCd'),
+    createBasicColumn('supportDoc', '관련근거', 100),
+    createDateColumn('checkPeriodName', '점검시기', 80),
+    createBasicColumn('checkWay', '점검방법', 100),
+    createBasicColumn('createdAt', '등록일자', 100),
+    createBasicColumn('updatedAt', '최종수정일자', 100),
   ];
 
   // 초기 데이터 로드

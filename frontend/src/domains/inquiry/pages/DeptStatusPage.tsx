@@ -91,11 +91,10 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   }, []);
 
   /**
-   * hod_ic_item 데이터를 부서별로 그룹화하여 통계 계산
+   * 부서별로 아이템들을 그룹화
    */
-  const processHodICItemData = (items: HodICItemRow[]): DeptStatusRow[] => {
-    // 부서별로 그룹화
-    const groupedByDept = items.reduce((acc, item) => {
+  const groupItemsByDepartment = (items: HodICItemRow[]): Record<string, HodICItemRow[]> => {
+    return items.reduce((acc, item) => {
       const deptCd = item.deptCd || '미분류';
       if (!acc[deptCd]) {
         acc[deptCd] = [];
@@ -103,102 +102,135 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       acc[deptCd].push(item);
       return acc;
     }, {} as Record<string, HodICItemRow[]>);
+  };
 
-    // 각 부서별 통계 계산
-    const deptRows = Object.entries(groupedByDept).map(([deptCd, items], index) => {
-      const totalItems = items.length;
-      
-      // 실제 점검 결과 통계 계산
-      let appropriateItems = 0;
-      let deficientItems = 0;
-      let excludedItems = 0;
-      
-      items.forEach(item => {
-        const statusCd = item.auditResultStatusCd;
-        if (statusCd === '적정') {
-          appropriateItems++;
-        } else if (statusCd === '미흡') {
-          deficientItems++;
-        } else if (statusCd === '제외') {
-          excludedItems++;
-        } else {
-          // 공란이거나 기타 상태는 미흡으로 처리
-          deficientItems++;
-        }
-      });
-      
-      const appropriateRate = totalItems > 0 ? Math.round((appropriateItems / totalItems) * 100) : 0;
-      
-      // 개선계획 등록 현황 통계 (임시 로직)
-      const deficientItemsForPlan = deficientItems;
-      const registeredPlans = Math.floor(deficientItemsForPlan * 0.7); // 70% 등록
-      const unregisteredPlans = deficientItemsForPlan - registeredPlans;
-      const registrationRate = deficientItemsForPlan > 0 ? Math.round((registeredPlans / deficientItemsForPlan) * 100) : 0;
+  /**
+   * 점검 결과 통계 계산
+   */
+  const calculateAuditStats = (items: HodICItemRow[]) => {
+    let appropriateItems = 0;
+    let deficientItems = 0;
+    let excludedItems = 0;
+    
+    items.forEach(item => {
+      const statusCd = item.auditResultStatusCd;
+      if (statusCd === '적정') {
+        appropriateItems++;
+      } else if (statusCd === '미흡') {
+        deficientItems++;
+      } else if (statusCd === '제외') {
+        excludedItems++;
+      } else {
+        // 공란이거나 기타 상태는 미흡으로 처리
+        deficientItems++;
+      }
+    });
+    
+    return { appropriateItems, deficientItems, excludedItems };
+  };
 
-      return {
-        id: index + 1,
-        department: getDepartmentName(deptCd), // 부서명으로 변환
-        totalItems,
-        appropriateItems,
-        deficientItems,
-        excludedItems,
-        appropriateRate,
-        deficientItemsForPlan,
-        registeredPlans,
-        unregisteredPlans,
-        registrationRate
-      };
+  /**
+   * 개선계획 등록 현황 통계 계산
+   */
+  const calculatePlanStats = (deficientItems: number) => {
+    const deficientItemsForPlan = deficientItems;
+    const registeredPlans = Math.floor(deficientItemsForPlan * 0.7); // 70% 등록
+    const unregisteredPlans = deficientItemsForPlan - registeredPlans;
+    const registrationRate = deficientItemsForPlan > 0 
+      ? Math.round((registeredPlans / deficientItemsForPlan) * 100) 
+      : 0;
+    
+    return { deficientItemsForPlan, registeredPlans, unregisteredPlans, registrationRate };
+  };
+
+  /**
+   * 부서별 통계 계산
+   */
+  const calculateDepartmentStats = (deptCd: string, items: HodICItemRow[], index: number): DeptStatusRow => {
+    const totalItems = items.length;
+    const { appropriateItems, deficientItems, excludedItems } = calculateAuditStats(items);
+    const { deficientItemsForPlan, registeredPlans, unregisteredPlans, registrationRate } = calculatePlanStats(deficientItems);
+    
+    const appropriateRate = totalItems > 0 
+      ? Math.round((appropriateItems / totalItems) * 100) 
+      : 0;
+
+    return {
+      id: index + 1,
+      department: getDepartmentName(deptCd),
+      totalItems,
+      appropriateItems,
+      deficientItems,
+      excludedItems,
+      appropriateRate,
+      deficientItemsForPlan,
+      registeredPlans,
+      unregisteredPlans,
+      registrationRate
+    };
+  };
+
+  /**
+   * 합계 행 계산
+   */
+  const calculateTotalRow = (deptRows: DeptStatusRow[]): DeptStatusRow | null => {
+    if (deptRows.length === 0) return null;
+    
+    const totals = deptRows.reduce((acc, row) => {
+      acc.totalItems += row.totalItems;
+      acc.appropriateItems += row.appropriateItems;
+      acc.deficientItems += row.deficientItems;
+      acc.excludedItems += row.excludedItems;
+      acc.deficientItemsForPlan += row.deficientItemsForPlan;
+      acc.registeredPlans += row.registeredPlans;
+      acc.unregisteredPlans += row.unregisteredPlans;
+      return acc;
+    }, {
+      totalItems: 0,
+      appropriateItems: 0,
+      deficientItems: 0,
+      excludedItems: 0,
+      deficientItemsForPlan: 0,
+      registeredPlans: 0,
+      unregisteredPlans: 0
     });
 
-    // 합계 행 계산
-    if (deptRows.length > 0) {
-      const totals = deptRows.reduce((acc, row) => {
-        acc.totalItems += row.totalItems;
-        acc.appropriateItems += row.appropriateItems;
-        acc.deficientItems += row.deficientItems;
-        acc.excludedItems += row.excludedItems;
-        acc.deficientItemsForPlan += row.deficientItemsForPlan;
-        acc.registeredPlans += row.registeredPlans;
-        acc.unregisteredPlans += row.unregisteredPlans;
-        return acc;
-      }, {
-        totalItems: 0,
-        appropriateItems: 0,
-        deficientItems: 0,
-        excludedItems: 0,
-        deficientItemsForPlan: 0,
-        registeredPlans: 0,
-        unregisteredPlans: 0
-      });
+    const totalAppropriateRate = totals.totalItems > 0 
+      ? Math.round((totals.appropriateItems / totals.totalItems) * 100) 
+      : 0;
 
-      // 전체 적정 수행률 계산
-      const totalAppropriateRate = totals.totalItems > 0 
-        ? Math.round((totals.appropriateItems / totals.totalItems) * 100) 
-        : 0;
+    const totalRegistrationRate = totals.deficientItemsForPlan > 0 
+      ? Math.round((totals.registeredPlans / totals.deficientItemsForPlan) * 100) 
+      : 0;
 
-      // 전체 등록률 계산
-      const totalRegistrationRate = totals.deficientItemsForPlan > 0 
-        ? Math.round((totals.registeredPlans / totals.deficientItemsForPlan) * 100) 
-        : 0;
+    return {
+      id: deptRows.length + 1,
+      department: '합계',
+      totalItems: totals.totalItems,
+      appropriateItems: totals.appropriateItems,
+      deficientItems: totals.deficientItems,
+      excludedItems: totals.excludedItems,
+      appropriateRate: totalAppropriateRate,
+      deficientItemsForPlan: totals.deficientItemsForPlan,
+      registeredPlans: totals.registeredPlans,
+      unregisteredPlans: totals.unregisteredPlans,
+      registrationRate: totalRegistrationRate
+    };
+  };
 
-      const totalRow: DeptStatusRow = {
-        id: deptRows.length + 1,
-        department: '합계',
-        totalItems: totals.totalItems,
-        appropriateItems: totals.appropriateItems,
-        deficientItems: totals.deficientItems,
-        excludedItems: totals.excludedItems,
-        appropriateRate: totalAppropriateRate,
-        deficientItemsForPlan: totals.deficientItemsForPlan,
-        registeredPlans: totals.registeredPlans,
-        unregisteredPlans: totals.unregisteredPlans,
-        registrationRate: totalRegistrationRate
-      };
+  /**
+   * hod_ic_item 데이터를 부서별로 그룹화하여 통계 계산
+   */
+  const processHodICItemData = (items: HodICItemRow[]): DeptStatusRow[] => {
+    const groupedByDept = groupItemsByDepartment(items);
+    
+    const deptRows = Object.entries(groupedByDept).map(([deptCd, items], index) => 
+      calculateDepartmentStats(deptCd, items, index)
+    );
 
-      return [...deptRows, totalRow];
-    }
-
-    return deptRows;
+    const totalRow = calculateTotalRow(deptRows);
+    
+    return totalRow ? [...deptRows, totalRow] : deptRows;
   };
 
   // 부서 목록 조회
