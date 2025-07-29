@@ -292,6 +292,53 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     setErrorMessage('');
   };
 
+  // 통합된 클릭 이벤트 핸들러
+  const handleCellClick = (type: string, row: DeptStatusRow) => {
+    if (row.department === '합계') return;
+    
+    const handlers = {
+      total: () => console.log('전체 항목 클릭:', row.department, row.totalItems),
+      appropriate: () => console.log('적정 항목 클릭:', row.department, row.appropriateItems),
+      deficient: () => console.log('미흡 항목 클릭:', row.department, row.deficientItems),
+      excluded: () => console.log('점검제외 항목 클릭:', row.department, row.excludedItems),
+      deficientForPlan: () => console.log('미흡사항 클릭:', row.department, row.deficientItemsForPlan),
+      registered: () => console.log('등록된 계획 클릭:', row.department, row.registeredPlans),
+      unregistered: () => console.log('미등록 계획 클릭:', row.department, row.unregisteredPlans),
+    };
+    
+    handlers[type as keyof typeof handlers]?.();
+  };
+
+  // 클릭 가능한 셀 렌더링 헬퍼 함수
+  const renderClickableCell = (
+    value: string | number, 
+    type: string, 
+    row: DeptStatusRow,
+    suffix: string = ''
+  ) => (
+    <TableCell 
+      align="center" 
+      onClick={() => handleCellClick(type, row)}
+      sx={{ 
+        border: '1px solid #ddd',
+        cursor: row.department !== '합계' ? 'pointer' : 'default',
+        '&:hover': row.department !== '합계' ? {
+          backgroundColor: '#f0f0f0'
+        } : {}
+      }}
+    >
+      {value}{suffix}
+    </TableCell>
+  );
+
+  // 일반 셀 렌더링 헬퍼 함수
+  const renderNormalCell = (value: string | number, suffix: string = '') => (
+    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+      {value}{suffix}
+    </TableCell>
+  );
+
+
   return (
     <PageContainer>
       <PageHeader
@@ -454,38 +501,15 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                     >
                       {row.department}
                     </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.totalItems}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.appropriateItems}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.deficientItems}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.excludedItems}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.appropriateRate}%
-                    </TableCell>
-                    <TableCell 
-                      align="center" 
-                      sx={{ 
-                        border: '1px solid #ddd'
-                      }}
-                    >
-                      {row.deficientItemsForPlan}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.registeredPlans}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.unregisteredPlans}
-                    </TableCell>
-                    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
-                      {row.registrationRate}%
-                    </TableCell>
+                    {renderClickableCell(row.totalItems, 'total', row)}
+                    {renderClickableCell(row.appropriateItems, 'appropriate', row)}
+                    {renderClickableCell(row.deficientItems, 'deficient', row)}
+                    {renderClickableCell(row.excludedItems, 'excluded', row)}
+                    {renderNormalCell(row.appropriateRate + '%', '')}
+                    {renderClickableCell(row.deficientItemsForPlan, 'deficientForPlan', row)}
+                    {renderClickableCell(row.registeredPlans, 'registered', row)}
+                    {renderClickableCell(row.unregisteredPlans, 'unregistered', row)}
+                    {renderNormalCell(row.registrationRate + '%', '')}
                   </TableRow>
                 ))}
               </TableBody>
