@@ -150,16 +150,12 @@ export const getAllDeficiencyStatusList = async (
   if (endDate) params.endDate = endDate;
 
   try {
-    console.log('API 호출 시작 - URL: /deficiency-status/all, params:', params);
     const response = await apiClient.get<DeficiencyStatusResponse[]>('/deficiency-status/all', { params });
-    console.log('API 응답 원본:', response);
 
     // apiClient가 이미 응답을 처리했으므로 response가 직접 배열이어야 함
     if (Array.isArray(response)) {
-      console.log('응답이 배열임, 길이:', response.length);
       return response;
     } else {
-      console.log('응답이 배열이 아님, 타입:', typeof response, '값:', response);
       return [];
     }
   } catch (error) {
