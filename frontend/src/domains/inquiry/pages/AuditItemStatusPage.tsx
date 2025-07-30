@@ -47,7 +47,7 @@ interface AuditItemRow {
   auditResultStatusCd: string;          // 점검결과
   roleSumm: string;                     // 책무 개요
   auditDoneDt: string;                  // 이행완료 예정일자
-  auditDetailCoantent: string;          // 점검 세부내용
+  auditDetailcontent: string;          // 점검 세부내용
 }
 
 /**
@@ -68,7 +68,7 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
     auditResultStatusCd: response.auditResultStatusCd || '',
     roleSumm: response.roleSumm || '',
     auditDoneDt: response.auditDoneDt || '',
-         auditDetailCoantent: response.auditDetailCoantent || '',
+         auditDetailcontent: response.auditDetailcontent || '',
   };
 };
 
@@ -222,7 +222,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       width: 180,
     },
     {
-      field: 'auditDetailCoantent',
+      field: 'auditDetailcontent',
       headerName: '점검 세부내용',
       width: 180,
     }
@@ -300,7 +300,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         '점검결과': row.auditResultStatusCd,
         '책무 개요': row.roleSumm,
         '이행완료 예정일자': row.auditDoneDt,
-                 '점검 세부내용': row.auditDetailCoantent,
+                 '점검 세부내용': row.auditDetailcontent,
       }));
       
       console.log('엑셀 다운로드 데이터:', excelData);

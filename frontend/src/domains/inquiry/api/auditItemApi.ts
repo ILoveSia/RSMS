@@ -21,7 +21,7 @@ export interface AuditItemStatusResponse {
   ledgerOrdersHod: string;          // 원장차수
   auditResult: string;              // 점검결과
   auditDoneDt: string;              // 이행완료 예정일자
-  auditDetailCoantent: string;      // 점검 세부내용
+  auditDetailcontent: string;      // 점검 세부내용
 }
 
 // 점검 현황(항목별) 조회 요청 파라미터

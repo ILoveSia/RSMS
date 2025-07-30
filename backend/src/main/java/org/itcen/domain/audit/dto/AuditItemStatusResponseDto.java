@@ -94,5 +94,5 @@ public class AuditItemStatusResponseDto {
     /**
      * 점검 세부내용
      */
-    private String auditDetailCoantent;
+    private String auditDetailcontent;
 }
