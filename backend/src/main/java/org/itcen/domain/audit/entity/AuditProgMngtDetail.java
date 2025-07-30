@@ -56,8 +56,8 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     @Builder.Default
     private String beforeAuditYn = "N";
 
-    @Column(name = "audit_detail_coantent", length = 1000)
-    private String auditDetailCoantent;
+    @Column(name = "audit_detail_content", length = 1000)
+    private String auditDetailContent;
 
     @Column(name = "imp_pl_status_cd", length = 10)
     private String impPlStatusCd;

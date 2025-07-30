@@ -103,13 +103,13 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
                 .auditResult(detail.getAuditResult())
                 .auditResultStatusCd(detail.getAuditResultStatusCd())
                 .beforeAuditYn(detail.getBeforeAuditYn())
-                .auditDetailCoantent(detail.getAuditDetailCoantent())
+                .auditDetailContent(detail.getAuditDetailContent())
                 .auditDoneDt(detail.getAuditDoneDt())
                 .auditDoneContent(detail.getAuditDoneContent())
                 .impPlStatusCd(detail.getImpPlStatusCd())
                 
                 // 화면 표시용 필드 매핑
-                .deficiencyContent(getDeficiencyContent(detail.getAuditDetailCoantent()))
+                .deficiencyContent(getDeficiencyContent(detail.getAuditDetailContent()))
                 .improvementPlan(getImprovementStatusByCode(detail.getImpPlStatusCd()))
                 .implementationResult(getImplementationResultByStatus(detail.getAuditResultStatusCd()))
                 .dueDate(detail.getAuditDoneDt())

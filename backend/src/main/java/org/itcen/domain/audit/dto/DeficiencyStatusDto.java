@@ -27,14 +27,14 @@ public class DeficiencyStatusDto {
     private String auditResult; // 점검 결과 작성
     private String auditResultStatusCd; // 점검결과상태코드 ('미흡')
     private String beforeAuditYn; // 이전회차 동일건 여부
-    private String auditDetailCoantent; // 개선계획 세부내용 (오타 그대로)
+    private String auditDetailContent; // 개선계획 세부내용
     private LocalDate auditDoneDt; // 이행완료 예정일자
     private String auditDoneContent; // 이행결과 내용
     private String impPlStatusCd; // 개선계획상태코드
     
     // 화면 표시용 필드 (기존 필드들을 매핑용으로 유지)
     private String deficiencyContent; // 미흡사항 내용 (audit_result 매핑)
-    private String improvementPlan; // 개선계획 (audit_detail_coantent 매핑)
+    private String improvementPlan; // 개선계획 (audit_detail_content 매핑)
     private String implementationResult; // 이행결과 (상태에 따른 표시)
     private LocalDate dueDate; // 완료예정일 (audit_done_dt 매핑)
     private LocalDate completionDate; // 완료일자

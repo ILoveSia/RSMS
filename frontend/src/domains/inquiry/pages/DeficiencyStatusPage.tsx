@@ -215,7 +215,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         auditProgMngtId: selectedRow.auditProgMngtId,  // 점검계획 ID 추가
         deficiencyContent: selectedRow.deficiencyContent || '',
         improvementPlan: selectedRow.improvementPlan || '',
-        auditDetailCoantent: selectedRow.auditDetailCoantent || '',
+        auditDetailContent: selectedRow.auditDetailContent || '',
         auditDoneContent: selectedRow.auditDoneContent || '',
         auditDoneDt: selectedRow.auditDoneDt || '',
         implementationStatus: selectedRow.statusName || '완료',
