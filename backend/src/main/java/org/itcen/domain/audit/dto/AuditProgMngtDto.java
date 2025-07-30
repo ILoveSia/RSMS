@@ -30,6 +30,7 @@ public class AuditProgMngtDto {
     private String auditStatusCd;        // 점검상태코드
     private String auditContents;        // 비고
     private List<Long> targetItemIds;    // 선택된 점검 대상 항목 ID 목록
+    private List<TargetItemData> targetItemData; // 선택된 점검 대상 상세 정보
     
     // 현황 조회용 추가 필드들
     private String auditProgName;        // 점검계획명
@@ -123,5 +124,18 @@ public class AuditProgMngtDto {
                 .auditStatusCd(entity.getAuditStatusCd())
                 .auditContents(entity.getAuditContents())
                 .build();
+    }
+
+    /**
+     * 점검 대상 상세 정보 클래스
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TargetItemData {
+        private Long hodIcItemId;       // 부서장 내부통제 항목 ID
+        private Long responsibilityId;  // 책무 ID
+        private Long responsibilityDetailId; // 책무상세 ID
     }
 }

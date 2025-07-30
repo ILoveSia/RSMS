@@ -61,6 +61,7 @@ public class HodICItemServiceImpl implements HodICItemService {
         // 엔티티 생성
         HodICItem hodICItem = HodICItem.builder()
                 .responsibilityId(createRequest.getResponsibilityId())
+                .responsibilityDetailId(createRequest.getResponsibilityDetailId())
                 .ledgerOrder(createRequest.getLedgerOrder())
                 .orderStatus(createRequest.getOrderStatus())
                 .dateExpired(createRequest.getDateExpired())
@@ -94,6 +95,7 @@ public class HodICItemServiceImpl implements HodICItemService {
 
         // 엔티티 업데이트
         hodICItem.setResponsibilityId(updateRequest.getResponsibilityId());
+        hodICItem.setResponsibilityDetailId(updateRequest.getResponsibilityDetailId());
         hodICItem.setLedgerOrder(updateRequest.getLedgerOrder());
         hodICItem.setOrderStatus(updateRequest.getOrderStatus());
         hodICItem.setDateExpired(updateRequest.getDateExpired());

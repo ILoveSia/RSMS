@@ -34,7 +34,26 @@ const TopHeader: React.FC<TopHeaderProps> = ({ style }) => {
         ...style,
       }}
     >
-      <div style={{ fontSize: '18px', fontWeight: 'bold' }}>ITCEN Solution</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ fontSize: '18px', fontWeight: 'bold' }}>ITCEN Solution</div>
+        <div 
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 12px',
+            borderRadius: '20px',
+            background: 'rgba(255, 255, 255, 0.2)',
+            border: '1px solid rgba(255, 255, 255, 0.4)',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#FFFFFF',
+          }}
+        >
+          <span>PROTOTYPE</span>
+          <span style={{ fontSize: '11px', opacity: 0.9 }}>v0.1.0</span>
+        </div>
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
         {authState.isAuthenticated && authState.user && (

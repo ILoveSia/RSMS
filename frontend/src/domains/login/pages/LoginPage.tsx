@@ -384,6 +384,40 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                 ITCEN Solution
               </Typography>
 
+              <Box 
+                sx={{ 
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 2,
+                  py: 0.5,
+                  mb: 2,
+                  borderRadius: 20,
+                  background: alpha(theme.palette.warning.main, 0.1),
+                  border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
+                }}
+              >
+                <Typography 
+                  variant='caption' 
+                  sx={{ 
+                    color: theme.palette.warning.dark,
+                    fontWeight: 'bold',
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  PROTOTYPE
+                </Typography>
+                <Typography 
+                  variant='caption' 
+                  sx={{ 
+                    color: theme.palette.warning.dark,
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  v0.1.0
+                </Typography>
+              </Box>
+
               <Typography variant='body1' color='text.secondary' sx={{ opacity: 0.8 }}>
                 책무구조도 관리 시스템에 로그인하세요
               </Typography>
@@ -537,10 +571,10 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
                   <Stack spacing={0.5}>
                     <Typography variant='caption' color='text.secondary'>
-                      React 18.2, Spring Boot 3.5, PostgreSQL 17, Redis ✅
+                      React 18.2, Spring Boot 3.5, PostgreSQL 17 ✅
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      TypeScript 5.8.3 전면 적용 ✅
+                      TypeScript 5.8.3, Redis 7.4  ✅
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
                       Material-UI v5 기반 모던 디자인 시스템 ✅
@@ -552,6 +586,41 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                 </Box>
               </>
             )}
+
+            {/* 프로토타입 안내 푸터 */}
+            <Box
+              sx={{
+                mt: 3,
+                p: 2,
+                borderRadius: 2,
+                backgroundColor: alpha(theme.palette.info.main, 0.05),
+                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
+                textAlign: 'center',
+              }}
+            >
+              <Typography 
+                variant='body2' 
+                color='text.secondary'
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}
+              >
+                <Typography component='span' sx={{ fontSize: '1.2em' }}>⚠️</Typography>
+                이 시스템은 현재
+                <Typography 
+                  component='span' 
+                  sx={{ 
+                    color: theme.palette.info.main,
+                    fontWeight: 'bold',
+                    mx: 0.5,
+                  }}
+                >
+                  프로토타입 단계
+                </Typography>
+                입니다.
+              </Typography>
+              <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block' }}>
+                실제 운영 환경에서는 사용하지 마세요.
+              </Typography>
+            </Box>
           </Card>
         </Fade>
       </Container>

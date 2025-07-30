@@ -6,7 +6,7 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { DatePicker } from '@/shared/components/ui/form';
+import { DateRangeSelector, SearchConditionPanel } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -22,7 +22,8 @@ import {
   createAuditProgMngt,
   updateAuditProgMngt,
   type AuditProgMngtStatusResponse,
-  type AuditProgMngtRequest
+  type AuditProgMngtRequest,
+  type TargetItemData
 } from '../api/auditProgMngtApi';
 
 // 점검계획관리 현황 데이터 인터페이스
@@ -304,6 +305,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       console.log('=== 점검계획관리 등록/수정 데이터 ===');
       console.log('받은 data:', data);
       console.log('data.targetItemIds:', data.targetItemIds);
+      console.log('data.targetItemData:', data.targetItemData);
       console.log('selectedTargetItems (페이지 상태):', selectedTargetItems);
       
       // AuditProgramData를 AuditProgMngtRequest로 변환
@@ -314,11 +316,14 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         auditEndDt: data.endDate ? data.endDate.toISOString().split('T')[0] : '',
         auditStatusCd: 'AUDIT_APPLY', // 기본값: 점검신청
         auditContents: data.remarks,
-        targetItemIds: data.targetItemIds || [] // targetItemIds 사용
+        targetItemIds: data.targetItemIds || [], // 호환성 유지
+        targetItemData: data.targetItemData || [] // 새로운 방식
       };
       
       console.log('API 요청 데이터:', request);
       console.log('targetItemIds 길이:', request.targetItemIds?.length);
+      console.log('targetItemData 길이:', request.targetItemData?.length);
+      console.log('targetItemData 내용:', request.targetItemData);
       
       if (dialogMode === 'create') {
         // 등록 시 auditProgMngtCd는 자동 생성되므로 제외
@@ -451,46 +456,16 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         }}
       >
         {/* 기간 선택 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          padding: '8px 16px',
-          mb: 2,
-          bgcolor: 'var(--bank-bg-secondary)',
-          borderRadius: 1,
-          border: '1px solid var(--bank-border)',
-          alignItems: 'center'
-        }}>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <DatePicker
-              label="시작일"
-              value={startDate}
-              onChange={setStartDate}
-              maxDate={endDate ?? undefined}
-              size="small"
-              mode="editable"
-              sx={{ width: '200px' }}
-            />
-            <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
-            <DatePicker
-              label="종료일"
-              minDate={startDate ?? undefined}
-              value={endDate}
-              onChange={setEndDate}
-              size="small"
-              mode="editable"
-              sx={{ width: '200px' }}
-            />
-          </Box>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleFetchAuditPrograms}
-            color="primary"
-          >
-            조회
-          </Button>
-        </Box>
+        <SearchConditionPanel disabled={isLoading}>
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            onSearch={handleFetchAuditPrograms}
+            loading={isLoading}
+          />
+        </SearchConditionPanel>
 
         {/* 버튼 영역 */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>

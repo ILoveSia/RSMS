@@ -31,6 +31,21 @@ public interface HodICItemStatusProjection {
     String getResponsibilityContent();
 
     /**
+     * 책무상세 ID
+     */
+    Long getResponsibilityDetailId();
+
+    /**
+     * 책무상세 내용
+     */
+    String getResponsibilityDetailContent();
+
+    /**
+     * 책무관련근거
+     */
+    String getResponsibilityRelEvid();
+
+    /**
      * 부서코드
      */
     String getDeptCd();

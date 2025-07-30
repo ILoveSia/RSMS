@@ -9,6 +9,7 @@ import { apiClient } from '@/app/common/api/client';
 export interface AuditItemStatusResponse {
   hodIcItemId: number;              // 부서장 내부통제 항목 ID
   responsibilityContent: string;    // 책무 내용
+  responsibilityDetailContent: string; // 책무상세 내용
   positionsNm: string;              // 직책명
   deptCd: string;                   // 부서 코드
   fieldTypeCd: string;              // 항목 구분 코드
@@ -19,6 +20,8 @@ export interface AuditItemStatusResponse {
   impPlStatusCd: string;            // 이행 계획 상태 코드
   ledgerOrdersHod: string;          // 원장차수
   auditResult: string;              // 점검결과
+  auditDoneDt: string;              // 이행완료 예정일자
+  auditDoneContent: string;         // 이행결과보고
 }
 
 // 점검 현황(항목별) 조회 요청 파라미터

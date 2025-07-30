@@ -45,6 +45,13 @@ export interface AuditProgMngtStatusRequest {
   endDate?: string;                 // 종료일 (YYYY-MM-DD)
 }
 
+// 점검 대상 상세 정보 타입
+export interface TargetItemData {
+  hodIcItemId: number;             // 부서장 내부통제 항목 ID
+  responsibilityId: number;        // 책무 ID
+  responsibilityDetailId: number;  // 책무상세 ID
+}
+
 // 점검계획관리 등록/수정 요청 타입
 export interface AuditProgMngtRequest {
   auditProgMngtCd?: string;         // 점검계획코드 (수정시)
@@ -54,7 +61,8 @@ export interface AuditProgMngtRequest {
   auditEndDt: string;               // 점검종료일 (YYYY-MM-DD)
   auditStatusCd?: string;           // 점검상태코드
   auditContents?: string;           // 비고
-  targetItemIds?: number[];         // 선택된 점검 대상 항목 ID 목록
+  targetItemIds?: number[];         // 선택된 점검 대상 항목 ID 목록 (호환성 유지)
+  targetItemData?: TargetItemData[]; // 선택된 점검 대상 상세 정보
 }
 
 /**

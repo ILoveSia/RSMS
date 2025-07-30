@@ -37,6 +37,12 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     @Column(name = "hod_ic_item_id", nullable = false)
     private Long hodIcItemId;
 
+    @Column(name = "responsibility_id")
+    private Long responsibilityId;
+
+    @Column(name = "responsibility_detail_id")
+    private Long responsibilityDetailId;
+
     @Column(name = "audit_men_id", length = 100)
     private String auditMenId;
 

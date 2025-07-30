@@ -16,6 +16,9 @@ export interface HodICItemRow {
   hodIcItemId: number;
   responsibilityId: number;
   responsibilityContent: string;
+  responsibilityDetailId?: number;
+  responsibilityDetailContent?: string;
+  responsibilityRelEvid?: string;
   deptCd: string;
   deptName: string;
   fieldTypeCd: string;
@@ -43,6 +46,9 @@ export interface HodICItemDetail {
   hodIcItemId: number;
   responsibilityId: number;
   responsibilityContent: string;
+  responsibilityDetailId?: number;
+  responsibilityDetailContent?: string;
+  responsibilityRelEvid?: string;
   ledgerOrder: string;
   orderStatus: string;
   approvalId?: number;
@@ -70,6 +76,7 @@ export interface HodICItemDetail {
 // 부서장 내부통제 항목 등록/수정 요청 타입
 export interface HodICItemCreateRequest {
   responsibilityId: number;
+  responsibilityDetailId?: number;
   ledgerOrder?: string;
   orderStatus?: string;
   dateExpired?: string;

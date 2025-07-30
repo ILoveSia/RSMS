@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.itcen.common.entity.BaseTimeEntity;
+import org.itcen.domain.responsibility.entity.Responsibility;
+import org.itcen.domain.responsibility.entity.ResponsibilityDetail;
 
 import java.time.LocalDate;
 
@@ -30,6 +32,9 @@ public class HodIcItem extends BaseTimeEntity {
 
     @Column(name = "responsibility_id", nullable = false)
     private Long responsibilityId;
+
+    @Column(name = "responsibility_detail_id")
+    private Long responsibilityDetailId;
 
     @Column(name = "ledger_order", length = 100)
     private String ledgerOrder;
@@ -79,4 +84,18 @@ public class HodIcItem extends BaseTimeEntity {
 
     @Column(name = "proof_doc", length = 1000)
     private String proofDoc;
+
+    /**
+     * 책무와의 연관관계 (ManyToOne)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsibility_id", referencedColumnName = "responsibility_id", insertable = false, updatable = false)
+    private Responsibility responsibility;
+
+    /**
+     * 책무상세와의 연관관계 (ManyToOne)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsibility_detail_id", referencedColumnName = "responsibility_detail_id", insertable = false, updatable = false)
+    private ResponsibilityDetail responsibilityDetail;
 }

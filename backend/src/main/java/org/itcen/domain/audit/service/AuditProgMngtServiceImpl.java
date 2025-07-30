@@ -57,7 +57,22 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         AuditProgMngt savedAuditProgMngt = auditProgMngtRepository.save(auditProgMngt);
 
         // 점검계획 상세 테이블 저장
-        if (dto.getTargetItemIds() != null && !dto.getTargetItemIds().isEmpty()) {
+        if (dto.getTargetItemData() != null && !dto.getTargetItemData().isEmpty()) {
+            for (AuditProgMngtDto.TargetItemData targetItem : dto.getTargetItemData()) {
+                AuditProgMngtDetail detail = AuditProgMngtDetail.builder()
+                        .auditProgMngtId(savedAuditProgMngt.getAuditProgMngtId())
+                        .auditProgMngtCd(auditProgMngtCd)
+                        .hodIcItemId(targetItem.getHodIcItemId())
+                        .responsibilityId(targetItem.getResponsibilityId())
+                        .responsibilityDetailId(targetItem.getResponsibilityDetailId())
+                        .beforeAuditYn("N")
+                        .build();
+                savedAuditProgMngt.addDetail(detail);
+            }
+            // cascade로 상세 항목들 자동 저장
+            auditProgMngtRepository.save(savedAuditProgMngt);
+        } else if (dto.getTargetItemIds() != null && !dto.getTargetItemIds().isEmpty()) {
+            // 기존 방식 호환성 유지 (targetItemIds만 있는 경우)
             for (Long hodIcItemId : dto.getTargetItemIds()) {
                 AuditProgMngtDetail detail = AuditProgMngtDetail.builder()
                         .auditProgMngtId(savedAuditProgMngt.getAuditProgMngtId())
@@ -101,7 +116,27 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         AuditProgMngt savedAuditProgMngt = auditProgMngtRepository.save(updatedAuditProgMngt);
 
         // 기존 상세 데이터 삭제 후 새로 등록
-        if (dto.getTargetItemIds() != null) {
+        if (dto.getTargetItemData() != null && !dto.getTargetItemData().isEmpty()) {
+            // 기존 상세 항목들 모두 제거
+            savedAuditProgMngt.clearDetails();
+            
+            // 새로운 상세 항목들 추가
+            for (AuditProgMngtDto.TargetItemData targetItem : dto.getTargetItemData()) {
+                AuditProgMngtDetail detail = AuditProgMngtDetail.builder()
+                        .auditProgMngtId(savedAuditProgMngt.getAuditProgMngtId())
+                        .auditProgMngtCd(dto.getAuditProgMngtCd())
+                        .hodIcItemId(targetItem.getHodIcItemId())
+                        .responsibilityId(targetItem.getResponsibilityId())
+                        .responsibilityDetailId(targetItem.getResponsibilityDetailId())
+                        .beforeAuditYn("N")
+                        .build();
+                savedAuditProgMngt.addDetail(detail);
+            }
+            
+            // 변경사항 저장 (cascade로 상세 항목들도 자동 저장)
+            auditProgMngtRepository.save(savedAuditProgMngt);
+        } else if (dto.getTargetItemIds() != null) {
+            // 기존 방식 호환성 유지 (targetItemIds만 있는 경우)
             // 기존 상세 항목들 모두 제거
             savedAuditProgMngt.clearDetails();
             

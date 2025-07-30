@@ -35,6 +35,11 @@ export interface AuditProgramData {
   remarks: string;               // 비고
   targetItems?: InspectionTargetItem[]; // 선택된 점검 대상 항목들
   targetItemIds?: number[];      // 선택된 점검 대상 항목 ID 목록 (backend 전송용)
+  targetItemData?: Array<{       // 선택된 점검 대상 상세 정보 (backend 전송용)
+    hodIcItemId: number;
+    responsibilityId: number;
+    responsibilityDetailId: number;
+  }>;
 }
 
 /**
@@ -85,6 +90,7 @@ const createDefaultAuditProgramData = (): AuditProgramData => ({
   targetSelection: '',
   remarks: '',
   targetItemIds: [],
+  targetItemData: [],
 });
 
 /**
@@ -203,6 +209,11 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
         ...prev,
         targetItems: selectedTargetItems,
         targetItemIds: selectedTargetItems.map(item => item.id),
+        targetItemData: selectedTargetItems.map(item => ({
+          hodIcItemId: item.id,
+          responsibilityId: item.responsibilityId,
+          responsibilityDetailId: item.responsibilityDetailId
+        })),
         targetSelection: `${selectedTargetItems.length}개 항목 선정됨`
       }));
     }
@@ -283,6 +294,11 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
       ...prev,
       targetItems: selectedItems,
       targetItemIds: selectedItems.map(item => item.id),
+      targetItemData: selectedItems.map(item => ({
+        hodIcItemId: item.id,
+        responsibilityId: item.responsibilityId,
+        responsibilityDetailId: item.responsibilityDetailId
+      })),
       targetSelection: `${selectedItems.length}개 항목 선정됨`
     }));
     setTargetSelectionOpen(false);
