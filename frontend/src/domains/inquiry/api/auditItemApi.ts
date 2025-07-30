@@ -17,11 +17,11 @@ export interface AuditItemStatusResponse {
   icTask: string;                   // 내부통제업무
   auditMenId: string;               // 점검자 ID
   auditResultStatusCd: string;      // 점검 결과 상태 코드
-  impPlStatusCd: string;            // 이행 계획 상태 코드
+  roleSumm: string;                 // 책무 개요
   ledgerOrdersHod: string;          // 원장차수
   auditResult: string;              // 점검결과
   auditDoneDt: string;              // 이행완료 예정일자
-  auditDoneContent: string;         // 이행결과보고
+  auditDetailCoantent: string;      // 점검 세부내용
 }
 
 // 점검 현황(항목별) 조회 요청 파라미터

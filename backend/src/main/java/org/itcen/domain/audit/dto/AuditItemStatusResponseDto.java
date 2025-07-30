@@ -72,9 +72,9 @@ public class AuditItemStatusResponseDto {
     private String auditResultStatusCd;
 
     /**
-     * 이행 계획 상태 코드 (RoleRespStatus에서 가져옴)
+     * 책무 개요 (RoleRespStatus에서 가져옴)
      */
-    private String impPlStatusCd;
+    private String roleSumm;
 
     /**
      * 원장차수 (조회조건용)
@@ -92,7 +92,7 @@ public class AuditItemStatusResponseDto {
     private String auditDoneDt;
 
     /**
-     * 이행결과보고
+     * 점검 세부내용
      */
-    private String auditDoneContent;
+    private String auditDetailCoantent;
 }

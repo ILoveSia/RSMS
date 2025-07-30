@@ -45,9 +45,9 @@ interface AuditItemRow {
   icTask: string;                       // 내부통제업무
   auditMenId: string;                   // 점검자
   auditResultStatusCd: string;          // 점검결과
-  impPlStatusCd: string;                // 점검진행상태
+  roleSumm: string;                     // 책무 개요
   auditDoneDt: string;                  // 이행완료 예정일자
-  auditDoneContent: string;              // 이행결과보고
+  auditDetailCoantent: string;          // 점검 세부내용
 }
 
 /**
@@ -66,9 +66,9 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
     icTask: response.icTask || '',
     auditMenId: response.auditMenId || '',
     auditResultStatusCd: response.auditResultStatusCd || '',
-    impPlStatusCd: response.impPlStatusCd || '',
+    roleSumm: response.roleSumm || '',
     auditDoneDt: response.auditDoneDt || '',
-    auditDoneContent: response.auditDoneContent || '',
+         auditDetailCoantent: response.auditDetailCoantent || '',
   };
 };
 
@@ -212,30 +212,9 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       },
     },
     {
-      field: 'impPlStatusCd',
-      headerName: '점검진행상태',
-      width: 120,
-      renderCell: ({ value }) => {
-        if (!value) return null;
-        return (
-          <Chip
-            label={
-              value === 'PLAN_WRITE' ? '계획작성' :
-              value === 'PLAN_APPROVAL_REQ' ? '계획결재요청' :
-              value === 'PLAN_APPROVAL_COMP' ? '계획결재완료' :
-              value === 'IMPL_WRITE' ? '이행작성' :
-              value === 'IMPL_APPROVAL_REQ' ? '이행결재요청' :
-              value === 'IMPL_APPROVAL_COMP' ? '이행결재완료' : value
-            }
-            color={
-              value === 'IMPL_APPROVAL_COMP' ? 'success' :
-              value === 'PLAN_APPROVAL_COMP' ? 'primary' :
-              value === 'PLAN_WRITE' ? 'default' : 'warning'
-            }
-            size="small"
-          />
-        );
-      },
+      field: 'roleSumm',
+      headerName: '책무 개요',
+      width: 200,
     },
     {
       field: 'auditDoneDt',
@@ -243,8 +222,8 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       width: 180,
     },
     {
-      field: 'auditDoneContent',
-      headerName: '이행결과보고',
+      field: 'auditDetailCoantent',
+      headerName: '점검 세부내용',
       width: 180,
     }
 
@@ -319,9 +298,9 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         '내부통제업무': row.icTask,
         '점검자': row.auditMenId,
         '점검결과': row.auditResultStatusCd,
-        '점검진행상태': row.impPlStatusCd,
+        '책무 개요': row.roleSumm,
         '이행완료 예정일자': row.auditDoneDt,
-        '이행결과보고': row.auditDoneContent,
+                 '점검 세부내용': row.auditDetailCoantent,
       }));
       
       console.log('엑셀 다운로드 데이터:', excelData);
