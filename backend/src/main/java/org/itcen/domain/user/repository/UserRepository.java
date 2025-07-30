@@ -86,22 +86,7 @@ public interface UserRepository extends JpaRepository<User, String> {
             Pageable pageable
     );
 
-    /**
-     * 사원 목록 조회 (팝업용)
-     * 페이징 없이 검색 조건에 맞는 사원 목록을 반환
-     */
-    @Query("SELECT u FROM User u WHERE " +
-           "(:username IS NULL OR u.username LIKE %:username%) AND " +
-           "(:num IS NULL OR u.num LIKE %:num%) AND " +
-           "(:deptCd IS NULL OR u.deptCd LIKE %:deptCd%) AND " +
-           "(:jobRankCd IS NULL OR u.jobRankCd LIKE %:jobRankCd%) " +
-           "ORDER BY u.num ASC")
-    List<User> findEmployeesBySearchCriteria(
-            @Param("username") String username,
-            @Param("num") String num,
-            @Param("deptCd") String deptCd,
-            @Param("jobRankCd") String jobRankCd
-    );
+
 
     /**
      * 전체 사용자 수 조회

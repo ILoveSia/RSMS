@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.itcen.domain.user.dto.UserDto;
 import org.itcen.domain.user.entity.User;
 import org.itcen.domain.user.repository.UserRepository;
+import org.itcen.domain.employee.entity.Employee;
+import org.itcen.domain.employee.repository.EmployeeRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
 
     /**
      * 사용자 목록 조회
@@ -66,20 +69,30 @@ public class UserService {
     /**
      * 사원 목록 조회 (팝업용)
      * 페이징 없이 검색 조건에 맞는 사원 목록을 반환
+     * employee 테이블 사용
      */
     public List<UserDto.Response> getEmployees(UserDto.EmployeeSearchRequest request) {
         // 검색 조건에 따른 조회
-        List<User> employees = userRepository.findEmployeesBySearchCriteria(
+        List<Employee> employees = employeeRepository.searchEmployees(
                 request.getUsername(),
-                request.getNum(),
-                request.getDeptCd(),
-                request.getJobRankCd()
+                request.getDeptCd()
         );
 
         // limit 적용
         return employees.stream()
                 .limit(request.getLimit())
-                .map(UserDto.Response::from)
+                .map(employee -> UserDto.Response.builder()
+                        .id(employee.getEmpNo())
+                        .username(employee.getEmpName())
+                        .email(employee.getEmail())
+                        .mobile(employee.getPhoneNo())
+                        .deptCd(employee.getDeptCode())
+                        .num(employee.getEmpNo())
+                        .jobRankCd(employee.getPositionCode())
+                        .jobTitleCd(employee.getPositionName())
+                        .createdAt(employee.getCreatedAt())
+                        .updatedAt(employee.getUpdatedAt())
+                        .build())
                 .collect(Collectors.toList());
     }
 

@@ -23,7 +23,7 @@ public class ExecutiveResponsibilityDto {
     private Long positionsId;
     private String positionNameMapped;
     private Long execofficerId;
-    private String empId;
+    private String empName;
     private String jobRankCd;
     private String jobTitleCd;
     private String num;
