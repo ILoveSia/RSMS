@@ -12,9 +12,18 @@ import {
   Alert,
   Box,
   CircularProgress,
+  Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   Grid,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import { Select, LedgerOrdersHodSelect } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
@@ -23,6 +32,7 @@ import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { HodICItemCreateRequest } from '../api/hodIcItemApi';
 import { hodICItemApi } from '../api/hodIcItemApi';
+import { apiClient } from '@/app/common/api/client';
 
 interface HodICItemDialogProps {
   open: boolean;
@@ -36,6 +46,8 @@ interface FormData {
   // 책무ID 관련
   responsibilityId: number | '';
   responsibilityContent: string; // 책무내용 표시용
+  responsibilityDetailId: number | '';
+  responsibilityDetailContent: string; // 책무상세내용 표시용
 
   // 부서 관련
   deptCd: string;
@@ -65,6 +77,8 @@ interface FormData {
 const initialFormData: FormData = {
   responsibilityId: '',
   responsibilityContent: '',
+  responsibilityDetailId: '',
+  responsibilityDetailContent: '',
   deptCd: '',
   deptName: '',
   ledgerOrder: '',
@@ -97,7 +111,19 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
 
   // 팝업 상태들
   const [responsibilitySearchOpen, setResponsibilitySearchOpen] = useState(false);
+  const [responsibilityDetailSearchOpen, setResponsibilityDetailSearchOpen] = useState(false);
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+
+  // 책무상세 목록 상태
+  const [responsibilityDetails, setResponsibilityDetails] = useState<ResponsibilityDetail[]>([]);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+
+// 책무상세 타입 정의
+interface ResponsibilityDetail {
+  responsibilityDetailId: number;
+  responsibilityDetailContent: string;
+  responsibilityRelEvid: string;
+}
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -281,6 +307,8 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
       setFormData({
         responsibilityId: data.responsibilityId,
         responsibilityContent: data.responsibilityContent || '',
+        responsibilityDetailId: data.responsibilityDetailId || '',
+        responsibilityDetailContent: data.responsibilityDetailContent || '',
         deptCd: data.deptCd,
         deptName: data.deptName || '', // API에서 부서명 가져오기
         ledgerOrder: data.ledgerOrder || '',
@@ -421,6 +449,7 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
       // 1. HodICItem 데이터 저장
       const requestData: HodICItemCreateRequest = {
         responsibilityId: formData.responsibilityId as number,
+        responsibilityDetailId: formData.responsibilityDetailId as number,
         ledgerOrder: formData.ledgerOrder,
         deptCd: formData.deptCd,
         fieldTypeCd: formData.fieldTypeCd,
@@ -497,6 +526,43 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     setDepartmentSearchOpen(false);
   };
 
+  // 책무상세 조회 API 함수
+  const fetchResponsibilityDetails = async (responsibilityId: number): Promise<ResponsibilityDetail[]> => {
+    const response = await apiClient.get<ResponsibilityDetail[]>(`/responsibilities/responsibility-details?responsibilityId=${responsibilityId}`);
+    return response || [];
+  };
+
+  // 책무상세 조회 버튼 핸들러
+  const handleResponsibilityDetailSearch = async () => {
+    if (!formData.responsibilityId) {
+      setError('먼저 책무ID를 선택해주세요.');
+      return;
+    }
+    
+    setDetailsLoading(true);
+    setError(null);
+    try {
+      const details = await fetchResponsibilityDetails(formData.responsibilityId as number);
+      setResponsibilityDetails(details);
+      setResponsibilityDetailSearchOpen(true);
+    } catch (err) {
+      console.error('책무상세 조회 오류:', err);
+      setError('책무상세 조회 중 오류가 발생했습니다.');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  // 책무상세 선택 핸들러
+  const handleResponsibilityDetailSelect = (detail: ResponsibilityDetail) => {
+    setFormData(prev => ({
+      ...prev,
+      responsibilityDetailId: detail.responsibilityDetailId,
+      responsibilityDetailContent: detail.responsibilityDetailContent,
+    }));
+    setResponsibilityDetailSearchOpen(false);
+  };
+
   const handleClose = () => {
     if (saving || requestingApproval) return;
     onClose();
@@ -522,18 +588,69 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
           p: 3,
           // view 모드에서 텍스트 스타일 진하게 통일
           ...(isViewMode && {
-            '& .MuiTextField-root.Mui-disabled': {
-              '& .MuiInputBase-input.Mui-disabled': {
-                fontWeight: 700,
-                color: '#1a1a1a',
-                WebkitTextFillColor: '#1a1a1a',
-              },
+            // 모든 비활성화된 입력 필드의 텍스트 색상 강제 변경
+            '& .MuiInputBase-input[disabled]': {
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
             },
+            '& .MuiInputBase-input.Mui-disabled': {
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
+            },
+            // TextField 전체 스타일
+            '& .MuiTextField-root .MuiInputBase-input': {
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
+            },
+            // Select 비활성화 상태 스타일
             '& .MuiSelect-select.Mui-disabled': {
-              fontWeight: 700,
-              color: '#1a1a1a',
-              WebkitTextFillColor: '#1a1a1a',
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
             },
+            '& .MuiSelect-select[disabled]': {
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
+            },
+            // 멀티라인 텍스트 영역
+            '& .MuiInputBase-inputMultiline[disabled]': {
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
+            },
+            '& .MuiInputBase-inputMultiline.Mui-disabled': {
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
+            },
+            // 라벨 스타일
+            '& .MuiInputLabel-root.Mui-disabled': {
+              color: '#666 !important',
+              opacity: '1 !important',
+            },
+            // 헬퍼 텍스트 스타일
+            '& .MuiFormHelperText-root': {
+              color: '#999 !important',
+              opacity: '1 !important',
+            },
+            // OutlinedInput 스타일
+            '& .MuiOutlinedInput-input[disabled]': {
+              fontWeight: '600 !important',
+              color: '#1a1a1a !important',
+              WebkitTextFillColor: '#1a1a1a !important',
+              opacity: '1 !important',
+            }
           })
         }}>
           {loading ? (
@@ -575,6 +692,32 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                   </Box>
                 </Grid>
 
+                {/* 책무상세ID */}
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <TextField
+                      fullWidth
+                      label='책무상세ID *'
+                      value={formData.responsibilityDetailContent || `${formData.responsibilityDetailId}`}
+                      disabled
+                      placeholder='책무상세를 선택하세요'
+                      helperText={
+                        formData.responsibilityDetailId ? `책무상세ID: ${formData.responsibilityDetailId}` : ''
+                      }
+                    />
+                    {!isViewMode && (
+                      <Button
+                        variant='outlined'
+                        onClick={handleResponsibilityDetailSearch}
+                        sx={{ minWidth: 100 }}
+                        startIcon={<SearchIcon />}
+                      >
+                        조회
+                      </Button>
+                    )}
+                  </Box>
+                </Grid>
+
                 {/* 부서명 */}
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
@@ -600,6 +743,21 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                 </Grid>
 
                 
+
+                {/* 책무번호 */}
+                <Grid item xs={12} sm={6}>
+                  <LedgerOrdersHodSelect
+                    value={formData.ledgerOrder}
+                    onChange={(value) => handleInputChange('ledgerOrder', value)}
+                    disabled={isViewMode}
+                    includeAll={false}
+                    placeholder="부서장 책무번호 선택 *"
+                    size="medium"
+                    sx={{ width: '100%' }}
+                    minWidth="100%"
+                    maxWidth="100%"
+                  />
+                </Grid>
 
                 {/* 항목구분 */}
                 <Grid item xs={12} sm={6}>
@@ -631,20 +789,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                     disabled={isViewMode || !formData.fieldTypeCd}
                   />
                 </Grid>
-                {/* 책무번호 */}
-                <Grid item xs={12} sm={6}>
-                  <LedgerOrdersHodSelect
-                    value={formData.ledgerOrder}
-                    onChange={(value) => handleInputChange('ledgerOrder', value)}
-                    disabled={isViewMode}
-                    includeAll={false}
-                    placeholder="선택"
-                    size="medium"
-                    sx={{ width: '100%' }}
-                    minWidth="100%"
-                    maxWidth="100%"
-                  />
-                </Grid>
 
                 {/* 조치활동ID */}
                 <Grid item xs={12} sm={6}>
@@ -654,6 +798,21 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                     value={formData.measureId}
                     onChange={e => handleInputChange('measureId', e.target.value)}
                     disabled={isViewMode}
+                  />
+                </Grid>
+
+                
+
+                {/* 조치활동 */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label='조치활동'
+                    value={formData.measureDesc}
+                    onChange={e => handleInputChange('measureDesc', e.target.value)}
+                    disabled={isViewMode}
+                    multiline
+                    rows={2}
                   />
                 </Grid>
 
@@ -667,19 +826,6 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
                     disabled={isViewMode}
                     multiline
                     rows={3}
-                  />
-                </Grid>
-
-                {/* 조치활동 */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='조치활동'
-                    value={formData.measureDesc}
-                    onChange={e => handleInputChange('measureDesc', e.target.value)}
-                    disabled={isViewMode}
-                    multiline
-                    rows={2}
                   />
                 </Grid>
 
@@ -783,6 +929,76 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
         title='부서 조회'
         multiSelect={false}
       />
+
+      {/* 책무상세 조회 팝업 */}
+      <Dialog
+        open={responsibilityDetailSearchOpen}
+        onClose={() => setResponsibilityDetailSearchOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          책무상세 조회
+          <Button
+            onClick={() => setResponsibilityDetailSearchOpen(false)}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </Button>
+        </DialogTitle>
+        <DialogContent>
+          {detailsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : responsibilityDetails.length === 0 ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <Alert severity="info">
+                해당 책무에 대한 상세 정보가 없습니다.
+              </Alert>
+            </Box>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>책무상세ID</TableCell>
+                    <TableCell>책무상세내용</TableCell>
+                    <TableCell>책무관련근거</TableCell>
+                    <TableCell>선택</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {responsibilityDetails.map((detail) => (
+                    <TableRow 
+                      key={detail.responsibilityDetailId}
+                      hover
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() => handleResponsibilityDetailSelect(detail)}
+                    >
+                      <TableCell>{detail.responsibilityDetailId}</TableCell>
+                      <TableCell>{detail.responsibilityDetailContent}</TableCell>
+                      <TableCell>{detail.responsibilityRelEvid}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleResponsibilityDetailSelect(detail);
+                          }}
+                        >
+                          선택
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

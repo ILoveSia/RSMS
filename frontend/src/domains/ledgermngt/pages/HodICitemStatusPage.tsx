@@ -31,20 +31,12 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
 
   // 부서장 원장차수 관련 상태는 LedgerOrdersHodSelect에서 자동 관리됨
 
-  // 컬럼 정의 - API 응답 구조에 맞게 수정
+  // 컬럼 정의 - 요청하신 순서대로 변경
   const columns: DataGridColumn<HodICItemRow>[] = [
     {
-      field: 'responsibilityId',
-      headerName: '책무ID',
-      width: 80,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
       field: 'responsibilityContent',
-      headerName: '책무내용',
-      width: 150,
-      flex: 1,
+      headerName: '책무',
+      width: 140,
       align: 'left',
       headerAlign: 'center',
       renderCell: params => {
@@ -67,19 +59,23 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       },
     },
     {
-      field: 'deptName',
-      headerName: '부서명',
-      width: 100,
-      align: 'center',
+      field: 'responsibilityDetailContent',
+      headerName: '책무세부내용',
+      width: 160,
+      align: 'left',
       headerAlign: 'center',
-      renderCell: params => {
-        return params.value || params.row.deptCd;
-      },
+    },
+    {
+      field: 'responsibilityRelEvid',
+      headerName: '책무관련근거',
+      width: 130,
+      align: 'left',
+      headerAlign: 'center',
     },
     {
       field: 'fieldTypeName',
       headerName: '항목구분',
-      width: 90,
+      width: 100,
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
@@ -89,7 +85,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     {
       field: 'roleTypeName',
       headerName: '직무구분',
-      width: 90,
+      width: 100,
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
@@ -97,30 +93,40 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       },
     },
     {
+      field: 'deptName',
+      headerName: '부서명',
+      width: 110,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        return params.value || params.row.deptCd;
+      },
+    },
+    {
       field: 'icTask',
-      headerName: '내부통제 업무',
-      width: 120,
+      headerName: '내부통제업무',
+      width: 140,
       align: 'left',
       headerAlign: 'center',
     },
     {
       field: 'measureDesc',
       headerName: '조치활동',
-      width: 120,
+      width: 130,
       align: 'left',
       headerAlign: 'center',
     },
     {
       field: 'measureType',
       headerName: '조치유형',
-      width: 80,
+      width: 90,
       align: 'center',
       headerAlign: 'center',
     },
     {
       field: 'periodName',
       headerName: '주기',
-      width: 70,
+      width: 80,
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
@@ -130,31 +136,31 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     {
       field: 'supportDoc',
       headerName: '관련근거',
-      width: 100,
-      align: 'center',
+      width: 110,
+      align: 'left',
       headerAlign: 'center',
     },
     {
       field: 'checkPeriodName',
       headerName: '점검시기',
-      width: 80,
+      width: 90,
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        return params.value || params.row.checkPeriod;
       },
     },
     {
       field: 'checkWay',
       headerName: '점검방법',
-      width: 100,
-      align: 'center',
+      width: 110,
+      align: 'left',
       headerAlign: 'center',
     },
     {
       field: 'createdAt',
       headerName: '등록일자',
-      width: 100,
+      width: 110,
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
@@ -164,7 +170,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     {
       field: 'updatedAt',
       headerName: '최종수정일자',
-      width: 100,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {

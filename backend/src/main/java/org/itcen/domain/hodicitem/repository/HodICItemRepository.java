@@ -28,6 +28,9 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                     h.hod_ic_item_id as "hodIcItemId",
                     r.responsibility_id as "responsibilityId",
                     r.responsibility_content as "responsibilityContent",
+                    h.responsibility_detail_id as "responsibilityDetailId",
+                    rd.responsibility_detail_content as "responsibilityDetailContent",
+                    rd.responsibility_rel_evid as "responsibilityRelEvid",
                     h.dept_cd as "deptCd",
                     d.department_name as "deptName",
                     h.field_type_cd as "fieldTypeCd",
@@ -49,6 +52,7 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                     h.ledger_order as "ledgerOrder"
                 FROM hod_ic_item h
                 INNER JOIN responsibility r ON h.responsibility_id = r.responsibility_id
+                LEFT JOIN responsibility_detail rd ON h.responsibility_detail_id = rd.responsibility_detail_id
                 LEFT JOIN departments d ON h.dept_cd = d.department_id
                 LEFT JOIN common_code cc1 ON h.field_type_cd = cc1.code AND cc1.group_code = 'FIELD_TYPE' AND cc1.use_yn = 'Y'
                 LEFT JOIN common_code cc2 ON h.role_type_cd = cc2.code AND (cc2.group_code = 'UNI_ROLE_TYPE' OR cc2.group_code = 'COM_ROLE_TYPE') AND cc2.use_yn = 'Y'

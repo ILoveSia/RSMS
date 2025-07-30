@@ -16,6 +16,8 @@ export interface LedgerOrdersHodSelectProps {
   value: string;
   /** 값 변경 핸들러 */
   onChange: (value: string) => void;
+  /** 라벨 텍스트 */
+  label?: string;
   /** 컴포넌트 크기 */
   size?: 'small' | 'medium';
   /** 커스텀 스타일 */
@@ -58,6 +60,7 @@ const fetchLedgerOrdersHodSelectList = async (): Promise<LedgerOrdersHodOption[]
 const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
   value,
   onChange,
+  label,
   size = 'small',
   sx,
   includeAll = true,
@@ -193,6 +196,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
     <Select
       value={value}
       onChange={handleChange}
+      label={label}
       size={size}
       options={getSelectOptions()}
       disabled={disabled} // loading 제거 - 로딩 중에도 "전체" 옵션 선택 가능

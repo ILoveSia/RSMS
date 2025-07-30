@@ -26,11 +26,14 @@ public interface HodIcItemRepository extends JpaRepository<HodIcItem, Long> {
     List<HodIcItem> findByLedgerOrderAndDateExpiredAfter(String ledgerOrder, java.time.LocalDate date);
 
     /**
-     * 책무번호로 유효한 내부통제 항목 조회
+     * 책무번호로 유효한 내부통제 항목 조회 (responsibility, responsibility_detail 조인)
      * 
      * @param ledgerOrder 책무번호
      * @return 유효한(만료되지 않은) 내부통제 항목 목록
      */
-    @Query("SELECT h FROM HodIcItem h WHERE h.ledgerOrder = :ledgerOrder AND h.dateExpired >= CURRENT_DATE")
+    @Query("SELECT h FROM HodIcItem h " +
+           "LEFT JOIN FETCH h.responsibility r " +
+           "LEFT JOIN FETCH h.responsibilityDetail rd " +
+           "WHERE h.ledgerOrder = :ledgerOrder AND h.dateExpired >= CURRENT_DATE")
     List<HodIcItem> findActiveItemsByLedgerOrder(@Param("ledgerOrder") String ledgerOrder);
 }

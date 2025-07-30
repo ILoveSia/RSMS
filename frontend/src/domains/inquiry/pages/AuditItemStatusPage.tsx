@@ -6,7 +6,7 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { LedgerOrdersHodSelect, CommonCodeSelect } from '@/shared/components/ui/form';
+import { LedgerOrdersHodSelect, CommonCodeSelect, SearchConditionPanel } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -27,6 +27,7 @@ interface AuditItemRow {
   id: string;                           // DataGrid용 고유 식별자
   hodIcItemId: number;                  // 부서장 내부통제 항목 ID
   responsibilityContent: string;        // 책무
+  responsibilityDetailContent: string;  // 책무상세내역
   positionsNm: string;                  // 직책명
   deptCd: string;                       // 부서
   fieldTypeCd: string;                  // 항목구분
@@ -35,6 +36,8 @@ interface AuditItemRow {
   auditMenId: string;                   // 점검자
   auditResultStatusCd: string;          // 점검결과
   impPlStatusCd: string;                // 점검진행상태
+  auditDoneDt: string;                  // 이행완료 예정일자
+  auditDoneContent: string;              // 이행결과보고
 }
 
 /**
@@ -45,6 +48,7 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
     id: response.hodIcItemId.toString(), // DataGrid용 고유 식별자
     hodIcItemId: response.hodIcItemId,
     responsibilityContent: response.responsibilityContent || '',
+    responsibilityDetailContent: response.responsibilityDetailContent || '',
     positionsNm: response.positionsNm || '',
     deptCd: response.deptCd || '',
     fieldTypeCd: response.fieldTypeCd || '',
@@ -53,6 +57,8 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
     auditMenId: response.auditMenId || '',
     auditResultStatusCd: response.auditResultStatusCd || '',
     impPlStatusCd: response.impPlStatusCd || '',
+    auditDoneDt: response.auditDoneDt || '',
+    auditDoneContent: response.auditDoneContent || '',
   };
 };
 
@@ -86,11 +92,16 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     {
       field: 'hodIcItemId',
       headerName: '부서장\n내부통제 항목ID',
-      width: 180,
+      width: 100,
     },
     {
       field: 'responsibilityContent',
       headerName: '책무',
+      width: 200,
+    },
+    {
+      field: 'responsibilityDetailContent',
+      headerName: '책무상세내역',
       width: 200,
     },
     {
@@ -167,6 +178,17 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         />
       ),
     },
+    {
+      field: 'auditDoneDt',
+      headerName: '이행완료 예정일자',
+      width: 180,
+    },
+    {
+      field: 'auditDoneContent',
+      headerName: '이행결과보고',
+      width: 180,
+    }
+
   ];
 
   // 항목별 점검 현황 조회
@@ -230,6 +252,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       const excelData = auditItemRows.map(row => ({
         '부서장내부통제항목ID': row.hodIcItemId,
         '책무': row.responsibilityContent,
+        '책무상세내역': row.responsibilityDetailContent,
         '책무별직책': row.positionsNm,
         '부서': row.deptCd,
         '항목구분': row.fieldTypeCd,
@@ -238,6 +261,8 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         '점검자': row.auditMenId,
         '점검결과': row.auditResultStatusCd,
         '점검진행상태': row.impPlStatusCd,
+        '이행완료 예정일자': row.auditDoneDt,
+        '이행결과보고': row.auditDoneContent,
       }));
       
       console.log('엑셀 다운로드 데이터:', excelData);
@@ -334,21 +359,13 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         }}
       >
         {/* 검색 조건 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          padding: '8px 16px',
-          mb: 2,
-          bgcolor: 'var(--bank-bg-secondary)',
-          borderRadius: 1,
-          border: '1px solid var(--bank-border)',
-          alignItems: 'center'
-        }}>
+        <SearchConditionPanel disabled={isLoading}>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <LedgerOrdersHodSelect
               value={selectedLedgerOrder}
               onChange={setSelectedLedgerOrder}
               size='small'
+              disabled={isLoading}
               sx={{ minWidth: 150, maxWidth: 200 }}
             />
             <CommonCodeSelect
@@ -356,6 +373,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               value={selectedImpPlStatus}
               onChange={setSelectedImpPlStatus}
               size="small"
+              disabled={isLoading}
               sx={{ width: '200px' }}
             />
           </Box>
@@ -364,10 +382,15 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             size="small"
             onClick={handleFetchAuditItems}
             color="primary"
+            disabled={isLoading}
+            sx={{
+              minWidth: '80px',
+              fontWeight: 600,
+            }}
           >
-            조회
+            {isLoading ? '조회중...' : '조회'}
           </Button>
-        </Box>
+        </SearchConditionPanel>
 
         {/* 버튼 영역 */}
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5, gap: 1 }}>

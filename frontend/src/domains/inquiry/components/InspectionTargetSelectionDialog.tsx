@@ -23,6 +23,10 @@ import { apiClient } from '@/app/common/api/client';
  */
 export interface InspectionTargetItem {
   id: number;
+  responsibilityId: number;     // 책무 ID
+  responsibilityContent: string; // 책무 내용
+  responsibilityDetailId: number; // 책무상세 ID  
+  responsibilityDetailContent: string; // 책무상세 내용
   fieldTypeCd: string;      // 항목구분
   icTask: string;           // 내부통제업무
   measureType: string;      // 조치유형
@@ -102,6 +106,20 @@ const InspectionTargetSelectionDialog: React.FC<InspectionTargetSelectionDialogP
    */
   const columns: DataGridColumn<InspectionTargetItem>[] = [
     { 
+      field: 'responsibilityContent', 
+      headerName: '책무', 
+      width: 160,
+      headerAlign: 'center',
+      align: 'left'
+    },
+    { 
+      field: 'responsibilityDetailContent', 
+      headerName: '책무세부내용', 
+      width: 180,
+      headerAlign: 'center',
+      align: 'left'
+    },
+    { 
       field: 'fieldTypeCd', 
       headerName: '항목구분', 
       width: 120,
@@ -133,7 +151,7 @@ const InspectionTargetSelectionDialog: React.FC<InspectionTargetSelectionDialogP
     { 
       field: 'checkPeriod', 
       headerName: '점검시기', 
-      width: 150,
+      width: 120,
       headerAlign: 'center',
       align: 'center'
     },

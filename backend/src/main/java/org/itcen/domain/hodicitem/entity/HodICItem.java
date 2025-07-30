@@ -8,6 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.itcen.common.entity.BaseTimeEntity;
 import org.itcen.domain.responsibility.entity.Responsibility;
+import org.itcen.domain.responsibility.entity.ResponsibilityDetail;
+import org.itcen.domain.departments.entity.Department;
 
 import java.time.LocalDate;
 
@@ -45,6 +47,12 @@ public class HodICItem extends BaseTimeEntity {
      */
     @Column(name = "responsibility_id", nullable = false)
     private Long responsibilityId;
+
+    /**
+     * 책무상세 ID (Foreign Key)
+     */
+    @Column(name = "responsibility_detail_id")
+    private Long responsibilityDetailId;
 
     /**
      * 책무번호(원장차수)
@@ -149,4 +157,18 @@ public class HodICItem extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsibility_id", referencedColumnName = "responsibility_id", insertable = false, updatable = false)
     private Responsibility responsibility;
+
+    /**
+     * 책무상세와의 연관관계 (ManyToOne)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsibility_detail_id", referencedColumnName = "responsibility_detail_id", insertable = false, updatable = false)
+    private ResponsibilityDetail responsibilityDetail;
+
+    /**
+     * 부서와의 연관관계 (ManyToOne)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dept_cd", referencedColumnName = "department_id", insertable = false, updatable = false)
+    private Department department;
 }

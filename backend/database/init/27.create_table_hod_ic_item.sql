@@ -1,12 +1,14 @@
 --부서장 내부통제 항목 현황 테이블
 --hod_ic_item
 
-DROP TABLE public.hod_ic_item
+DROP TABLE public.hod_ic_item CASCADE;
 
 CREATE TABLE public.hod_ic_item (
     hod_ic_item_id              bigserial               NOT NULL,               -- 부서장 내부통제 항목 id
     responsibility_id           int8                    NOT NULL,               -- 책무id
-    ledger_order                varchar(100)            NULL,                   -- 책무번호(원장차수)
+    responsibility_detail_id    int8                    NULL,                   -- 책무상세id
+    ledger_orders               varchar(100)            NULL,                   -- 책무번호(원장차수)
+    ledger_orders_hod           varchar(100)            NULL,                   -- 부서장책무번호(원장차수)
     order_status                varchar(20)             NULL,                   -- 책무상태코드
     approval_id                 int8                    NULL,                   -- 결재ID
     date_expired                date        DEFAULT '9999-12-31'::date NULL,    -- 만료일

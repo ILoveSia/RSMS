@@ -4,7 +4,7 @@
 
 -- DROP TABLE public.menu_permissions CASCADE;
 
--- public.menu_permissions 테이블 DDL (외래 키 제거됨)
+-- public.menu_permissions 테이블 DDL (외래 키 포함)
 CREATE TABLE public.menu_permissions (
 	id bigserial NOT NULL,       -- 메뉴권한ID
 	menu_id int8 NOT NULL,       -- 메뉴ID
@@ -17,13 +17,8 @@ CREATE TABLE public.menu_permissions (
 	created_id varchar(100) NULL, -- 생성자 ID
 	updated_id varchar(100) NULL, -- 수정자 ID
 	CONSTRAINT menu_permissions_pkey PRIMARY KEY (id),
-	CONSTRAINT uk_menu_permission UNIQUE (menu_id, role_name)
-	-- 기존의 FOREIGN KEY (menu_id) REFERENCES public.menus(id) ON DELETE CASCADE 제약 조건이 제거되었습니다.
+	CONSTRAINT uk_menu_permission UNIQUE (menu_id, role_name),
+	CONSTRAINT fk_menu_permissions_menu_id FOREIGN KEY (menu_id) REFERENCES public.menus(id) ON DELETE CASCADE
 );
 
--- Table Triggers
-
-create trigger trigger_update_menu_permission_updated_at before
-update
-    on
-    public.menu_permissions for each row execute function update_menu_updated_at();
+-- Table Triggers 생략 (update_menu_updated_at 함수 의존성 제거)

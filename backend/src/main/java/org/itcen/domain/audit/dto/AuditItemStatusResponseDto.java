@@ -22,9 +22,19 @@ public class AuditItemStatusResponseDto {
     private Long hodIcItemId;
 
     /**
+     * 점검 계획관리 상세ID
+     */
+    private Long auditProgMngtDetailId;
+
+    /**
      * 책무 내용
      */
     private String responsibilityContent;
+
+    /**
+     * 책무상세 내용
+     */
+    private String responsibilityDetailContent;
 
     /**
      * 직책명
@@ -75,4 +85,14 @@ public class AuditItemStatusResponseDto {
      * 점검결과 (조회조건용)
      */
     private String auditResult;
+
+    /**
+     * 이행완료 예정일자
+     */
+    private String auditDoneDt;
+
+    /**
+     * 이행결과보고
+     */
+    private String auditDoneContent;
 }

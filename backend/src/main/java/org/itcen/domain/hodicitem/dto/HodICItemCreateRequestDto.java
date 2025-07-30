@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 
@@ -30,6 +29,11 @@ public class HodICItemCreateRequestDto {
      */
     @NotNull(message = "책무 ID는 필수입니다.")
     private Long responsibilityId;
+
+    /**
+     * 책무상세 ID
+     */
+    private Long responsibilityDetailId;
 
     /**
      * 책무번호(원장차수)

@@ -29,9 +29,4 @@ CREATE INDEX idx_menus_menu_code ON public.menus USING btree (menu_code);
 CREATE INDEX idx_menus_parent_id ON public.menus USING btree (parent_id);
 CREATE INDEX idx_menus_sort_order ON public.menus USING btree (sort_order);
 
--- Table Triggers
-
-create trigger trigger_update_menu_updated_at before
-update
-    on
-    public.menus for each row execute function update_menu_updated_at();
+-- Table Triggers 생략 (update_menu_updated_at 함수 의존성 제거)

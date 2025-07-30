@@ -36,9 +36,24 @@ public class HodICItemResponseDto {
     private Long responsibilityId;
 
     /**
+     * 책무상세 ID
+     */
+    private Long responsibilityDetailId;
+
+    /**
      * 책무 내용 (조인된 정보)
      */
     private String responsibilityContent;
+
+    /**
+     * 책무상세 내용 (조인된 정보)
+     */
+    private String responsibilityDetailContent;
+
+    /**
+     * 책무관련근거 (조인된 정보)
+     */
+    private String responsibilityRelEvid;
 
     /**
      * 책무번호(원장차수)
@@ -79,6 +94,11 @@ public class HodICItemResponseDto {
      * 부서코드
      */
     private String deptCd;
+
+    /**
+     * 부서명 (조인된 정보)
+     */
+    private String deptName;
 
     /**
      * 내부통제업무
@@ -152,8 +172,13 @@ public class HodICItemResponseDto {
         return HodICItemResponseDto.builder()
                 .hodIcItemId(entity.getHodIcItemId())
                 .responsibilityId(entity.getResponsibilityId())
+                .responsibilityDetailId(entity.getResponsibilityDetailId())
                 .responsibilityContent(entity.getResponsibility() != null ?
                     entity.getResponsibility().getResponsibilityContent() : null)
+                .responsibilityDetailContent(entity.getResponsibilityDetail() != null ?
+                    entity.getResponsibilityDetail().getResponsibilityDetailContent() : null)
+                .responsibilityRelEvid(entity.getResponsibilityDetail() != null ?
+                    entity.getResponsibilityDetail().getResponsibilityRelEvid() : null)
                 .ledgerOrder(entity.getLedgerOrder())
                 .orderStatus(entity.getOrderStatus())
                 .approvalId(entity.getApprovalId())
@@ -161,6 +186,8 @@ public class HodICItemResponseDto {
                 .fieldTypeCd(entity.getFieldTypeCd())
                 .roleTypeCd(entity.getRoleTypeCd())
                 .deptCd(entity.getDeptCd())
+                .deptName(entity.getDepartment() != null ?
+                    entity.getDepartment().getDepartmentName() : null)
                 .icTask(entity.getIcTask())
                 .measureId(entity.getMeasureId())
                 .measureDesc(entity.getMeasureDesc())

@@ -16,7 +16,7 @@ public class ResponsibilityDetail extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "responsibility_detail_id")
-    private Long id;
+    private Long responsibilityDetailId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "responsibility_id", nullable = false)

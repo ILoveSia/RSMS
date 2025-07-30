@@ -19,6 +19,10 @@ import org.itcen.domain.audit.entity.HodIcItem;
 public class HodIcItemDto {
 
     private Long id;
+    private Long responsibilityId;   // 책무 ID
+    private String responsibilityContent; // 책무 내용
+    private Long responsibilityDetailId; // 책무상세 ID
+    private String responsibilityDetailContent; // 책무상세 내용
     private String fieldTypeCd;      // 항목구분
     private String icTask;           // 내부통제업무
     private String measureType;      // 조치유형
@@ -35,6 +39,12 @@ public class HodIcItemDto {
     public static HodIcItemDto fromEntity(HodIcItem entity) {
         return HodIcItemDto.builder()
                 .id(entity.getHodIcItemId())
+                .responsibilityId(entity.getResponsibilityId())
+                .responsibilityContent(entity.getResponsibility() != null ? 
+                    entity.getResponsibility().getResponsibilityContent() : "")
+                .responsibilityDetailId(entity.getResponsibilityDetailId())
+                .responsibilityDetailContent(entity.getResponsibilityDetail() != null ? 
+                    entity.getResponsibilityDetail().getResponsibilityDetailContent() : "")
                 .fieldTypeCd(entity.getFieldTypeCd())
                 .icTask(entity.getIcTask())
                 .measureType(entity.getMeasureType())
