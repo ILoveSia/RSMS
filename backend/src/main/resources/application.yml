@@ -164,7 +164,7 @@ spring:
       on-profile: local
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/dev_db
+    url: jdbc:postgresql://localhost:5433/dev_db
     username: postgres
     password: 1q2w3e4r!
     driver-class-name: org.postgresql.Driver
@@ -176,6 +176,10 @@ spring:
       max-lifetime: 1200000
       leak-detection-threshold: 60000
       auto-commit: false
+  
+  sql:
+    init:
+      mode: never
 
   data:
     redis:
