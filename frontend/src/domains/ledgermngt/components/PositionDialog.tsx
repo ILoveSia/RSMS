@@ -338,8 +338,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                 const deptName = await DepartmentApi.getName(positionData.writeDeptCd);
                 if (typeof deptName === 'string') {
                   writeDeptName = deptName;
-                } else if (typeof deptName === 'object' && deptName !== null) {
-                  writeDeptName = deptName.departmentName || '';
+                } else if (typeof deptName === 'object' && deptName !== null && 'departmentName' in deptName) {
+                  writeDeptName = (deptName as any).departmentName || '';
                 }
               } catch (deptErr) {
                 console.warn('부서명 조회 실패:', deptErr);
@@ -562,6 +562,50 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     setManagers(prev =>
       prev.map(manager => (manager.id === id ? { ...manager, [field]: value } : manager))
     );
+
+    // 사번 입력 시 자동으로 사원 정보 조회
+    if (field === 'empNo' && value.trim()) {
+      fetchEmployeeInfo(id, value.trim());
+    }
+  };
+
+  // 사번으로 사원 정보 조회
+  const fetchEmployeeInfo = async (managerId: string, empNo: string) => {
+    console.log('사원 정보 조회 시도:', empNo);
+    try {
+      const response = await apiClient.get(`/users/num/${empNo}`);
+      if (response && typeof response === 'object') {
+        const userData = response as any;
+        // 직급 코드를 직급명으로 변환
+        const positionName = getJobRankName(userData.jobRankCd);
+        
+        setManagers(prev =>
+          prev.map(manager =>
+            manager.id === managerId
+              ? {
+                ...manager,
+                empName: userData.username || '',
+                position: positionName,
+              }
+              : manager
+          )
+        );
+      }
+    } catch (err) {
+      console.error('사원 정보 조회 실패:', err);
+      // 사원 정보 조회 실패 시 empName과 position을 초기화
+      setManagers(prev =>
+        prev.map(manager =>
+          manager.id === managerId
+            ? {
+              ...manager,
+              empName: '',
+              position: '',
+            }
+            : manager
+        )
+      );
+    }
   };
 
   // 사원 검색 팝업 열기
@@ -579,6 +623,9 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   // 사원 선택 완료
   const handleEmployeeSelect = (selectedEmployee: EmployeeSearchResult) => {
     if (currentManagerId) {
+      // 직급 코드를 직급명으로 변환
+      const positionName = getJobRankName(selectedEmployee.jobRankCd);
+      
       setManagers(prev =>
         prev.map(manager =>
           manager.id === currentManagerId
@@ -586,13 +633,25 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               ...manager,
               empNo: selectedEmployee.num,
               empName: selectedEmployee.username,
-              position: selectedEmployee.jobRankCd,
+              position: positionName,
             }
             : manager
         )
       );
     }
     handleEmployeeSearchClose();
+  };
+
+  // 직급 코드를 직급명으로 변환하는 함수
+  const getJobRankName = (jobRankCd: string): string => {
+    if (!jobRankCd) return '';
+    
+    const codes = getCodesArray();
+    const jobRankCode = codes.find(code => 
+      code.groupCode === 'JOB_RANK' && code.code === jobRankCd
+    );
+    
+    return jobRankCode ? jobRankCode.codeName : jobRankCd;
   };
 
   // 부서 검색 팝업 열기

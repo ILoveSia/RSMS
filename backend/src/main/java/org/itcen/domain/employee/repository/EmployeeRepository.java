@@ -45,4 +45,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
            "AND (:deptCode IS NULL OR :deptCode = '' OR e.deptCode = :deptCode) " +
            "ORDER BY e.empName")
     List<Employee> searchEmployees(@Param("empName") String empName, @Param("deptCode") String deptCode);
+
+    /**
+     * 휴대폰 번호로 직원 조회
+     */
+    Optional<Employee> findByPhoneNo(String phoneNo);
 }

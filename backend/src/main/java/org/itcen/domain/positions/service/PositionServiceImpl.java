@@ -29,6 +29,7 @@ import org.itcen.domain.positions.repository.PositionOwnerDeptRepository;
 import org.itcen.domain.positions.repository.PositionRepository;
 import org.itcen.domain.user.entity.User;
 import org.itcen.domain.user.repository.UserRepository;
+import org.itcen.domain.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
@@ -58,6 +59,7 @@ public class PositionServiceImpl implements PositionService {
     private final CommonCodeRepository commonCodeRepository;
     private final MeetingBodyRepository meetingBodyRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
     private final DepartmentService departmentService;
 
     @PersistenceContext
@@ -282,31 +284,31 @@ public class PositionServiceImpl implements PositionService {
         // 관리자 정보 조회 및 변환
         List<PositionDetailDto.ManagerInfo> managers =
                 positionAdminRepository.findByPosition_PositionsId(id).stream().map(pa -> {
-                    Optional<User> userOpt = userRepository.findByNum(pa.getPositionsAdminId());
+                    try {
+                        // UserService를 통해 employee 테이블에서 조회
+                        var userResponse = userService.getUserByNum(pa.getPositionsAdminId());
+                        
+                        String positionName = "직급정보 없음";
+                        if (userResponse.getJobRankCd() != null && !userResponse.getJobRankCd().isBlank()) {
+                            positionName = commonCodeRepository
+                                    .findByGroupCodeAndCode("JOB_RANK", userResponse.getJobRankCd())
+                                    .map(CommonCode::getCodeName).orElseGet(() -> {
+                                        log.warn("공통코드에 해당 직급코드가 없습니다: group=JOB_RANK, code={}",
+                                                userResponse.getJobRankCd());
+                                        return "직급명(코드미등록)";
+                                    });
+                        } else {
+                            log.warn("사용자에게 직급코드가 지정되지 않았습니다: {}", userResponse.getUsername());
+                        }
 
-                    if (userOpt.isEmpty()) {
+                        return PositionDetailDto.ManagerInfo.builder().empNo(userResponse.getNum())
+                                .empName(userResponse.getUsername()).position(positionName).build();
+                    } catch (Exception e) {
                         log.warn("사번으로 사용자를 찾을 수 없습니다: {}", pa.getPositionsAdminId());
                         return PositionDetailDto.ManagerInfo.builder()
                                 .empNo(pa.getPositionsAdminId()).empName("사용자 정보 없음")
                                 .position("직급정보 없음").build();
                     }
-
-                    User user = userOpt.get();
-                    String positionName = "직급정보 없음";
-                    if (user.getJobRankCd() != null && !user.getJobRankCd().isBlank()) {
-                        positionName = commonCodeRepository
-                                .findByGroupCodeAndCode("JOB_RANK", user.getJobRankCd())
-                                .map(CommonCode::getCodeName).orElseGet(() -> {
-                                    log.warn("공통코드에 해당 직급코드가 없습니다: group=JOB_RANK, code={}",
-                                            user.getJobRankCd());
-                                    return "직급명(코드미등록)";
-                                });
-                    } else {
-                        log.warn("사용자에게 직급코드가 지정되지 않았습니다: {}", user.getUsername());
-                    }
-
-                    return PositionDetailDto.ManagerInfo.builder().empNo(user.getNum())
-                            .empName(user.getUsername()).position(positionName).build();
                 }).collect(Collectors.toList());
 
         return PositionDetailDto.builder().positionsId(position.getPositionsId())

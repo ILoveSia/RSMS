@@ -81,18 +81,22 @@ public class UserService {
         // limit 적용
         return employees.stream()
                 .limit(request.getLimit())
-                .map(employee -> UserDto.Response.builder()
-                        .id(employee.getEmpNo())
-                        .username(employee.getEmpName())
-                        .email(employee.getEmail())
-                        .mobile(employee.getPhoneNo())
-                        .deptCd(employee.getDeptCode())
-                        .num(employee.getEmpNo())
-                        .jobRankCd(employee.getPositionCode())
-                        .jobTitleCd(employee.getPositionName())
-                        .createdAt(employee.getCreatedAt())
-                        .updatedAt(employee.getUpdatedAt())
-                        .build())
+                .map(employee -> {
+                    log.info("Employee 매핑 - empNo: {}, empName: {}", employee.getEmpNo(), employee.getEmpName());
+                    return UserDto.Response.builder()
+                            .id(employee.getEmpNo())
+                            .username(employee.getEmpName())
+                            .email(employee.getEmail())
+                            .address("")
+                            .mobile(employee.getPhoneNo())
+                            .deptCd(employee.getDeptCode())
+                            .num(employee.getEmpNo())
+                            .jobRankCd(employee.getPositionCode())
+                            .jobTitleCd(employee.getPositionName())
+                            .createdAt(employee.getCreatedAt())
+                            .updatedAt(employee.getUpdatedAt())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 
@@ -227,21 +231,48 @@ public class UserService {
 
     /**
      * 휴대폰 번호로 사용자 조회
+     * employee 테이블 사용
      */
     public UserDto.Response getUserByMobile(String mobile) {        
-        User user = userRepository.findByMobile(mobile)
+        Employee employee = employeeRepository.findByPhoneNo(mobile)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Mobile: " + mobile));
         
-        return UserDto.Response.from(user);
+        return UserDto.Response.builder()
+                .id(employee.getEmpNo())
+                .username(employee.getEmpName())
+                .email(employee.getEmail())
+                .address("")
+                .mobile(employee.getPhoneNo())
+                .deptCd(employee.getDeptCode())
+                .num(employee.getEmpNo())
+                .jobRankCd(employee.getPositionCode())
+                .jobTitleCd(employee.getPositionName())
+                .createdAt(employee.getCreatedAt())
+                .updatedAt(employee.getUpdatedAt())
+                .build();
     }
 
     /**
      * 사번으로 사용자 조회
+     * employee 테이블 사용
      */
     public UserDto.Response getUserByNum(String num) {
-        User user = userRepository.findByNum(num)
+        log.info("사번으로 사용자 조회 시도: {}", num);
+        Employee employee = employeeRepository.findByEmpNo(num)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Num: " + num));
         
-        return UserDto.Response.from(user);
+        return UserDto.Response.builder()
+                .id(employee.getEmpNo())
+                .username(employee.getEmpName())
+                .email(employee.getEmail())
+                .address("")
+                .mobile(employee.getPhoneNo())
+                .deptCd(employee.getDeptCode())
+                .num(employee.getEmpNo())
+                .jobRankCd(employee.getPositionCode())
+                .jobTitleCd(employee.getPositionName())
+                .createdAt(employee.getCreatedAt())
+                .updatedAt(employee.getUpdatedAt())
+                .build();
     }
-} 
+}
