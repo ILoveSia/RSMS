@@ -22,7 +22,7 @@ export interface DeficiencyStatusResponse {
   auditResult?: string;             // 점검 결과 작성
   auditResultStatusCd?: string;     // 점검결과상태코드
   beforeAuditYn?: string;           // 이전회차 동일건 여부
-  auditDetailCoantent?: string;     // 개선계획 세부내용 (오타 그대로)
+  auditDetailContent?: string;      // 개선계획 세부내용
   auditDoneDt?: string;             // 이행완료 예정일자
   auditDoneContent?: string;        // 이행결과 내용
   impPlStatusCd?: string;           // 개선계획상태코드

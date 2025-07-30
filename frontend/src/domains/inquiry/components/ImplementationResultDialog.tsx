@@ -21,7 +21,7 @@ export interface ImplementationResultData {
   auditProgMngtId: number;  // 점검계획 ID 추가
   deficiencyContent: string;
   improvementPlan: string;
-  auditDetailCoantent?: string;
+  auditDetailContent?: string;
   auditDoneContent?: string;
   auditDoneDt?: string;
   implementationStatus?: string;

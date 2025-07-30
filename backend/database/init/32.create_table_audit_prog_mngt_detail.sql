@@ -10,7 +10,7 @@ CREATE TABLE public.audit_prog_mngt_detail (
     audit_result                    varchar(500)        NULL,               -- 점검 결과 작성
     audit_result_status_cd          varchar(30)         NULL,               -- 점검 결과 상태 코드 (진행중,적성,미흡,제외)
     before_audit_yn                 varchar(1)          NULL DEFAULT 'N',   -- 이전회차의 개선과제와 동일한 건 _ YN
-    audit_detail_coantent           varchar(1000)       NULL,               -- 개선계획 세부내용
+    audit_detail_content           varchar(1000)       NULL,                -- 개선계획 세부내용
     audit_done_dt                   date                NULL,               -- 이행완료 예정일자
     audit_done_content              varchar(1000)       NULL,               -- 이행완료 내용
     imp_pl_status_cd                varchar(10) NULL,                       -- 개선계획상태코드(계획작성,계획결재요청,계획결재완료,이행작성,이행결재요청,이행결재완료) PLAN_IMP

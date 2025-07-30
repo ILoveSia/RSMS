@@ -108,21 +108,21 @@ const InspectionTargetSelectionDialog: React.FC<InspectionTargetSelectionDialogP
     { 
       field: 'responsibilityContent', 
       headerName: '책무', 
-      width: 160,
+      width: 120,
       headerAlign: 'center',
       align: 'left'
     },
     { 
       field: 'responsibilityDetailContent', 
       headerName: '책무세부내용', 
-      width: 180,
+      width: 130,
       headerAlign: 'center',
       align: 'left'
     },
     { 
       field: 'fieldTypeCd', 
       headerName: '항목구분', 
-      width: 120,
+      width: 80,
       headerAlign: 'center',
       align: 'center'
     },
@@ -130,28 +130,28 @@ const InspectionTargetSelectionDialog: React.FC<InspectionTargetSelectionDialogP
       field: 'icTask', 
       headerName: '내부통제업무', 
       flex: 1,
-      minWidth: 200,
+      minWidth: 140,
       headerAlign: 'center',
       align: 'left'
     },
     { 
       field: 'measureType', 
       headerName: '조치유형', 
-      width: 120,
+      width: 80,
       headerAlign: 'center',
       align: 'center'
     },
     { 
       field: 'periodCd', 
       headerName: '주기', 
-      width: 100,
+      width: 60,
       headerAlign: 'center',
       align: 'center'
     },
     { 
       field: 'checkPeriod', 
       headerName: '점검시기', 
-      width: 120,
+      width: 80,
       headerAlign: 'center',
       align: 'center'
     },
@@ -199,9 +199,9 @@ const InspectionTargetSelectionDialog: React.FC<InspectionTargetSelectionDialogP
       title="점검 대상 선정"
       loading={loading}
       disableSave={selectedItems.length === 0}
-      maxWidth="lg"
+      maxWidth="sm"
     >
-      <Box sx={{ width: '100%', height: '600px' }}>
+      <Box sx={{ width: '100%', height: '450px' }}>
         {!ledgerOrdersHod ? (
           <Alert severity="warning" sx={{ mb: 2 }}>
             책무번호가 선택되지 않았습니다. 먼저 책무번호를 선택해주세요.
