@@ -30,11 +30,14 @@ interface ExecutiveResponsibilityItem {
   empNo?: string;            // 사번
   executiveName?: string;    // 성명
   jobRank?: string;          // 직위
-  responsibility?: string;   // 책무
+  responsibility?: string;   // 책무 내용
+  responsibilityOverview?: string; // 책무 개요 추가
   responsibilityDetail?: string; // 책무 세부내용
   managementDuty?: string;   // 책무이행을 위한 주요 관리의무
   relatedBasis?: string;     // 관련근거
   execofficer_dt?: string;   // 임원 일자
+  hasConcurrentPosition?: string; // 겸직여부
+  concurrentPosition?: string; // 겸직사항
 }
 
 // 그룹화된 데이터
@@ -137,12 +140,21 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     },
     {
       field: 'responsibility' as keyof ExecutiveResponsibilityRow,
-      headerName: '책무',
+      headerName: '책무 내용',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ row }) => renderArrayValue(row.items, 'responsibility'),
+    },
+    {
+      field: 'responsibilityOverview' as keyof ExecutiveResponsibilityRow,
+      headerName: '책무 개요',
+      flex: 1,
+      minWidth: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ row }) => renderArrayValue(row.items, 'responsibilityOverview'),
     },
     {
       field: 'responsibilityDetail' as keyof ExecutiveResponsibilityRow,
@@ -188,12 +200,15 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       jobTitle: item.jobTitleCd || '해당없음',
       empNo: item.num || '해당없음',
       executiveName: item.empId || '해당없음',
-      responsibility: item.responsibilityContent || '해당없음',
+      responsibility: item.responsibilityContent || '해당없음', // 책무 내용
+      responsibilityOverview: item.roleSumm || '해당없음', // 책무 개요
       responsibilityDetail: item.responsibilityDetailContent || '해당없음',
       managementDuty: item.responsibilityMgtSts || '해당없음',
       relatedBasis: item.responsibilityRelEvid || '해당없음',
       jobRank: item.jobRankCd || '해당없음',
-      execofficer_dt: item.execofficer_dt || '해당없음'
+      execofficer_dt: item.execofficer_dt || '해당없음',
+      hasConcurrentPosition: item.hasConcurrentPosition || 'N', // 겸직여부
+      concurrentPosition: item.concurrentPosition || '해당없음' // 겸직사항
     }));
   }, []);
 

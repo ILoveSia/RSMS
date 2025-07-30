@@ -32,6 +32,9 @@ public class ExecutiveResponsibilityDto {
     private String responsibilityMgtSts;
     private String responsibilityRelEvid;
     private String execofficer_dt;
+    private String roleSumm; // 책무 개요 추가
+    private String hasConcurrentPosition; // 겸직여부
+    private String concurrentPosition; // 겸직사항
 
     @Data
     @Builder

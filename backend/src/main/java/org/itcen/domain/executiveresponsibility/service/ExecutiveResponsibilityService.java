@@ -19,10 +19,10 @@ public class ExecutiveResponsibilityService {
 
     @PersistenceContext
     private EntityManager em;
-public List<ExecutiveResponsibilityDto> getByPositionId(Long positionId) {
+    public List<ExecutiveResponsibilityDto> getByPositionId(Long positionId) {
     String sql="SELECT   p.positions_id,   p.positions_nm,   e.execofficer_id, "+
                  "u.username,   u.job_rank_cd,   u.job_title_cd,   u.num ,r.responsibility_content,rd.responsibility_detail_content, "+
-                 "rd.responsibility_mgt_sts ,rd.responsibility_rel_evid FROM positions p "+
+                 "rd.responsibility_mgt_sts ,rd.responsibility_rel_evid, rrs.role_summ, e.has_concurrent_position, e.concurrent_position FROM positions p "+
                  "LEFT JOIN execofficer e ON p.positions_id = e.positions_id "+
                  "left join role_resp_status rrs on rrs.positions_id =p.positions_id "+
                  "left join responsibility r on r.responsibility_id =rrs.responsibility_id "+
@@ -45,7 +45,9 @@ public List<ExecutiveResponsibilityDto> getByPositionId(Long positionId) {
                 dto.setResponsibilityDetailContent((String) row[8]);
                 dto.setResponsibilityMgtSts((String) row[9]);
                 dto.setResponsibilityRelEvid((String) row[10]);
-                dto.setExecofficer_dt((String) row[11]);
+                dto.setRoleSumm((String) row[11]); // role_summ 추가
+                dto.setHasConcurrentPosition((String) row[12]); // 겸직여부 추가
+                dto.setConcurrentPosition((String) row[13]); // 겸직사항 추가
                 return dto;
             } catch (Exception e) {
                 log.error("Error processing row: {}", row, e);
@@ -57,14 +59,35 @@ public List<ExecutiveResponsibilityDto> getByPositionId(Long positionId) {
         return finalResult;
 }
     public List<ExecutiveResponsibilityDto> getAll() {
-        String sql = "SELECT   p.positions_id,   p.positions_nm,   e.execofficer_id, "+
-                 "u.username,   u.job_rank_cd,   u.job_title_cd,   u.num  ,r.responsibility_content,rd.responsibility_detail_content, "+
-                 "rd.responsibility_mgt_sts ,rd.responsibility_rel_evid ,e.execofficer_dt FROM positions p "+
-                 "LEFT JOIN execofficer e ON p.positions_id = e.positions_id "+
-                 "left join role_resp_status rrs on rrs.positions_id =p.positions_id "+
-                 "left join responsibility r on r.responsibility_id =rrs.responsibility_id "+
-                 "left join responsibility_detail rd on rd.responsibility_id =r.responsibility_id "+
-                 "LEFT JOIN users u ON e.emp_id = u.id   ORDER BY p.positions_id;";
+        String sql = "select "+
+	"p.positions_id,"+
+	"p.positions_nm,"+
+	"e.execofficer_id,"+
+	"u.username,"+
+	"u.job_rank_cd,"+
+	"u.job_title_cd,"+
+	"u.num ,"+
+	"r.responsibility_content,"+
+	"rd.responsibility_detail_content,"+
+	"rd.responsibility_mgt_sts ,"+
+	"rd.responsibility_rel_evid ,"+
+	"e.execofficer_dt,"+
+	"rrs.role_summ,"+
+	"e.dual_yn ,"+
+	"e.dual_details "+
+	"from positions p "+
+	"left join execofficer e on "+
+	"p.positions_id = e.positions_id "+
+	"left join role_resp_status rrs on "+
+	"rrs.positions_id = p.positions_id "+
+	"left join responsibility r on "+
+	"r.responsibility_id = rrs.responsibility_id "+
+	"left join responsibility_detail rd on "+
+	"rd.responsibility_id = r.responsibility_id "+
+	"left join users u on "+
+	"e.emp_id = u.id "+
+	"order by "+
+	"p.positions_id;";
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
         List<ExecutiveResponsibilityDto> finalResult = results.stream().map(row -> {
             try {
@@ -81,6 +104,9 @@ public List<ExecutiveResponsibilityDto> getByPositionId(Long positionId) {
                 dto.setResponsibilityMgtSts((String) row[9]);
                 dto.setResponsibilityRelEvid((String) row[10]);
                 dto.setExecofficer_dt((String) row[11]);
+                dto.setRoleSumm((String) row[12]); // role_summ 추가
+                dto.setHasConcurrentPosition((String) row[13]); // 겸직여부 추가
+                dto.setConcurrentPosition((String) row[14]); // 겸직사항 추가
                 return dto;
             } catch (Exception e) {
                 log.error("Error processing row: {}", row, e);
