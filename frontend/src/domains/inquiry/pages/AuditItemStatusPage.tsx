@@ -11,6 +11,7 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
+import { useReduxState } from '@/app/store/use-store';
 import { 
   Search as SearchIcon,
   Person as PersonIcon,
@@ -21,6 +22,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { getAuditItemStatusList, type AuditItemStatusResponse } from '../api/auditItemApi';
 import { assignAuditor, type AuditorAssignmentRequest } from '../api/auditorApi';
 import AuditorAssignmentDialog from '../components/AuditorAssignmentDialog';
+import DepartmentApi from '@/domains/common/api/departmentApi';
+import { 
+  getCodeName, 
+  getRoleTypeName, 
+  getDepartmentName, 
+  extractCommonCodes,
+  type CommonCode,
+  type Department 
+} from '@/shared/utils/codeUtils';
 
 // 항목별 점검 현황 데이터 인터페이스
 interface AuditItemRow {
@@ -72,6 +82,14 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   const [selectedImpPlStatus, setSelectedImpPlStatus] = useState<string>('ALL');
 
+  // Redux에서 공통코드 가져오기
+  const { data: allCodesData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
+  
+  // 공통코드 배열 추출
+  const allCodes = extractCommonCodes(allCodesData);
+
+  // 부서 정보 상태
+  const [departments, setDepartments] = useState<Department[]>([]);
 
   // 항목별 점검 현황 데이터
   const [auditItemRows, setAuditItemRows] = useState<AuditItemRow[]>([]);
@@ -86,6 +104,38 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
 
   // 점검자 지정 다이얼로그 상태
   const [auditorDialogOpen, setAuditorDialogOpen] = useState(false);
+
+  // 부서 정보 로드
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const deptList = await DepartmentApi.getAll();
+        setDepartments(deptList);
+      } catch (error) {
+        console.error('부서 정보 로드 실패:', error);
+      }
+    };
+    loadDepartments();
+  }, []);
+
+  // 공통코드 로드 확인
+  useEffect(() => {
+    console.log('allCodesData:', allCodesData);
+    console.log('allCodes:', allCodes);
+    if (allCodes && allCodes.length > 0) {
+      console.log('로드된 공통코드 개수:', allCodes.length);
+      console.log('FIELD_TYPE 코드:', allCodes.filter(c => c.groupCode === 'FIELD_TYPE'));
+      console.log('COM_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'COM_ROLE_TYPE'));
+      console.log('UNI_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'UNI_ROLE_TYPE'));
+      
+      // 첫 번째 공통코드 구조 확인
+      if (allCodes[0]) {
+        console.log('첫 번째 공통코드 구조:', allCodes[0]);
+      }
+    } else {
+      console.log('공통코드가 로드되지 않았습니다.');
+    }
+  }, [allCodes, allCodesData]);
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<AuditItemRow>[] = [
@@ -112,17 +162,20 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     {
       field: 'deptCd',
       headerName: '부서',
-      width: 100,
+      width: 120,
+      renderCell: ({ value }) => getDepartmentName(departments, value as string),
     },
     {
       field: 'fieldTypeCd',
       headerName: '항목구분',
-      width: 100,
+      width: 120,
+      renderCell: ({ value }) => getCodeName(allCodes, 'FIELD_TYPE', value as string),
     },
     {
       field: 'roleTypeCd',
       headerName: '직무구분',
-      width: 100,
+      width: 120,
+      renderCell: ({ value }) => getRoleTypeName(allCodes, value as string),
     },
     {
       field: 'icTask',
@@ -138,45 +191,51 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       field: 'auditResultStatusCd',
       headerName: '점검결과',
       width: 100,
-      renderCell: ({ value }) => (
-        <Chip
-          label={
-            value === 'SUITABLE' ? '적정' :
-            value === 'INADEQUATE' ? '미흡' :
-            value === 'EXCLUDED' ? '제외' :
-            value === 'IN_PROGRESS' ? '진행중' : value
-          }
-          color={
-            value === 'SUITABLE' ? 'success' :
-            value === 'INADEQUATE' ? 'error' :
-            value === 'EXCLUDED' ? 'default' : 'primary'
-          }
-          size="small"
-        />
-      ),
+      renderCell: ({ value }) => {
+        if (!value) return null;
+        return (
+          <Chip
+            label={
+              value === 'SUITABLE' ? '적정' :
+              value === 'INADEQUATE' ? '미흡' :
+              value === 'EXCLUDED' ? '제외' :
+              value === 'IN_PROGRESS' ? '진행중' : value
+            }
+            color={
+              value === 'SUITABLE' ? 'success' :
+              value === 'INADEQUATE' ? 'error' :
+              value === 'EXCLUDED' ? 'default' : 'primary'
+            }
+            size="small"
+          />
+        );
+      },
     },
     {
       field: 'impPlStatusCd',
       headerName: '점검진행상태',
       width: 120,
-      renderCell: ({ value }) => (
-        <Chip
-          label={
-            value === 'PLAN_WRITE' ? '계획작성' :
-            value === 'PLAN_APPROVAL_REQ' ? '계획결재요청' :
-            value === 'PLAN_APPROVAL_COMP' ? '계획결재완료' :
-            value === 'IMPL_WRITE' ? '이행작성' :
-            value === 'IMPL_APPROVAL_REQ' ? '이행결재요청' :
-            value === 'IMPL_APPROVAL_COMP' ? '이행결재완료' : value
-          }
-          color={
-            value === 'IMPL_APPROVAL_COMP' ? 'success' :
-            value === 'PLAN_APPROVAL_COMP' ? 'primary' :
-            value === 'PLAN_WRITE' ? 'default' : 'warning'
-          }
-          size="small"
-        />
-      ),
+      renderCell: ({ value }) => {
+        if (!value) return null;
+        return (
+          <Chip
+            label={
+              value === 'PLAN_WRITE' ? '계획작성' :
+              value === 'PLAN_APPROVAL_REQ' ? '계획결재요청' :
+              value === 'PLAN_APPROVAL_COMP' ? '계획결재완료' :
+              value === 'IMPL_WRITE' ? '이행작성' :
+              value === 'IMPL_APPROVAL_REQ' ? '이행결재요청' :
+              value === 'IMPL_APPROVAL_COMP' ? '이행결재완료' : value
+            }
+            color={
+              value === 'IMPL_APPROVAL_COMP' ? 'success' :
+              value === 'PLAN_APPROVAL_COMP' ? 'primary' :
+              value === 'PLAN_WRITE' ? 'default' : 'warning'
+            }
+            size="small"
+          />
+        );
+      },
     },
     {
       field: 'auditDoneDt',
@@ -340,12 +399,26 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
   };
 
   return (
-    <PageContainer>
+    <PageContainer
+      sx={{
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
       <PageHeader
         title="[901] 점검 현황(항목별)"
         icon={<SearchIcon />}
         description="적부구조도 이력 점검의 항목별 점검 현황을 조회하고 관리합니다."
         elevation={false}
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          flexShrink: 0,
+        }}
       />
       <PageContent
         sx={{
@@ -433,27 +506,29 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         </Box>
 
         {/* 데이터 그리드 */}
-        <Box sx={{
-          flex: 1,
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
+        <Box sx={{ 
+          width: '100%', 
+          flex: 1 
         }}>
           <DataGrid
             data={auditItemRows}
             columns={columns}
             loading={isLoading}
             error={null}
+            selectable={true}
+            multiSelect={true}
+            selectedRows={selectedItemIds}
             onRowSelectionChange={handleItemRowSelectionModelChange}
-            checkboxSelection={true}
-            rowSelectionModel={selectedItemIds}
+            rowIdField='id'
             sx={{
-              height: '650px',
-              '& .MuiDataGrid-virtualScroller': {
-                overflow: 'auto'
-              },
+              width: '100%',
+              height: '100%',
               '& .MuiDataGrid-columnHeaders': {
-                minHeight: '80px !important'
+                backgroundColor: 'var(--bank-bg-secondary) !important',
+                fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-row': {
+                cursor: 'pointer',
               },
               '& .MuiDataGrid-columnHeader[data-field="hodIcItemId"]': {
                 '& .MuiDataGrid-columnHeaderTitle': {
@@ -475,6 +550,10 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', fontSize: '12px', color: '#666' }}>
               <div>Grid 데이터 개수: {auditItemRows.length}</div>
               <div>선택된 항목: {selectedItemIds.length}개</div>
+              <div>공통코드 로드 상태: {allCodes ? `${allCodes.length}개 로드됨` : '로드되지 않음'}</div>
+              {auditItemRows.length > 0 && (
+                <div>첫 번째 행 데이터: fieldTypeCd={auditItemRows[0].fieldTypeCd}, roleTypeCd={auditItemRows[0].roleTypeCd}</div>
+              )}
             </Box>
           )}
         </Box>
