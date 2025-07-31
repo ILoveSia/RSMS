@@ -2,9 +2,8 @@
  * 회의체 현황 페이지 컴포넌트
  * MainContent.tsx 스타일과 일관성 있게 구현
  */
-import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
-import type { CommonCode } from '@/app/types/common';
+import { useCommonCodes, useGetCodeName, type CommonCode } from '@/shared/utils/codeUtils';
 import { Confirm } from '@/shared/components/modal';
 import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
@@ -19,7 +18,6 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import '../../../assets/scss/style.css';
-import apiClient from '@/app/common/api/client';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 import MeetingBodyDialog from '../components/MeetingBodyDialog';
 
@@ -28,54 +26,16 @@ interface IMeetingStatusPageProps {
 }
 
 const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): React.JSX.Element => {
-  // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<CommonCode[]>('codeStore/allCodes');
-
-  // 공통코드 로드 함수
-  const loadCommonCodes = useCallback(async () => {
-    try {
-      const response = await apiClient.get<CommonCode[]>('/common-codes');
-      
-      let commonCodesData: CommonCode[];
-      if (response && typeof response === 'object' && 'data' in response) {
-        commonCodesData = (response as any).data;
-      } else {
-        commonCodesData = response as CommonCode[];
-      }
-      
-      if (setAllCodes && typeof setAllCodes === 'function') {
-        setAllCodes(commonCodesData);
-      }
-    } catch (error) {
-      console.error('Failed to load common codes:', error);
-    }
-  }, [setAllCodes]);
-
-  // 공통코드 배열 추출 함수
-  const getCodesArray = useCallback((): CommonCode[] => {
-    if (!allCodes) {
-      return [];
-    }
-    const result = Array.isArray(allCodes) ? allCodes : (allCodes as any).data || [];
-    return result;
-  }, [allCodes]);
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
+  const getCodeNameFn = useGetCodeName();
 
   // 공통코드 헬퍼 함수
   const getMeetingBodyCodes = useCallback(() => {
-    const codes = getCodesArray();
-    return codes
+    return allCodes
       .filter(code => code.groupCode === 'MEETING_BODY' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [getCodesArray]);
-
-  const getCodeName = useCallback(
-    (groupCode: string, code: string): string => {
-      const codes = getCodesArray();
-      const found = codes.find(item => item.groupCode === groupCode && item.code === code);
-      return found?.codeName || code;
-    },
-    [getCodesArray]
-  );
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  }, [allCodes]);
 
   const [meetingBodies, setMeetingBodies] = useState<MeetingBody[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -105,7 +65,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
         field: 'gubun',
         headerName: '구분',
         width: 100,
-        renderCell: ({ value }) => getCodeName('MEETING_BODY', (value as string) || ''),
+        renderCell: ({ value }) => getCodeNameFn('MEETING_BODY', (value as string) || ''),
       },
       {
         field: 'meetingName',
@@ -135,11 +95,11 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
         field: 'meetingPeriod',
         headerName: '개최주기',
         width: 120,
-        renderCell: ({ value }) => getCodeName('PERIOD', (value as string) || ''),
+        renderCell: ({ value }) => getCodeNameFn('PERIOD', (value as string) || ''),
       },
       { field: 'content', headerName: '주요 심의·의결사항', width: 300, flex: 2 },
     ],
-    [getCodeName, meetingBodies]
+    [getCodeNameFn, meetingBodies]
   );
 
   // API 호출 함수
@@ -219,34 +179,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
     }
   }, [pageInfo.page, pageInfo.size, filterDivision]);
 
-  // 컴포넌트 마운트 시 localStorage에서 공통코드 복원
-  useEffect(() => {
-    const storedCommonCodes = localStorage.getItem('commonCodes');
 
-    if (
-      storedCommonCodes &&
-      (!allCodes ||
-        (Array.isArray(allCodes) && allCodes.length === 0) ||
-        (typeof allCodes === 'object' &&
-          'data' in allCodes &&
-          (!allCodes.data || allCodes.data.length === 0)))
-    ) {
-      try {
-        const parsedCodes = JSON.parse(storedCommonCodes);
-        setAllCodes(parsedCodes);
-      } catch {
-        localStorage.removeItem('commonCodes');
-      }
-    }
-  }, [allCodes, setAllCodes]);
-
-  // 컴포넌트 마운트 시 공통코드 로드
-  useEffect(() => {
-    const codesArray = getCodesArray();
-    if (codesArray.length === 0) {
-      loadCommonCodes();
-    }
-  }, [loadCommonCodes, getCodesArray]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -348,9 +281,9 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
       // 데이터 추가
       meetingBodies.forEach(row => {
         worksheet.addRow([
-          getCodeName('MEETING_BODY', row.gubun),
+          getCodeNameFn('MEETING_BODY', row.gubun),
           row.meetingName,
-          getCodeName('PERIOD', row.meetingPeriod),
+          getCodeNameFn('PERIOD', row.meetingPeriod),
           row.content,
         ]);
       });
@@ -369,7 +302,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
     } catch {
       setError('엑셀 다운로드 중 오류가 발생했습니다.');
     }
-  }, [meetingBodies, getCodeName]);
+  }, [meetingBodies, getCodeNameFn]);
 
   return (
     <PageContainer

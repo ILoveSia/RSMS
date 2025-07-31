@@ -2,8 +2,7 @@
  * 직책 등록/수정/조회 다이얼로그 컴포넌트
  */
 import apiClient from '@/app/common/api/client';
-import { useReduxState } from '@/app/store/use-store';
-import type { CommonCode } from '@/app/types/common';
+import { useCommonCodes, getCodeName, type CommonCode } from '@/shared/utils/codeUtils';
 import DepartmentApi, {
   type Department as ApiDepartment,
 } from '@/domains/common/api/departmentApi';
@@ -112,27 +111,13 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   onSave,
   onChangeMode,
 }) => {
-  // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<
-    { data: CommonCode[] } | CommonCode[]
-  >('codeStore/allCodes');
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
 
   // 부서 데이터 상태
   const [departments, setDepartments] = useState<Array<{ value: string; label: string }>>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState<boolean>(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
-
-  // 공통코드 배열 추출 함수
-  const getCodesArray = (): CommonCode[] => {
-    if (!allCodes) return [];
-    if (Array.isArray(allCodes)) {
-      return allCodes;
-    }
-    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
-      return allCodes.data;
-    }
-    return [];
-  };
 
   // 공통코드 헬퍼 함수
   const getDeptCodes = () => {
@@ -148,17 +133,15 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     }
 
     // 기존 공통코드 로직 (폴백용)
-    const codes = getCodesArray();
-    return codes
+    return allCodes
       .filter(code => code.groupCode === 'DEPT' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   };
 
   const getMebGubunCodes = () => {
-    const codes = getCodesArray();
-    return codes
+    return allCodes
       .filter(code => code.groupCode === 'MEB_GUBUN' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   };
 
   // 부서 데이터 가져오기
@@ -268,27 +251,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     }
   };
 
-  // 컴포넌트 마운트 시 localStorage에서 공통코드 복원 및 부서 데이터 캐싱
+  // 컴포넌트 마운트 시 부서 데이터 캐싱
   useEffect(() => {
-    const storedCommonCodes = localStorage.getItem('commonCodes');
-
-    if (
-      storedCommonCodes &&
-      (!allCodes ||
-        (Array.isArray(allCodes) && allCodes.length === 0) ||
-        (typeof allCodes === 'object' &&
-          'data' in allCodes &&
-          (!allCodes.data || allCodes.data.length === 0)))
-    ) {
-      try {
-        const parsedCodes = JSON.parse(storedCommonCodes);
-        setAllCodes(parsedCodes);
-      } catch (error) {
-        console.error('localStorage 공통코드 복원 실패:', error);
-        localStorage.removeItem('commonCodes');
-      }
-    }
-
     // 부서 데이터 캐싱 처리
     const cachedDepartments = localStorage.getItem('cachedDepartments');
     const cacheTimestamp = localStorage.getItem('departmentsCacheTimestamp');
@@ -316,7 +280,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       // 캐시가 없거나 만료된 경우 API에서 로드
       fetchDepartments();
     }
-  }, [allCodes]);
+  }, []);
 
   // 폼 데이터 초기화 및 상세 데이터 로드
   useEffect(() => {
@@ -344,10 +308,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               } catch (deptErr) {
                 console.warn('부서명 조회 실패:', deptErr);
                 // 부서명 조회 실패 시 공통코드에서 찾기
-                const deptCode = getCodesArray().find(
-                  code => code.groupCode === 'DEPT' && code.code === positionData.writeDeptCd
-                );
-                writeDeptName = deptCode ? deptCode.codeName : positionData.writeDeptCd;
+                writeDeptName = getCodeName('DEPT', positionData.writeDeptCd);
               }
             }
           }
@@ -372,7 +333,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               ? meetingsData.map((m: any, i: any) => ({
                 id: String(i + 1),
                 ...m,
-                memberGubun: m.memberGubun === 'GUBUN01' ? 'MEG01' : m.memberGubun, // 데이터 임시 보정
+                memberGubun: convertMemberGubun(m.memberGubun), // 데이터 변환
               }))
               : [
                 {
@@ -578,7 +539,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         const userData = response as any;
         // 직급 코드를 직급명으로 변환
         const positionName = getJobRankName(userData.jobRankCd);
-        
+
         setManagers(prev =>
           prev.map(manager =>
             manager.id === managerId
@@ -625,7 +586,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     if (currentManagerId) {
       // 직급 코드를 직급명으로 변환
       const positionName = getJobRankName(selectedEmployee.jobRankCd);
-      
+
       setManagers(prev =>
         prev.map(manager =>
           manager.id === currentManagerId
@@ -645,13 +606,23 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   // 직급 코드를 직급명으로 변환하는 함수
   const getJobRankName = (jobRankCd: string): string => {
     if (!jobRankCd) return '';
+    return getCodeName('JOB_RANK', jobRankCd);
+  };
+
+  // memberGubun 코드 변환 함수
+  const convertMemberGubun = (memberGubun: string): string => {
+    if (!memberGubun) return '';
     
-    const codes = getCodesArray();
-    const jobRankCode = codes.find(code => 
-      code.groupCode === 'JOB_RANK' && code.code === jobRankCd
-    );
+    // 기존 코드 매핑
+    const codeMapping: Record<string, string> = {
+      'GUBUN01': 'MG01',
+      'GB01': 'MG01',
+      'GB02': 'MG02',
+      // 필요에 따라 추가 매핑
+    };
     
-    return jobRankCode ? jobRankCode.codeName : jobRankCd;
+    // 매핑된 코드가 있으면 변환, 없으면 원래 값 반환
+    return codeMapping[memberGubun] || memberGubun;
   };
 
   // 부서 검색 팝업 열기
@@ -997,7 +968,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell>
                         <FormControl fullWidth size='small'>
                           <Select
-                            value={meeting.memberGubun}
+                            value={(() => {
+                              const mebGubunCodes = getMebGubunCodes();
+                              const hasValue = mebGubunCodes.some(code => code.code === meeting.memberGubun);
+                              return hasValue ? meeting.memberGubun : '';
+                            })()}
                             onChange={e =>
                               handleMeetingChange(meeting.id, 'memberGubun', e.target.value)
                             }
@@ -1016,7 +991,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell sx={{ width: 120 }}>
                         <TextField
                           size='small'
-                          value={meeting.meetingPeriod}
+                          value={getCodeName('PERIOD', meeting.meetingPeriod)}
                           mode="readonly"
                           readonlyPlaceholder="자동 입력"
                           sx={{ width: 100 }}

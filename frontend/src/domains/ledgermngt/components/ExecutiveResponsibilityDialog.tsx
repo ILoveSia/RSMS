@@ -1,5 +1,4 @@
-import { useReduxState } from '@/app/store/use-store';
-import type { CommonCode } from '@/app/types/common';
+import { useCommonCodes, useGetCodeName, type CommonCode } from '@/shared/utils/codeUtils';
 import execOfficerApi from '@/domains/ledgermngt/api/executivestatusApi';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
@@ -38,29 +37,9 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const [originalDate, setOriginalDate] = useState<Date | null>(null);
   const [currentTab, setCurrentTab] = useState(0);
 
-  // Redux에서 공통코드 가져오기 (AuditItemStatusPage 방식 참고)
-  const { data: allCodesData, setData: setAllCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
-
-  // 공통코드 배열 추출
-  const currentAllCodes = React.useMemo(() => {
-    if (!allCodesData) return [];
-    if (Array.isArray(allCodesData)) {
-      return allCodesData;
-    }
-    if (typeof allCodesData === 'object' && 'data' in allCodesData && Array.isArray(allCodesData.data)) {
-      return allCodesData.data;
-    }
-    return [];
-  }, [allCodesData]);
-
-  // 직위 코드를 직위명으로 변환하는 함수 (AuditItemStatusPage 방식 적용)
-  const getCodeName = (groupCode: string, code: string | null | undefined): string => {
-    if (!code) return '';
-
-    // 공통코드 배열에서 직접 찾기
-    const matchingCode = currentAllCodes.find(item => item.groupCode === groupCode && item.code === code);
-    return matchingCode?.codeName || '';
-  };
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
+  const getCodeNameFn = useGetCodeName();
 
   // 직책 ID로 직책 상세 정보 조회
   const fetchPositionDetails = async (positionId: number) => {
@@ -87,27 +66,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     }
   };
 
-  // 공통코드 초기화 useEffect (localStorage 복원 로직)
-  useEffect(() => {
-    const storedCommonCodes = localStorage.getItem('commonCodes');
 
-    if (
-      storedCommonCodes &&
-      (!allCodesData ||
-        (Array.isArray(allCodesData) && allCodesData.length === 0) ||
-        (typeof allCodesData === 'object' &&
-          'data' in allCodesData &&
-          (!allCodesData.data || allCodesData.data.length === 0)))
-    ) {
-      try {
-        const parsedCodes = JSON.parse(storedCommonCodes);
-        setAllCodes(parsedCodes);
-      } catch (error) {
-        console.error('localStorage 공통코드 복원 실패:', error);
-        localStorage.removeItem('commonCodes');
-      }
-    }
-  }, [allCodesData, setAllCodes]);
 
   useEffect(() => {
     if (!data || !open) return;
@@ -224,7 +183,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       for (let i = 1; i < items.length; i++) {
         const getValue = (item: any, col: string) => {
           if (col === 'jobRank') {
-            return getCodeName('JOB_RANK', item[col]) || item[col] || '해당없음';
+            return getCodeNameFn('JOB_RANK', item[col]) || item[col] || '해당없음';
           }
           return item[col] || '해당없음';
         };
@@ -256,7 +215,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     const getValue = () => {
       switch (column) {
         case 'jobRank':
-          return getCodeName('JOB_RANK', item.jobRank) || item.jobRank || '해당없음';
+          return getCodeNameFn('JOB_RANK', item.jobRank) || item.jobRank || '해당없음';
         default:
           return item[column] || '해당없음';
       }
@@ -396,7 +355,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               <TextField
                                 fullWidth
                                 size='small'
-                                value={meeting.meetingPeriod || ''}
+                                value={getCodeNameFn('PERIOD', meeting.meetingPeriod || '')}
                                 disabled
                                 placeholder='개최주기'
                               />

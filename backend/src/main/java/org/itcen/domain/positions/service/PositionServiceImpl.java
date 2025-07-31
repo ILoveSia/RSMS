@@ -251,9 +251,12 @@ public class PositionServiceImpl implements PositionService {
     public List<PositionStatusDto> getPositionStatusList() {
         List<PositionStatusProjection> projections = positionRepository.findPositionStatusList();
         return projections.stream()
-                .map(p -> PositionStatusDto.builder().positionsId(p.getPositionsId())
-                        .positionsNm(p.getPositionsNm()).writeDeptNm(p.getWriteDeptNm())
-                        .ownerDeptNms(p.getOwnerDeptNms()).adminCount(p.getAdminCount()).build())
+                .map(p -> PositionStatusDto.builder()
+                        .positionsId(p.getPositionsId())
+                        .positionsNm(p.getPositionsNm())
+                        .writeDeptNm(p.getWriteDeptNm())
+                        .ownerDeptNms(p.getOwnerDeptNms())
+                        .adminCount(p.getAdminCount()).build())
                 .collect(Collectors.toList());
     }
 

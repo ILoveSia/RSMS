@@ -19,11 +19,9 @@ import ExecutiveResponsibilityDialog from '../components/ExecutiveResponsibility
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 import {
-  getCodeName,
-  extractCommonCodes,
-  type CommonCode
+  useCommonCodes,
+  getCodeNameSync,
 } from '@/shared/utils/codeUtils';
-import { useReduxState } from '@/app/store/use-store';
 interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
 }
@@ -195,17 +193,14 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [rows, setRows] = useState<ExecutiveResponsibilityRow[]>([]);
   const [allExecutiveData, setAllExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
 
-  // Redux에서 공통코드 가져오기 (AuditItemStatusPage 방식 참고)
-  const { data: allCodesData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
-
-  // 공통코드 배열 추출
-  const currentAllCodes = useMemo(() => extractCommonCodes(allCodesData), [allCodesData]);
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
 
   // API 데이터를 변환하는 함수
   const transformApiData = useCallback((data: any[]): ExecutiveResponsibilityItem[] => {
     return data.map((item: any) => {
       const jobTitleCode = item.jobTitleCd || item.positionCode;
-      const jobTitleName = getCodeName(currentAllCodes, 'JOB_RANK', jobTitleCode);
+      const jobTitleName = getCodeNameSync(allCodes, 'JOB_RANK', jobTitleCode);
 
       return {
         id: item.positionsId || 0,
@@ -221,7 +216,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         execofficer_dt: item.execofficer_dt || '해당없음'
       };
     });
-  }, [currentAllCodes]);
+  }, [allCodes]);
 
   // 에러 처리 함수
   const handleError = useCallback((error: any, message: string) => {

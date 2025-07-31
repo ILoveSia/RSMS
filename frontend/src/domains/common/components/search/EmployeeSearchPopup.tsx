@@ -8,6 +8,7 @@ import { Dialog } from '@/shared/components/modal';
 import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import type { DataGridColumn } from '@/shared/types/common';
+import { getCodeName, useCommonCodes } from '@/shared/utils/codeUtils';
 import {
   Box,
   TextField
@@ -49,29 +50,12 @@ interface UserResponse {
   updatedAt: string;
 }
 
-// Local storage에서 공통코드 가져오는 함수
-function getCommonCodesFromLocalStorage(): Record<
-  string,
-  { code: string; codeName: string; groupCode: string }[]
-> {
-  try {
-    const codes = localStorage.getItem('commonCodes');
-    if (!codes) return {};
-    return JSON.parse(codes);
-  } catch (e) {
-    console.error('LocalStorage commonCodes 파싱 오류:', e);
-    return {};
-  }
-}
-
 const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   open,
   onClose,
   onSelect,
   title = '사원 검색',
 }) => {
-  // 공통코드 Local storage에서 읽기
-  const usableGroupedCodes = getCommonCodesFromLocalStorage();
 
   // 검색 조건 상태
   const [searchConditions, setSearchConditions] = useState({
@@ -89,18 +73,18 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // 코드명 조회 함수 (Local storage 데이터 사용 - 직급용)
-  const getCodeName = (groupCode: string, code: string | null | undefined): string => {
-    if (!code) return '';
-    const codeList = usableGroupedCodes[groupCode];
-    if (!codeList || !Array.isArray(codeList)) {
-      return code;
-    }
-    const codeItem = codeList.find(item => item.code === code);
-    if (!codeItem) {
-      return code;
-    }
-    return codeItem.codeName;
-  };
+  // const getCodeName = (groupCode: string, code: string | null | undefined): string => {
+  //   if (!code) return '';
+  //   const codeList = usableGroupedCodes[groupCode];
+  //   if (!codeList || !Array.isArray(codeList)) {
+  //     return code;
+  //   }
+  //   const codeItem = codeList.find(item => item.code === code);
+  //   if (!codeItem) {
+  //     return code;
+  //   }
+  //   return codeItem.codeName;
+  // };
 
   // 부서명 조회 함수 (DepartmentApi 사용)
   const getDepartmentName = async (deptCd: string): Promise<string> => {

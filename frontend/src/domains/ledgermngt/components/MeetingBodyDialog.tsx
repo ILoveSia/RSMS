@@ -1,9 +1,8 @@
 /**
  * 회의체 등록/수정/조회 다이얼로그 컴포넌트
  */
-import { useReduxState } from '@/app/store/use-store';
 import type { MeetingBody } from '@/app/types';
-import type { CommonCode } from '@/app/types/common';
+import { useCommonCodes, type CommonCode } from '@/shared/utils/codeUtils';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button, Select } from '@/shared/components/ui';
@@ -34,36 +33,20 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
   const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
 
-  // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
-
-  // 공통코드 배열 추출 함수
-  const getCodesArray = (): CommonCode[] => {
-    if (!allCodes) {
-      return [];
-    }
-    if (Array.isArray(allCodes)) {
-      return allCodes;
-    }
-    if ('data' in allCodes && Array.isArray(allCodes.data)) {
-      return allCodes.data;
-    }
-    return [];
-  };
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
 
   // 공통코드 헬퍼 함수
   const getMeetingBodyCodes = () => {
-    const codes = getCodesArray();
-    return codes
+    return allCodes
       .filter(code => code.groupCode === 'MEETING_BODY' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   };
 
   const getPeriodCodes = () => {
-    const codes = getCodesArray();
-    return codes
+    return allCodes
       .filter(code => code.groupCode === 'PERIOD' && code.useYn === 'Y')
-      .sort((a, b) => a.sortOrder - b.sortOrder);
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   };
 
   useEffect(() => {
@@ -91,7 +74,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
 
   // Select 컴포넌트용 변경 핸들러
   const handleSelectChange = (field: keyof MeetingBody) => (value: string | number | string[] | number[]) => {
-    
+
     setFormData(prev => {
       const newData = {
         ...prev,

@@ -2,8 +2,7 @@
  * 임원 현황 페이지
  * 책무구조 원장 관리 - 임원 현황
  */
-import { useReduxState } from '@/app/store/use-store';
-import type { CommonCode } from '@/app/types/common';
+import { useCommonCodes, type CommonCode } from '@/shared/utils/codeUtils';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -51,22 +50,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // 성공 알림 상태
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const { data: allCodes, setData: setAllCodes } = useReduxState<
-    { data: CommonCode[] } | CommonCode[]
-  >('codeStore/allCodes');
-
-
-  // 공통코드 배열 추출 함수
-  const getCodesArray = (): CommonCode[] => {
-    if (!allCodes) return [];
-    if (Array.isArray(allCodes)) {
-      return allCodes;
-    }
-    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
-      return allCodes.data;
-    }
-    return [];
-  };
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
 
 
   const fetchExecutiveStatus = useCallback(async () => {

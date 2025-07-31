@@ -1,6 +1,5 @@
 import apiClient from '@/app/common/api/client';
-import { useReduxState } from '@/app/store/use-store';
-import type { CommonCode } from '@/app/types/common';
+import { useCommonCodes, useGetCodeName, type CommonCode } from '@/shared/utils/codeUtils';
 import type { EmployeeSearchResult } from '@/domains/common/components/search/';
 import EmployeeSearchpopup from '@/domains/common/components/search/EmployeeSearchPopup';
 import execOfficerApi from '@/domains/ledgermngt/api/executivestatusApi';
@@ -55,55 +54,9 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const [positionDetailsLoading, setPositionDetailsLoading] = useState(false);
   const [originalDate, setOriginalDate] = useState<Date | null>(null);
 
-  // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
-
-  // 공통코드 배열 추출 함수
-  const getCodesArray = (): CommonCode[] => {
-    if (!allCodes) return [];
-    if (Array.isArray(allCodes)) {
-      return allCodes;
-    }
-    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
-      return allCodes.data;
-    }
-    return [];
-  };
-
-  // 직위 코드를 직위명으로 변환하는 함수 (PositionDialog.tsx 패턴 적용)
-  const getCodeName = (groupCode: string, code: string | null | undefined): string => {
-    if (!code) return '';
-
-    // 공통코드 배열에서 직접 찾기
-    const codes = getCodesArray();
-    const matchingCode = codes.find(item => item.groupCode === groupCode && item.code === code);
-
-    if (matchingCode) {
-      return matchingCode.codeName;
-    }
-
-    // 직위 코드 매핑 (fallback)
-    const jobRankMapping: Record<string, string> = {
-      'JR001': '사원',
-      'JR002': '대리',
-      'JR003': '과장',
-      'JR004': '차장',
-      'JR005': '부장',
-      'JR006': '이사',
-      'JR007': '상무',
-      'JR008': '전무',
-      'JR009': '부사장',
-      'JR010': '사장',
-      'JR011': '부회장',
-      'JR012': '회장'
-    };
-
-    if (groupCode === 'JOB_RANK' && code in jobRankMapping) {
-      return jobRankMapping[code];
-    }
-
-    return code;
-  };
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
+  const getCodeNameFn = useGetCodeName();
 
   // 직책 ID로 직책 상세 정보 조회
   const fetchPositionDetails = async (positionId: number) => {
@@ -148,27 +101,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     }
   };
 
-  // 공통코드 초기화 useEffect (PositionDialog.tsx 패턴 적용)
-  useEffect(() => {
-    const storedCommonCodes = localStorage.getItem('commonCodes');
 
-    if (
-      storedCommonCodes &&
-      (!allCodes ||
-        (Array.isArray(allCodes) && allCodes.length === 0) ||
-        (typeof allCodes === 'object' &&
-          'data' in allCodes &&
-          (!allCodes.data || allCodes.data.length === 0)))
-    ) {
-      try {
-        const parsedCodes = JSON.parse(storedCommonCodes);
-        setAllCodes(parsedCodes);
-      } catch (error) {
-        console.error('localStorage 공통코드 복원 실패:', error);
-        localStorage.removeItem('commonCodes');
-      }
-    }
-  }, [allCodes, setAllCodes]);
 
   useEffect(() => {
     if (executive && open) {
@@ -333,9 +266,9 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
             <TextField
               label="직위"
               value={formData.employee?.jobRankCd
-                ? getCodeName('JOB_RANK', formData.employee.jobRankCd)
+                ? getCodeNameFn('JOB_RANK', formData.employee.jobRankCd)
                 : formData.jobRankCd
-                  ? getCodeName('JOB_RANK', formData.jobRankCd)
+                  ? getCodeNameFn('JOB_RANK', formData.jobRankCd)
                   : ''}
               mode="readonly"
               sx={{ flex: 1 }}
@@ -472,7 +405,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                         <TextField
                           fullWidth
                           size='small'
-                          value={meeting.meetingPeriod || ''}
+                          value={getCodeNameFn('PERIOD', meeting.meetingPeriod || '')}
                           mode="readonly"
                           readonlyPlaceholder="개최주기"
                         />

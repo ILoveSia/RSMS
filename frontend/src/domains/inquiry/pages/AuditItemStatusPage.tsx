@@ -12,7 +12,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { useReduxState } from '@/app/store/use-store';
-import { 
+import {
   Search as SearchIcon,
   Person as PersonIcon,
   Edit as EditIcon
@@ -23,13 +23,13 @@ import { getAuditItemStatusList, type AuditItemStatusResponse } from '../api/aud
 import { assignAuditor, type AuditorAssignmentRequest } from '../api/auditorApi';
 import AuditorAssignmentDialog from '../components/AuditorAssignmentDialog';
 import DepartmentApi from '@/domains/common/api/departmentApi';
-import { 
-  getCodeName, 
-  getRoleTypeName, 
-  getDepartmentName, 
+import {
+  useGetCodeName,
+  useGetRoleTypeName,
+  getDepartmentName,
   extractCommonCodes,
   type CommonCode,
-  type Department 
+  type Department
 } from '@/shared/utils/codeUtils';
 
 // 항목별 점검 현황 데이터 인터페이스
@@ -68,7 +68,7 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
     auditResultStatusCd: response.auditResultStatusCd || '',
     roleSumm: response.roleSumm || '',
     auditDoneDt: response.auditDoneDt || '',
-         auditDetailcontent: response.auditDetailcontent || '',
+    auditDetailcontent: response.auditDetailcontent || '',
   };
 };
 
@@ -77,14 +77,14 @@ interface IAuditItemStatusPageProps {
 }
 
 const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.Element => {
-  
+
   // 검색 조건 상태
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   const [selectedImpPlStatus, setSelectedImpPlStatus] = useState<string>('ALL');
 
   // Redux에서 공통코드 가져오기
   const { data: allCodesData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
-  
+
   // 공통코드 배열 추출
   const allCodes = extractCommonCodes(allCodesData);
 
@@ -117,25 +117,9 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     };
     loadDepartments();
   }, []);
-
-  // 공통코드 로드 확인
-  useEffect(() => {
-    console.log('allCodesData:', allCodesData);
-    console.log('allCodes:', allCodes);
-    if (allCodes && allCodes.length > 0) {
-      console.log('로드된 공통코드 개수:', allCodes.length);
-      console.log('FIELD_TYPE 코드:', allCodes.filter(c => c.groupCode === 'FIELD_TYPE'));
-      console.log('COM_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'COM_ROLE_TYPE'));
-      console.log('UNI_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'UNI_ROLE_TYPE'));
-      
-      // 첫 번째 공통코드 구조 확인
-      if (allCodes[0]) {
-        console.log('첫 번째 공통코드 구조:', allCodes[0]);
-      }
-    } else {
-      console.log('공통코드가 로드되지 않았습니다.');
-    }
-  }, [allCodes, allCodesData]);
+  // Hook을 컴포넌트 레벨에서 호출
+  const getCodeNameFn = useGetCodeName();
+  const getRoleTypeNameFn = useGetRoleTypeName();
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<AuditItemRow>[] = [
@@ -169,13 +153,13 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       field: 'fieldTypeCd',
       headerName: '항목구분',
       width: 120,
-      renderCell: ({ value }) => getCodeName(allCodes, 'FIELD_TYPE', value as string),
+      renderCell: ({ value }) => getCodeNameFn('FIELD_TYPE', value as string),
     },
     {
       field: 'roleTypeCd',
       headerName: '직무구분',
       width: 120,
-      renderCell: ({ value }) => getRoleTypeName(allCodes, value as string),
+      renderCell: ({ value }) => getRoleTypeNameFn(value as string),
     },
     {
       field: 'icTask',
@@ -197,14 +181,14 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
           <Chip
             label={
               value === 'SUITABLE' ? '적정' :
-              value === 'INADEQUATE' ? '미흡' :
-              value === 'EXCLUDED' ? '제외' :
-              value === 'IN_PROGRESS' ? '진행중' : value
+                value === 'INADEQUATE' ? '미흡' :
+                  value === 'EXCLUDED' ? '제외' :
+                    value === 'IN_PROGRESS' ? '진행중' : value
             }
             color={
               value === 'SUITABLE' ? 'success' :
-              value === 'INADEQUATE' ? 'error' :
-              value === 'EXCLUDED' ? 'default' : 'primary'
+                value === 'INADEQUATE' ? 'error' :
+                  value === 'EXCLUDED' ? 'default' : 'primary'
             }
             size="small"
           />
@@ -233,23 +217,23 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
   const handleFetchAuditItems = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       console.log('검색 조건:', { selectedLedgerOrder, selectedImpPlStatus });
-      
+
       // 실제 API 호출
       const apiResponse = await getAuditItemStatusList({
         ledgerOrdersHod: selectedLedgerOrder === 'ALL' ? '' : selectedLedgerOrder,
         auditResultStatusCd: selectedImpPlStatus === 'ALL' ? '' : selectedImpPlStatus
       });
-      
+
       console.log('API Response:', apiResponse);
       console.log('API Response type:', typeof apiResponse);
       console.log('API Response is array:', Array.isArray(apiResponse));
       console.log('API Response length:', apiResponse?.length);
-      
+
       if (apiResponse && Array.isArray(apiResponse)) {
         console.log('First item:', apiResponse[0]);
-        
+
         // API 응답을 화면용 데이터로 변환
         const convertedData = apiResponse.map(convertApiResponseToRow);
         console.log('Converted Data:', convertedData);
@@ -259,7 +243,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         console.error('API 응답이 배열이 아닙니다:', apiResponse);
         setAuditItemRows([]);
       }
-      
+
     } catch (error) {
       console.error('항목별 점검 현황 조회 오류:', error);
       setErrorMessage('항목별 점검 현황 조회 중 오류가 발생했습니다.');
@@ -285,7 +269,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
   const handleExcelDownload = async () => {
     try {
       console.log('항목별 점검 현황 엑셀 다운로드 시작');
-      
+
       // 현재 표시된 데이터를 엑셀 형태로 변환
       const excelData = auditItemRows.map(row => ({
         '부서장내부통제항목ID': row.hodIcItemId,
@@ -300,14 +284,14 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         '점검결과': row.auditResultStatusCd,
         '책무 개요': row.roleSumm,
         '이행완료 예정일자': row.auditDoneDt,
-                 '점검 세부내용': row.auditDetailcontent,
+        '점검 세부내용': row.auditDetailcontent,
       }));
-      
+
       console.log('엑셀 다운로드 데이터:', excelData);
-      
+
       // TODO: 실제 엑셀 파일 생성 및 다운로드 로직 구현
       // 예: XLSX 라이브러리 사용하여 파일 생성 후 다운로드
-      
+
     } catch (error) {
       console.error('엑셀 다운로드 오류:', error);
       setErrorMessage('엑셀 다운로드 중 오류가 발생했습니다.');
@@ -459,8 +443,8 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             disabled={!selectedItemIds.length || isLoading}
             color="secondary"
             startIcon={<PersonIcon />}
-            sx={{ 
-              color: 'white !important', 
+            sx={{
+              color: 'white !important',
               '& .MuiSvgIcon-root': { color: 'white' },
               '& .MuiButton-root': { color: 'white !important' }
             }}
@@ -474,8 +458,8 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             disabled={!selectedItemIds.length || isLoading}
             color="success"
             startIcon={<EditIcon />}
-            sx={{ 
-              color: 'white !important', 
+            sx={{
+              color: 'white !important',
               '& .MuiSvgIcon-root': { color: 'white' },
               '& .MuiButton-root': { color: 'white !important' }
             }}
@@ -485,9 +469,9 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         </Box>
 
         {/* 데이터 그리드 */}
-        <Box sx={{ 
-          width: '100%', 
-          flex: 1 
+        <Box sx={{
+          width: '100%',
+          flex: 1
         }}>
           <DataGrid
             data={auditItemRows}
@@ -523,18 +507,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               }
             }}
           />
-          
-          {/* 디버깅 정보 */}
-          {!isLoading && (
-            <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', fontSize: '12px', color: '#666' }}>
-              <div>Grid 데이터 개수: {auditItemRows.length}</div>
-              <div>선택된 항목: {selectedItemIds.length}개</div>
-              <div>공통코드 로드 상태: {allCodes ? `${allCodes.length}개 로드됨` : '로드되지 않음'}</div>
-              {auditItemRows.length > 0 && (
-                <div>첫 번째 행 데이터: fieldTypeCd={auditItemRows[0].fieldTypeCd}, roleTypeCd={auditItemRows[0].roleTypeCd}</div>
-              )}
-            </Box>
-          )}
+
         </Box>
 
         {/* 점검자 지정 다이얼로그 */}
