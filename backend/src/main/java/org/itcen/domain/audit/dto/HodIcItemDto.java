@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.itcen.domain.audit.entity.HodIcItem;
 
+import java.time.LocalDate;
+
 /**
  * 부서장 내부통제 항목 DTO
  * 
@@ -23,12 +25,22 @@ public class HodIcItemDto {
     private String responsibilityContent; // 책무 내용
     private Long responsibilityDetailId; // 책무상세 ID
     private String responsibilityDetailContent; // 책무상세 내용
+    private String ledgerOrder;      // 원장순서
+    private String orderStatus;      // 순서상태
+    private Long approvalId;         // 승인 ID
+    private LocalDate dateExpired;   // 만료일자
     private String fieldTypeCd;      // 항목구분
+    private String roleTypeCd;       // 직무구분
+    private String deptCd;           // 부서코드
     private String icTask;           // 내부통제업무
+    private String measureId;        // 조치 ID
     private String measureType;      // 조치유형
+    private String measureDesc;      // 조치활동
     private String periodCd;         // 주기
+    private String supportDoc;       // 관련근거
     private String checkPeriod;      // 점검시기
-    private String checkWay;         // 점검사항
+    private String checkWay;         // 점검방법
+    private String proofDoc;         // 증빙자료
 
     /**
      * Entity를 DTO로 변환
@@ -45,12 +57,22 @@ public class HodIcItemDto {
                 .responsibilityDetailId(entity.getResponsibilityDetailId())
                 .responsibilityDetailContent(entity.getResponsibilityDetail() != null ? 
                     entity.getResponsibilityDetail().getResponsibilityDetailContent() : "")
+                .ledgerOrder(entity.getLedgerOrder())
+                .orderStatus(entity.getOrderStatus())
+                .approvalId(entity.getApprovalId())
+                .dateExpired(entity.getDateExpired())
                 .fieldTypeCd(entity.getFieldTypeCd())
+                .roleTypeCd(entity.getRoleTypeCd())
+                .deptCd(entity.getDeptCd())
                 .icTask(entity.getIcTask())
+                .measureId(entity.getMeasureId())
                 .measureType(entity.getMeasureType())
+                .measureDesc(entity.getMeasureDesc())
                 .periodCd(entity.getPeriodCd())
+                .supportDoc(entity.getSupportDoc())
                 .checkPeriod(entity.getCheckPeriod())
                 .checkWay(entity.getCheckWay())
+                .proofDoc(entity.getProofDoc())
                 .build();
     }
 }

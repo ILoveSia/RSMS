@@ -38,7 +38,7 @@ interface AuditProgRow {
   auditTeamLeader: string;    // 점검팀장
   auditTeamMembers: string;   // 점검팀원
   targetItemCount: number;    // 대상 점검항목수
-  auditStatusName: string;    // 점검상태명
+  auditStatusCd: string;    // 점검상태명
   remarks?: string;           // 비고
   createdAt: string;          // 등록일자
 }
@@ -62,7 +62,7 @@ const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditPr
     auditTeamLeader: response.auditTeamLeader || '', // null 방지
     auditTeamMembers: response.auditTeamMembers || '', // null 방지
     targetItemCount: response.targetItemCount || 0,
-    auditStatusName: response.auditStatusName || '', // null 방지
+    auditStatusCd: response.auditStatusCd || '', // null 방지
     remarks: response.remarks || '',
     createdAt: response.createdAt || '', // null 방지
   };
@@ -191,16 +191,20 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       align: 'center' as const,
     },
     {
-      field: 'auditStatusName',
+      field: 'auditStatusCd',
       headerName: '점검상태',
       width: 90,
       renderCell: ({ value }) => (
         <Chip
-          label={value}
+          label={
+            value === 'AA03' ? '점검마감' :
+            value === 'AA02' ? '점검진행' :
+            value === 'AA01' ? '점검신청' : value
+          }
           color={
-            value === '완료' ? 'success' :
-            value === '진행중' ? 'primary' :
-            value === '계획' ? 'default' : 'warning'
+            value === 'AA03' ? 'success' :
+            value === 'AA02' ? 'primary' :
+            value === 'AA01' ? 'default' : 'warning'
           }
           size="small"
         />
@@ -314,7 +318,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         auditTitle: data.auditTitle, // 점검회차명 추가
         auditStartDt: data.startDate ? data.startDate.toISOString().split('T')[0] : '',
         auditEndDt: data.endDate ? data.endDate.toISOString().split('T')[0] : '',
-        auditStatusCd: 'AUDIT_APPLY', // 기본값: 점검신청
+        auditStatusCd: 'AA01', // 기본값: 점검신청
         auditContents: data.remarks,
         targetItemIds: data.targetItemIds || [], // 호환성 유지
         targetItemData: data.targetItemData || [] // 새로운 방식
@@ -384,7 +388,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       '점검팀장': row.auditTeamLeader,
       '점검팀원': row.auditTeamMembers,
       '대상점검항목수': row.targetItemCount,
-      '점검상태': row.auditStatusName,
+      '점검상태': row.auditStatusCd,
       '비고': row.remarks,
       '등록일자': row.createdAt,
     }));

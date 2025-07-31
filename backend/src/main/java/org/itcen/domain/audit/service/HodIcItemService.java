@@ -19,4 +19,12 @@ public interface HodIcItemService {
      * @return 내부통제 항목 DTO 목록
      */
     List<HodIcItemDto> getItemsByLedgerOrdersHod(String ledgerOrdersHod);
+
+    /**
+     * ID로 HOD IC ITEM 상세 정보 조회
+     * 
+     * @param hodIcItemId 부서장 내부통제 항목 ID
+     * @return HOD IC ITEM DTO
+     */
+    HodIcItemDto getHodIcItemById(Long hodIcItemId);
 }

@@ -101,6 +101,23 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
         this.impPlStatusCd = impPlStatusCd;
     }
 
+    /**
+     * 점검결과 업데이트
+     * 점검결과작성 팝업에서 사용
+     */
+    public void updateAuditResult(
+            String auditResultStatusCd, 
+            String auditResult, 
+            String beforeAuditYn, 
+            String auditDetailContent, 
+            LocalDate auditDoneDt) {
+        this.auditResultStatusCd = auditResultStatusCd;
+        this.auditResult = auditResult;
+        this.beforeAuditYn = beforeAuditYn;
+        this.auditDetailContent = auditDetailContent;
+        this.auditDoneDt = auditDoneDt;
+    }
+
     // HodIcItem과의 연관관계 설정 (임시 주석처리 - 삭제 문제 해결 후 복원)
     // @ManyToOne(fetch = FetchType.LAZY)
     // @JoinColumn(name = "hod_ic_item_id", insertable = false, updatable = false)

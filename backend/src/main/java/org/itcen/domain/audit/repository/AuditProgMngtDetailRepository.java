@@ -51,4 +51,9 @@ public interface AuditProgMngtDetailRepository extends JpaRepository<AuditProgMn
      * 점검결과상태코드로 상세 목록 조회
      */
     List<AuditProgMngtDetail> findByAuditResultStatusCd(String auditResultStatusCd);
+    
+    /**
+     * 점검계획관리상세 ID 목록으로 조회
+     */
+    List<AuditProgMngtDetail> findByAuditProgMngtDetailIdIn(List<Long> auditProgMngtDetailIds);
 }

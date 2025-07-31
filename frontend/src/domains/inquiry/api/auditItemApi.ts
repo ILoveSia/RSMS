@@ -8,6 +8,7 @@ import { apiClient } from '@/app/common/api/client';
 // 점검 현황(항목별) 조회 응답 타입
 export interface AuditItemStatusResponse {
   hodIcItemId: number;              // 부서장 내부통제 항목 ID
+  auditProgMngtDetailId: number;    // 점검 계획관리 상세 ID
   responsibilityContent: string;    // 책무 내용
   responsibilityDetailContent: string; // 책무상세 내용
   positionsNm: string;              // 직책명
@@ -15,13 +16,15 @@ export interface AuditItemStatusResponse {
   fieldTypeCd: string;              // 항목 구분 코드
   roleTypeCd: string;               // 직무 구분 코드
   icTask: string;                   // 내부통제업무
-  auditMenId: string;               // 점검자 ID
+  auditMenId: string;               // 점검자 ID (사원명 또는 ID)
   auditResultStatusCd: string;      // 점검 결과 상태 코드
   roleSumm: string;                 // 책무 개요
   ledgerOrdersHod: string;          // 원장차수
   auditResult: string;              // 점검결과
   auditDoneDt: string;              // 이행완료 예정일자
   auditDetailcontent: string;      // 점검 세부내용
+  auditDoneContent: string;         // 이행결과보고
+  auditStatusCd: string;            // 점검상태코드 (audit_prog_mngt 테이블)
 }
 
 // 점검 현황(항목별) 조회 요청 파라미터

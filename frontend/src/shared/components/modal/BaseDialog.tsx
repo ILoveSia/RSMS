@@ -79,6 +79,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography
             variant="h6"
+            component="span"
             sx={{
               fontWeight: 600,
               color: 'var(--bank-text-primary)',
@@ -103,6 +104,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
       </DialogTitle>
       <DialogContent
         dividers
+        component="div"
         sx={{
           p: 3,
           paddingX: 5,

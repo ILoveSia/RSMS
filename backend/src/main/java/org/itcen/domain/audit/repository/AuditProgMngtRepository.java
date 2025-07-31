@@ -64,13 +64,14 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
             COALESCE(hi.fieldTypeCd, ''),
             COALESCE(hi.roleTypeCd, ''),
             COALESCE(hi.icTask, ''),
-            COALESCE(apd.auditMenId, ''),
+            COALESCE(emp.empName, apd.auditMenId, ''),
             COALESCE(apd.auditResultStatusCd, ''),
             COALESCE(rrs.roleSumm, ''),
             COALESCE(apm.ledgerOrdersHod, ''),
             COALESCE(apd.auditResult, ''),
             COALESCE(CAST(apd.auditDoneDt AS string), ''),
-            COALESCE(apd.auditDetailContent, '')
+            COALESCE(apd.auditDetailContent, ''),
+            COALESCE(apm.auditStatusCd, '')
         )
         FROM org.itcen.domain.audit.entity.AuditProgMngt apm
         INNER JOIN org.itcen.domain.audit.entity.AuditProgMngtDetail apd ON apm.auditProgMngtId = apd.auditProgMngtId
@@ -79,6 +80,7 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
         LEFT JOIN org.itcen.domain.responsibility.entity.ResponsibilityDetail rd ON hi.responsibilityDetailId = rd.responsibilityDetailId
         LEFT JOIN org.itcen.domain.audit.entity.RoleRespStatus rrs ON r.id = rrs.responsibilityId
         LEFT JOIN org.itcen.domain.positions.entity.Position p ON rrs.positionsId = p.positionsId
+        LEFT JOIN org.itcen.domain.employee.entity.Employee emp ON apd.auditMenId = emp.empNo
         WHERE (:ledgerOrdersHod IS NULL OR :ledgerOrdersHod = '' OR apm.ledgerOrdersHod = :ledgerOrdersHod)
         AND (:auditResultStatusCd IS NULL OR :auditResultStatusCd = '' OR apd.auditResultStatusCd = :auditResultStatusCd)
         ORDER BY apm.auditProgMngtCd, apd.auditProgMngtDetailId
