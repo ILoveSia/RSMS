@@ -33,6 +33,7 @@ public class ExecutiveResponsibilityDto {
     private String dualYn; // 겸직여부
     private String dualDetails; // 겸직사항
     private String empNo;
+    private String execofficer_dt;
 
     @Data
     @Builder

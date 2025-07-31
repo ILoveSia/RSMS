@@ -63,7 +63,7 @@ public class ExecutiveResponsibilityService {
     public List<ExecutiveResponsibilityDto> getAll() {
         String sql = "SELECT   p.positions_id,   p.positions_nm,   e.execofficer_id, " +
                 "emp.emp_name,   emp.position_code , r.responsibility_content,rd.responsibility_detail_content, " +
-                "rd.responsibility_mgt_sts ,rd.responsibility_rel_evid, rrs.role_summ, e.dual_yn, e.dual_details,emp.emp_no  FROM positions p "
+                "rd.responsibility_mgt_sts ,rd.responsibility_rel_evid, rrs.role_summ, e.dual_yn, e.dual_details,emp.emp_no,e.execofficer_dt  FROM positions p "
                 +
                 "LEFT JOIN execofficer e ON p.positions_id = e.positions_id " +
                 "left join role_resp_status rrs on rrs.positions_id =p.positions_id " +
@@ -89,6 +89,7 @@ public class ExecutiveResponsibilityService {
                 dto.setDualYn((String) row[10]); // dual_yn (겸직여부)
                 dto.setDualDetails((String) row[11]); // dual_details (겸직사항)
                 dto.setEmpNo((String) row[12]); // emp_no
+                dto.setExecofficer_dt((String) row[13]); // execofficer_dt
                 return dto;
             } catch (Exception e) {
                 log.error("Error processing row: {}", row, e);

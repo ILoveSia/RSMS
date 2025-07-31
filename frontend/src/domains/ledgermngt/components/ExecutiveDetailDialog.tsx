@@ -172,6 +172,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
 
   useEffect(() => {
     if (executive && open) {
+      setOriginalDate(executive.execofficer_dt ? new Date(executive.execofficer_dt) : null)
       // employee 테이블 구조에 맞게 수정
       // empId는 사번이므로 그대로 사용
       // dualYn 필드를 hasConcurrentPosition으로 매핑하여 라디오박스에 표시되도록 함
@@ -345,7 +346,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               mode={mode === 'view' ? 'readonly' : 'editable'}
               onChange={(date) => {
                 setOriginalDate(date)
-                setFormData((prev: any) => ({ ...prev, execofficer_dt: date || new Date() }));
+                setFormData((prev: any) => ({ ...prev, execofficer_dt: date || '9999-12-31' }));
               }}
               onClose={() => {
                 setOriginalDate(null);

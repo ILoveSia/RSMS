@@ -59,32 +59,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
 
     // 공통코드 배열에서 직접 찾기
     const matchingCode = currentAllCodes.find(item => item.groupCode === groupCode && item.code === code);
-
-    if (matchingCode) {
-      return matchingCode.codeName;
-    }
-
-    // 직위 코드 매핑 (fallback)
-    const jobRankMapping: Record<string, string> = {
-      'JR001': '사원',
-      'JR002': '대리',
-      'JR003': '과장',
-      'JR004': '차장',
-      'JR005': '부장',
-      'JR006': '이사',
-      'JR007': '상무',
-      'JR008': '전무',
-      'JR009': '부사장',
-      'JR010': '사장',
-      'JR011': '부회장',
-      'JR012': '회장'
-    };
-
-    if (groupCode === 'JOB_RANK' && code in jobRankMapping) {
-      return jobRankMapping[code];
-    }
-
-    return code;
+    return matchingCode?.codeName || '';
   };
 
   // 직책 ID로 직책 상세 정보 조회
@@ -144,15 +119,14 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     // 그룹화된 데이터인지 확인
     const isGrouped = data.items && Array.isArray(data.items);
     const firstItem = isGrouped ? data.items[0] || {} : data;
-
     // 공통 데이터 설정
     const commonData = {
       ...data,
       positionsNm: data.position || '',
-      executiveName: firstItem.executiveName || '',
-      hasConcurrentPosition: firstItem.hasConcurrentPosition || 'N',
-      concurrentPosition: firstItem.concurrentPosition || '',
-      jobRankCd: isGrouped ? firstItem.jobTitle || '' : data.jobRank || '',
+      executiveName: firstItem.empName || '',
+      hasConcurrentPosition: firstItem.dualYn || 'N',
+      concurrentPosition: firstItem.dualDetails || '',
+      jobRankCd:  isGrouped ? firstItem.jobTitle || '' : data.jobRank || '',
       isGrouped,
       ...(isGrouped && {
         groupItems: data.items,
@@ -164,7 +138,6 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         deptName: data.deptName || ''
       })
     };
-
     setFormData(commonData);
 
     // 직책 상세 정보 조회
@@ -203,7 +176,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       <Box sx={{ display: 'flex', gap: 2 }}>
         <TextField
           label="직위"
-          value={getCodeName('JOB_RANK', formData.jobRankCd) || ''}
+          value={formData.jobRankCd || ''}
           disabled={true}
           mode='readonly'
           sx={{ flex: 1 }}

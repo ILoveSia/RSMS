@@ -40,6 +40,7 @@ interface ExecutiveResponsibilityItem {
   responsibilityDetail?: string; // 책무 세부내용
   managementDuty?: string;   // 책무이행을 위한 주요 관리의무
   relatedBasis?: string;     // 관련근거
+  execofficer_dt?: string;     // 현 직책 부여일
 }
 
 // 그룹화된 데이터
@@ -49,6 +50,7 @@ interface ExecutiveResponsibilityRow {
   items: ExecutiveResponsibilityItem[]; // 해당 직책의 모든 데이터
   count: number;             // 데이터 개수
   empName: string;
+  execofficer_dt: string;
 }
 
 
@@ -78,7 +80,8 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       position,
       items,
       count: items.length,
-      empName: items[0].empName || '해당없음'
+      empName: items[0].empName || '해당없음',
+      execofficer_dt: items[0].execofficer_dt || '해당없음'
     }));
   };
 
@@ -214,7 +217,8 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
         responsibilityOverview: item.roleSumm || '해당없음',
         responsibilityDetail: item.responsibilityDetailContent || '해당없음',
         managementDuty: item.responsibilityMgtSts || '해당없음',
-        relatedBasis: item.responsibilityRelEvid || '해당없음'
+        relatedBasis: item.responsibilityRelEvid || '해당없음',
+        execofficer_dt: item.execofficer_dt || '해당없음'
       };
     });
   }, [currentAllCodes]);

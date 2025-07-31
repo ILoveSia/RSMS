@@ -74,7 +74,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setError(null);
     try {
       const data = await execOfficerApi.getAll();
-      console.log('data', data);
       setRows(data);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');

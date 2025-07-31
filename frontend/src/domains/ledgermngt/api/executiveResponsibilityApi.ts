@@ -10,6 +10,7 @@ export interface ExecutiveResponsibility {
   responsibilityDetail: string; // 책무 세부내용
   managementDuty: string;    // 책무이행을 위한 주요 관리의무
   relatedBasis: string;      // 관련근거
+  execofficer_dt: string;     // 현 직책 부여일
 }
 
 export interface ExecutiveResponsibilitySearchParams {
