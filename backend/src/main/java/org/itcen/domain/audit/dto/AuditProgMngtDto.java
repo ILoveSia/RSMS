@@ -114,6 +114,22 @@ public class AuditProgMngtDto {
      * Entity를 DTO로 변환
      */
     public static AuditProgMngtDto fromEntity(AuditProgMngt entity) {
+        // 점검 대상 상세 정보 변환
+        List<TargetItemData> targetItemDataList = entity.getDetails() != null ? 
+            entity.getDetails().stream()
+                .map(detail -> TargetItemData.builder()
+                    .hodIcItemId(detail.getHodIcItemId())
+                    .responsibilityId(detail.getResponsibilityId())
+                    .responsibilityDetailId(detail.getResponsibilityDetailId())
+                    .build())
+                .collect(java.util.stream.Collectors.toList()) : 
+            new java.util.ArrayList<>();
+
+        // targetItemIds 생성
+        List<Long> targetItemIds = targetItemDataList.stream()
+            .map(TargetItemData::getHodIcItemId)
+            .collect(java.util.stream.Collectors.toList());
+
         return AuditProgMngtDto.builder()
                 .auditProgMngtId(entity.getAuditProgMngtId())
                 .auditProgMngtCd(entity.getAuditProgMngtCd())
@@ -123,6 +139,8 @@ public class AuditProgMngtDto {
                 .auditEndDt(entity.getAuditEndDt())
                 .auditStatusCd(entity.getAuditStatusCd())
                 .auditContents(entity.getAuditContents())
+                .targetItemIds(targetItemIds)
+                .targetItemData(targetItemDataList)
                 .build();
     }
 

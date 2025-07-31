@@ -11,6 +11,7 @@ import org.itcen.domain.positions.dto.PositionDetailDto;
 import org.itcen.domain.positions.dto.PositionMeetingDto;
 import org.itcen.domain.positions.dto.PositionStatusDto;
 import org.itcen.domain.positions.dto.PositionUpdateRequestDto;
+import org.itcen.domain.positions.dto.ExecutiveInfoDto;
 import org.itcen.domain.positions.service.PositionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -131,6 +132,16 @@ public class PositionController {
             @PathVariable("id") Long id) {
         List<PositionMeetingDto> meetings = positionService.getPositionMeetings(id);
         return ResponseEntity.ok(ApiResponse.success(meetings));
+    }
+
+    /**
+     * 직책 ID로 임원 정보 조회
+     */
+    @GetMapping("/{id}/executive")
+    public ResponseEntity<ExecutiveInfoDto> getExecutiveByPositionId(
+            @PathVariable("id") Long positionsId) {
+        ExecutiveInfoDto executiveInfo = positionService.getExecutiveByPositionId(positionsId);
+        return ResponseEntity.ok(executiveInfo);
     }
 
     /**

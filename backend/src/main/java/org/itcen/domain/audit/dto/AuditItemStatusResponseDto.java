@@ -94,8 +94,7 @@ public class AuditItemStatusResponseDto {
     /**
      * 점검 세부내용
      */
-    private String auditDetailcontent;
-    private String auditDoneContent;
+    private String auditDetailContent;
 
     /**
      * 점검상태코드 (audit_prog_mngt 테이블에서)

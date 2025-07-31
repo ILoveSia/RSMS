@@ -15,7 +15,7 @@ import DatePicker from '@/shared/components/ui/form/DatePicker';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import LedgerOrdersHodSelect from '@/shared/components/ui/form/LedgerOrdersHodSelect';
 import { Box, Typography } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import InspectionTargetSelectionDialog, { type InspectionTargetItem } from './InspectionTargetSelectionDialog';
 
 /**
@@ -146,7 +146,7 @@ const useFormValidation = (data: AuditProgramData): ValidationResult => {
     if (!data.targetItemIds || data.targetItemIds.length === 0) {
       errors.targetSelection = '점검 대상 항목을 선정해주세요.';
     }
-
+    console.log("errors",errors);
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
@@ -186,6 +186,9 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
   // 폼 유효성 검증
   const validation = useFormValidation(formData);
 
+  // 초기 로드 여부를 추적하는 ref
+  const isInitialLoadRef = useRef(true);
+
   /**
    * 초기 데이터 설정
    * 
@@ -195,27 +198,51 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
     if (mode === 'create') {
       // 새로운 점검계획 코드를 생성하여 설정
       setFormData(createDefaultAuditProgramData());
-    } else if (initialData) {
+      isInitialLoadRef.current = false;
+    } else if (initialData && isInitialLoadRef.current) {
+      // 처음 로드시에만 initialData를 설정
       setFormData({ ...initialData });
+      isInitialLoadRef.current = false;
     }
   }, [mode, initialData]);
+
+  // 다이얼로그가 열릴 때마다 초기 로드 플래그 리셋
+  useEffect(() => {
+    if (open) {
+      isInitialLoadRef.current = true;
+    }
+  }, [open]);
   
   /**
    * 선택된 타겟 항목 업데이트
+   * 사용자가 입력한 다른 필드들은 보존하면서 점검대상 관련 필드만 업데이트
    */
   useEffect(() => {
     if (selectedTargetItems && selectedTargetItems.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        targetItems: selectedTargetItems,
-        targetItemIds: selectedTargetItems.map(item => item.id),
-        targetItemData: selectedTargetItems.map(item => ({
-          hodIcItemId: item.id,
-          responsibilityId: item.responsibilityId,
-          responsibilityDetailId: item.responsibilityDetailId
-        })),
-        targetSelection: `${selectedTargetItems.length}개 항목 선정됨`
-      }));
+      setFormData(prev => {
+        // 현재 사용자가 입력한 중요한 데이터들을 명시적으로 보존
+        const preservedData = {
+          planCode: prev.planCode,
+          ledgerOrdersHod: prev.ledgerOrdersHod,
+          auditTitle: prev.auditTitle, // 회차명 보존
+          startDate: prev.startDate,
+          endDate: prev.endDate,
+          remarks: prev.remarks, // 비고 보존
+        };
+
+        return {
+          ...prev,
+          ...preservedData, // 보존할 데이터를 명시적으로 덮어쓰기
+          targetItems: selectedTargetItems,
+          targetItemIds: selectedTargetItems.map(item => item.id),
+          targetItemData: selectedTargetItems.map(item => ({
+            hodIcItemId: item.id,
+            responsibilityId: item.responsibilityId,
+            responsibilityDetailId: item.responsibilityDetailId
+          })),
+          targetSelection: `${selectedTargetItems.length}개 항목 선정됨`
+        };
+      });
     }
   }, [selectedTargetItems]);
 
@@ -264,6 +291,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
     }
 
     try {
+      console.log("formdata",formData);
       await onSave(formData);
     } catch (error) {
       console.error('점검 계획 저장 중 오류 발생:', error);

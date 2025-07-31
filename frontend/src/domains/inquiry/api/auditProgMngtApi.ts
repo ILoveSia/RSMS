@@ -52,6 +52,20 @@ export interface TargetItemData {
   responsibilityDetailId: number;  // 책무상세 ID
 }
 
+// 백엔드 AuditProgMngtDto 응답 타입
+export interface AuditProgMngtDto {
+  auditProgMngtId?: number;        // 점검계획 ID
+  auditProgMngtCd: string;         // 점검계획코드
+  ledgerOrdersHod: string;         // 책무번호
+  auditTitle: string;              // 점검회차명
+  auditStartDt: string;            // 점검시작일
+  auditEndDt: string;              // 점검종료일
+  auditStatusCd: string;           // 점검상태코드
+  auditContents?: string;          // 비고
+  targetItemIds?: number[];        // 선택된 점검 대상 항목 ID 목록
+  targetItemData?: TargetItemData[]; // 선택된 점검 대상 상세 정보
+}
+
 // 점검계획관리 등록/수정 요청 타입
 export interface AuditProgMngtRequest {
   auditProgMngtCd?: string;         // 점검계획코드 (수정시)
@@ -73,13 +87,12 @@ export const getAuditProgMngtStatusList = async (
 ): Promise<AuditProgMngtStatusResponse[]> => {
   try {
     const response = await apiClient.get<ApiResponse<AuditProgMngtStatusResponse[]>>('/audit-prog-mngt/status', { params });
-    
+
     // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
-    } else if (response.data && Array.isArray(response.data)) {
-      return response.data;
-    } else {
+    if (response){
+      return response as any;
+    }
+      else {
       console.error('예상하지 못한 응답 구조:', response);
       return [];
     }
@@ -99,10 +112,10 @@ export const getAllAuditProgMngtStatusList = async (
   const params: Record<string, string> = {};
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
-  
+
   try {
     const response = await apiClient.get<AuditProgMngtStatusResponse[]>('/audit-prog-mngt/status/all', { params });
-    
+
     // Spring Boot에서 직접 List<AuditProgMngtDto>를 반환하므로 response.data가 배열이어야 함
     if (Array.isArray(response)) {
       return response;
@@ -122,15 +135,17 @@ export const getAllAuditProgMngtStatusList = async (
  */
 export const getAuditProgMngtByCode = async (
   auditProgMngtCd: string
-): Promise<AuditProgMngtStatusResponse> => {
+): Promise<AuditProgMngtDto> => {
   try {
-    const response = await apiClient.get<ApiResponse<AuditProgMngtStatusResponse>>(`/audit-prog-mngt/${auditProgMngtCd}`);
-    
-    // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
-    } else if (response.data) {
-      return response.data;
+    const response = await apiClient.get<AuditProgMngtDto>(`/audit-prog-mngt/${auditProgMngtCd}`);
+
+    // axios 응답 구조 확인: response.data가 실제 데이터
+    if (response) {
+      return response;
+    } else if (response && typeof response === 'object' && response.auditProgMngtCd) {
+      // response 자체가 데이터인 경우 (비정상적이지만 처리)
+      console.log('response 자체를 데이터로 사용');
+      return response as AuditProgMngtDto;
     } else {
       throw new Error('유효하지 않은 응답 구조');
     }
@@ -148,7 +163,7 @@ export const createAuditProgMngt = async (
 ): Promise<{ auditProgMngtCd: string }> => {
   try {
     const response = await apiClient.post<ApiResponse<{ auditProgMngtCd: string }>>('/audit-prog-mngt', data);
-    
+
     // 응답 구조 확인 후 적절한 데이터 반환
     if (response && (response as any).auditProgMngtCd) {
       return { auditProgMngtCd: (response as any).auditProgMngtCd };
@@ -169,18 +184,17 @@ export const updateAuditProgMngt = async (
   auditProgMngtCd: string,
   data: AuditProgMngtRequest
 ): Promise<AuditProgMngtStatusResponse> => {
-    try {
+  try {
     const response = await apiClient.put<ApiResponse<AuditProgMngtStatusResponse>>(`/audit-prog-mngt/${auditProgMngtCd}`, data);
-    
+
     // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data.data) {
-      return response.data.data;
-    } else if (response.data) {
-      return response.data;
+    if (response) {
+      return response as any;
     } else {
       throw new Error('유효하지 않은 응답 구조');
     }
   } catch (error) {
+    console.error('점검계획관리 수정 오류:', error);
     throw error;
   }
 };

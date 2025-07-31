@@ -53,7 +53,7 @@ export async function fetchSubmissionHistory(
 
   const response = await apiClient.get(`/submissions/history?${queryParams.toString()}`);
   if (response.success !== false) {
-    const submissions = response.data || response || [];
+    const submissions = response || [];
     // 백엔드 데이터를 프론트엔드 형식으로 변환
     return submissions.map((item: any) => ({
       ...item,
@@ -119,7 +119,6 @@ export async function updateSubmissionHistory(
     attachmentFile: file?.name || null
   };
 
-  
   const response = await apiClient.put<any>(`/submissions/${id}`, requestData);
   
   // API 클라이언트가 자동으로 ApiResponse wrapper를 unwrap하므로

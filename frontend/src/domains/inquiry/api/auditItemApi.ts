@@ -20,6 +20,7 @@ export interface AuditItemStatusResponse {
   auditResultStatusCd: string;      // 점검 결과 상태 코드
   roleSumm: string;                 // 책무 개요
   ledgerOrdersHod: string;          // 원장차수
+  impPlStatusCd: string;            // 이행완료 예정일자
   auditResult: string;              // 점검결과
   auditDoneDt: string;              // 이행완료 예정일자
   auditDetailcontent: string;      // 점검 세부내용
@@ -53,15 +54,11 @@ export const getAuditItemStatusList = async (
       }
     });
     
-    console.log('점검 현황(항목별) 조회 응답:', response);
-    
     // Spring Boot에서 직접 List<AuditItemStatusResponseDto>를 반환하므로 response.data가 배열이어야 함
-    if (Array.isArray(response.data)) {
-      console.log('점검 현황(항목별) 조회 결과:', response.data.length, '건');
-      return response.data;
+    if (Array.isArray(response)) {
+      return response;
     } else if (response && Array.isArray(response)) {
       // axios가 직접 배열을 반환하는 경우
-      console.log('점검 현황(항목별) 조회 결과 (직접 배열):', response.length, '건');
       return response;
     } else {
       console.error('예상하지 못한 응답 구조:', response);

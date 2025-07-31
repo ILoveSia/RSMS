@@ -8,6 +8,7 @@ import org.itcen.domain.positions.dto.PositionUpdateRequestDto;
 import org.itcen.domain.positions.dto.LedgerOrderSelectDto;
 import org.itcen.domain.positions.dto.PositionDto;
 import org.itcen.domain.positions.dto.PositionSearchRequestDto;
+import org.itcen.domain.positions.dto.ExecutiveInfoDto;
 
 import java.util.List;
 
@@ -82,4 +83,12 @@ public interface PositionService {
      * @return 회의체 목록
      */
     List<PositionMeetingDto> getPositionMeetings(Long id);
+
+    /**
+     * 직책 ID로 임원 정보 조회
+     * 
+     * @param positionsId 직책 ID
+     * @return 임원 정보
+     */
+    ExecutiveInfoDto getExecutiveByPositionId(Long positionsId);
 }

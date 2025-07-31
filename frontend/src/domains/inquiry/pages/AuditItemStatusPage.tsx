@@ -52,13 +52,11 @@ interface AuditItemRow {
   roleTypeCd: string;                   // 직무구분
   icTask: string;                       // 내부통제업무
   auditMenId: string;                   // 점검자
-  auditResultStatusCd: string;          // 점검결과
   roleSumm: string;                     // 책무 개요
   auditDoneDt: string;                  // 이행완료 예정일자
   auditDetailcontent: string;          // 점검 세부내용
   auditResultStatusCd: string;          // 점가결과
-  impPlStatusCd: string;                // 점검진행상태
-  auditDoneDt: string;                  // 이행완료 예정일자
+  impPlStatusCd: string;                    // 이행완료 예정일자
   auditDoneContent: string;              // 이행결과보고
   auditStatusCd: string;                // 점검상태코드
 }
@@ -78,9 +76,10 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
     fieldTypeCd: response.fieldTypeCd || '',
     roleTypeCd: response.roleTypeCd || '',
     icTask: response.icTask || '',
-    auditMenId: response.auditMenId || '',
     auditResultStatusCd: response.auditResultStatusCd || '',
+    auditMenId: response.auditMenId || '',
     roleSumm: response.roleSumm || '',
+    impPlStatusCd: response.impPlStatusCd || '',
     auditDoneDt: response.auditDoneDt || '',
     auditDetailcontent: response.auditDetailcontent || '',
     auditDoneContent: response.auditDoneContent || '',
@@ -503,7 +502,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       }}
     >
       <PageHeader
-        title="[901] 점검 현황(항목별)"
+        title="[1000] 점검 현황(항목별)"
         icon={<SearchIcon />}
         description="적부구조도 이력 점검의 항목별 점검 현황을 조회하고 관리합니다."
         elevation={false}

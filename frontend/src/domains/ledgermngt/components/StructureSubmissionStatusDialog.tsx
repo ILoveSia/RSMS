@@ -12,6 +12,7 @@ import type { SelectOption } from '@/shared/types/common';
 import { AttachFile as AttachFileIcon, Delete as DeleteIcon, Download as DownloadIcon } from '@mui/icons-material';
 import { Box, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
+import { apiClient } from '@/app/common/api/client';
 
 interface RegistrationData {
   submitHistCd: string;
@@ -42,6 +43,24 @@ interface StructureSubmissionStatusDialogProps {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx'];
+
+// 임원 정보 인터페이스
+interface ExecutiveInfo {
+  execofficerId: string;
+  empName: string;
+  empNo: string;
+}
+
+// 직책 ID로 임원 정보 조회 API
+const fetchExecutiveByPositionId = async (positionsId: number): Promise<ExecutiveInfo | null> => {
+  try {
+    const response = await apiClient.get<ExecutiveInfo>(`/positions/${positionsId}/executive`);
+    return response || null;
+  } catch (error) {
+    console.error('임원 정보 조회 오류:', error);
+    return null;
+  }
+};
 
 const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogProps> = ({
   open,
@@ -223,14 +242,35 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
   };
 
   // 직책 선택 핸들러
-  const handlePositionSelect = (position: PositionSearchResult) => {
-    setRegistrationData(prev => ({
-      ...prev,
-      position: { value: position.positionsNm, label: position.positionsNm },
-      positionsId: position.positionsId,
-      positionsNm: position.positionsNm,
-      ledgerOrder: position.ledgerOrder
-    }));
+  const handlePositionSelect = async (position: PositionSearchResult) => {
+    try {
+      // 선택된 직책의 임원 정보를 조회
+      const executiveInfo = await fetchExecutiveByPositionId(position.positionsId);
+      
+      setRegistrationData(prev => ({
+        ...prev,
+        position: { value: position.positionsNm, label: position.positionsNm },
+        positionsId: position.positionsId,
+        positionsNm: position.positionsNm,
+        ledgerOrder: position.ledgerOrder,
+        // 임원 정보 자동 설정
+        execofficerId: executiveInfo?.execofficerId || null,
+        executiveName: executiveInfo?.empName ? 
+          { value: executiveInfo.empName, label: executiveInfo.empName } : null
+      }));
+    } catch (error) {
+      console.error('임원 정보 조회 실패:', error);
+      // 임원 정보 조회 실패 시에도 직책 정보는 설정
+      setRegistrationData(prev => ({
+        ...prev,
+        position: { value: position.positionsNm, label: position.positionsNm },
+        positionsId: position.positionsId,
+        positionsNm: position.positionsNm,
+        ledgerOrder: position.ledgerOrder,
+        execofficerId: null,
+        executiveName: null
+      }));
+    }
     setPositionPopupOpen(false);
   };
 
@@ -397,28 +437,6 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           sx={{ backgroundColor: '#f5f5f5' }}
         />
 
-        {/* 제출 대상 임원 */}
-        <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
-          제출 대상 임원
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <TextField
-            value={registrationData.executiveName?.label || ''}
-            placeholder="제출 대상 임원을 선택하세요"
-            size="small"
-            mode="readonly"
-            sx={{ minWidth: '300px', backgroundColor: '#f5f5f5' }}
-          />
-          {mode !== 'view' && (
-            <Button
-              variant="contained"
-              size="small"
-              onClick={() => setEmployeePopupOpen(true)}
-            >
-              검색
-            </Button>
-          )}
-        </Box>
 
         {/* 직책 */}
         <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
@@ -443,6 +461,28 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           )}
         </Box>
 
+        {/* 제출 대상 임원 */}
+        <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
+          제출 대상 임원
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            value={registrationData.executiveName?.label || ''}
+            placeholder="제출 대상 임원을 선택하세요"
+            size="small"
+            mode="readonly"
+            sx={{ minWidth: '300px', backgroundColor: '#f5f5f5', width: '100%' }}
+          />
+          {/* {mode !== 'view' && (
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => setEmployeePopupOpen(true)}
+            >
+              검색
+            </Button>
+          )} */}
+        </Box>
         {/* 책무구조도 제출일 */}
         <Typography sx={{ fontSize: '0.85rem', color: 'var(--bank-text-primary)', fontWeight: 'bold' }}>
           책무구조도 제출일

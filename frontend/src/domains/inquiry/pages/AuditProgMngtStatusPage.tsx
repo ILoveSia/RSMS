@@ -21,8 +21,10 @@ import {
   deleteMultipleAuditProgMngt,
   createAuditProgMngt,
   updateAuditProgMngt,
+  getAuditProgMngtByCode,
   type AuditProgMngtStatusResponse,
   type AuditProgMngtRequest,
+  type AuditProgMngtDto,
   type TargetItemData
 } from '../api/auditProgMngtApi';
 
@@ -97,13 +99,14 @@ const convertToAuditProgramData = (row: AuditProgRow): AuditProgramData => {
   return {
     id: 0, // 임시 ID
     planCode: row.auditProgMngtCd,
-    ledgerOrdersHod: row.ledgerOrdersHod,
-    auditTitle: row.auditTarget, // 감사대상을 점검회차명으로 매핑
+    ledgerOrdersHod: row.ledgerOrdersHod || '', // 빈 문자열로 기본값 설정하여 MUI Select 오류 방지
+    auditTitle: row.auditProgName, // 점검계획명을 점검회차명으로 매핑 (수정)
     startDate,
     endDate,
-    targetSelection: `${row.targetItemCount}개 항목 선정`, // 대상 항목 수를 문자열로 변환
+    targetSelection: row.targetItemCount > 0 ? `${row.targetItemCount}개 항목 선정됨` : '', // 기존 선정 정보 표시
     remarks: row.remarks || '',
-    targetItemIds: [], // 빈 배열로 초기화
+    targetItemIds: [], // API에서 상세 정보를 다시 조회해야 함
+    targetItemData: [], // API에서 상세 정보를 다시 조회해야 함
   };
 };
 
@@ -274,13 +277,45 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   };
 
   // 행 클릭 핸들러 (상세보기)
-  const handleAuditRowClick = (row: AuditProgRow) => {
+  const handleAuditRowClick = async (row: AuditProgRow) => {
     if (isRegistrationMode) {
       return;
     }
-    setSelectedItem(row);
-    setDialogMode('view');
-    setIsRegistrationMode(true);
+    
+    try {
+      // 행 클릭은 단순 상세보기이므로 전체 페이지 로딩 상태를 변경하지 않음
+      
+      // 기존 점검계획 상세 정보 조회 (점검대상 정보 포함)
+      const detailResponse = await getAuditProgMngtByCode(row.auditProgMngtCd);
+      
+      // 기존 점검대상 정보를 포함한 데이터로 변환
+      const auditProgramData = convertToAuditProgramData(row);
+      
+      // 기존에 선정된 점검대상이 있다면 selectedTargetItems에 설정
+      if (detailResponse.targetItemData && detailResponse.targetItemData.length > 0) {
+        const targetItems = detailResponse.targetItemData.map(item => ({
+          id: item.hodIcItemId,
+          responsibilityId: item.responsibilityId,
+          responsibilityDetailId: item.responsibilityDetailId,
+          // 추가 필드들은 실제 InspectionTargetItem 인터페이스에 맞게 설정
+          itemName: `항목 ${item.hodIcItemId}`, // 임시값 - 실제로는 API에서 조회해야 함
+          description: '', // 임시값
+          selected: true, // 기존에 선정된 항목이므로 선택 상태로 설정
+        }));
+        setSelectedTargetItems(targetItems);
+      } else {
+        setSelectedTargetItems([]);
+      }
+      
+      setSelectedItem(row);
+      setDialogMode('view');
+      setIsRegistrationMode(true);
+      
+    } catch (error) {
+      console.error('점검계획 상세 조회 오류:', error);
+      setErrorMessage('점검계획 상세 정보를 불러오는 중 오류가 발생했습니다.');
+      setErrorDialogOpen(true);
+    }
   };
 
   // 등록 모드 전환
@@ -324,20 +359,14 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         targetItemData: data.targetItemData || [] // 새로운 방식
       };
       
-      console.log('API 요청 데이터:', request);
-      console.log('targetItemIds 길이:', request.targetItemIds?.length);
-      console.log('targetItemData 길이:', request.targetItemData?.length);
-      console.log('targetItemData 내용:', request.targetItemData);
       
       if (dialogMode === 'create') {
         // 등록 시 auditProgMngtCd는 자동 생성되므로 제외
         await createAuditProgMngt(request);
-        console.log('점검계획관리 등록 완료');
       } else if (dialogMode === 'edit' && data.planCode) {
         // 수정 시 auditProgMngtCd 추가
         request.auditProgMngtCd = data.planCode;
         await updateAuditProgMngt(data.planCode, request);
-        console.log('점검계획관리 수정 완료');
       }
       
       handleDialogClose();
@@ -516,6 +545,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
             onRowClick={handleAuditRowClick}
             onRowSelectionChange={handleAuditRowSelectionModelChange}
             checkboxSelection={true}
+            multiSelect={false}
             rowSelectionModel={selectedAuditIds}
             sx={{
               height: '650px',

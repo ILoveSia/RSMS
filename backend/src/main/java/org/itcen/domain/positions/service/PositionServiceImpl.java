@@ -19,6 +19,7 @@ import org.itcen.domain.positions.dto.PositionSearchRequestDto;
 import org.itcen.domain.positions.dto.PositionStatusDto;
 import org.itcen.domain.positions.dto.PositionStatusProjection;
 import org.itcen.domain.positions.dto.PositionUpdateRequestDto;
+import org.itcen.domain.positions.dto.ExecutiveInfoDto;
 import org.itcen.domain.positions.entity.Position;
 import org.itcen.domain.positions.entity.PositionAdmin;
 import org.itcen.domain.positions.entity.PositionMeeting;
@@ -386,6 +387,24 @@ public class PositionServiceImpl implements PositionService {
                 .ledgerOrder(position.getLedgerOrder())
                 .confirmGubunCd(position.getConfirmGubunCd())
                 .writeDeptCd(position.getWriteDeptCd())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ExecutiveInfoDto getExecutiveByPositionId(Long positionsId) {
+        // execofficer 테이블과 employee 테이블을 조인하여 임원 정보 조회
+        PositionRepository.ExecutiveInfoProjection projection = positionRepository.findExecutiveByPositionId(positionsId);
+        
+        if (projection == null) {
+            // 해당 직책에 임원이 없는 경우 null 반환
+            return null;
+        }
+        
+        return ExecutiveInfoDto.builder()
+                .execofficerId(projection.getExecofficerId())
+                .empName(projection.getEmpName())
+                .empNo(projection.getEmpNo())
                 .build();
     }
 }

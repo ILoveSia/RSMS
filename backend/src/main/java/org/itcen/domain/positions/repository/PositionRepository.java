@@ -123,4 +123,31 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
                                  @Param("positionsNm") String positionsNm,
                                  @Param("writeDeptCd") String writeDeptCd,
                                  @Param("confirmGubunCd") String confirmGubunCd);
+
+    /**
+     * 직책 ID로 임원 정보 조회
+     * execofficer 테이블과 employee 테이블을 조인하여 임원 정보 조회
+     */
+    @Query(value = """
+            SELECT 
+                e.execofficer_id as execofficerId,
+                emp.emp_name as empName,
+                emp.emp_no as empNo
+            FROM execofficer e
+            INNER JOIN employee emp ON e.emp_id = emp.emp_no
+            WHERE e.positions_id = :positionsId
+            AND e.date_expired > CURRENT_DATE
+            ORDER BY e.execofficer_dt DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    ExecutiveInfoProjection findExecutiveByPositionId(@Param("positionsId") Long positionsId);
+
+    /**
+     * 임원 정보 조회 결과를 위한 Projection 인터페이스
+     */
+    interface ExecutiveInfoProjection {
+        String getExecofficerId();
+        String getEmpName();
+        String getEmpNo();
+    }
 }

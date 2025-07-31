@@ -27,81 +27,79 @@ interface IStructureSubmissionStatusPageProps {
   className?: string;
 }
 
-const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProps> = (): React.JSX.Element => {
-  // 기본 날짜 계산 (3개월 전 ~ 오늘)
-  const getDefaultDates = () => {
-    const today = new Date();
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(today.getMonth() - 3);
-    return { startDate: threeMonthsAgo, endDate: today };
-  };
+// 기본 날짜 계산 (3개월 전 ~ 오늘)
+const getDefaultDates = () => {
+  const today = new Date();
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(today.getMonth() - 3);
+  return { startDate: threeMonthsAgo, endDate: today };
+};
 
+// 원장차수 옵션
+const LEDGER_ORDER_OPTIONS: SelectOption[] = [
+  { value: '', label: '전체' },
+  { value: '2024-001', label: '2024-001' },
+  { value: '2024-002', label: '2024-002' },
+  { value: '2024-003', label: '2024-003' }
+];
+
+const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProps> = (): React.JSX.Element => {
   // 기간 선택 상태
   const [startDate, setStartDate] = useState<Date | null>(getDefaultDates().startDate);
   const [endDate, setEndDate] = useState<Date | null>(getDefaultDates().endDate);
-  const [ledgerOrder, setLedgerOrder] = useState<string>(''); // "전체" 선택을 위해 빈 문자열
+  const [ledgerOrder, setLedgerOrder] = useState<string>('');
 
-  // 원장차수 옵션
-  const ledgerOrderOptions: SelectOption[] = [
-    { value: '', label: '전체' }, // "전체" 옵션 추가
-    { value: '2024-001', label: '2024-001' },
-    { value: '2024-002', label: '2024-002' },
-    { value: '2024-003', label: '2024-003' }
-  ];
-
-  // 제출 이력 데이터
+  // 상태 관리
   const [historyRows, setHistoryRows] = useState<SubmissionHistoryRow[]>([]);
   const [selectedHistoryIds, setSelectedHistoryIds] = useState<number[]>([]);
-
-  // 등록 모드
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // 다이얼로그 상태
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedItem, setSelectedItem] = useState<SubmissionHistoryRow | null>(null);
 
-  // 에러 다이얼로그 상태
+  // 에러 상태
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
-  // 파일 입력 참조
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // 첨부파일 렌더링 컴포넌트
+  const renderAttachmentCell = ({ row }: { row: SubmissionHistoryRow }) => {
+    if (row.hasAttachment && row.attachmentCount && row.attachmentCount > 0) {
+      return (
+        <Tooltip title={`첨부파일 ${row.attachmentCount}개`}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <AttachFileIcon fontSize="small" color="primary" />
+            <span style={{ fontSize: '0.75rem', color: '#666' }}>
+              {row.attachmentCount}
+            </span>
+          </Box>
+        </Tooltip>
+      );
+    }
+    return <span style={{ fontSize: '0.75rem', color: '#999' }}>-</span>;
+  };
 
-  // 로딩 상태
-  const [isLoading, setIsLoading] = useState(false);
+  // 직책 렌더링 컴포넌트
+  const renderPositionCell = ({ row }: { row: SubmissionHistoryRow }) => (
+    <div>
+      <div style={{ fontWeight: 'bold' }}>
+        {row.positionsNm || row.position || '-'}
+      </div>
+      {row.positionsNm && (
+        <div style={{ fontSize: '0.75rem', color: '#666' }}>
+          원장차수: {row.ledgerOrder || '-'}
+        </div>
+      )}
+    </div>
+  );
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<SubmissionHistoryRow>[] = [
-    {
-      field: 'historyCode',
-      headerName: '제출이력 코드',
-      width: 150,
-    },
-    {
-      field: 'executiveName',
-      headerName: '제출 대상 임원',
-      width: 150,
-    },
-    {
-      field: 'position',
-      headerName: '직책',
-      width: 200,
-      renderCell: ({ row }) => (
-        <div>
-          <div style={{ fontWeight: 'bold' }}>
-            {row.positionsNm || row.position || '-'}
-          </div>
-          {row.positionsNm && (
-            <div style={{ fontSize: '0.75rem', color: '#666' }}>
-              원장차수: {row.ledgerOrder || '-'}
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      field: 'submissionDate',
-      headerName: '제출일',
-      width: 150,
-    },
+    { field: 'historyCode', headerName: '제출이력 코드', width: 150 },
+    { field: 'position', headerName: '직책', width: 200, renderCell: renderPositionCell },
+    { field: 'executiveName', headerName: '제출 대상 임원', width: 150 },
+    { field: 'submissionDate', headerName: '제출일', width: 150 },
     {
       field: 'isModified',
       headerName: '수정여부',
@@ -118,127 +116,93 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       field: 'modificationDate',
       headerName: '수정일',
       width: 150,
-      renderCell: ({ row }) => row.submissionDate, // 제출일과 동일하게 표시
+      renderCell: ({ row }) => row.submissionDate,
     },
     {
       field: 'attachmentFile',
       headerName: '첨부파일',
       width: 120,
       align: 'center' as const,
-      renderCell: ({ row }) => {
-        if (row.hasAttachment && row.attachmentCount && row.attachmentCount > 0) {
-          return (
-            <Tooltip title={`첨부파일 ${row.attachmentCount}개`}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <AttachFileIcon fontSize="small" color="primary" />
-                <span style={{ fontSize: '0.75rem', color: '#666' }}>
-                  {row.attachmentCount}
-                </span>
-              </Box>
-            </Tooltip>
-          );
-        }
-        return (
-          <span style={{ fontSize: '0.75rem', color: '#999' }}>-</span>
-        );
-      },
+      renderCell: renderAttachmentCell,
     },
-    {
-      field: 'remarks',
-      headerName: '비고',
-      width: 200,
-    },
+    { field: 'remarks', headerName: '비고', width: 200 },
   ];
+
+  // 에러 처리 헬퍼
+  const showError = useCallback((message: string) => {
+    setErrorMessage(message);
+    setErrorDialogOpen(true);
+  }, []);
 
   // 제출 이력 조회
   const handleFetchSubmissionHistory = useCallback(async () => {
     try {
       setIsLoading(true);
-      // ledgerOrder가 빈 문자열이면 undefined를 전달하여 "전체" 조회
       const data = await fetchSubmissionHistory(startDate, endDate, ledgerOrder || undefined);
       setHistoryRows(data);
     } catch (error) {
-      setErrorMessage('제출 이력 조회 중 오류가 발생했습니다.');
-      setErrorDialogOpen(true);
+      showError('제출 이력 조회 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
-  }, [startDate, endDate, ledgerOrder]);
+  }, [startDate, endDate, ledgerOrder, showError]);
 
   // 초기 로드 시 자동 조회
   useEffect(() => {
     handleFetchSubmissionHistory();
   }, [handleFetchSubmissionHistory]);
 
-  // 행 선택 변경 핸들러
-  const handleHistoryRowSelectionModelChange = (
-    selectedRows: (string | number)[]
-  ) => {
-    setSelectedHistoryIds(selectedRows.map(id => Number(id)));
-  };
-
-  // 행 클릭 핸들러 (상세보기)
-  const handleHistoryRowClick = (row: SubmissionHistoryRow) => {
-    if (isRegistrationMode) {
-      return;
-    }
-    setSelectedItem(row);
-    setDialogMode('view');
+  // 다이얼로그 관리
+  const openDialog = useCallback((mode: 'create' | 'edit' | 'view', item?: SubmissionHistoryRow) => {
+    setDialogMode(mode);
+    setSelectedItem(item || null);
     setIsRegistrationMode(true);
-  };
+  }, []);
 
-  // 등록 모드 전환
-  const handleRegistrationModeToggle = () => {
-    setIsRegistrationMode(!isRegistrationMode);
-    if (!isRegistrationMode) {
-      setDialogMode('create');
-      setSelectedItem(null);
-    }
-  };
-
-  // 모달 닫기 핸들러
-  const handleDialogClose = () => {
+  const closeDialog = useCallback(() => {
     setIsRegistrationMode(false);
     setSelectedItem(null);
     setDialogMode('create');
-  };
+  }, []);
+
+  // 이벤트 핸들러
+  const handleRowSelectionChange = useCallback((selectedRows: (string | number)[]) => {
+    setSelectedHistoryIds(selectedRows.map(id => Number(id)));
+  }, []);
+
+  const handleRowClick = useCallback((row: SubmissionHistoryRow) => {
+    if (!isRegistrationMode) {
+      openDialog('view', row);
+    }
+  }, [isRegistrationMode, openDialog]);
+
+  const handleCreateClick = useCallback(() => {
+    openDialog('create');
+  }, [openDialog]);
 
   // 제출 이력 등록/수정
-  const handleSubmit = async (data: RegistrationData): Promise<{ id: number }> => {
+  const handleSubmit = useCallback(async (data: RegistrationData): Promise<{ id: number }> => {
     try {
       setIsLoading(true);
-      let result: { id: number };
+      const result = dialogMode === 'edit' && selectedItem?.id
+        ? await updateSubmissionHistory(selectedItem.id, data)
+        : await submitSubmissionHistory(data);
       
-      if (dialogMode === 'edit' && selectedItem?.id) {
-        // 수정 모드: PUT 요청
-        result = await updateSubmissionHistory(selectedItem.id, data);
-      } else {
-        // 생성 모드: POST 요청
-        result = await submitSubmissionHistory(data);
-      }
-      
-      handleDialogClose();
+      closeDialog();
       handleFetchSubmissionHistory();
       return result;
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
-      setErrorDialogOpen(true);
-      throw error; // 에러를 다시 던져서 다이얼로그에서 처리할 수 있도록 함
+      showError(error instanceof Error ? error.message : '오류가 발생했습니다.');
+      throw error;
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // 모드 변경 핸들러
-  const handleModeChange = (mode: 'create' | 'edit' | 'view') => {
-    setDialogMode(mode);
-  };
+  }, [dialogMode, selectedItem?.id, closeDialog, handleFetchSubmissionHistory, showError]);
 
   // 제출 이력 삭제
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!selectedHistoryIds.length) {
-      setErrorMessage('삭제할 제출 이력을 선택해주세요.');
-      setErrorDialogOpen(true);
+      showError('삭제할 제출 이력을 선택해주세요.');
       return;
     }
 
@@ -248,12 +212,16 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       setSelectedHistoryIds([]);
       handleFetchSubmissionHistory();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
-      setErrorDialogOpen(true);
+      showError(error instanceof Error ? error.message : '오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedHistoryIds, handleFetchSubmissionHistory, showError]);
+
+  // 모드 변경 핸들러
+  const handleModeChange = useCallback((mode: 'create' | 'edit' | 'view') => {
+    setDialogMode(mode);
+  }, []);
 
   return (
     <PageContainer>
@@ -287,8 +255,8 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <ComboBox
-            options={ledgerOrderOptions}
-            value={ledgerOrderOptions.find(option => option.value === ledgerOrder) || ledgerOrderOptions[0]}
+            options={LEDGER_ORDER_OPTIONS}
+            value={LEDGER_ORDER_OPTIONS.find(option => option.value === ledgerOrder) || LEDGER_ORDER_OPTIONS[0]}
             onChange={value => setLedgerOrder((value as SelectOption)?.value?.toString() || '')}
             size="small"
             mode="editable"
@@ -330,7 +298,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           <Button
             variant="contained"
             size="small"
-            onClick={handleRegistrationModeToggle}
+            onClick={handleCreateClick}
             color="success"
             sx={{ mr: 1 }}
             disabled={isLoading}
@@ -361,16 +329,11 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             columns={columns}
             loading={isLoading}
             error={null}
-            onRowClick={handleHistoryRowClick}
-            onRowSelectionChange={handleHistoryRowSelectionModelChange}
+            onRowClick={handleRowClick}
+            onRowSelectionChange={handleRowSelectionChange}
             checkboxSelection={true}
+            multiSelect={false}
             rowSelectionModel={selectedHistoryIds}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10, page: 0 }
-              }
-            }}
-            pageSizeOptions={[5, 10, 25, 50]}
             sx={{
               height: '650px', // 고정 높이로 변경
               '& .MuiDataGrid-virtualScroller': {
@@ -384,7 +347,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
         {isRegistrationMode && (
           <StructureSubmissionStatusDialog
             open={isRegistrationMode}
-            onClose={handleDialogClose}
+            onClose={closeDialog}
             onSubmit={handleSubmit}
             loading={isLoading}
             mode={dialogMode}
