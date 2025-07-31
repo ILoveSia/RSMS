@@ -44,7 +44,7 @@ public class ExecOfficerService {
             try {
                 ExecOfficerDto dto = new ExecOfficerDto();
                 dto.setPositionsId(row[0] != null ? ((Number) row[0]).longValue() : null);
-                dto.setPositionNameMapped((String) row[1]);
+                dto.setPositionsNm((String) row[1]);
                 dto.setExecofficerId(row[2] != null ? ((Number) row[2]).longValue() : null);
                 dto.setEmpId((String) row[3]);
                 dto.setExecofficer_dt(row[4] != null ? row[4].toString() : null);

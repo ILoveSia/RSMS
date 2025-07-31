@@ -2,7 +2,7 @@ import apiClient from '@/app/common/api/client';
 
 export interface ExecOfficer {
   execofficerId: number;
-  positionNameMapped?: string;
+  positionsNm?: string;
   empId: string;
   execofficer_dt: string;
   dualYn: string;

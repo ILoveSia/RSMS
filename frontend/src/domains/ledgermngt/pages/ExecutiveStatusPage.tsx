@@ -91,7 +91,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   const executiveColumns: DataGridColumn<ExecutiveStatusRow>[] = [
     {
-      field: 'positionNameMapped',
+      field: 'positionsNm',
       headerName: '직책명',
       width: 200,
       renderCell: ({ value, row }) => (
@@ -242,7 +242,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const addDataToWorksheet = (worksheet: ExcelJS.Worksheet, data: ExecutiveStatusRow[]) => {
     data.forEach(row => {
       worksheet.addRow([
-        row.positionNameMapped,
+        row.positionsNm,
         row.empId,
         row.execofficer_dt,
         row.dualYn === 'Y' ? '있음' : '없음',
@@ -409,7 +409,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             selectedRows={selectedIds}
             // onRowClick={handleRowClick}
             onRowSelectionChange={handleRowSelectionModelChange}
-            rowIdField="positionNameMapped"
+            rowIdField="positionsNm"
           />
         </Box>
 

@@ -42,32 +42,31 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const [employeeSearchPopupOpen, setEmployeeSearchPopupOpen] = useState(false);
   const [positionDetailsLoading, setPositionDetailsLoading] = useState(false);
   const [originalDate, setOriginalDate] = useState<Date | null>(null);
-  
+
   // 탭 상태
   const [currentTab, setCurrentTab] = useState(0);
-  
-  // 공통코드 Store에서 데이터 가져오기
-  const { data: allCodes, setData: setAllCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
 
-  // 공통코드 배열 추출 함수
-  const getCodesArray = (): CommonCode[] => {
-    if (!allCodes) return [];
-    if (Array.isArray(allCodes)) {
-      return allCodes;
+  // Redux에서 공통코드 가져오기 (AuditItemStatusPage 방식 참고)
+  const { data: allCodesData, setData: setAllCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
+
+  // 공통코드 배열 추출
+  const currentAllCodes = React.useMemo(() => {
+    if (!allCodesData) return [];
+    if (Array.isArray(allCodesData)) {
+      return allCodesData;
     }
-    if (typeof allCodes === 'object' && 'data' in allCodes && Array.isArray(allCodes.data)) {
-      return allCodes.data;
+    if (typeof allCodesData === 'object' && 'data' in allCodesData && Array.isArray(allCodesData.data)) {
+      return allCodesData.data;
     }
     return [];
-  };
+  }, [allCodesData]);
 
-  // 직위 코드를 직위명으로 변환하는 함수 (PositionDialog.tsx 패턴 적용)
+  // 직위 코드를 직위명으로 변환하는 함수 (AuditItemStatusPage 방식 적용)
   const getCodeName = (groupCode: string, code: string | null | undefined): string => {
     if (!code) return '';
 
     // 공통코드 배열에서 직접 찾기
-    const codes = getCodesArray();
-    const matchingCode = codes.find(item => item.groupCode === groupCode && item.code === code);
+    const matchingCode = currentAllCodes.find(item => item.groupCode === groupCode && item.code === code);
 
     if (matchingCode) {
       return matchingCode.codeName;
@@ -128,17 +127,18 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   };
 
   // 사용자 정보 조회 함수
-  // 공통코드 초기화 useEffect (PositionDialog.tsx 패턴 적용)
+
+  // 공통코드 초기화 useEffect (localStorage 복원 로직)
   useEffect(() => {
     const storedCommonCodes = localStorage.getItem('commonCodes');
 
     if (
       storedCommonCodes &&
-      (!allCodes ||
-        (Array.isArray(allCodes) && allCodes.length === 0) ||
-        (typeof allCodes === 'object' &&
-          'data' in allCodes &&
-          (!allCodes.data || allCodes.data.length === 0)))
+      (!allCodesData ||
+        (Array.isArray(allCodesData) && allCodesData.length === 0) ||
+        (typeof allCodesData === 'object' &&
+          'data' in allCodesData &&
+          (!allCodesData.data || allCodesData.data.length === 0)))
     ) {
       try {
         const parsedCodes = JSON.parse(storedCommonCodes);
@@ -148,23 +148,23 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         localStorage.removeItem('commonCodes');
       }
     }
-  }, [allCodes, setAllCodes]);
+  }, [allCodesData, setAllCodes]);
 
   useEffect(() => {
     if (data && open) {
       setLoading(true);
-
+      console.log(data)
       // 그룹화된 데이터인지 확인 (items 배열이 있으면 그룹화된 데이터)
       if (data.items && Array.isArray(data.items)) {
         // 그룹화된 데이터 처리
         const firstItem = data.items[0] || {};
         setFormData({
           ...data,
-          positionNameMapped: data.position || '',
+          positionsNm: data.position || '',
           executiveName: firstItem.executiveName || '',
           hasConcurrentPosition: firstItem.hasConcurrentPosition || 'N',
           concurrentPosition: firstItem.concurrentPosition || '',
-          jobRankCd: firstItem.jobRank || '',
+          jobRankCd: firstItem.jobTitle || '',
           isGrouped: true,
           groupItems: data.items,
           count: data.count || data.items.length
@@ -178,7 +178,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         // 개별 데이터 처리 (기존 로직)
         setFormData({
           ...data,
-          positionNameMapped: data.position || '',
+          positionsNm: data.position || '',
           executiveName: data.executiveName || '',
           hasConcurrentPosition: data.hasConcurrentPosition || 'N',
           concurrentPosition: data.concurrentPosition || '',
@@ -278,10 +278,10 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
             {currentTab === 0 && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 {/* 직책 정보 */}
-                <Box sx={{ fontWeight: 'bold', fontSize: '1.1rem', mb: 1, color: 'primary.main', display: 'flex', gap: 2, alignItems: 'center', width: '100%', marginTop: '10px'   }}>
+                <Box sx={{ fontWeight: 'bold', fontSize: '1.1rem', mb: 1, color: 'primary.main', display: 'flex', gap: 2, alignItems: 'center', width: '100%', marginTop: '10px' }}>
                   <TextField
                     label="직책"
-                    value={formData.positionNameMapped || ''}
+                    value={formData.positionsNm || ''}
                     disabled={true}
                     mode='readonly'
                     sx={{ flex: 1 }}
@@ -317,12 +317,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                   <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
                     <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
-                                         <RadioGroup
-                       row
-                       value={formData.hasConcurrentPosition || 'N'}
-                       name="hasConcurrentPosition"
-                       sx={{ flex: 1, width: '100%' }}
-                     >
+                    <RadioGroup
+                      row
+                      value={formData.hasConcurrentPosition || 'N'}
+                      name="hasConcurrentPosition"
+                      sx={{ flex: 1, width: '100%' }}
+                    >
                       <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
                       <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
                     </RadioGroup>
@@ -343,7 +343,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', width: '100%' }}>
                       <TextField
                         label="직책"
-                        value={formData.positionNameMapped || ''}
+                        value={formData.positionsNm || ''}
                         disabled={true}
                         mode='readonly'
                         sx={{ flex: 1 }}
@@ -385,11 +385,11 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                       <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
                         <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
-                                                 <RadioGroup
-                           row
-                           value={formData.hasConcurrentPosition || 'N'}
-                           name="hasConcurrentPosition"
-                         >
+                        <RadioGroup
+                          row
+                          value={formData.hasConcurrentPosition || 'N'}
+                          name="hasConcurrentPosition"
+                        >
                           <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
                           <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
                         </RadioGroup>

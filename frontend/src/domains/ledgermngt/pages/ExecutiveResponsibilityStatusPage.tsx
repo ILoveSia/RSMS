@@ -13,11 +13,17 @@ import type { DataGridColumn } from '@/shared/types/common';
 import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import executiveResponsibilityApi from '../api/executiveResponsibilityApi';
 import ExecutiveResponsibilityDialog from '../components/ExecutiveResponsibilityDialog';
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
+import {
+  getCodeName,
+  extractCommonCodes,
+  type CommonCode
+} from '@/shared/utils/codeUtils';
+import { useReduxState } from '@/app/store/use-store';
 interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
 }
@@ -38,6 +44,7 @@ interface ExecutiveResponsibilityItem {
   execofficer_dt?: string;   // 임원 일자
   hasConcurrentPosition?: string; // 겸직여부
   concurrentPosition?: string; // 겸직사항
+  empName?: string;
 }
 
 // 그룹화된 데이터
@@ -46,6 +53,7 @@ interface ExecutiveResponsibilityRow {
   position: string;          // 직책
   items: ExecutiveResponsibilityItem[]; // 해당 직책의 모든 데이터
   count: number;             // 데이터 개수
+  empName: string;
 }
 
 
@@ -75,7 +83,8 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       id: position,
       position,
       items,
-      count: items.length
+      count: items.length,
+      empName: items[0].empName || '해당없음'
     }));
   };
 
@@ -118,7 +127,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ row }) => renderArrayValue(row.items, 'jobRank'),
+      renderCell: ({ row }) => renderArrayValue(row.items, 'jobTitle'),
     },
     {
       field: 'empNo' as keyof ExecutiveResponsibilityRow,
@@ -130,13 +139,13 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       renderCell: ({ row }) => renderArrayValue(row.items, 'empNo'),
     },
     {
-      field: 'executiveName' as keyof ExecutiveResponsibilityRow,
+      field: 'empName' as keyof ExecutiveResponsibilityRow,
       headerName: '성명',
       flex: 1,
       minWidth: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ row }) => renderArrayValue(row.items, 'executiveName'),
+      renderCell: ({ row }) => renderArrayValue(row.items, 'empName'),
     },
     {
       field: 'responsibility' as keyof ExecutiveResponsibilityRow,
@@ -192,25 +201,36 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [allExecutiveData, setAllExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
   const [filteredExecutiveData, setFilteredExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
 
+  // Redux에서 공통코드 가져오기 (AuditItemStatusPage 방식 참고)
+  const { data: allCodesData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
+
+  // 공통코드 배열 추출
+  const currentAllCodes = useMemo(() => extractCommonCodes(allCodesData), [allCodesData]);
+
   // API 데이터를 변환하는 함수
   const transformApiData = useCallback((data: any[]): ExecutiveResponsibilityItem[] => {
-    return data.map((item: any) => ({
-      id: item.positionsId || 0,
-      position: item.positionNameMapped || '해당없음',
-      jobTitle: item.jobTitleCd || '해당없음',
-      empNo: item.num || '해당없음',
-      executiveName: item.empId || '해당없음',
-      responsibility: item.responsibilityContent || '해당없음', // 책무 내용
-      responsibilityOverview: item.roleSumm || '해당없음', // 책무 개요
-      responsibilityDetail: item.responsibilityDetailContent || '해당없음',
-      managementDuty: item.responsibilityMgtSts || '해당없음',
-      relatedBasis: item.responsibilityRelEvid || '해당없음',
-      jobRank: item.jobRankCd || '해당없음',
-      execofficer_dt: item.execofficer_dt || '해당없음',
-      hasConcurrentPosition: item.hasConcurrentPosition || 'N', // 겸직여부
-      concurrentPosition: item.concurrentPosition || '해당없음' // 겸직사항
-    }));
-  }, []);
+
+    return data.map((item: any) => {
+      const jobTitleCode = item.jobTitleCd || item.positionCode; // 백엔드 응답에 따라 다른 필드명 사용
+      const jobTitleName = getCodeName(currentAllCodes, 'JOB_RANK', jobTitleCode);
+
+      return {
+        id: item.positionsId || 0,
+        position: item.positionsNm || '해당없음', // 백엔드 응답 필드명 수정
+        jobTitle: jobTitleName || jobTitleCode || '해당없음', // 코드명 변환 실패시 원본 코드 표시
+        empNo: item.empNo || '해당없음', // 사번
+        executiveName: item.empName || '해당없음', // 성명
+        responsibility: item.responsibilityContent || '해당없음', // 책무 내용
+        responsibilityOverview: item.roleSumm || '해당없음', // 책무 개요
+        responsibilityDetail: item.responsibilityDetailContent || '해당없음',
+        managementDuty: item.responsibilityMgtSts || '해당없음',
+        relatedBasis: item.responsibilityRelEvid || '해당없음',
+        hasConcurrentPosition: item.hasConcurrentPosition || 'N', // 겸직여부
+        concurrentPosition: item.concurrentPosition || '해당없음', // 겸직사항
+        empName: item.empName || '해당없음'
+      };
+    });
+  }, [currentAllCodes]);
 
   // 에러 처리 함수
   const handleError = useCallback((error: any, message: string) => {
@@ -226,7 +246,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
       // 모든 데이터를 한 번만 로드
       const data = await executiveResponsibilityApi.getAll();
-
       // API 응답을 개별 항목 형태로 변환
       const transformedItems = transformApiData(data);
       setAllExecutiveData(transformedItems);
@@ -247,12 +266,12 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   // 필터링된 데이터를 그룹핑하여 표시
   const applyFiltersAndUpdate = useCallback(() => {
     let filtered = allExecutiveData;
-    
+
     // 직책 필터링
     if (selectedPosition?.positionsId) {
       filtered = filtered.filter(item => item.position === selectedPosition.positionsNm);
     }
-    
+
     setFilteredExecutiveData(filtered);
     updateDisplayData(filtered);
   }, [allExecutiveData, selectedPosition, updateDisplayData]);

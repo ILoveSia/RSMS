@@ -21,20 +21,18 @@ public class ExecutiveResponsibilityDto {
 
     // 메인 클래스에 필요한 필드들 추가
     private Long positionsId;
-    private String positionNameMapped;
+    private String positionsNm;
     private Long execofficerId;
     private String empName;
-    private String jobRankCd;
-    private String jobTitleCd;
-    private String num;
+    private String positionCode;
     private String responsibilityContent;
     private String responsibilityDetailContent;
     private String responsibilityMgtSts;
     private String responsibilityRelEvid;
-    private String execofficer_dt;
     private String roleSumm; // 책무 개요 추가
-    private String hasConcurrentPosition; // 겸직여부
-    private String concurrentPosition; // 겸직사항
+    private String dualYn; // 겸직여부
+    private String dualDetails; // 겸직사항
+    private String empNo;
 
     @Data
     @Builder

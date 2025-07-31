@@ -280,7 +280,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
 
   const isFormValid = () => {
     return !!(
-      formData.positionNameMapped &&
+      formData.positionsNm &&
       formData.executiveName &&
       // formData.jobTitle &&
       formData.execofficer_dt
@@ -308,7 +308,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <TextField
               label="직책"
-              value={formData.positionNameMapped || ''}
+              value={formData.positionsNm || ''}
               mode={'readonly'}
               sx={{ flex: 1 }}
             />
