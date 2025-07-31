@@ -39,4 +39,21 @@ public class HodIcItemController {
         log.info("내부통제 항목 조회 완료 - 건수: {}", items.size());
         return ResponseEntity.ok(items);
     }
+
+    /**
+     * HOD IC ITEM 상세 정보 조회
+     * 점검결과작성 팝업에서 사용
+     * 
+     * @param hodIcItemId 부서장 내부통제 항목 ID
+     * @return HOD IC ITEM 상세 정보
+     */
+    @GetMapping("/{hodIcItemId}/detail")
+    public ResponseEntity<HodIcItemDto> getHodIcItemDetail(@PathVariable Long hodIcItemId) {
+        log.info("HOD IC ITEM 상세 정보 조회 요청 - ID: {}", hodIcItemId);
+        
+        HodIcItemDto item = hodIcItemService.getHodIcItemById(hodIcItemId);
+        
+        log.info("HOD IC ITEM 상세 정보 조회 완료 - ID: {}", hodIcItemId);
+        return ResponseEntity.ok(item);
+    }
 }

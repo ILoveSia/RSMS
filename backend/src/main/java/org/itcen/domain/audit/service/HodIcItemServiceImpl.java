@@ -40,4 +40,19 @@ public class HodIcItemServiceImpl implements HodIcItemService {
                 .map(HodIcItemDto::fromEntity)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * ID로 HOD IC ITEM 상세 정보 조회
+     * 
+     * @param hodIcItemId 부서장 내부통제 항목 ID
+     * @return HOD IC ITEM DTO
+     */
+    @Override
+    public HodIcItemDto getHodIcItemById(Long hodIcItemId) {
+        log.debug("HOD IC ITEM 상세 정보 조회: {}", hodIcItemId);
+        
+        return hodIcItemRepository.findById(hodIcItemId)
+                .map(HodIcItemDto::fromEntity)
+                .orElseThrow(() -> new RuntimeException("HOD IC ITEM을 찾을 수 없습니다: " + hodIcItemId));
+    }
 }

@@ -95,4 +95,9 @@ public class AuditItemStatusResponseDto {
      * 이행결과보고
      */
     private String auditDoneContent;
+
+    /**
+     * 점검상태코드 (audit_prog_mngt 테이블에서)
+     */
+    private String auditStatusCd;
 }

@@ -15,13 +15,20 @@ import { useReduxState } from '@/app/store/use-store';
 import { 
   Search as SearchIcon,
   Person as PersonIcon,
-  Edit as EditIcon
+  Create as CreateIcon
 } from '@mui/icons-material';
 import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { getAuditItemStatusList, type AuditItemStatusResponse } from '../api/auditItemApi';
 import { assignAuditor, type AuditorAssignmentRequest } from '../api/auditorApi';
 import AuditorAssignmentDialog from '../components/AuditorAssignmentDialog';
+import AuditResultDialog, { 
+  type AuditItemInfo, 
+  type DialogMode 
+} from '../components/AuditResultDialog';
+import { 
+  getAuditResultDetail
+} from '../api/auditResultApi';
 import DepartmentApi from '@/domains/common/api/departmentApi';
 import { 
   getCodeName, 
@@ -32,10 +39,11 @@ import {
   type Department 
 } from '@/shared/utils/codeUtils';
 
-// 항목별 점검 현황 데이터 인터페이스
+// 항목별 점가 현황 데이터 인터페이스
 interface AuditItemRow {
   id: string;                           // DataGrid용 고유 식별자
   hodIcItemId: number;                  // 부서장 내부통제 항목 ID
+  auditProgMngtDetailId: number;        // 점검 계획관리 상세 ID
   responsibilityContent: string;        // 책무
   responsibilityDetailContent: string;  // 책무상세내역
   positionsNm: string;                  // 직책명
@@ -44,10 +52,11 @@ interface AuditItemRow {
   roleTypeCd: string;                   // 직무구분
   icTask: string;                       // 내부통제업무
   auditMenId: string;                   // 점검자
-  auditResultStatusCd: string;          // 점검결과
+  auditResultStatusCd: string;          // 점가결과
   impPlStatusCd: string;                // 점검진행상태
   auditDoneDt: string;                  // 이행완료 예정일자
   auditDoneContent: string;              // 이행결과보고
+  auditStatusCd: string;                // 점검상태코드
 }
 
 /**
@@ -57,6 +66,7 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
   return {
     id: response.hodIcItemId.toString(), // DataGrid용 고유 식별자
     hodIcItemId: response.hodIcItemId,
+    auditProgMngtDetailId: response.auditProgMngtDetailId,
     responsibilityContent: response.responsibilityContent || '',
     responsibilityDetailContent: response.responsibilityDetailContent || '',
     positionsNm: response.positionsNm || '',
@@ -69,6 +79,7 @@ const convertApiResponseToRow = (response: AuditItemStatusResponse): AuditItemRo
     impPlStatusCd: response.impPlStatusCd || '',
     auditDoneDt: response.auditDoneDt || '',
     auditDoneContent: response.auditDoneContent || '',
+    auditStatusCd: response.auditStatusCd || '',
   };
 };
 
@@ -105,6 +116,10 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
   // 점검자 지정 다이얼로그 상태
   const [auditorDialogOpen, setAuditorDialogOpen] = useState(false);
 
+  // 점검결과작성 다이얼로그 상태
+  const [auditResultDialogOpen, setAuditResultDialogOpen] = useState(false);
+  const [auditResultDialogMode, setAuditResultDialogMode] = useState<DialogMode>('create');
+
   // 부서 정보 로드
   useEffect(() => {
     const loadDepartments = async () => {
@@ -120,13 +135,13 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
 
   // 공통코드 로드 확인
   useEffect(() => {
-    console.log('allCodesData:', allCodesData);
-    console.log('allCodes:', allCodes);
+    // console.log('allCodesData:', allCodesData);
+    // console.log('allCodes:', allCodes);
     if (allCodes && allCodes.length > 0) {
-      console.log('로드된 공통코드 개수:', allCodes.length);
-      console.log('FIELD_TYPE 코드:', allCodes.filter(c => c.groupCode === 'FIELD_TYPE'));
-      console.log('COM_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'COM_ROLE_TYPE'));
-      console.log('UNI_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'UNI_ROLE_TYPE'));
+      // console.log('로드된 공통코드 개수:', allCodes.length);
+      // console.log('FIELD_TYPE 코드:', allCodes.filter(c => c.groupCode === 'FIELD_TYPE'));
+      // console.log('COM_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'COM_ROLE_TYPE'));
+      // console.log('UNI_ROLE_TYPE 코드:', allCodes.filter(c => c.groupCode === 'UNI_ROLE_TYPE'));
       
       // 첫 번째 공통코드 구조 확인
       if (allCodes[0]) {
@@ -185,7 +200,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     {
       field: 'auditMenId',
       headerName: '점검자',
-      width: 100,
+      width: 120,
     },
     {
       field: 'auditResultStatusCd',
@@ -196,15 +211,15 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         return (
           <Chip
             label={
-              value === 'SUITABLE' ? '적정' :
-              value === 'INADEQUATE' ? '미흡' :
-              value === 'EXCLUDED' ? '제외' :
-              value === 'IN_PROGRESS' ? '진행중' : value
+              value === 'INS02' ? '적정' :
+              value === 'INS03' ? '미흡' :
+              value === 'INS04' ? '제외' :
+              value === 'INS01' ? '진행중' : value
             }
             color={
-              value === 'SUITABLE' ? 'success' :
-              value === 'INADEQUATE' ? 'error' :
-              value === 'EXCLUDED' ? 'default' : 'primary'
+              value === 'INS02' ? 'success' :
+              value === 'INS03' ? 'error' :
+              value === 'INS01' ? 'default' : 'primary'
             }
             size="small"
           />
@@ -212,7 +227,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       },
     },
     {
-      field: 'impPlStatusCd',
+      field: 'auditStatusCd',
       headerName: '점검진행상태',
       width: 120,
       renderCell: ({ value }) => {
@@ -220,17 +235,14 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         return (
           <Chip
             label={
-              value === 'PLAN_WRITE' ? '계획작성' :
-              value === 'PLAN_APPROVAL_REQ' ? '계획결재요청' :
-              value === 'PLAN_APPROVAL_COMP' ? '계획결재완료' :
-              value === 'IMPL_WRITE' ? '이행작성' :
-              value === 'IMPL_APPROVAL_REQ' ? '이행결재요청' :
-              value === 'IMPL_APPROVAL_COMP' ? '이행결재완료' : value
+              value === 'AA03' ? '점검마감' :
+              value === 'AA02' ? '점검진행' :
+              value === 'AA01' ? '점검신청' : value
             }
             color={
-              value === 'IMPL_APPROVAL_COMP' ? 'success' :
-              value === 'PLAN_APPROVAL_COMP' ? 'primary' :
-              value === 'PLAN_WRITE' ? 'default' : 'warning'
+              value === 'AA03' ? 'success' :
+              value === 'AA02' ? 'primary' :
+              value === 'AA01' ? 'default' : 'warning'
             }
             size="small"
           />
@@ -263,26 +275,26 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         auditResultStatusCd: selectedImpPlStatus === 'ALL' ? '' : selectedImpPlStatus
       });
       
-      console.log('API Response:', apiResponse);
-      console.log('API Response type:', typeof apiResponse);
-      console.log('API Response is array:', Array.isArray(apiResponse));
-      console.log('API Response length:', apiResponse?.length);
+      // console.log('API Response:', apiResponse);
+      // console.log('API Response type:', typeof apiResponse);
+      // console.log('API Response is array:', Array.isArray(apiResponse));
+      // console.log('API Response length:', apiResponse?.length);
       
       if (apiResponse && Array.isArray(apiResponse)) {
-        console.log('First item:', apiResponse[0]);
+        // console.log('First item:', apiResponse[0]);
         
         // API 응답을 화면용 데이터로 변환
         const convertedData = apiResponse.map(convertApiResponseToRow);
-        console.log('Converted Data:', convertedData);
-        console.log('Converted Data length:', convertedData.length);
+        // console.log('Converted Data:', convertedData);
+        // console.log('Converted Data length:', convertedData.length);
         setAuditItemRows(convertedData);
       } else {
-        console.error('API 응답이 배열이 아닙니다:', apiResponse);
+        // console.error('API 응답이 배열이 아닙니다:', apiResponse);
         setAuditItemRows([]);
       }
       
     } catch (error) {
-      console.error('항목별 점검 현황 조회 오류:', error);
+      // console.error('항목별 점검 현황 조회 오류:', error);
       setErrorMessage('항목별 점검 현황 조회 중 오류가 발생했습니다.');
       setErrorDialogOpen(true);
     } finally {
@@ -387,16 +399,108 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     }
   };
 
-  // 점검 결과 작성 핸들러
-  const handleWriteAuditResult = () => {
+  // 점검 결과 작성/수정 통합 핸들러
+  const handleAuditResult = async () => {
     if (!selectedItemIds.length) {
       setErrorMessage('점검 결과를 작성할 항목을 선택해주세요.');
       setErrorDialogOpen(true);
       return;
     }
-    console.log('점검 결과 작성:', selectedItemIds);
-    // TODO: 점검 결과 작성 다이얼로그 열기
+
+    try {
+      console.log('====== 점검결과 처리 시작 ======');
+      console.log('선택된 항목 IDs:', selectedItemIds);
+      
+      // 선택된 항목들의 auditProgMngtDetailId 추출
+      const selectedRows = auditItemRows.filter(row => selectedItemIds.includes(row.id));
+      const auditProgMngtDetailIds = selectedRows.map(row => row.auditProgMngtDetailId);
+      
+      console.log('선택된 행들:', selectedRows);
+      console.log('추출된 auditProgMngtDetailId들:', auditProgMngtDetailIds);
+
+      // 기존 점검결과 데이터 확인
+      console.log('API 호출 전 - auditProgMngtDetailIds:', auditProgMngtDetailIds);
+      
+      const existingResults = await getAuditResultDetail(auditProgMngtDetailIds);
+      
+      // console.log('API 호출 후 - 기존 점검결과 데이터 조회 결과:', existingResults);
+      // console.log('응답 타입:', typeof existingResults);
+      // console.log('배열 여부:', Array.isArray(existingResults));
+      // console.log('길이:', existingResults?.length);
+
+      // 🚨 단순화된 모드 결정 로직
+      let hasExistingData = false;
+      
+      console.log('📋 모드 결정 시작:', {
+        existingResultsExists: !!existingResults,
+        isArray: Array.isArray(existingResults),
+        length: existingResults?.length
+      });
+      
+      // 단순한 조건: API 응답에 데이터가 있으면 edit, 없으면 create
+      if (existingResults && Array.isArray(existingResults) && existingResults.length > 0) {
+        console.log('✅ API 응답에 데이터 있음 - edit 모드로 결정');
+        hasExistingData = true;
+        
+        // 상세 데이터 확인 (디버깅용)
+        existingResults.forEach((result: any, index: number) => {
+          console.log(`📋 결과 ${index + 1}:`, {
+            auditProgMngtDetailId: result.auditProgMngtDetailId,
+            auditResultStatusCd: result.auditResultStatusCd,
+            hasStatus: !!result.auditResultStatusCd
+          });
+        });
+      } else {
+        console.log('❌ API 응답에 데이터 없음 - create 모드로 결정');
+        // hasExistingData는 이미 false로 초기화되어 있음
+      }
+      
+      // console.log('📋 최종 hasExistingData 결과:', hasExistingData);
+
+      const selectedMode = hasExistingData ? 'edit' : 'create';
+      // console.log('🔥🔥🔥 결정된 모드:', selectedMode, '🔥🔥🔥');
+      // console.log('🔥🔥🔥 hasExistingData 최종값:', hasExistingData, '🔥🔥🔥');
+      
+      // console.log('🎯 모드 설정 전 - 현재 auditResultDialogMode:', auditResultDialogMode);
+      setAuditResultDialogMode(selectedMode);
+      // console.log('🎯 모드 설정 후 - 설정할 모드:', selectedMode);
+      setAuditResultDialogOpen(true);
+      // console.log('🎯 다이얼로그 열기 완료');
+
+    } catch (error) {
+      // console.error('🚨🚨🚨 점검결과 상태 확인 오류 발생 🚨🚨🚨');
+      // console.error('오류 내용:', error);
+      console.error('오류 상세:', {
+        message: error instanceof Error ? error.message : '알 수 없는 오류',
+        stack: error instanceof Error ? error.stack : null,
+        type: typeof error,
+        errorObject: error
+      });
+      
+      // 오류 발생 시 기본적으로 생성 모드로 처리
+      // console.log('🚨 오류로 인해 create 모드로 강제 설정');
+      setAuditResultDialogMode('create');
+      setAuditResultDialogOpen(true);
+    }
   };
+
+  // 선택된 항목들을 AuditItemInfo 형태로 변환
+  const getSelectedAuditItems = (): AuditItemInfo[] => {
+    return auditItemRows
+      .filter(row => selectedItemIds.includes(row.id))
+      .map(row => ({
+        hodIcItemId: row.hodIcItemId,
+        auditProgMngtDetailId: row.auditProgMngtDetailId,
+        responsibilityContent: row.responsibilityContent,
+        responsibilityDetailContent: row.responsibilityDetailContent,
+        positionsNm: row.positionsNm,
+        deptCd: row.deptCd,
+        fieldTypeCd: row.fieldTypeCd,
+        roleTypeCd: row.roleTypeCd,
+        icTask: row.icTask,
+      }));
+  };
+
 
   return (
     <PageContainer
@@ -491,10 +595,10 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
           <Button
             variant="contained"
             size="small"
-            onClick={handleWriteAuditResult}
+            onClick={handleAuditResult}
             disabled={!selectedItemIds.length || isLoading}
             color="success"
-            startIcon={<EditIcon />}
+            startIcon={<CreateIcon />}
             sx={{ 
               color: 'white !important', 
               '& .MuiSvgIcon-root': { color: 'white' },
@@ -564,6 +668,20 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
           onClose={() => setAuditorDialogOpen(false)}
           onAssign={handleAuditorAssignment}
           selectedItemIds={selectedItemIds}
+          loading={isLoading}
+        />
+
+        {/* 점검결과작성 다이얼로그 */}
+        <AuditResultDialog
+          open={auditResultDialogOpen}
+          mode={auditResultDialogMode}
+          onClose={() => {
+            setAuditResultDialogOpen(false);
+            setSelectedItemIds([]);
+            // 저장 후 데이터 새로고침
+            handleFetchAuditItems();
+          }}
+          selectedItems={getSelectedAuditItems()}
           loading={isLoading}
         />
 
