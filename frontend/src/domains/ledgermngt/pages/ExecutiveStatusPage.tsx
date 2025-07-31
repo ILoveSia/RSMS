@@ -74,6 +74,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setError(null);
     try {
       const data = await execOfficerApi.getAll();
+      console.log('data', data);
       setRows(data);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
@@ -110,7 +111,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       headerAlign: 'center',
     },
     {
-      field: 'empId',
+      field: 'empName',
       headerName: '성명 ',
       width: 120,
       renderCell: ({ value }) => value || '해당없음',
@@ -167,7 +168,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const handleSaveExecutive = async (data: ExecOfficer) => {
     try {
       if (data.execofficerId) {
-        // 수정
+        // 수
         await execOfficerApi.update(data.execofficerId, data);
         setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
       } else {
@@ -183,13 +184,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       setErrorMessage('임원 정보 저장 중 오류가 발생했습니다.');
       setErrorDialogOpen(true);
     }
-  };
-
-  // 임원 등록 핸들러
-  const handleCreateExecutive = () => {
-    setSelectedExecutive(null);
-    setDialogMode('create');
-    setDialogOpen(true);
   };
 
   // 임원 상세 정보 핸들러

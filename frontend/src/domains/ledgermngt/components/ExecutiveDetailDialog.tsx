@@ -172,12 +172,13 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
 
   useEffect(() => {
     if (executive && open) {
-      // empId 필드를 executiveName으로도 설정하여 성명 필드에 표시되도록 함
+      // employee 테이블 구조에 맞게 수정
+      // empId는 사번이므로 그대로 사용
       // dualYn 필드를 hasConcurrentPosition으로 매핑하여 라디오박스에 표시되도록 함
       // dualDetails 필드를 concurrentPosition으로 매핑하여 겸직사항 필드에 표시되도록 함
       setFormData({
         ...executive,
-        executiveName: executive.empId || '',
+        executiveName: executive.empId || '', // empId는 사번이므로 성명으로 표시하기 위해 임시로 설정
         hasConcurrentPosition: executive.dualYn === 'Y',
         concurrentPosition: executive.dualDetails || ''
       });
@@ -187,22 +188,30 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         fetchPositionDetails(executive.positionsId);
       }
 
-      // empId가 있으면 사용자 정보 조회하여 job_rank_cd 가져오기
+      // empId(사번)가 있으면 employee 테이블에서 사용자 정보 조회하여 성명과 직급 가져오기
       if (executive.empId) {
         const fetchUser = async () => {
           try {
-            const userInfo = await fetchUserInfo(executive.empId);
+            // employee 테이블에서 사번으로 조회
+            const userInfo = await apiClient.get(`/users/num/${executive.empId}`);
             if (userInfo) {
               // userInfo가 any 타입이므로 타입 안전하게 처리
               if (typeof userInfo === 'object' && userInfo !== null) {
+                const userData = userInfo as any;
                 setFormData((prev: Record<string, any>) => ({
                   ...prev,
-                  jobRankCd: userInfo.jobRankCd || ''
+                  executiveName: userData.username || '', // 성명 설정
+                  jobRankCd: userData.jobRankCd || '' // 직급 코드 설정
                 }));
               }
             }
           } catch (error) {
             console.error('사용자 정보 조회 실패:', error);
+            // 조회 실패 시 empId를 그대로 사용
+            setFormData((prev: Record<string, any>) => ({
+              ...prev,
+              executiveName: executive.empId || ''
+            }));
           }
         };
         fetchUser();
@@ -224,7 +233,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       setFormData((prev: any) => ({
         ...prev,
         employee,
-        empId: employee.username,
+        empId: employee.num, // 사번으로 설정
         executiveName: employee.username, // 성명 자동 입력
       }));
 

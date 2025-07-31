@@ -112,12 +112,26 @@ public class UserService {
 
     /**
      * 사용자명으로 사용자 조회
+     * employee 테이블 사용
      */
     public UserDto.Response getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
+        log.info("사용자명으로 사용자 조회 시도: {}", username);
+        Employee employee = employeeRepository.findByEmpName(username)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Username: " + username));
         
-        return UserDto.Response.from(user);
+        return UserDto.Response.builder()
+                .id(employee.getEmpNo())
+                .username(employee.getEmpName())
+                .email(employee.getEmail())
+                .address("")
+                .mobile(employee.getPhoneNo())
+                .deptCd(employee.getDeptCode())
+                .num(employee.getEmpNo())
+                .jobRankCd(employee.getPositionCode())
+                .jobTitleCd(employee.getPositionName())
+                .createdAt(employee.getCreatedAt())
+                .updatedAt(employee.getUpdatedAt())
+                .build();
     }
 
     /**

@@ -50,4 +50,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
      * 휴대폰 번호로 직원 조회
      */
     Optional<Employee> findByPhoneNo(String phoneNo);
+
+    /**
+     * 성명으로 직원 조회 (정확히 일치)
+     */
+    Optional<Employee> findByEmpName(String empName);
 }

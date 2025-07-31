@@ -26,4 +26,5 @@ public class ExecOfficerDto {
     private LocalDateTime updatedAt;
     private String positionNameMapped;
     private String userName;
+    private String empName;
 }

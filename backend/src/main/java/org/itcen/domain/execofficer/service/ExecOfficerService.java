@@ -31,10 +31,11 @@ public class ExecOfficerService {
         String sql = "SELECT  " +
                 "p.positions_id, p.positions_nm,  " +
                 "eo.execofficer_id, eo.emp_id,  eo.execofficer_dt, eo.dual_yn, eo.dual_details,  " +
-                "eo.approval_id, eo.ledger_order, eo.order_status,  " +
+                "eo.approval_id, eo.ledger_order, eo.order_status,     em.emp_name ," +
                 "eo.created_id, eo.updated_id, eo.created_at, eo.updated_at  " +
                 "FROM positions p  " +
                 "LEFT JOIN execofficer eo ON p.positions_id = eo.positions_id " +
+                "left join employee em on eo.emp_id =em.emp_no " +
                 "ORDER BY p.positions_id";
 
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
@@ -52,11 +53,11 @@ public class ExecOfficerService {
                 dto.setApprovalId(row[7] != null ? ((Number) row[7]).longValue() : null);
                 dto.setLedgerOrder((String) row[8]);
                 dto.setOrderStatus((String) row[9]);
-                dto.setCreatedId((String) row[10]);
-                dto.setUpdatedId((String) row[11]);
-                dto.setCreatedAt(row[12] != null ? toLocalDateTime(row[12]) : null);
-                dto.setUpdatedAt(row[13] != null ? toLocalDateTime(row[13]) : null);
-                // dto.setUserName((String) row[14]);
+                dto.setEmpName((String) row[10]);
+                dto.setCreatedId((String) row[11]);
+                dto.setUpdatedId((String) row[12]);
+                dto.setCreatedAt(row[13] != null ? toLocalDateTime(row[13]) : null);
+                dto.setUpdatedAt(row[14] != null ? toLocalDateTime(row[14]) : null);
                 return dto;
             } catch (Exception e) {
                 log.error("Error processing row: {}", row, e);
@@ -121,13 +122,27 @@ public class ExecOfficerService {
     private ExecOfficer toEntity(ExecOfficerDto dto) {
         LocalDate execDate = null;
         if (dto.getExecofficer_dt() != null && !dto.getExecofficer_dt().trim().isEmpty()) {
-            execDate = LocalDate.parse(dto.getExecofficer_dt());
+            try {
+                // ISO 8601 형식 (2025-07-07T15:00:00.000Z) 처리
+                if (dto.getExecofficer_dt().contains("T")) {
+                    // ISO 8601 형식에서 날짜 부분만 추출
+                    String datePart = dto.getExecofficer_dt().substring(0, 10);
+                    execDate = LocalDate.parse(datePart);
+                } else {
+                    // 기존 YYYY-MM-DD 형식 처리
+                    execDate = LocalDate.parse(dto.getExecofficer_dt());
+                }
+            } catch (Exception e) {
+                log.warn("날짜 파싱 실패: {}, 원본 값: {}", e.getMessage(), dto.getExecofficer_dt());
+                // 파싱 실패 시 null로 설정
+                execDate = null;
+            }
         }
 
         return ExecOfficer.builder()
                 .execofficerId(dto.getExecofficerId())
                 .empId(dto.getEmpId())
-                .execofficer_dt(dto.getExecofficer_dt())
+                .execofficer_dt(execDate != null ? execDate.toString() : null)
                 .dualYn(dto.getDualYn())
                 .dualDetails(dto.getDualDetails())
                 .positionsId(dto.getPositionsId())

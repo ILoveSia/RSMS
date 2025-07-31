@@ -12,6 +12,7 @@ export interface ExecOfficer {
   ledgerOrder: number;
   orderStatus: string;
   positionsId?: number;
+  empName: string;
 }
 
 export interface PositionDetailResponse {

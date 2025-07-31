@@ -9,6 +9,7 @@ import React from 'react';
 const AuditProgMngtStatusPage = React.lazy(() => import('@/domains/inquiry/pages/AuditProgMngtStatusPage'));
 const DeptStatusPage = React.lazy(() => import('@/domains/inquiry/pages/DeptStatusPage'));
 const DeficiencyStatusPage = React.lazy(() => import('@/domains/inquiry/pages/DeficiencyStatusPage'));
+const AuditItemStatusPage = React.lazy(() => import('@/domains/inquiry/pages/AuditItemStatusPage'));
 
 const inquiryRoutes: DomainRoute[] = [
   {
@@ -21,6 +22,18 @@ const inquiryRoutes: DomainRoute[] = [
       breadcrumb: ['적부구조도 이력 점검', '점검계획관리 현황'],
       icon: 'Assignment',
       description: '점검계획관리 현황 페이지',
+    },
+  },
+  {
+    path: '/inquiry/audit-item-status',
+    element: AuditItemStatusPage,
+    meta: {
+      title: '점검현황(항목별)',
+      requiresAuth: true,
+      roles: ['USER', 'ADMIN'],
+      breadcrumb: ['적부구조도 이력 점검', '점검현황(항목별)'],
+      icon: 'Assessment',
+      description: '항목별 점검 현황 페이지',
     },
   },
   {
