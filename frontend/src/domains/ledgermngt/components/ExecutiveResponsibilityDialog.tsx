@@ -1,6 +1,5 @@
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import EmployeeSearchpopup from '@/domains/common/components/search/EmployeeSearchPopup';
 import execOfficerApi from '@/domains/ledgermngt/api/executivestatusApi';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
@@ -17,12 +16,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
   Tabs,
   Tab
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { DatePicker } from '../../../shared/components';
+
 
 interface ExecutiveDetailDialogProps {
   open: boolean;
@@ -35,15 +33,9 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   onClose,
   data,
 }) => {
-  // const [mode, setMode] = useState<DialogMode>('view');
   const [formData, setFormData] = useState<any>({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [employeeSearchPopupOpen, setEmployeeSearchPopupOpen] = useState(false);
   const [positionDetailsLoading, setPositionDetailsLoading] = useState(false);
   const [originalDate, setOriginalDate] = useState<Date | null>(null);
-
-  // 탭 상태
   const [currentTab, setCurrentTab] = useState(0);
 
   // Redux에서 공통코드 가져오기 (AuditItemStatusPage 방식 참고)
@@ -97,18 +89,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
 
   // 직책 ID로 직책 상세 정보 조회
   const fetchPositionDetails = async (positionId: number) => {
-    const dateValue = data.execofficer_dt ? new Date(data.execofficer_dt) : null;
-    setOriginalDate(dateValue)
+    if (!positionId) return null;
+
     try {
       setPositionDetailsLoading(true);
-
       const positionDetails = await execOfficerApi.getPositionDetails(positionId);
 
-      setFormData((prev: Record<string, any>) => ({
-        ...prev,
-        positionName: positionDetails.positionName || []
-      }));
-      // 조회된 데이터 설정
       if (positionDetails) {
         setFormData((prev: Record<string, any>) => ({
           ...prev,
@@ -125,8 +111,6 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       setPositionDetailsLoading(false);
     }
   };
-
-  // 사용자 정보 조회 함수
 
   // 공통코드 초기화 useEffect (localStorage 복원 로직)
   useEffect(() => {
@@ -151,62 +135,110 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   }, [allCodesData, setAllCodes]);
 
   useEffect(() => {
-    if (data && open) {
-      setLoading(true);
-      console.log(data)
-      // 그룹화된 데이터인지 확인 (items 배열이 있으면 그룹화된 데이터)
-      if (data.items && Array.isArray(data.items)) {
-        // 그룹화된 데이터 처리
-        const firstItem = data.items[0] || {};
-        setFormData({
-          ...data,
-          positionsNm: data.position || '',
-          executiveName: firstItem.executiveName || '',
-          hasConcurrentPosition: firstItem.hasConcurrentPosition || 'N',
-          concurrentPosition: firstItem.concurrentPosition || '',
-          jobRankCd: firstItem.jobTitle || '',
-          isGrouped: true,
-          groupItems: data.items,
-          count: data.count || data.items.length
-        });
+    if (!data || !open) return;
 
-        // 첫 번째 항목의 ID로 직책 상세 정보 조회
-        if (data.items.length > 0 && data.items[0].id) {
-          fetchPositionDetails(data.items[0].id);
-        }
-      } else {
-        // 개별 데이터 처리 (기존 로직)
-        setFormData({
-          ...data,
-          positionsNm: data.position || '',
-          executiveName: data.executiveName || '',
-          hasConcurrentPosition: data.hasConcurrentPosition || 'N',
-          concurrentPosition: data.concurrentPosition || '',
-          responsibilityContent: data.responsibilityContent || '',
-          jobRankCd: data.jobRank || '',
-          deptCode: data.deptCode || '',
-          deptName: data.deptName || '',
-          isGrouped: false
-        });
+    // 날짜 설정
+    const dateValue = data.execofficer_dt ? new Date(data.execofficer_dt) : null;
+    setOriginalDate(dateValue);
 
-        // 직책 ID가 있으면 직책 상세 정보 조회
-        if (data.id) {
-          fetchPositionDetails(data.id);
-        }
-      }
+    // 그룹화된 데이터인지 확인
+    const isGrouped = data.items && Array.isArray(data.items);
+    const firstItem = isGrouped ? data.items[0] || {} : data;
+
+    // 공통 데이터 설정
+    const commonData = {
+      ...data,
+      positionsNm: data.position || '',
+      executiveName: firstItem.executiveName || '',
+      hasConcurrentPosition: firstItem.hasConcurrentPosition || 'N',
+      concurrentPosition: firstItem.concurrentPosition || '',
+      jobRankCd: isGrouped ? firstItem.jobTitle || '' : data.jobRank || '',
+      isGrouped,
+      ...(isGrouped && {
+        groupItems: data.items,
+        count: data.count || data.items.length
+      }),
+      ...(!isGrouped && {
+        responsibilityContent: data.responsibilityContent || '',
+        deptCode: data.deptCode || '',
+        deptName: data.deptName || ''
+      })
+    };
+
+    setFormData(commonData);
+
+    // 직책 상세 정보 조회
+    const positionId = isGrouped ? firstItem.id : data.id;
+    if (positionId) {
+      fetchPositionDetails(positionId);
     }
-    setLoading(false);
-    setError(null);
-    setCurrentTab(0); // 다이얼로그 열릴 때 첫 번째 탭으로 초기화
+
+    setCurrentTab(0);
   }, [data, open]);
 
   // 탭 변경 핸들러
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
   };
 
-
-
+  // 기본 정보 필드 렌더링 헬퍼
+  const renderBasicInfoFields = () => (
+    <>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', width: '100%', marginTop: '10px' }}>
+        <TextField
+          label="직책"
+          value={formData.positionsNm || ''}
+          disabled={true}
+          mode='readonly'
+          sx={{ flex: 1 }}
+        />
+        <TextField
+          label="성명"
+          value={formData.executiveName || ''}
+          disabled={true}
+          mode='readonly'
+          sx={{ flex: 1 }}
+        />
+      </Box>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <TextField
+          label="직위"
+          value={getCodeName('JOB_RANK', formData.jobRankCd) || ''}
+          disabled={true}
+          mode='readonly'
+          sx={{ flex: 1 }}
+        />
+        <TextField
+          label="현 직책 부여일"
+          value={originalDate ? originalDate.toLocaleDateString() : ''}
+          disabled={true}
+          mode='readonly'
+          sx={{ flex: 1 }}
+        />
+      </Box>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
+          <RadioGroup
+            row
+            value={formData.hasConcurrentPosition || 'N'}
+            name="hasConcurrentPosition"
+            sx={{ flex: 1, width: '100%' }}
+          >
+            <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
+            <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
+          </RadioGroup>
+        </Box>
+        <TextField
+          label="겸직사항"
+          value={formData.concurrentPosition || ''}
+          disabled={true}
+          mode='readonly'
+          sx={{ flex: 1 }}
+        />
+      </Box>
+    </>
+  );
 
   // 셀 병합을 위한 헬퍼 함수
   const calculateRowSpans = (items: any[]) => {
@@ -214,43 +246,61 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     const rowSpans: { [key: string]: number[] } = {};
 
     columns.forEach(column => {
-      rowSpans[column] = [];
-      let currentSpan = 1;
+      rowSpans[column] = new Array(items.length).fill(1);
 
-      for (let i = 0; i < items.length; i++) {
-        if (i === 0) {
-          // 첫 번째 행
-          rowSpans[column][i] = 1;
-        } else {
-          const currentValue = column === 'jobRank'
-            ? getCodeName('JOB_RANK', items[i][column]) || items[i][column] || '해당없음'
-            : items[i][column] || '해당없음';
-          const prevValue = column === 'jobRank'
-            ? getCodeName('JOB_RANK', items[i - 1][column]) || items[i - 1][column] || '해당없음'
-            : items[i - 1][column] || '해당없음';
+      for (let i = 1; i < items.length; i++) {
+        const getValue = (item: any, col: string) => {
+          if (col === 'jobRank') {
+            return getCodeName('JOB_RANK', item[col]) || item[col] || '해당없음';
+          }
+          return item[col] || '해당없음';
+        };
 
-          if (currentValue === prevValue) {
-            // 이전 행과 같은 값
-            rowSpans[column][i] = 0; // 병합되어 숨겨짐
-            currentSpan++;
-            // 이전 행들의 rowSpan 업데이트
-            for (let j = i - currentSpan + 1; j < i; j++) {
-              if (rowSpans[column][j] > 0) {
-                rowSpans[column][j] = currentSpan;
-                break;
-              }
-            }
-            rowSpans[column][i - currentSpan + 1] = currentSpan;
-          } else {
-            // 다른 값
-            currentSpan = 1;
-            rowSpans[column][i] = 1;
+        const currentValue = getValue(items[i], column);
+        const prevValue = getValue(items[i - 1], column);
+
+        if (currentValue === prevValue) {
+          rowSpans[column][i] = 0;
+          // 이전 행의 rowSpan 증가
+          let j = i - 1;
+          while (j >= 0 && rowSpans[column][j] === 0) {
+            j--;
+          }
+          if (j >= 0) {
+            rowSpans[column][j]++;
           }
         }
       }
     });
 
     return rowSpans;
+  };
+
+  // 테이블 셀 렌더링 헬퍼
+  const renderTableCell = (item: any, column: string, rowSpan: number, index: number) => {
+    if (rowSpan === 0) return null;
+
+    const getValue = () => {
+      switch (column) {
+        case 'jobRank':
+          return getCodeName('JOB_RANK', item.jobRank) || item.jobRank || '해당없음';
+        default:
+          return item[column] || '해당없음';
+      }
+    };
+
+    return (
+      <TableCell
+        key={column}
+        rowSpan={rowSpan}
+        sx={{
+          verticalAlign: 'middle',
+          borderRight: rowSpan > 1 ? '1px solid #e0e0e0' : undefined
+        }}
+      >
+        {getValue()}
+      </TableCell>
+    );
   };
 
   return (
@@ -260,8 +310,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         open={open}
         title={'임원 책무 상세조회'}
         onClose={onClose}
-        // onModeChange={onChangeMode}
-        loading={loading}
+        loading={positionDetailsLoading}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           {/* 탭 헤더 */}
@@ -277,132 +326,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
             {/* 첫 번째 탭: 기본 정보 및 소관부서/회의체 */}
             {currentTab === 0 && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {/* 직책 정보 */}
-                <Box sx={{ fontWeight: 'bold', fontSize: '1.1rem', mb: 1, color: 'primary.main', display: 'flex', gap: 2, alignItems: 'center', width: '100%', marginTop: '10px' }}>
-                  <TextField
-                    label="직책"
-                    value={formData.positionsNm || ''}
-                    disabled={true}
-                    mode='readonly'
-                    sx={{ flex: 1 }}
-                  />
-                  <TextField
-                    label="성명"
-                    value={formData.executiveName || ''}
-                    disabled={true}
-                    mode='readonly'
-                    sx={{ flex: 1 }}
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField
-                    label="직위"
-                    value={formData.jobRankCd
-                      ? getCodeName('JOB_RANK', formData.jobRankCd)
-                      : formData.jobRankCd
-                        ? getCodeName('JOB_RANK', formData.jobRankCd)
-                        : ''}
-                    disabled={true}
-                    mode='readonly'
-                    sx={{ flex: 1 }}
-                  />
-                  <TextField
-                    label="현 직책 부여일"
-                    value={originalDate ? originalDate.toLocaleDateString() : ''}
-                    disabled={true}
-                    mode='readonly'
-                    sx={{ flex: 1 }}
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
-                    <RadioGroup
-                      row
-                      value={formData.hasConcurrentPosition || 'N'}
-                      name="hasConcurrentPosition"
-                      sx={{ flex: 1, width: '100%' }}
-                    >
-                      <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
-                      <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
-                    </RadioGroup>
-                  </Box>
-                  <TextField
-                    label="겸직사항"
-                    value={formData.concurrentPosition || ''}
-                    disabled={true}
-                    mode='readonly'
-                    sx={{ flex: 1 }}
-                  />
-                </Box>
-
-                {/* 개별 데이터인 경우 상세 정보 */}
-                {!formData.isGrouped && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {/* 첫 번째 행: 직책, 성명 */}
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', width: '100%' }}>
-                      <TextField
-                        label="직책"
-                        value={formData.positionsNm || ''}
-                        disabled={true}
-                        mode='readonly'
-                        sx={{ flex: 1 }}
-                      />
-                      <TextField
-                        required
-                        label="성명"
-                        value={formData.executiveName || ''}
-                        disabled={true}
-                        mode='readonly'
-                        sx={{ flex: 1 }}
-                      />
-                    </Box>
-
-                    {/* 두 번째 행: 직위, 현 직책 부여일 */}
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                      <TextField
-                        label="직위"
-                        value={formData.employee?.jobRankCd
-                          ? getCodeName('JOB_RANK', formData.employee.jobRankCd)
-                          : formData.jobRankCd
-                            ? getCodeName('JOB_RANK', formData.jobRankCd)
-                            : ''}
-                        disabled={true}
-                        sx={{ flex: 1 }}
-                      />
-                      <DatePicker
-                        label="현 직책 부여일"
-                        value={originalDate}
-                        disabled={true}
-                        onChange={(date) => {
-                          setFormData((prev: any) => ({ ...prev, appointmentDate: date || new Date() }));
-                        }}
-                        sx={{ flex: 1 }}
-                      />
-                    </Box>
-
-                    {/* 세 번째 행: 겸직여부, 겸직사항 */}
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                      <Box sx={{ flex: '0 0 200px', display: 'flex', alignItems: 'center' }}>
-                        <Box sx={{ fontWeight: 'bold', fontSize: '0.9rem', mr: 2, minWidth: '60px' }}>겸직여부</Box>
-                        <RadioGroup
-                          row
-                          value={formData.hasConcurrentPosition || 'N'}
-                          name="hasConcurrentPosition"
-                        >
-                          <FormControlLabel value="N" control={<Radio />} label="없음" disabled={true} />
-                          <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={true} />
-                        </RadioGroup>
-                      </Box>
-                      <TextField
-                        label="겸직사항"
-                        value={formData.concurrentPosition || ''}
-                        disabled={true}
-                        sx={{ flex: 1 }}
-                      />
-                    </Box>
-                  </Box>
-                )}
+                {/* 기본 정보 */}
+                {renderBasicInfoFields()}
 
                 {/* 소관부서 */}
                 <Box>
@@ -551,98 +476,12 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                       {(() => {
                         const items = formData.groupItems || [];
                         const rowSpans = calculateRowSpans(items);
+                        const columns = ['executiveName', 'jobRank', 'empNo', 'responsibility', 'responsibilityDetail', 'managementDuty', 'relatedBasis'];
 
                         return items.map((item: any, index: number) => (
                           <TableRow key={index}>
-                            {/* 성명 */}
-                            {rowSpans.executiveName[index] > 0 && (
-                              <TableCell
-                                rowSpan={rowSpans.executiveName[index]}
-                                sx={{
-                                  verticalAlign: 'middle',
-                                  borderRight: rowSpans.executiveName[index] > 1 ? '1px solid #e0e0e0' : undefined
-                                }}
-                              >
-                                {item.executiveName || '해당없음'}
-                              </TableCell>
-                            )}
-
-                            {/* 직위 */}
-                            {rowSpans.jobRank[index] > 0 && (
-                              <TableCell
-                                rowSpan={rowSpans.jobRank[index]}
-                                sx={{
-                                  verticalAlign: 'middle',
-                                  borderRight: rowSpans.jobRank[index] > 1 ? '1px solid #e0e0e0' : undefined
-                                }}
-                              >
-                                {getCodeName('JOB_RANK', item.jobRank) || item.jobRank || '해당없음'}
-                              </TableCell>
-                            )}
-
-                            {/* 사번 */}
-                            {rowSpans.empNo[index] > 0 && (
-                              <TableCell
-                                rowSpan={rowSpans.empNo[index]}
-                                sx={{
-                                  verticalAlign: 'middle',
-                                  borderRight: rowSpans.empNo[index] > 1 ? '1px solid #e0e0e0' : undefined
-                                }}
-                              >
-                                {item.empNo || '해당없음'}
-                              </TableCell>
-                            )}
-
-                            {/* 책무 */}
-                            {rowSpans.responsibility[index] > 0 && (
-                              <TableCell
-                                rowSpan={rowSpans.responsibility[index]}
-                                sx={{
-                                  verticalAlign: 'middle',
-                                  borderRight: rowSpans.responsibility[index] > 1 ? '1px solid #e0e0e0' : undefined
-                                }}
-                              >
-                                {item.responsibility || '해당없음'}
-                              </TableCell>
-                            )}
-
-                            {/* 책무 세부내용 */}
-                            {rowSpans.responsibilityDetail[index] > 0 && (
-                              <TableCell
-                                rowSpan={rowSpans.responsibilityDetail[index]}
-                                sx={{
-                                  verticalAlign: 'middle',
-                                  borderRight: rowSpans.responsibilityDetail[index] > 1 ? '1px solid #e0e0e0' : undefined
-                                }}
-                              >
-                                {item.responsibilityDetail || '해당없음'}
-                              </TableCell>
-                            )}
-
-                            {/* 관리의무 */}
-                            {rowSpans.managementDuty[index] > 0 && (
-                              <TableCell
-                                rowSpan={rowSpans.managementDuty[index]}
-                                sx={{
-                                  verticalAlign: 'middle',
-                                  borderRight: rowSpans.managementDuty[index] > 1 ? '1px solid #e0e0e0' : undefined
-                                }}
-                              >
-                                {item.managementDuty || '해당없음'}
-                              </TableCell>
-                            )}
-
-                            {/* 관련근거 */}
-                            {rowSpans.relatedBasis[index] > 0 && (
-                              <TableCell
-                                rowSpan={rowSpans.relatedBasis[index]}
-                                sx={{
-                                  verticalAlign: 'middle',
-                                  borderRight: rowSpans.relatedBasis[index] > 1 ? '1px solid #e0e0e0' : undefined
-                                }}
-                              >
-                                {item.relatedBasis || '해당없음'}
-                              </TableCell>
+                            {columns.map(column =>
+                              renderTableCell(item, column, rowSpans[column][index], index)
                             )}
                           </TableRow>
                         ));
@@ -655,16 +494,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
           </Box>
         </Box>
 
-        {error && (
-          <Box sx={{ color: 'error.main', mt: 2, textAlign: 'center' }}>
-            {error}
-          </Box>
-        )}
       </BaseDialog>
-      <EmployeeSearchpopup
-        open={employeeSearchPopupOpen}
-        onClose={() => setEmployeeSearchPopupOpen(false)}
-      />
     </>
   );
 };

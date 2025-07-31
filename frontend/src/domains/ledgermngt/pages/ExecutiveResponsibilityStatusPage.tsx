@@ -10,7 +10,7 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
-import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
+
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
@@ -34,17 +34,12 @@ interface ExecutiveResponsibilityItem {
   position: string;          // 직책
   jobTitle?: string;         // 직위
   empNo?: string;            // 사번
-  executiveName?: string;    // 성명
-  jobRank?: string;          // 직위
+  empName?: string;          // 성명
   responsibility?: string;   // 책무 내용
-  responsibilityOverview?: string; // 책무 개요 추가
+  responsibilityOverview?: string; // 책무 개요
   responsibilityDetail?: string; // 책무 세부내용
   managementDuty?: string;   // 책무이행을 위한 주요 관리의무
   relatedBasis?: string;     // 관련근거
-  execofficer_dt?: string;   // 임원 일자
-  hasConcurrentPosition?: string; // 겸직여부
-  concurrentPosition?: string; // 겸직사항
-  empName?: string;
 }
 
 // 그룹화된 데이터
@@ -65,7 +60,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogData, setDialogData] = useState<any>(null);
-  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
 
   // 그룹화 함수
   const groupDataByPosition = (data: ExecutiveResponsibilityItem[]): ExecutiveResponsibilityRow[] => {
@@ -196,10 +190,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
   // 데이터 상태 관리
   const [rows, setRows] = useState<ExecutiveResponsibilityRow[]>([]);
-
-  // 프론트엔드 필터링을 위한 상태
   const [allExecutiveData, setAllExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
-  const [filteredExecutiveData, setFilteredExecutiveData] = useState<ExecutiveResponsibilityItem[]>([]);
 
   // Redux에서 공통코드 가져오기 (AuditItemStatusPage 방식 참고)
   const { data: allCodesData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
@@ -209,25 +200,21 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
 
   // API 데이터를 변환하는 함수
   const transformApiData = useCallback((data: any[]): ExecutiveResponsibilityItem[] => {
-
     return data.map((item: any) => {
-      const jobTitleCode = item.jobTitleCd || item.positionCode; // 백엔드 응답에 따라 다른 필드명 사용
+      const jobTitleCode = item.jobTitleCd || item.positionCode;
       const jobTitleName = getCodeName(currentAllCodes, 'JOB_RANK', jobTitleCode);
 
       return {
         id: item.positionsId || 0,
-        position: item.positionsNm || '해당없음', // 백엔드 응답 필드명 수정
-        jobTitle: jobTitleName || jobTitleCode || '해당없음', // 코드명 변환 실패시 원본 코드 표시
-        empNo: item.empNo || '해당없음', // 사번
-        executiveName: item.empName || '해당없음', // 성명
-        responsibility: item.responsibilityContent || '해당없음', // 책무 내용
-        responsibilityOverview: item.roleSumm || '해당없음', // 책무 개요
+        position: item.positionsNm || '해당없음',
+        jobTitle: jobTitleName || jobTitleCode || '해당없음',
+        empNo: item.empNo || '해당없음',
+        empName: item.empName || '해당없음',
+        responsibility: item.responsibilityContent || '해당없음',
+        responsibilityOverview: item.roleSumm || '해당없음',
         responsibilityDetail: item.responsibilityDetailContent || '해당없음',
         managementDuty: item.responsibilityMgtSts || '해당없음',
-        relatedBasis: item.responsibilityRelEvid || '해당없음',
-        hasConcurrentPosition: item.hasConcurrentPosition || 'N', // 겸직여부
-        concurrentPosition: item.concurrentPosition || '해당없음', // 겸직사항
-        empName: item.empName || '해당없음'
+        relatedBasis: item.responsibilityRelEvid || '해당없음'
       };
     });
   }, [currentAllCodes]);
@@ -239,17 +226,13 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     setErrorDialogOpen(true);
   }, []);
 
-  // 모든 데이터 로드 (한 번만)
+  // 모든 데이터 로드
   const loadAllData = useCallback(async () => {
     try {
       setIsLoading(true);
-
-      // 모든 데이터를 한 번만 로드
       const data = await executiveResponsibilityApi.getAll();
-      // API 응답을 개별 항목 형태로 변환
       const transformedItems = transformApiData(data);
       setAllExecutiveData(transformedItems);
-
     } catch (err) {
       handleError(err, '임원별 책무 현황 데이터를 불러오는데 실패했습니다.');
     } finally {
@@ -263,7 +246,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     setRows(groupedData);
   }, []);
 
-  // 필터링된 데이터를 그룹핑하여 표시
+  // 필터링 및 데이터 업데이트
   const applyFiltersAndUpdate = useCallback(() => {
     let filtered = allExecutiveData;
 
@@ -272,7 +255,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
       filtered = filtered.filter(item => item.position === selectedPosition.positionsNm);
     }
 
-    setFilteredExecutiveData(filtered);
     updateDisplayData(filtered);
   }, [allExecutiveData, selectedPosition, updateDisplayData]);
 
@@ -346,14 +328,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           border: '1px solid var(--bank-border)',
           alignItems: 'center'
         }}>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <LedgerOrderSelect
-            value={selectedLedgerOrder}
-            onChange={setSelectedLedgerOrder}
-            size='small'
-            sx={{ minWidth: 150, maxWidth: 200 }}
-          />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>직책</span>
           <PositionSelect
             value={selectedPosition}
             onChange={setSelectedPosition}
