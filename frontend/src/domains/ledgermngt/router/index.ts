@@ -10,7 +10,6 @@ const MeetingStatusPage = React.lazy(() => import('../pages/MeetingStatusPage'))
 const PositionStatusPage = React.lazy(() => import('../pages/PositionStatusPage'));
 const ResponsibilityDbStatusPage = React.lazy(() => import('../pages/ResponsibilityDbStatusPage'));
 const PositionResponsibilityStatusPage = React.lazy(() => import('../pages/PositionResponsibilityStatusPage'));
-const TestGrid = React.lazy(() => import('../pages/TestGrid'));
 const StructureSubmissionStatusPage = React.lazy(() => import('../pages/StructureSubmissionStatusPage'));
 const ExecutiveStatusPage = React.lazy(() => import('../pages/ExecutiveStatusPage'));
 const ExecutiveResponsibilityStatusPage = React.lazy(() => import('../pages/ExecutiveResponsibilityStatusPage'));
@@ -91,7 +90,7 @@ const routes: DomainRoute[] = [
   },
   {
     path: '/ledgermngt/internal-control',
-    element: TestGrid,
+    element: ExecutiveResponsibilityStatusPage,
     meta: {
       title: '부서장 내부통제 항목',
       requiresAuth: true,

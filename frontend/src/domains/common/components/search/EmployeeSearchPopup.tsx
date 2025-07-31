@@ -113,12 +113,21 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
         return result;
       }
 
-      // 객체인 경우 data 필드 확인
+      // 객체인 경우 필드 확인
       if (typeof result === 'object' && result !== null) {
         const obj = result as Record<string, unknown>;
+        
+        // message 필드 확인 (백엔드 표준 응답 형태)
+        if ('message' in obj && typeof obj.message === 'string') {
+          return obj.message;
+        }
+        
+        // data 필드 확인
         if ('data' in obj && typeof obj.data === 'string') {
           return obj.data;
         }
+        
+        // departmentName 필드 확인
         if ('departmentName' in obj && typeof obj.departmentName === 'string') {
           return obj.departmentName;
         }
