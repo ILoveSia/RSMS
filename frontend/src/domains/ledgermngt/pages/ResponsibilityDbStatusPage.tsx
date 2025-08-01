@@ -115,12 +115,17 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           return `${items[0]} 외 ${items.length - 1}개`;
         };
 
+        const formatRelEvid = (items: string[]) => {
+          // 관련 근거는 동일한 값이므로 첫 번째 값만 표시
+          return items[0] || '';
+        };
+
         return {
           responsibilityId: group.responsibilityId,
           responsibilityContent: group.responsibilityContent,
           responsibilityDetailContent: formatWithCount(group.details.map(d => d.responsibilityDetailContent)),
           responsibilityMgtSts: formatWithCount(group.details.map(d => d.responsibilityMgtSts)),
-          responsibilityRelEvid: formatWithCount(group.details.map(d => d.responsibilityRelEvid)),
+          responsibilityRelEvid: formatRelEvid(group.details.map(d => d.responsibilityRelEvid)),
           createdAt: group.createdAt,
           updatedAt: group.updatedAt,
           detailCount: group.details.length
