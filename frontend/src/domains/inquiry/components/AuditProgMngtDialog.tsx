@@ -399,6 +399,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
         <Box sx={{ display: 'flex', gap: 2 }}>
           <TextField
             fullWidth
+            mode={mode === 'view' ? 'readonly' : 'editable'}
             required
             label="점검 회차명"
             value={formData.auditTitle}
@@ -499,6 +500,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
         <Box sx={{ display: 'flex', gap: 2 }}>
           <TextField
             fullWidth
+            mode={mode === 'view' ? 'readonly' : 'editable'}
             label="비고"
             value={formData.remarks}
             onChange={e => handleInputChange('remarks', e.target.value)}
