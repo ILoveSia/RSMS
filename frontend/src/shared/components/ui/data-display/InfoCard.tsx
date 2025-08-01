@@ -66,12 +66,12 @@ export const InfoCard: React.FC<InfoCardProps> = ({
         } : {},
         '& .document-stack': {
           position: 'relative',
-          width: '80px',
-          height: '100px',
+          width: '60px',
+          height: '70px',
           '& .document-page': {
             position: 'absolute',
-            width: '60px',
-            height: '80px',
+            width: '45px',
+            height: '60px',
             background: '#fff',
             border: '1px solid #e5e7eb',
             borderRadius: '3px',
@@ -97,10 +97,10 @@ export const InfoCard: React.FC<InfoCardProps> = ({
       <Box
         className="info-card__header"
         sx={{
-          height: '45px',
+          height: '35px',
           display: 'flex',
           alignItems: 'center',
-          padding: '16px 20px',
+          padding: '10px 16px',
           backgroundColor: '#e2e8f0',
           borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
           borderRadius: '8px 8px 0 0',
@@ -150,11 +150,11 @@ export const InfoCard: React.FC<InfoCardProps> = ({
       <Box
         className="info-card__content"
         sx={{
-          padding: '20px',
+          padding: '12px 16px',
           display: 'flex',
           alignItems: 'flex-start',
-          gap: 3,
-          fontSize: '0.8rem',
+          gap: 2,
+          fontSize: '0.75rem',
         }}
       >
         {contentImage && (

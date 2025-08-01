@@ -390,6 +390,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             data={rows}
             columns={columns}
             loading={loading}
+            height={600} 
             selectable={true}
             multiSelect={true}
             selectedRows={selectedIds}
@@ -401,7 +402,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             rowIdField='hodIcItemId'
             sx={{
               width: '100%',
-              height: '100%',
+              height: '600px',
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary) !important',
                 fontWeight: 'bold',

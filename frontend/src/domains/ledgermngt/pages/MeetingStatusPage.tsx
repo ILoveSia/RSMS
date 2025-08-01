@@ -491,6 +491,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             loading={loading}
             outline={false}
             selectable={true}
+            height={600} 
             multiSelect
             selectedRows={selectedIds}
             onRowSelectionChange={selectedRowIds => {

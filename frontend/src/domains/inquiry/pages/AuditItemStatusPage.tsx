@@ -626,7 +626,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             rowIdField='id'
             sx={{
               width: '100%',
-              height: '100%',
+              height: '600px',
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary) !important',
                 fontWeight: 'bold',
@@ -649,17 +649,6 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             }}
           />
           
-          {/* 디버깅 정보 */}
-          {!isLoading && (
-            <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', fontSize: '12px', color: '#666' }}>
-              <div>Grid 데이터 개수: {auditItemRows.length}</div>
-              <div>선택된 항목: {selectedItemIds.length}개</div>
-              <div>공통코드 로드 상태: {allCodes ? `${allCodes.length}개 로드됨` : '로드되지 않음'}</div>
-              {auditItemRows.length > 0 && (
-                <div>첫 번째 행 데이터: fieldTypeCd={auditItemRows[0].fieldTypeCd}, roleTypeCd={auditItemRows[0].roleTypeCd}</div>
-              )}
-            </Box>
-          )}
         </Box>
 
         {/* 점검자 지정 다이얼로그 */}

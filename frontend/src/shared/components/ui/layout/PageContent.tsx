@@ -68,6 +68,7 @@ export const PageContent: React.FC<PageContentProps> = ({
     flexDirection: 'column',
     height: '100%',
     overflow: 'visible',
+    minHeight: 0, // flex 컨테이너에서 스크롤이 제대로 작동하도록
   };
 
   return (

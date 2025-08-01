@@ -360,6 +360,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             data={historyRows}
             columns={columns}
             loading={isLoading}
+            height={600} 
             error={null}
             onRowClick={handleHistoryRowClick}
             onRowSelectionChange={handleHistoryRowSelectionModelChange}
@@ -372,7 +373,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             }}
             pageSizeOptions={[5, 10, 25, 50]}
             sx={{
-              height: '650px', // 고정 높이로 변경
+              height: '600px', // 고정 높이로 변경
               '& .MuiDataGrid-virtualScroller': {
                 overflow: 'auto' // 스크롤 허용
               }

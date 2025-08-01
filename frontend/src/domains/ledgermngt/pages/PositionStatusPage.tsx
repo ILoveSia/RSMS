@@ -377,7 +377,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             </Button>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5, gap: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, flexShrink: 0, gap: 1 }}>
           <ExcelDownloadButton
             onDownload={handleExcelDownload}
             filename="position_status"
@@ -387,9 +387,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           <Button
             variant='contained'
             size='small'
-            color='primary'
             onClick={handleCreateClick}
-            sx={{ mr: 1 }}
           >
             등록
           </Button>
@@ -411,6 +409,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               renderCell: col.renderCell,
             }))}
             loading={loading}
+            height={600}
             selectable={true}
             multiSelect={true}
             selectedRows={selectedIds}

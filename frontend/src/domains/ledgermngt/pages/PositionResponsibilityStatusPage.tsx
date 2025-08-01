@@ -585,6 +585,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             data={rows}
             columns={columns}
             loading={loading}
+            height={600} 
             error={error}
             selectable
             multiSelect={false}

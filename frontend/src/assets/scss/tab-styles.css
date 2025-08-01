@@ -31,6 +31,15 @@
   flex-direction: column;
 }
 
+/* 탭 내부 페이지 콘텐츠 스크롤 설정 - 이중 스크롤 방지 */
+.tab-content {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 /* 탭 아이템 커스텀 스타일 */
 .MuiTab-root {
   min-height: 48px !important;

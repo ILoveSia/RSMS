@@ -545,6 +545,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               data={rows}
               columns={columns as any}
               loading={loading}
+              height={600} 
               selectable={true}
               multiSelect={false}
               selectedRows={selectedIds}
