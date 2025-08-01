@@ -540,6 +540,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
           <DataGrid
             data={auditRows}
             columns={columns}
+            height={600} 
             loading={isLoading}
             error={null}
             onRowClick={handleAuditRowClick}
@@ -548,20 +549,12 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
             multiSelect={false}
             rowSelectionModel={selectedAuditIds}
             sx={{
-              height: '650px',
+              height: '600px',
               '& .MuiDataGrid-virtualScroller': {
                 overflow: 'auto'
               }
             }}
           />
-          
-          {/* 디버깅 정보 */}
-          {!isLoading && (
-            <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', fontSize: '12px', color: '#666' }}>
-              <div>Grid 데이터 개수: {auditRows.length}</div>
-              <div>첫 번째 데이터: {auditRows.length > 0 ? JSON.stringify(auditRows[0]) : '없음'}</div>
-            </Box>
-          )}
         </Box>
 
         {/* 점검계획관리 등록/수정 다이얼로그 */}

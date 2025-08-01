@@ -356,6 +356,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             data={rows}
             columns={columns}
             loading={isLoading}
+            height={600} 
             error={null}
             rowIdField="id"
             disableRowSelectionOnClick

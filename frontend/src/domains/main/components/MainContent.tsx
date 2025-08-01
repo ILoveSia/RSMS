@@ -35,7 +35,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
     () => ({
       fetchData: async (request: ServerRequest) => {
         try {
-          const qnaList = await mainApi.getRecentQnaList(request.size || 5);
+          const qnaList = await mainApi.getRecentQnaList(request.size || 4);
           const content = qnaList || [];
 
 
@@ -44,7 +44,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
             totalElements: content.length,
             totalPages: 1,
             number: 0,
-            size: request.size || 5,
+            size: request.size || 4,
             first: true,
             last: true,
             numberOfElements: content.length,
@@ -61,7 +61,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
         }
       },
       exportData: async (request: ServerRequest) => {
-        const data = await mainApi.getRecentQnaList(request.size || 5);
+        const data = await mainApi.getRecentQnaList(request.size || 4);
         return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       },
       deleteRows: async (ids: (string | number)[]) => {
@@ -77,7 +77,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
       fetchData: async (request: ServerRequest) => {
         try {
 
-          const caseStudies = await mainApi.getRecentCaseStudies(request.size || 5);
+          const caseStudies = await mainApi.getRecentCaseStudies(request.size || 4);
           const content = caseStudies || [];
 
 
@@ -86,7 +86,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
             totalElements: content.length,
             totalPages: 1,
             number: 0,
-            size: request.size || 5,
+            size: request.size || 4,
             first: true,
             last: true,
             numberOfElements: content.length,
@@ -103,7 +103,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
         }
       },
       exportData: async (request: ServerRequest) => {
-        const data = await mainApi.getRecentCaseStudies(request.size || 5);
+        const data = await mainApi.getRecentCaseStudies(request.size || 4);
         return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       },
       deleteRows: async (ids: (string | number)[]) => {
@@ -122,8 +122,8 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
         setLoading(true);
         setError(null);
 
-        // 최근 Q&A 목록 조회 (메인 화면용으로 5개만)
-        const qnaList = await mainApi.getRecentQnaList(5);
+        // 최근 Q&A 목록 조회 (메인 화면용으로 4개만)
+        const qnaList = await mainApi.getRecentQnaList(4);
         setQaData(qnaList || []);
       } catch (err: unknown) {
         console.error('[MainContent] Q&A 데이터 로드 실패:', err);
@@ -156,7 +156,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
     const loadCaseStudyData = async () => {
       try {
         setCaseStudyError(null);
-        const caseStudies = await mainApi.getRecentCaseStudies(5);
+        const caseStudies = await mainApi.getRecentCaseStudies(4);
         setCaseStudyData(caseStudies || []);
       } catch (err: unknown) {
         console.error('Case Study 데이터 로드 실패:', err);
@@ -219,7 +219,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        overflow: 'clip',
+        overflow: 'hidden',
       }}
     >
       <PageHeader
@@ -240,13 +240,11 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
           flexDirection: 'column',
           minHeight: 0,
           position: 'relative',
-          py: 1,
           px: 0,
-          overflowY: 'auto',
-          overflowX: 'hidden'
+          overflow: 'auto',
         }}
       >
-        <div className='responsibility-section'>
+        <div className='responsibility-section responsibility-section--first'>
           <InfoCard
             title='책무구조도의 기본 개념'
             contentTitle='책무구조도 무엇인가요?'
@@ -269,9 +267,10 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
             {/* 책무구조도의 기본 개념 */}
           </div>
 
-          {/* Q&A 섹션 */}
-          <div className='responsibility-section'>
-            <div className='responsibility-card responsibility-card--full'>
+          {/* Q&A와 Case Study 섹션을 나란히 배치 */}
+          <div className='responsibility-section responsibility-section--horizontal'>
+            {/* Q&A 섹션 */}
+            <div className='responsibility-card responsibility-card--half'>
               <div className='responsibility-card__header'>
                 <div className='responsibility-card__arrow'>
                   <svg viewBox='0 0 24 24' fill='currentColor'>
@@ -281,7 +280,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                 <h3 className='responsibility-card__title'>Q&A</h3>
               </div>
               <div className='responsibility-card__content'>
-                <Box sx={{ height: 300, width: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ height: 250, width: '100%', display: 'flex', flexDirection: 'column' }}>
                   {loading ? (
                     <Box
                       sx={{
@@ -313,10 +312,10 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                       toolbar={false}
                       initialState={{
                         pagination: {
-                          paginationModel: { page: 0, pageSize: 5 },
+                          paginationModel: { page: 0, pageSize: 4 },
                         },
                       }}
-                      pageSizeOptions={[5, 10]}
+                      pageSizeOptions={[4, 8]}
                       disableRowSelectionOnClick
                       sx={{
                         height: '100%',
@@ -400,11 +399,9 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                 </Box>
               </div>
             </div>
-          </div>
 
-          {/* Case Study 섹션 */}
-          <div className='responsibility-section'>
-            <div className='responsibility-card responsibility-card--full'>
+            {/* Case Study 섹션 */}
+            <div className='responsibility-card responsibility-card--half'>
               <div className='responsibility-card__header'>
                 <div className='responsibility-card__arrow'>
                   <svg viewBox='0 0 24 24' fill='currentColor'>
@@ -414,7 +411,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                 <h3 className='responsibility-card__title'>Case Study</h3>
               </div>
               <div className='responsibility-card__content'>
-                <Box sx={{ height: 300, width: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ height: 250, width: '100%', display: 'flex', flexDirection: 'column' }}>
                   {caseStudyError ? (
                     <Box sx={{ p: 2 }}>
                       <Alert severity='error'>{caseStudyError}</Alert>
@@ -435,10 +432,10 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                       toolbar={false}
                       initialState={{
                         pagination: {
-                          paginationModel: { page: 0, pageSize: 5 },
+                          paginationModel: { page: 0, pageSize: 4 },
                         },
                       }}
-                      pageSizeOptions={[5, 10]}
+                      pageSizeOptions={[4, 8]}
                       disableRowSelectionOnClick
                       sx={{
                         height: '100%',
@@ -492,9 +489,10 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
             </div>
           </div>
 
-          {/* 나의 업무 섹션 */}
-          <div className='responsibility-section'>
-            <div className='responsibility-card responsibility-card--full'>
+          {/* 나의 업무와 책무구조도 이사회 의결 대상 사안을 나란히 배치 */}
+          <div className='responsibility-section responsibility-section--horizontal responsibility-section--second'>
+            {/* 나의 업무 섹션 */}
+            <div className='responsibility-card responsibility-card--half'>
               <div className='responsibility-card__header'>
                 <div className='responsibility-card__arrow'>
                   <svg viewBox='0 0 24 24' fill='currentColor'>
@@ -504,15 +502,12 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                 <h3 className='responsibility-card__title'>나의 업무</h3>
               </div>
               <div className='responsibility-card__content'>
-                <div className='my-work-grid'>
+                <div className='my-work-grid my-work-grid--compact'>
                   {/* 점검 수행 */}
-                  <div className='my-work-item'>
-                    <div className='my-work-icon my-work-icon--inspection'>
-                      <svg viewBox='0 0 24 24' fill='currentColor'>
-                        <path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z' />
-                      </svg>
+                  <div className='my-work-item my-work-item--compact'>
+                    <div className='my-work-header'>
+                      <span className='my-work-title'>점검 수행</span>
                     </div>
-                    <h4>점검 수행</h4>
                     <div className='my-work-buttons'>
                       <button className='my-work-button'>
                         <span className='my-work-count'>0</span>
@@ -526,72 +521,61 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                   </div>
 
                   {/* 개선 이행 */}
-                  <div className='my-work-item'>
-                    <div className='my-work-icon my-work-icon--improvement'>
-                      <svg viewBox='0 0 24 24' fill='currentColor'>
-                        <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
-                      </svg>
+                  <div className='my-work-item my-work-item--compact'>
+                    <div className='my-work-header'>
+                      <span className='my-work-title'>개선 이행</span>
                     </div>
-                    <h4>개선 이행</h4>
                     <div className='my-work-buttons'>
                       <button className='my-work-button'>
                         <span className='my-work-count'>0</span>
-                        <span>개선계획 및 이행결과 작성 (의견작성)</span>
+                        <span>개선계획 작성</span>
                       </button>
                       <button className='my-work-button'>
                         <span className='my-work-count'>0</span>
-                        <span>개선계획 및 이행결과 승인 (의견작성)</span>
+                        <span>이행결과 승인</span>
                       </button>
                     </div>
                   </div>
 
                   {/* 결과 보고 */}
-                  <div className='my-work-item'>
-                    <div className='my-work-icon my-work-icon--report'>
-                      <svg viewBox='0 0 24 24' fill='currentColor'>
-                        <path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z' />
-                      </svg>
+                  <div className='my-work-item my-work-item--compact'>
+                    <div className='my-work-header'>
+                      <span className='my-work-title'>결과 보고</span>
                     </div>
-                    <h4>결과 보고</h4>
                     <div className='my-work-buttons'>
                       <button className='my-work-button'>
                         <span className='my-work-count'>0</span>
-                        <span>결과보고 작성 (승인요청)</span>
+                        <span>결과보고 작성</span>
                       </button>
                       <button className='my-work-button'>
                         <span className='my-work-count'>0</span>
-                        <span>결과보고 작성 (의견작성)</span>
+                        <span>의견작성</span>
                       </button>
                     </div>
                   </div>
 
                   {/* 일정관리 */}
-                  <div className='my-work-item'>
-                    <div className='my-work-icon my-work-icon--schedule'>
-                      <svg viewBox='0 0 24 24' fill='currentColor'>
-                        <path d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z' />
-                      </svg>
+                  <div className='my-work-item my-work-item--compact'>
+                    <div className='my-work-header'>
+                      <span className='my-work-title'>일정관리</span>
                     </div>
-                    <h4>일정관리</h4>
                     <div className='my-work-buttons'>
                       <button className='my-work-button'>
                         <span className='my-work-count'>1</span>
-                        <span>임원 책무기준서 신규/변경 승인</span>
+                        <span>책무기준서 승인</span>
                       </button>
                       <button className='my-work-button'>
                         <span className='my-work-count'>1</span>
-                        <span>부서장 업무매뉴얼 신규/변경 승인</span>
+                        <span>업무매뉴얼 승인</span>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* 책무구조도 이사회 의결 대상 사안 */}
-          <div className='responsibility-section'>
-            <div className='responsibility-card responsibility-card--full'>
+            {/* 책무구조도 이사회 의결 대상 사안 */}
+            <div className='responsibility-card responsibility-card--half'>
               <div className='responsibility-card__header'>
                 <div className='responsibility-card__arrow'>
                   <svg viewBox='0 0 24 24' fill='currentColor'>

@@ -614,7 +614,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             rowIdField='id'
             sx={{
               width: '100%',
-              height: '100%',
+              height: '600px',
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary) !important',
                 fontWeight: 'bold',
@@ -636,7 +636,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               }
             }}
           />
-
+          
         </Box>
 
         {/* 점검자 지정 다이얼로그 */}

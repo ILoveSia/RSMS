@@ -387,6 +387,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             data={rows}
             columns={executiveColumns}
             loading={loading}
+            height={600} 
             error={error}
             selectable
             multiSelect={false}
