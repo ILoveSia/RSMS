@@ -8,7 +8,7 @@
  * 의존성 역전 원칙(DIP): DatePicker 컴포넌트 인터페이스에 의존
  */
 
-import { Button } from '@/shared/components/ui/button';
+import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DatePicker } from '@/shared/components/ui/form';
 import { Box, Typography } from '@mui/material';
 import React from 'react';
@@ -137,19 +137,13 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
           sx={{ width: endDateWidth }}
         />
       </Box>
-      <Button
-        variant="contained"
-        size="small"
+      <SearchButton
         onClick={onSearch}
-        color="primary"
+        loading={loading}
         disabled={disabled || loading}
-        sx={{
-          minWidth: '80px',
-          fontWeight: 600,
-        }}
-      >
-        {loading ? '조회중...' : searchLabel}
-      </Button>
+        text={searchLabel}
+        loadingText="조회중..."
+      />
     </Box>
   );
 };

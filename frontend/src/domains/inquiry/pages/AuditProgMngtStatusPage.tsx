@@ -4,7 +4,9 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { ExcelDownloadButton } from '@/shared/components/ui/button';
+import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
+import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { DateRangeSelector, SearchConditionPanel } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -23,9 +25,7 @@ import {
   updateAuditProgMngt,
   getAuditProgMngtByCode,
   type AuditProgMngtStatusResponse,
-  type AuditProgMngtRequest,
-  type AuditProgMngtDto,
-  type TargetItemData
+  type AuditProgMngtRequest
 } from '../api/auditProgMngtApi';
 
 // 점검계획관리 현황 데이터 인터페이스
@@ -288,9 +288,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       // 기존 점검계획 상세 정보 조회 (점검대상 정보 포함)
       const detailResponse = await getAuditProgMngtByCode(row.auditProgMngtCd);
       
-      // 기존 점검대상 정보를 포함한 데이터로 변환
-      const auditProgramData = convertToAuditProgramData(row);
-      
       // 기존에 선정된 점검대상이 있다면 selectedTargetItems에 설정
       if (detailResponse.targetItemData && detailResponse.targetItemData.length > 0) {
         const targetItems = detailResponse.targetItemData.map(item => ({
@@ -501,33 +498,35 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         </SearchConditionPanel>
 
         {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-          <ExcelDownloadButton 
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 0.5, 
+          gap: 1,
+          alignItems: 'center',
+          height: '32px',
+        }}>
+          <ExcelDownloadButton
             onDownload={handleExcelDownload}
             filename="audit_prog_mngt_status"
             disabled={isLoading}
+            loading={isLoading}
           />
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleRegistrationModeToggle}
-              color="success"
-              disabled={isLoading}
-            >
-              등록
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleDelete}
-              disabled={!selectedAuditIds.length || isLoading}
-              color="primary"
-              style={{ color: 'white' }}
-            >
-              삭제
-            </Button>
-          </Box>
+          <ManagementButtonGroup
+            onRegister={handleRegistrationModeToggle}
+            onDelete={handleDelete}
+            registerDisabled={isLoading}
+            deleteDisabled={!selectedAuditIds.length || isLoading}
+            registerLoading={isLoading}
+            deleteLoading={isLoading}
+            showRegister={true}
+            showDelete={true}
+            showEdit={false}
+            showSave={false}
+            showCancel={false}
+            showRefresh={false}
+            sx={{ mb: 0 }}
+          />
         </Box>
 
         {/* 데이터 그리드 */}

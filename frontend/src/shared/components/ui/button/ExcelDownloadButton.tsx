@@ -98,7 +98,13 @@ const ExcelDownloadButton: React.FC<ExcelDownloadButtonProps> = ({
       startIcon={<ExcelIcon />}
       className={className}
       sx={{
-        minWidth: '120px',
+        height: '32px',
+        minWidth: '80px',
+        fontSize: '0.875rem',
+        fontWeight: 600,
+        px: 1.5,
+        lineHeight: 1,
+        borderRadius: 1,
         ...sx,
       }}
     >

@@ -4,9 +4,10 @@
  */
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
+import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { Modal } from '@/shared/components/ui/feedback';
-import { ComboBox } from '@/shared/components/ui/form';
+import { ComboBox, SearchConditionPanel } from '@/shared/components/ui/form';
 import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -289,48 +290,39 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           py: 1,
         }}
       >
-        {/* 필터 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          padding: '8px 16px',
-          mb: 2,
-          bgcolor: 'var(--bank-bg-secondary)',
-          borderRadius: 1,
-          border: '1px solid var(--bank-border)',
-          alignItems: 'center'
-        }}>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>점검회차</span>
-          <ComboBox
-            value={inspectionRound}
-            onChange={(value) => setInspectionRound(value as string)}
-            options={inspectionRoundOptions}
-            size="small"
-            mode="editable"
-            sx={{ minWidth: '200px' }}
-          />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          <DepartmentSelect
-            value={departmentFilter}
-            onChange={setDepartmentFilter}
-            size="small"
-            placeholder="부서 선택"
-            sx={{ minWidth: '200px' }}
-          />
-          <Button
-            variant="contained"
-            size="small"
+        {/* 검색 조건 영역 */}
+        <SearchConditionPanel disabled={loading}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', whiteSpace: 'nowrap' }}>점검회차</span>
+            <ComboBox
+              value={inspectionRound}
+              onChange={(value) => setInspectionRound(value as string)}
+              options={inspectionRoundOptions}
+              size="small"
+              mode="editable"
+              disabled={loading}
+              sx={{ minWidth: '200px' }}
+            />
+            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px', whiteSpace: 'nowrap' }}>부서</span>
+            <DepartmentSelect
+              value={departmentFilter}
+              onChange={setDepartmentFilter}
+              size="small"
+              placeholder="부서 선택"
+              disabled={loading}
+              sx={{ minWidth: '200px' }}
+            />
+          </Box>
+          <SearchButton
             onClick={handleSearch}
-            color="primary"
-          >
-            조회
-          </Button>
-        </Box>
+            loading={loading}
+          />
+        </SearchConditionPanel>
 
         {/* 버튼 영역 */}
         <Box sx={{
           display: 'flex',
-          gap: '8px',
+          gap: 1,
           marginBottom: '8px',
           justifyContent: 'flex-end'
         }}>
@@ -339,6 +331,16 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             color="primary"
             size="small"
             onClick={handleImprovementPlanChange}
+            disabled={loading}
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              px: 1.5,
+              lineHeight: 1,
+              borderRadius: 1,
+            }}
           >
             개선계획 변경
           </Button>
@@ -347,6 +349,16 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             color="primary"
             size="small"
             onClick={handleImplementationWrite}
+            disabled={loading}
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              px: 1.5,
+              lineHeight: 1,
+              borderRadius: 1,
+            }}
           >
             이행결과 작성
           </Button>
@@ -355,6 +367,16 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             color="success"
             size="small"
             onClick={handleApproval}
+            disabled={loading}
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              px: 1.5,
+              lineHeight: 1,
+              borderRadius: 1,
+            }}
           >
             승인하기
           </Button>
@@ -367,6 +389,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             columns={columns}
             loading={loading}
             error={error}
+            height={600}
             selectedRows={selectedIds}
             selectable={true}
             multiSelect={false}

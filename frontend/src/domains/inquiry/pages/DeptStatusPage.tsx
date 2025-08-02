@@ -5,7 +5,8 @@
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
-import { ComboBox } from '@/shared/components/ui/form';
+import SearchButton from '@/shared/components/ui/button/SearchButton';
+import { ComboBox, SearchConditionPanel } from '@/shared/components/ui/form';
 import DepartmentSelect from '@/shared/components/ui/form/DepartmentSelect';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -390,43 +391,34 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           py: 1,
         }}
       >
-        {/* 필터 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          padding: '8px 16px',
-          mb: 2,
-          bgcolor: 'var(--bank-bg-secondary)',
-          borderRadius: 1,
-          border: '1px solid var(--bank-border)',
-          alignItems: 'center'
-        }}>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>점검회차</span>
-          <ComboBox
-            value={selectedRound}
-            onChange={(value) => setSelectedRound(value as SelectOption)}
-            options={roundOptions}
-            size="small"
-            mode="editable"
-            sx={{ minWidth: '200px' }}
-          />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          <DepartmentSelect
-            value={selectedDepartment}
-            onChange={(value) => setSelectedDepartment(value)}
-            size="small"
-            sx={{ minWidth: '200px' }}
-            availableDepartments={getAvailableDepartments()}
-          />
-          <Button
-            variant="contained"
-            size="small"
+        {/* 검색 조건 영역 */}
+        <SearchConditionPanel disabled={isLoading}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', whiteSpace: 'nowrap' }}>점검회차</span>
+            <ComboBox
+              value={selectedRound}
+              onChange={(value) => setSelectedRound(value as SelectOption)}
+              options={roundOptions}
+              size="small"
+              mode="editable"
+              disabled={isLoading}
+              sx={{ minWidth: '200px' }}
+            />
+            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px', whiteSpace: 'nowrap' }}>부서</span>
+            <DepartmentSelect
+              value={selectedDepartment}
+              onChange={(value) => setSelectedDepartment(value)}
+              size="small"
+              disabled={isLoading}
+              sx={{ minWidth: '200px' }}
+              availableDepartments={getAvailableDepartments()}
+            />
+          </Box>
+          <SearchButton
             onClick={applyFilters}
-            color="primary"
-          >
-            조회
-          </Button>
-        </Box>
+            loading={isLoading}
+          />
+        </SearchConditionPanel>
 
         {/* 계층적 헤더 테이블 */}
         <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>

@@ -34,7 +34,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 COUNT(a.attach_id) as attachmentCount
             FROM rm_submit_mgmt s
             LEFT JOIN positions p ON s.positions_id = p.positions_id
-            LEFT JOIN execofficer e ON e.execofficer_id = CAST(s.execofficer_id AS BIGINT)
+            LEFT JOIN execofficer e ON e.execofficer_id::varchar = s.execofficer_id
             LEFT JOIN employee u ON e.emp_id = u.emp_no
             LEFT JOIN attachments a ON a.entity_type = 'LEDGER_MGMT_STRUCTURE_SUBMISSION'
                 AND a.entity_id = s.rm_submit_mgmt_id

@@ -16,7 +16,7 @@ import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import ErrorDialog from '../../../app/components/ErrorDialog';
 import '../../../assets/scss/style.css';
-import { Button, ExcelDownloadButton } from '../../../shared/components/ui/button';
+import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
 import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
@@ -340,14 +340,11 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
+          <SearchButton
             onClick={fetchExecutiveStatus}
-          >
-            조회
-          </Button>
+            loading={loading}
+            disabled={loading}
+          />
         </Box>
 
         {/* 버튼 영역 */}
@@ -355,13 +352,22 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           display: 'flex',
           gap: 1,
           marginBottom: '6px',
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          height: '32px',
         }}>
           <Button
             variant="contained"
             color="success"
             size="small"
             onClick={handleExcelUpload}
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: 1,
+            }}
           >
             엑셀 업로드
           </Button>
@@ -371,7 +377,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             disabled={loading || rows.length === 0}
             loading={loading}
           />
-
         </Box>
 
         {/* 데이터 그리드 */}
