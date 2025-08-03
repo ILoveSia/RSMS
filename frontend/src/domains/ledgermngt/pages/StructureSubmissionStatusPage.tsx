@@ -4,7 +4,7 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Button } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox, DatePicker } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -283,38 +283,36 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               sx={{ width: '200px' }}
             />
           </Box>
-          <Button
-            variant="contained"
-            size="small"
+          <SearchButton
             onClick={handleFetchSubmissionHistory}
-            color="primary"
-          >
-            조회
-          </Button>
+            loading={isLoading}
+            disabled={isLoading}
+          />
         </Box>
 
         {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5 }}>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleCreateClick}
-            color="success"
-            sx={{ mr: 1 }}
-            disabled={isLoading}
-          >
-            등록
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleDelete}
-            disabled={!selectedHistoryIds.length || isLoading}
-            color="primary"
-            style={{ color: 'white' }}
-          >
-            삭제
-          </Button>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 0.5,
+          alignItems: 'center',
+          height: '32px',
+          gap: 1,
+        }}>
+          <ManagementButtonGroup
+            onRegister={handleCreateClick}
+            onDelete={handleDelete}
+            showRegister={true}
+            showDelete={true}
+            showEdit={false}
+            showRefresh={false}
+            registerDisabled={isLoading}
+            deleteDisabled={!selectedHistoryIds.length || isLoading}
+            align="right"
+            sx={{
+              mb: 0,
+            }}
+          />
         </Box>
 
         {/* 데이터 그리드 */}

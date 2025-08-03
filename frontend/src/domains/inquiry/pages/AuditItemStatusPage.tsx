@@ -4,7 +4,7 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { Button, ExcelDownloadButton, SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { LedgerOrdersHodSelect, CommonCodeSelect, SearchConditionPanel } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -526,6 +526,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         {/* 검색 조건 영역 */}
         <SearchConditionPanel disabled={isLoading}>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', whiteSpace: 'nowrap' }}>점검회차</span>
             <LedgerOrdersHodSelect
               value={selectedLedgerOrder}
               onChange={setSelectedLedgerOrder}
@@ -533,6 +534,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               disabled={isLoading}
               sx={{ minWidth: 150, maxWidth: 200 }}
             />
+            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px', whiteSpace: 'nowrap' }}>진행상태</span>
             <CommonCodeSelect
               groupCode="PLAN_IMP"
               value={selectedImpPlStatus}
@@ -542,19 +544,10 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               sx={{ width: '200px' }}
             />
           </Box>
-          <Button
-            variant="contained"
-            size="small"
+          <SearchButton
             onClick={handleFetchAuditItems}
-            color="primary"
-            disabled={isLoading}
-            sx={{
-              minWidth: '80px',
-              fontWeight: 600,
-            }}
-          >
-            {isLoading ? '조회중...' : '조회'}
-          </Button>
+            loading={isLoading}
+          />
         </SearchConditionPanel>
 
         {/* 버튼 영역 */}
@@ -573,6 +566,13 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             color="secondary"
             startIcon={<PersonIcon />}
             sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              px: 1.5,
+              lineHeight: 1,
+              borderRadius: 1,
               color: 'white !important',
               '& .MuiSvgIcon-root': { color: 'white' },
               '& .MuiButton-root': { color: 'white !important' }
@@ -587,7 +587,14 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             disabled={!selectedItemIds.length || isLoading}
             color="success"
             startIcon={<CreateIcon />}
-            sx={{ 
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              px: 1.5,
+              lineHeight: 1,
+              borderRadius: 1,
               color: 'white !important', 
               '& .MuiSvgIcon-root': { color: 'white' },
               '& .MuiButton-root': { color: 'white !important' }

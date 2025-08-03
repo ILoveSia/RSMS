@@ -1,11 +1,11 @@
 /**
  * 회의체 현황 페이지 컴포넌트
- * MainContent.tsx 스타일과 일관성 있게 구현
+ * MainContent.tsx
  */
 import type { MeetingBody } from '@/app/types';
 import { useCommonCodes, useGetCodeName, type CommonCode } from '@/shared/utils/codeUtils';
 import { Confirm } from '@/shared/components/modal';
-import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -354,7 +354,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
               textAlign: 'right',
             }}
           >
-            구분:
+            구분
           </Box>
 
           <ComboBox
@@ -371,35 +371,50 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             mode="editable"
             sx={{ width: 140 }}
           />
-          <Button
-            variant='contained'
-            size='small'
+          <SearchButton
             onClick={handleSearch}
+            loading={loading}
+            disabled={loading}
             sx={{
-              minWidth: 60,
-              px: 2,
-              py: 0.5,
+              height: '32px',
+              minWidth: '80px',
               fontSize: '0.875rem',
+              fontWeight: 600,
             }}
-          >
-            조회
-          </Button>
+          />
         </Box>
 
         {/* 버튼 영역 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, flexShrink: 0, gap: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 1, 
+          flexShrink: 0, 
+          gap: 1, 
+          alignItems: 'center',
+          height: '32px', // 명시적 높이 설정
+        }}>
           <ExcelDownloadButton
             onDownload={handleExcelDownload}
             filename="meeting_status"
             disabled={loading}
             loading={loading}
           />
-          <Button variant='contained' size='small' onClick={handleCreateClick}>
-            등록
-          </Button>
-          <Button variant='contained' size='small' color='error' onClick={handleDelete}>
-            삭제
-          </Button>
+          <ManagementButtonGroup
+            onRegister={handleCreateClick}
+            onDelete={handleDelete}
+            showRegister={true}
+            showDelete={true}
+            showEdit={false}
+            showRefresh={false}
+            registerDisabled={loading}
+            deleteDisabled={loading || selectedIds.length === 0}
+            align="right"
+            sx={{
+              mb: 0, // ManagementButtonGroup의 기본 mb 제거
+              alignSelf: 'center',
+            }}
+          />
         </Box>
 
         {/* 에러 메시지 */}

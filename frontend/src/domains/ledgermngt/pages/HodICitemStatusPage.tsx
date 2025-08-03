@@ -1,5 +1,4 @@
-import { Button } from '@/shared/components/ui';
-import { ExcelDownloadButton } from '@/shared/components/ui/button';
+import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { LedgerOrdersHodSelect, CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -330,14 +329,23 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
           />
-          <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
-            조회
-          </Button>
+          <SearchButton
+            onClick={handleSearch}
+            loading={loading}
+            disabled={loading}
+          />
           <Button 
             variant='contained' 
             size='small' 
             color='secondary' 
-            sx={{ marginLeft: '8px' }}
+            sx={{ 
+              marginLeft: '8px',
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: 1,
+            }}
             onClick={handleCreateHodOrder}
           >
             부서장차수생성
@@ -350,6 +358,13 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
               onClick={() => {
                 /* 확정 로직 미구현 */
               }}
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
             >
               확정
             </Button>
@@ -360,29 +375,46 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
               onClick={() => {
                 /* 확정취소 로직 미구현 */
               }}
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
             >
               확정취소
             </Button>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.5, gap: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 0.5, 
+          gap: 1,
+          alignItems: 'center',
+          height: '32px',
+        }}>
           <ExcelDownloadButton
             onDownload={handleExcelDownload}
             filename="hod_ic_item_status"
             disabled={loading}
             loading={loading}
           />
-          <Button
-            variant='contained'
-            size='small'
-            color='primary'
-            onClick={handleCreateClick}
-          >
-            등록
-          </Button>
-          <Button variant='contained' size='small' onClick={handleDelete} color='error'>
-            삭제
-          </Button>
+          <ManagementButtonGroup
+            onRegister={handleCreateClick}
+            onDelete={handleDelete}
+            showRegister={true}
+            showDelete={true}
+            showEdit={false}
+            showRefresh={false}
+            registerDisabled={loading}
+            deleteDisabled={loading || selectedIds.length === 0}
+            align="right"
+            sx={{
+              mb: 0,
+            }}
+          />
         </Box>
         <Box sx={{ width: '100%', flex: 1 }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}

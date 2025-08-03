@@ -8,7 +8,7 @@ import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
@@ -518,14 +518,11 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             size="small"
             sx={{ minWidth: '200px' }}
           />
-          <Button
-            variant="contained"
-            size="small"
+          <SearchButton
             onClick={applyFilters}
-            color="primary"
-          >
-            조회
-          </Button>
+            loading={loading}
+            disabled={loading}
+          />
         </Box>
 
         {/* 액션 버튼 영역 */}
@@ -535,6 +532,8 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             gap: 1,
             marginBottom: '6px',
             justifyContent: 'flex-end',
+            alignItems: 'center',
+            height: '32px',
           }}
         >
           <Button
@@ -542,6 +541,13 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             size="small"
             onClick={handleExcelUpload}
             color="success"
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: 1,
+            }}
           >
             엑셀 업로드
           </Button>
@@ -551,14 +557,21 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             disabled={loading}
             loading={loading}
           />
-          <Button
+          {/* <Button
             variant="contained"
             size="small"
             onClick={handleChangeHistory}
             color="warning"
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: 1,
+            }}
           >
             변경 이력
-          </Button>
+          </Button> */}
           {/* <Button
             variant="contained"
             size="small"

@@ -4,7 +4,7 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Button } from '@/shared/components/ui/button';
+import { SearchButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -334,14 +334,11 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             size="small"
             sx={{ minWidth: '200px' }}
           />
-          <Button
-            variant="contained"
-            size="small"
+          <SearchButton
             onClick={applyFiltersAndUpdate}
-            color="primary"
-          >
-            조회
-          </Button>
+            loading={isLoading}
+            disabled={isLoading}
+          />
         </Box>
 
         {/* 데이터 그리드 */}

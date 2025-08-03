@@ -3,7 +3,7 @@
  */
 import '@/assets/scss/style.css';
 import { Button, DataGrid } from '@/shared/components/ui';
-import { ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
@@ -505,34 +505,43 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
                 ),
               }}
             /> */}
-            <Box sx={{ flexGrow: 1 }} />
-            <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
-              조회
-            </Button>
+            <SearchButton
+              onClick={handleSearch}
+              loading={loading}
+              disabled={loading}
+            />
           </Box>
 
           {/* 버튼 영역 */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            mb: 1, 
+            gap: 1, 
+            alignItems: 'center',
+            height: '32px',
+          }}>
             <ExcelDownloadButton
               onDownload={handleExcelDownload}
               filename="responsibility_db_status"
               disabled={loading}
               loading={loading}
             />
-            <Button variant='contained' size='small' color='warning'>
-              변경 이력
-            </Button>
-            <Button
-              variant='contained'
-              size='small'
-              color='primary'
-              onClick={handleCreateClick}
-            >
-              등록
-            </Button>
-            <Button variant='contained' size='small' color='error' onClick={handleDelete}>
-              삭제
-            </Button>
+            <ManagementButtonGroup
+              onRegister={handleCreateClick}
+              onDelete={handleDelete}
+              showRegister={true}
+              showDelete={true}
+              showEdit={false}
+              showRefresh={false}
+              registerDisabled={loading}
+              deleteDisabled={loading || selectedIds.length === 0}
+              align="right"
+              sx={{
+                mb: 0,
+                alignSelf: 'center',
+              }}
+            />
           </Box>
 
           {/* 데이터 그리드 */}

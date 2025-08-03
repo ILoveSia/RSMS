@@ -92,17 +92,17 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
   '/ledgermngt/position-status': {
     component: () => import('@/domains/ledgermngt/pages/PositionStatusPage'),
     title: '직책 현황',
-    icon: 'person',
+    icon: 'meeting_room',
   },
   '/ledgermngt/responsibility-db-status': {
     component: () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage'),
     title: '책무DB 현황',
-    icon: 'database',
+    icon: 'meeting_room',
   },
   '/ledgermngt/executive-responsibility': {
     component: () => import('@/domains/ledgermngt/pages/ExecutiveResponsibilityStatusPage'),
     title: '임원별 책무 현황',
-    icon: 'Work',
+    icon: 'meeting_room',
   },
 
   // 장부관리 - 새로운 경로 (데이터베이스와 일치)
@@ -114,72 +114,88 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
   '/ledger/position-status': {
     component: () => import('@/domains/ledgermngt/pages/PositionStatusPage'),
     title: '직책 현황',
-    icon: 'person',
+    icon: 'meeting_room',
   },
   '/ledger/db-status': {
     component: () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage'),
     title: '책무 DB현황',
-    icon: 'database',
+    icon: 'meeting_room',
   },
   '/ledger/detail-status': {
     component: () => import('@/domains/ledgermngt/pages/PositionResponsibilityStatusPage'),
     title: '직책별 책무 현황',
-    icon: 'list_alt',
+    icon: 'meeting_room',
   },
   '/ledger/business-status': {
     component: () => import('@/domains/ledgermngt/pages/ExecutiveStatusPage'),
     title: '임원 현황',
-    icon: 'business_center',
+    icon: 'meeting_room',
   },
   '/ledger/business-detail-status': {
     component: () => import('@/domains/ledgermngt/pages/ExecutiveResponsibilityStatusPage'),
     title: '임원별 책무 현황',
-    icon: 'analytics',
+    icon: 'meeting_room',
   },
   '/ledger/internal-control': {
     component: () => import('@/domains/ledgermngt/pages/HodICitemStatusPage'),
     title: '부서장 내부통제 항목 현황',
-    icon: 'network_node',
+    icon: 'meeting_room',
   },
   '/ledger/structure-submission': {
     component: () => import('@/domains/ledgermngt/pages/StructureSubmissionStatusPage'),
     title: '책무구조도 제출',
-    icon: 'upload',
+    icon: 'meeting_room',
   },
   '/ledger/responsibility-db-status': {
     component: () => import('@/domains/ledgermngt/pages/ResponsibilityDbStatusPage'),
     title: '책무 DB현황',
-    icon: 'database',
+    icon: 'meeting_room',
   },
 
   // 조회
   '/inquiry/dept-status': {
     component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
     title: '점검 현황(부서별)',
-    icon: 'business',
+    icon: 'Work',
   },
   '/inquiry/schedule': {
     component: () => import('@/domains/inquiry/pages/AuditProgMngtStatusPage'),
     title: '점검 계획',
-    icon: 'calendar_alt',
+    icon: 'Work',
   },
   '/inquiry/monthly-status': {
     component: () => import('@/domains/inquiry/pages/AuditItemStatusPage'),
     title: '점검 현황(항목별)',
-    icon: 'calendar_month',
+    icon: 'Work',
   },
   '/inquiry/non-employee': {
     component: () => import('@/domains/inquiry/pages/DeficiencyStatusPage'),
     title: '미흡상황 현황',
-    icon: 'warning',
+    icon: 'Work',
   },
   // 책무구조도 이력 점검
   '/history/dept-status': {
     component: () => import('@/domains/inquiry/pages/DeptStatusPage'),
     title: '부서별 현황',
-    icon: 'business',
+    icon: 'Work',
   },
- 
+
+  // 결재관리
+  '/approval/approval_status': {
+    component: () => import('@/domains/approval/pages/ApprovalDashboardPage'),
+    title: '결재 대쉬보드',
+    icon: 'business_center',
+  },
+  '/approval/my_approval_list': {
+    component: () => import('@/domains/approval/pages/MyApprovalListPage'),
+    title: '내 결재 목록',
+    icon: 'business_center',
+  },
+  '/approval/approval_history': {
+    component: () => import('@/domains/approval/pages/ApprovalHistoryPage'),
+    title: '결재 히스토리',
+    icon: 'business_center',
+  },
 };
 
 /**

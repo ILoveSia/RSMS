@@ -1,3 +1,7 @@
+/**
+ * 직책책 현황 페이지 컴포넌트
+ * PositionStatusPage.tsx 
+ */
 import {
   DepartmentSearchPopup,
   EmployeeSearchPopup,
@@ -6,7 +10,7 @@ import {
 } from '@/domains/common/components/search';
 import { Confirm } from '@/shared/components/modal';
 import { Button, DataGrid } from '@/shared/components/ui';
-import { ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -341,15 +345,24 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
-          <Button variant='contained' size='small' onClick={handleSearch} color='primary'>
-            조회
-          </Button>
+          <SearchButton
+            onClick={handleSearch}
+            loading={loading}
+            disabled={loading}
+          />
           <Button
             variant='contained'
             size='small'
             color='success'
             onClick={() => {
               /* 차수생성 로직 미구현 */
+            }}
+            sx={{
+              height: '32px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: 1,
             }}
           >
             책무번호생성
@@ -362,6 +375,13 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               onClick={() => {
                 /* 확정 로직 미구현 */
               }}
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
             >
               확정
             </Button>
@@ -372,28 +392,48 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               onClick={() => {
                 /* 확정취소 로직 미구현 */
               }}
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
             >
               확정취소
             </Button>
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, flexShrink: 0, gap: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 1, 
+          flexShrink: 0, 
+          gap: 1, 
+          alignItems: 'center',
+          height: '32px',
+        }}>
           <ExcelDownloadButton
             onDownload={handleExcelDownload}
             filename="position_status"
             disabled={loading}
             loading={loading}
           />
-          <Button
-            variant='contained'
-            size='small'
-            onClick={handleCreateClick}
-          >
-            등록
-          </Button>
-          <Button variant='contained' size='small' onClick={handleDelete} color='error'>
-            삭제
-          </Button>
+          <ManagementButtonGroup
+            onRegister={handleCreateClick}
+            onDelete={handleDelete}
+            showRegister={true}
+            showDelete={true}
+            showEdit={false}
+            showRefresh={false}
+            registerDisabled={loading}
+            deleteDisabled={loading || selectedIds.length === 0}
+            align="right"
+            sx={{
+              mb: 0,
+              alignSelf: 'center',
+            }}
+          />
         </Box>
         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}>
           {error && <p style={{ color: 'red' }}>{error}</p>}
