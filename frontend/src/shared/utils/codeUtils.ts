@@ -1,8 +1,9 @@
 /**
  * 공통코드 및 부서 관련 유틸리티 함수
  */
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { useReduxState } from "@/app/store/use-store";
+import apiClient from "@/app/common/api/client";
 
 // 공통코드 타입
 export interface CommonCode {
@@ -151,8 +152,28 @@ export const extractCommonCodes = (
 /**
  * 공통코드 가져오기 Hook
  * React 컴포넌트에서만 사용 가능
+ * 데이터가 비어있을 때 자동으로 API 호출하여 Redux store에 저장
  */
 export const useCommonCodes = (): CommonCode[] => {
-  const { data: allCodesData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
+  const { data: allCodesData, setData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
+  
+  // 데이터가 비어있을 때 자동으로 API 호출
+  useEffect(() => {
+    const fetchCommonCodes = async () => {
+      try {
+        const response = await apiClient.get('/common-codes');
+        if (response && Array.isArray(response)) {
+          setData({ data: response });
+        }
+      } catch (error) {
+        console.error('공통코드 조회 실패:', error);
+      }
+    };
+
+    if (!allCodesData || (Array.isArray(allCodesData) && allCodesData.length === 0)) {
+      fetchCommonCodes();
+    }
+  }, [allCodesData, setData]);
+  
   return useMemo(() => extractCommonCodes(allCodesData), [allCodesData]);
 };

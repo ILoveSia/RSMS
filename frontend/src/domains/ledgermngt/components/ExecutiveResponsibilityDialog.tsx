@@ -346,7 +346,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                               <TextField
                                 fullWidth
                                 size='small'
-                                value={meeting.memberGubun || ''}
+                                value={getCodeNameFn('MEB_GUBUN', meeting.memberGubun || '')}
                                 disabled
                                 placeholder='위원장/위원'
                               />

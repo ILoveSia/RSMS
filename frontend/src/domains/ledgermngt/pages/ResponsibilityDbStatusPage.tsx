@@ -58,7 +58,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const [error, setError] = useState<string | null>(null);
     const [rows, setRows] = useState<GroupedResponsibilityRow[]>([]);
     const [selectedResponsibilityId, setSelectedResponsibilityId] = useState<number | null>(null);
-    const [selectedRowData, setSelectedRowData] = useState<ResponsibilityRow | null>(null);
+    const [selectedRowData, setSelectedRowData] = useState<any>(null);
     const [dialogOpen, setDialogOpen] = useState<boolean>(false);
     const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
     // 검색 조건 상태
