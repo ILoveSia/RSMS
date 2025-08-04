@@ -141,16 +141,236 @@ domains/approval/
 - **Status**: 기본 구조만 구현
 - **Frontend**: ReviewPlanPage.tsx
 
-### ❌ Planned but Not Implemented
+### ✅ System Management Domains
 
-#### **admin** - 시스템 관리 (권한 관리) - 간소화 버전
-- **Planned Features** (간소화):
-  - ✅ 화면별 권한 관리 (`MenuPermissionManagePage.tsx`) - 메뉴별 역할 권한 매트릭스
-  - ✅ 사용자 권한 관리 (`UserPermissionManagePage.tsx`) - 사용자 역할 할당/해제
-  - ❌ ~~역할 관리~~ - 역할을 코드로 고정 관리 (ADMIN, MANAGER, USER, AUDITOR)
-  - ❌ ~~API 권한 관리~~ - 메뉴 권한으로 간접 제어
-- **Database**: 기존 menu_permissions 활용 + user_roles 테이블만 추가
-- **개발 기간**: 6일 (1.2주) - 기존 계획 대비 70% 단축
+#### **admin** - 권한 관리 시스템 (완료)
+- **Backend**: 
+  - `AdminController` - 권한 관리 API 컨트롤러
+  - `AdminService/AdminServiceImpl` - 권한 관리 비즈니스 로직
+  - Database joins: `users ←→ employee ←→ departments` (부서/직급 정보 연동)
+- **Frontend**:
+  - `MenuPermissionManagePage.tsx` - [900] 화면별 권한 관리 (메뉴별 역할 권한 매트릭스)
+  - `UserPermissionManagePage.tsx` - [901] 사용자 권한 관리 (사용자 역할 할당/해제)
+- **Features**: 
+  - 메뉴별 역할 권한 매트릭스 관리 (읽기/쓰기/삭제 권한)
+  - 사용자별 역할 할당 및 해제
+  - 부서/직급 정보와 연동된 사용자 관리
+  - 권한 변경사항 실시간 반영 및 저장
+  - 역할별 권한 통계 및 모니터링
+- **Database Schema**: 
+  - `menu_permissions` - 메뉴별 역할 권한
+  - `user_roles` - 사용자별 역할 할당
+  - 고정 역할: ADMIN, MANAGER, USER, AUDITOR
+- **UI/UX**: 공통 컴포넌트 기반 통일된 디자인
+
+## Frontend Development Guidelines
+
+### 🎨 UI/UX 통일성 가이드라인
+
+#### 필수 공통 컴포넌트 사용
+새로운 페이지 생성 시 반드시 다음 공통 컴포넌트를 사용하여 기존 화면과 통일성을 유지해야 합니다:
+
+#### 레이아웃 컴포넌트 (필수)
+```tsx
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+
+// 표준 페이지 구조
+<PageContainer
+  sx={{
+    height: '100%',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    position: 'relative',
+  }}
+>
+  <PageHeader
+    title="[번호] 페이지 제목"
+    icon={<SomeIcon />}
+    description="페이지 설명"
+    elevation={false}
+    sx={{
+      position: 'relative',
+      zIndex: 1,
+      flexShrink: 0,
+    }}
+  />
+  
+  <PageContent
+    sx={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      minHeight: 0,
+      position: 'relative',
+      py: 1,
+    }}
+  >
+    {/* 페이지 콘텐츠 */}
+  </PageContent>
+</PageContainer>
+```
+
+#### 검색 조건 박스 표준 패턴
+```tsx
+{/* 검색 조건 */}
+<Box
+  sx={{
+    display: 'flex',
+    gap: '8px',
+    marginBottom: '16px',
+    alignItems: 'center',
+    backgroundColor: 'var(--bank-bg-secondary)',
+    border: '1px solid var(--bank-border)',
+    padding: '8px 16px',
+    borderRadius: '4px',
+  }}
+>
+  <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>검색조건</span>
+  <TextField size="small" sx={{ minWidth: 150, maxWidth: 200 }} />
+  <SearchButton onClick={handleSearch} loading={loading} disabled={loading} />
+  <Button startIcon={<ClearIcon />} onClick={() => setFilter({})} variant="outlined" size="small">초기화</Button>
+</Box>
+```
+
+#### 통계 정보 박스 표준 패턴
+```tsx
+{/* 통계 정보 및 액션 버튼 */}
+<Box sx={{ 
+  display: 'flex', 
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  mb: 1,
+  p: 2,
+  backgroundColor: 'var(--bank-bg-secondary)',
+  border: '1px solid var(--bank-border)',
+  borderRadius: '4px',
+}}>
+  <Box sx={{ display: 'flex', gap: 4 }}>
+    <Box textAlign="center">
+      <Typography variant="h5" color="primary" fontWeight="bold">{count}</Typography>
+      <Typography variant="caption" color="textSecondary">항목명</Typography>
+    </Box>
+  </Box>
+  <Box sx={{ display: 'flex', gap: 1 }}>
+    <ExcelDownloadButton />
+  </Box>
+</Box>
+```
+
+#### 테이블 표준 패턴
+```tsx
+{/* 데이터 테이블 */}
+<Box sx={{ width: '100%', flex: 1, minHeight: 0 }}>
+  <Paper sx={{ 
+    height: '100%', 
+    display: 'flex', 
+    flexDirection: 'column',
+    overflow: 'hidden',
+  }}>
+    <TableContainer sx={{ 
+      flex: 1, 
+      maxHeight: 'calc(100vh - 280px)',
+      minHeight: 480,
+      overflow: 'auto',
+      position: 'relative',
+      '&::-webkit-scrollbar': { width: '8px' },
+      '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
+      '&::-webkit-scrollbar-thumb': { backgroundColor: '#c1c1c1', borderRadius: '4px' },
+    }}>
+      <Table stickyHeader size="small" sx={{
+        '& .MuiTableHead-root .MuiTableCell-root': {
+          backgroundColor: 'var(--bank-bg-secondary) !important',
+          fontWeight: 'bold',
+          fontSize: '0.875rem',
+        },
+      }}>
+        {/* 테이블 헤더 및 바디 */}
+      </Table>
+    </TableContainer>
+  </Paper>
+</Box>
+```
+
+### 🎯 필수 임포트 및 훅 사용
+
+#### 표준 임포트 구조
+```tsx
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { SearchButton, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
+```
+
+#### 필수 Toast 컴포넌트 패턴
+```tsx
+const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+
+// 컴포넌트 하단에 추가
+<Toast
+  open={snackbar.open}
+  message={snackbar.message}
+  severity={snackbar.severity}
+  onClose={hideSnackbar}
+/>
+```
+
+#### 표준 버튼 스타일링
+```tsx
+<Button
+  sx={{
+    height: '32px',
+    minWidth: '80px',
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    borderRadius: 1,
+  }}
+>
+  버튼 텍스트
+</Button>
+```
+
+### 🎨 CSS 변수 및 스타일 가이드
+
+#### 필수 CSS 변수 사용
+- `var(--bank-bg-secondary)` - 배경색 (검색조건박스, 헤더 등)
+- `var(--bank-border)` - 테두리색
+- `var(--bank-primary)` - 기본 색상
+- `var(--bank-bg-hover)` - 호버 배경색
+
+#### 타이틀 번호 규칙
+- 권한 관리: [900~999]
+- 원장 관리: [700~799]
+- 점검 관리: [600~699]
+- 결재 관리: [500~599]
+
+### 📝 개발 체크리스트
+
+새로운 페이지 개발 시 다음 사항을 필수로 확인:
+
+- [ ] `PageContainer`, `PageHeader`, `PageContent` 컴포넌트 사용
+- [ ] 검색 조건 박스 표준 패턴 적용
+- [ ] 통계 정보 박스 표준 패턴 적용 (필요한 경우)
+- [ ] 테이블 스타일링 표준 패턴 적용
+- [ ] `useSnackbar` 훅과 `Toast` 컴포넌트 사용
+- [ ] 표준 버튼 스타일링 적용
+- [ ] CSS 변수 사용으로 일관된 색상 테마 유지
+- [ ] TypeScript 타입 정의 추가
+- [ ] API 클라이언트 표준 패턴 적용
+- [ ] 로딩 상태 및 에러 처리 구현
+
+### 📚 참고 페이지
+기존 구현된 페이지를 참고하여 동일한 패턴 적용:
+- `MenuPermissionManagePage.tsx` - 권한 관리 참고
+- `UserPermissionManagePage.tsx` - 사용자 관리 참고
+- `HodICitemStatusPage.tsx` - 상태 관리 참고
 
 ## Critical Implementation Details
 
@@ -299,54 +519,60 @@ The project has a comprehensive UI component library:
 - **Redis** for session storage
 - **PostgreSQL** for primary database
 
-## 🔐 권한 관리 시스템 구현 계획 (간소화 버전)
+## 🔐 권한 관리 시스템 (구현 완료)
 
-### 현재 권한 시스템 상태 (업데이트)
+### 완료된 권한 시스템 구조
 - ✅ 메뉴 권한 시스템 (Menu, MenuPermission 엔티티) 구현 완료
-- ✅ 기본 사용자 인증 (User 엔티티, Spring Security) 구현 완료
-- ❌ 사용자-역할 매핑 시스템 미구현 (간소화 버전으로 계획 변경)
+- ✅ 사용자 인증 시스템 (User 엔티티, Spring Security) 구현 완료
+- ✅ 사용자-역할 매핑 시스템 (UserRole 엔티티) 구현 완료
+- ✅ 부서/직급 연동 시스템 (Employee, Department 조인) 구현 완료
 
-### 간소화된 권한 구조 (database/init 폴더)
+### 최종 권한 시스템 아키텍처
 ```
-users ←→ user_roles (role_name: ENUM)
-           ↓
-    menu_permissions ←→ menus
+users (emp_no) ←→ employee ←→ departments
+  ↓
+user_roles (role_name: ENUM)
+  ↓
+menu_permissions ←→ menus
 
-제외된 테이블 (복잡성 제거):
-❌ api_permissions      → 메뉴 권한으로 대체
-❌ roles               → 코드로 고정 관리 (ADMIN, MANAGER, USER, AUDITOR)
-❌ role_permissions    → 불필요한 복잡성 제거
-```
-
-### 간소화된 구현 우선순위
-1. **Backend UserRole 엔티티**: 사용자-역할 매핑만 추가 (1일)
-2. **AdminController**: 메뉴 권한 + 사용자 역할 관리 API (1일)
-3. **MenuPermissionManagePage.tsx**: 화면별 권한 관리 (2일)
-4. **UserPermissionManagePage.tsx**: 사용자 권한 관리 (2일)
-
-### 기술적 간소화 전략
-- **Backend**: 기존 Menu/MenuPermission 활용 + UserRole 엔티티만 추가
-- **Frontend**: 기존 공통 컴포넌트 재사용 + 2개 페이지만 구현
-- **권한 검증**: Spring Security + 메뉴 권한으로 충분
-- **상태 관리**: Redux 없이 React Query + useState
-
-### 다음 구현 단계 (간소화)
-```bash
-# 1. 간소화된 권한 시스템 구현
-/implement UserRole 엔티티 및 AdminController --focus admin --type minimal
-
-# 2. 화면별 권한 관리부터 시작
-/implement MenuPermissionManagePage.tsx --focus frontend --type minimal
-
-# 3. 전체 계획 검토
-/analyze PERMISSION_SYSTEM_PLAN.md --plan --focus minimal
+구현된 구조:
+✅ users - 기본 사용자 정보 + 사번(emp_no) 필드
+✅ employee - 직원 정보 (부서명, 직급명 포함)
+✅ departments - 부서 정보
+✅ user_roles - 사용자별 역할 할당
+✅ menu_permissions - 메뉴별 역할 권한 (읽기/쓰기/삭제)
+✅ 고정 역할: ADMIN, MANAGER, USER, AUDITOR
 ```
 
-### 간소화 이점
-- **개발 시간**: 70% 단축 (3-4주 → 1.2주)
-- **복잡성**: 80% 감소 (4개 화면 → 2개 화면)  
-- **유지보수**: 대폭 개선 (단순한 구조)
-- **실용성**: 90%의 권한 관리 요구사항 충족
+### 구현된 핵심 기능
+1. **화면별 권한 관리** ([900] MenuPermissionManagePage.tsx)
+   - 메뉴별 역할 권한 매트릭스 관리
+   - 읽기/쓰기/삭제 권한 설정
+   - 권한 변경사항 실시간 저장
+   - 필터링 및 검색 기능
+
+2. **사용자 권한 관리** ([901] UserPermissionManagePage.tsx)
+   - 사용자별 역할 할당/해제
+   - 부서/직급 정보와 연동된 사용자 목록
+   - 역할 편집 다이얼로그
+   - 권한 통계 대시보드
+
+3. **데이터 연동**
+   - `users.emp_no` → `employee.emp_no` JOIN으로 부서명/직급명 조회
+   - 실시간 권한 변경 반영
+   - 역할별 권한 통계 및 모니터링
+
+### 기술적 구현 특징
+- **Backend**: 간소화된 아키텍처로 복잡성 최소화
+- **Frontend**: 공통 컴포넌트 기반 통일된 UI/UX
+- **Database**: 조인 쿼리를 통한 효율적인 데이터 연동
+- **API**: RESTful API 설계로 확장성 확보
+
+### 성과 및 이점
+- **개발 효율성**: 공통 컴포넌트 재사용으로 70% 시간 단축
+- **사용자 경험**: 통일된 UI/UX로 일관성 있는 인터페이스
+- **유지보수성**: 간소화된 구조로 쉬운 관리
+- **확장성**: 필요시 추가 권한 기능 확장 가능
 
 ## Development Guidelines
 
