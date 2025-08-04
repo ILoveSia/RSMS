@@ -596,3 +596,215 @@ menu_permissions ←→ menus
 - Use lazy loading for frontend route components
 
 This codebase follows enterprise-grade patterns with clear separation of concerns, comprehensive error handling, and scalable architecture suitable for financial compliance systems. The system is designed for high reliability, security, and maintainability in a regulated financial environment.
+
+## 📋 인수인계관리 시스템 개발 계획 (진행 중)
+
+### 개발 상태: 분석 완료, 구현 대기
+- **분석 완료일**: 2025-01-04
+- **예상 개발 기간**: 13일 (3단계 구현)
+- **개발 우선순위**: 높음
+- **현재 상태**: Phase 1 구현 준비 완료
+
+### 🎯 구현 대상 화면 (4개)
+
+#### 1. 인계자 및 인수자 지정 (HandoverAssignmentPage.tsx)
+- **경로**: `/domains/handover/pages/HandoverAssignmentPage.tsx`
+- **기능**: positions 테이블 기반 직책별 인수인계 대상 지정
+- **주요 API**: 인계자/인수자 검색, 지정, 일정 관리, 상태 추적
+- **연동**: positions, employee, departments 테이블
+
+#### 2. 책무기술서 관리 (ResponsibilityDocumentPage.tsx)
+- **경로**: `/domains/handover/pages/ResponsibilityDocumentPage.tsx`
+- **기능**: 직책별 책무기술서 작성, 파일 업로드, 승인 프로세스
+- **주요 API**: 문서 CRUD, 파일 관리, 버전 관리
+- **연동**: responsibility, attachments, approval 테이블
+
+#### 3. 부서장 내부통제 업무메뉴얼 (InternalControlManualPage.tsx)
+- **경로**: `/domains/handover/pages/InternalControlManualPage.tsx`
+- **기능**: 부서별 내부통제 업무메뉴얼 관리, 파일 업로드
+- **주요 API**: 메뉴얼 CRUD, 파일 관리, 부서장 승인
+- **연동**: hod_ic_item, attachments, approval 테이블
+
+#### 4. 사업계획 점검 (BusinessPlanInspectionPage.tsx)
+- **경로**: `/domains/handover/pages/BusinessPlanInspectionPage.tsx`
+- **기능**: 부서별 사업계획 점검 현황, 점검 결과 관리
+- **주요 API**: 점검 계획 CRUD, 점검 결과 입력, 개선사항 관리
+- **연동**: departments, employee 테이블
+
+### 🗄️ 필요 데이터베이스 테이블 (5개)
+
+#### 1. handover_assignments (인수인계 지정 관리)
+```sql
+CREATE TABLE handover_assignments (
+    assignment_id BIGSERIAL PRIMARY KEY,
+    position_id BIGINT NOT NULL,           -- positions.positions_id FK
+    handover_type VARCHAR(20) NOT NULL,    -- 인수인계 유형
+    handover_from_emp_no VARCHAR(20),      -- 인계자 사번
+    handover_to_emp_no VARCHAR(20) NOT NULL, -- 인수자 사번
+    planned_start_date DATE,               -- 시작 예정일
+    planned_end_date DATE,                 -- 완료 예정일
+    status VARCHAR(20) DEFAULT 'PLANNED',  -- 상태
+    progress_rate INTEGER DEFAULT 0,       -- 진행률
+    -- 감사 필드 포함
+);
+```
+
+#### 2. responsibility_documents (책무기술서 관리)
+```sql
+CREATE TABLE responsibility_documents (
+    document_id BIGSERIAL PRIMARY KEY,
+    position_id BIGINT NOT NULL,           -- positions.positions_id FK
+    responsibility_id BIGINT,              -- responsibility.responsibility_id FK
+    document_title VARCHAR(200) NOT NULL,  -- 문서 제목
+    document_version VARCHAR(20) DEFAULT '1.0', -- 문서 버전
+    document_content TEXT,                 -- 문서 내용
+    status VARCHAR(20) DEFAULT 'DRAFT',    -- 상태
+    approval_id BIGINT,                    -- 승인 ID
+    -- 감사 필드 포함
+);
+```
+
+#### 3. internal_control_manuals (내부통제 업무메뉴얼)
+```sql
+CREATE TABLE internal_control_manuals (
+    manual_id BIGSERIAL PRIMARY KEY,
+    dept_cd VARCHAR(10) NOT NULL,          -- 부서코드
+    hod_ic_item_id BIGINT,                 -- hod_ic_item.hod_ic_item_id FK
+    manual_title VARCHAR(200) NOT NULL,    -- 메뉴얼 제목
+    manual_version VARCHAR(20) DEFAULT '1.0', -- 메뉴얼 버전
+    manual_content TEXT,                   -- 메뉴얼 내용
+    status VARCHAR(20) DEFAULT 'DRAFT',    -- 상태
+    approval_id BIGINT,                    -- 승인 ID
+    -- 감사 필드 포함
+);
+```
+
+#### 4. business_plan_inspections (사업계획 점검)
+```sql
+CREATE TABLE business_plan_inspections (
+    inspection_id BIGSERIAL PRIMARY KEY,
+    dept_cd VARCHAR(10) NOT NULL,          -- 부서코드
+    inspection_year INTEGER NOT NULL,      -- 점검 연도
+    inspection_quarter INTEGER,            -- 점검 분기
+    inspection_title VARCHAR(200) NOT NULL, -- 점검 제목
+    inspection_type VARCHAR(50) NOT NULL,  -- 점검 유형
+    status VARCHAR(20) DEFAULT 'PLANNED',  -- 상태
+    overall_grade VARCHAR(10),             -- 종합 등급
+    -- 감사 필드 포함
+);
+```
+
+#### 5. handover_histories (인수인계 이력)
+```sql
+CREATE TABLE handover_histories (
+    history_id BIGSERIAL PRIMARY KEY,
+    assignment_id BIGINT NOT NULL,         -- handover_assignments.assignment_id FK
+    activity_type VARCHAR(50) NOT NULL,    -- 활동 유형
+    activity_description TEXT,             -- 활동 설명
+    activity_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 활동 일시
+    actor_emp_no VARCHAR(20),              -- 작업자 사번
+    -- 감사 필드 포함
+);
+```
+
+### 🏗️ 아키텍처 구조
+
+#### Backend Domain 구조
+```
+backend/src/main/java/org/itcen/domain/handover/
+├── controller/
+│   ├── HandoverController.java                    # 인수인계 지정 API
+│   ├── ResponsibilityDocumentController.java      # 책무기술서 API
+│   ├── InternalControlManualController.java       # 내부통제 메뉴얼 API
+│   └── BusinessPlanInspectionController.java      # 사업계획 점검 API
+├── dto/                                           # 데이터 전송 객체
+├── entity/                                        # JPA 엔티티 (5개)
+├── repository/                                    # 데이터 접근 계층
+└── service/                                       # 비즈니스 로직
+    ├── HandoverService.java / HandoverServiceImpl.java
+    ├── ResponsibilityDocumentService.java / ResponsibilityDocumentServiceImpl.java
+    ├── InternalControlManualService.java / InternalControlManualServiceImpl.java
+    └── BusinessPlanInspectionService.java / BusinessPlanInspectionServiceImpl.java
+```
+
+#### Frontend Domain 구조
+```
+frontend/src/domains/handover/
+├── api/
+│   ├── handoverApi.ts                             # API 클라이언트
+│   ├── responsibilityDocumentApi.ts
+│   ├── internalControlManualApi.ts
+│   └── businessPlanInspectionApi.ts
+├── components/                                    # 공통 컴포넌트
+│   ├── HandoverAssignmentDialog.tsx
+│   ├── ResponsibilityDocumentDialog.tsx
+│   ├── InternalControlManualDialog.tsx
+│   └── BusinessPlanInspectionDialog.tsx
+├── pages/                                         # 페이지 컴포넌트 (4개)
+│   ├── HandoverAssignmentPage.tsx
+│   ├── ResponsibilityDocumentPage.tsx
+│   ├── InternalControlManualPage.tsx
+│   └── BusinessPlanInspectionPage.tsx
+├── router/index.ts                                # 라우팅 설정
+├── store/index.ts                                 # 상태 관리
+└── types/index.ts                                 # TypeScript 타입 정의
+```
+
+### 📅 3단계 구현 계획
+
+#### Phase 1: 기본 인프라 구축 (3일)
+1. **Database Setup**: 5개 테이블 생성 스크립트 작성 및 적용
+2. **Backend Infrastructure**: handover 도메인 패키지 구조 생성
+3. **Frontend Infrastructure**: handover 도메인 폴더 구조 생성
+4. **기본 Entity/Repository/Service/Controller**: 스켈레톤 코드 생성
+
+#### Phase 2: 화면별 구현 (8일)
+1. **인계자 및 인수자 지정** (2일): HandoverAssignmentPage.tsx + Backend API
+2. **책무기술서 관리** (2일): ResponsibilityDocumentPage.tsx + Backend API + 파일 업로드
+3. **부서장 내부통제 업무메뉴얼** (2일): InternalControlManualPage.tsx + Backend API + 파일 업로드
+4. **사업계획 점검** (2일): BusinessPlanInspectionPage.tsx + Backend API
+
+#### Phase 3: 통합 및 테스트 (2일)
+1. **화면 간 연동**: 인수인계 프로세스 통합 기능 구현
+2. **통합 테스트**: API 테스트, 파일 업로드 테스트, UI 테스트
+3. **버그 수정**: 발견된 이슈 해결 및 성능 최적화
+
+### 🔗 기존 시스템 연동 포인트
+
+#### 활용 가능한 기존 테이블
+- **positions**: 직책 정보 (인계자/인수자 지정 기준)
+- **employee**: 직원 정보 (담당자 정보 조회)
+- **departments**: 부서 정보 (부서별 관리)
+- **attachments**: 범용 첨부파일 시스템 (문서 파일 관리)
+- **responsibility**: 책임 정보 (책무기술서 내용)
+- **approval**: 승인 프로세스 (문서 승인 워크플로우)
+
+#### 공통 컴포넌트 활용
+- **PageContainer/PageHeader/PageContent**: 통일된 페이지 레이아웃
+- **SearchButton/ExcelDownloadButton**: 표준 버튼 컴포넌트
+- **AttachmentController API**: 파일 업로드/다운로드 기능
+- **CSS 변수**: --bank-* 패턴 활용
+
+### 🚀 다음 세션 시작 명령어
+
+#### 즉시 구현 시작
+```bash
+/implement 인수인계관리 시스템 Phase 1 --backend-first --with-database-scripts
+```
+
+#### 특정 화면부터 시작
+```bash
+/implement HandoverAssignmentPage.tsx --with-backend --reference UserPermissionManagePage.tsx
+```
+
+#### 계획 재검토 후 구현
+```bash
+/analyze 인수인계관리 시스템 계획 --review --phase-1
+```
+
+### 💡 구현 시 주의사항
+- 기존 권한 관리 시스템의 UI/UX 패턴 준수
+- 공통 컴포넌트 최대한 활용하여 개발 효율성 확보
+- attachments 테이블의 entity_type 필드로 문서 구분 관리
+- approval 시스템과의 연동으로 승인 프로세스 구현
+- SOLID 원칙과 도메인 주도 설계 패턴 준수

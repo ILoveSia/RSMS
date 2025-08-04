@@ -210,6 +210,28 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'business_center',
   },
 
+  // 인수인계 관리 (다이얼로그 통합 버전)
+  '/handover/assignments': {
+    component: () => import('@/domains/handover/pages/HandoverAssignmentListPage'),
+    title: '인계자 및 인수자 지정',
+    icon: 'assessment',
+  },
+  '/handover/documents': {
+    component: () => import('@/domains/handover/pages/ResponsibilityDocumentListPage'),
+    title: '책무기술서 관리',
+    icon: 'assessment',
+  },
+  '/handover/manuals': {
+    component: () => import('@/domains/handover/pages/InternalControlManualListPage'),
+    title: '내부통제 업무메뉴얼 관리',
+    icon: 'assessment',
+  },
+  '/handover/inspections': {
+    component: () => import('@/domains/handover/pages/BusinessPlanInspectionListPage'),
+    title: '사업계획 점검 관리',
+    icon: 'assessment',
+  },
+
 
 };
 

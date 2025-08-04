@@ -8,6 +8,7 @@ import inquiryRoutes from '@/domains/inquiry/router';
 import ledgermngtRoutes from '@/domains/ledgermngt/router';
 import loginRoutes from '@/domains/login/router';
 import mainRoutes from '@/domains/main/router';
+import handoverRoutes from '@/domains/handover/router';
 
 // 라우트 매니저 인스턴스 생성
 const routeManager = new RouteManager();
@@ -17,6 +18,7 @@ routeManager.registerDomainRoutes('login', loginRoutes);
 routeManager.registerDomainRoutes('main', mainRoutes);
 routeManager.registerDomainRoutes('ledgermngt', ledgermngtRoutes);
 routeManager.registerDomainRoutes('inquiry', inquiryRoutes);
+routeManager.registerDomainRoutes('handover', handoverRoutes);
 
 // React Router용 RouteObject 생성
 const generateRoutes = (): RouteObject[] => {

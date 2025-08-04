@@ -27,7 +27,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "org.itcen.domain.user.repository", "org.itcen.auth.repository",
         "org.itcen.domain.execofficer.repository", "org.itcen.domain.submission.repository",
         "org.itcen.domain.positionresponsibility.repository", "org.itcen.domain.audit.repository",
-        "org.itcen.domain.employee.repository", "org.itcen.domain.approval.repository"})
+        "org.itcen.domain.employee.repository", "org.itcen.domain.approval.repository",
+        "org.itcen.domain.handover.repository"})
 @EntityScan(basePackages = {"org.itcen.domain.departments.entity", "org.itcen.domain.common.entity",
         "org.itcen.domain.casestudy.entity", "org.itcen.domain.hodicitem.entity",
         "org.itcen.domain.meeting.entity", "org.itcen.domain.menu.entity",
@@ -36,7 +37,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "org.itcen.auth.domain", "org.itcen.auth.domain.permission",
         "org.itcen.domain.execofficer.entity", "org.itcen.domain.submission.entity",
         "org.itcen.domain.positionresponsibility.entity", "org.itcen.domain.audit.entity",
-        "org.itcen.domain.employee.entity", "org.itcen.domain.approval.entity"})
+        "org.itcen.domain.employee.entity", "org.itcen.domain.approval.entity",
+        "org.itcen.domain.handover.entity"})
 // @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 3600) // H2 프로파일에서는 비활성화
 public class BackendApplication {
 
