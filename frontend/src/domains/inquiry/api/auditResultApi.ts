@@ -131,27 +131,16 @@ export const getAuditResultDetail = async (
   auditProgMngtDetailIds: number[]
 ): Promise<AuditResultDetailResponse[]> => {
   try {
-    console.log('점검결과 상세 조회 요청:', auditProgMngtDetailIds);
     
     const response = await apiClient.post<AuditResultDetailResponse[]>(
       '/inquiry/audit-result/detail',
       { auditProgMngtDetailIds }
     );
     
-    console.log('점검결과 상세 조회 응답:', response);
-    console.log('점검결과 상세 조회 응답 타입:', typeof response);
-    console.log('점검결과 상세 조회 응답 구조:', {
-      hasData: 'data' in response,
-      isArray: Array.isArray(response),
-      responseKeys: Object.keys(response || {}),
-    });
-    
     // apiClient가 이미 데이터를 unwrap하므로 response 자체가 데이터일 수 있음
     if (Array.isArray(response)) {
-      console.log('응답이 이미 배열 형태로 unwrap됨');
       return response;
     } else if (response && 'data' in response) {
-      console.log('응답에 data 속성이 있음');
       return (response as any).data;
     } else {
       console.log('예상하지 못한 응답 구조');

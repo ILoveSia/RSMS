@@ -100,4 +100,9 @@ public class AuditItemStatusResponseDto {
      * 점검상태코드 (audit_prog_mngt 테이블에서)
      */
     private String auditStatusCd;
+
+    /**
+     * 책무 ID (audit_prog_mngt_detail 테이블에서)
+     */
+    private Long responsibilityId;
 }

@@ -71,7 +71,8 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
                 COALESCE(apd.auditResult, ''),
                 COALESCE(CAST(apd.auditDoneDt AS string), ''),
                 COALESCE(apd.auditDetailContent, ''),
-                COALESCE(apm.auditStatusCd, '')
+                COALESCE(apm.auditStatusCd, ''),
+                COALESCE(hi.responsibilityId, 0L)
             )
             FROM org.itcen.domain.audit.entity.AuditProgMngt apm
             INNER JOIN org.itcen.domain.audit.entity.AuditProgMngtDetail apd ON apm.auditProgMngtId = apd.auditProgMngtId

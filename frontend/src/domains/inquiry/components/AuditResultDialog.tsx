@@ -136,30 +136,17 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
   // 기존 점검결과 데이터 로드
   const loadExistingAuditResults = async () => {
     try {
-      console.log('기존 점검결과 데이터 로드 시작');
-      
       // 선택된 항목들의 auditProgMngtDetailId 추출
       const auditProgMngtDetailIds = selectedItems.map(item => item.auditProgMngtDetailId);
-      console.log('조회할 auditProgMngtDetailIds:', auditProgMngtDetailIds);
-      
-      // 기존 점검결과 데이터 조회
       const existingResults = await getAuditResultDetail(auditProgMngtDetailIds);
-      // console.log('기존 점검결과 데이터 조회 결과:', existingResults);
-      // console.log('기존 점검결과 데이터 타입:', typeof existingResults);
-      // console.log('기존 점검결과 데이터 길이:', existingResults?.length);
-      
       // auditResultStatusCd가 있는 결과만 필터링
       const validResults = existingResults?.filter((result: any) => 
         result.auditResultStatusCd && result.auditResultStatusCd.trim() !== ''
       ) || [];
 
-      console.log('유효한 결과 (auditResultStatusCd 있음):', validResults);
-
       if (validResults && validResults.length > 0) {
         // 첫 번째 결과를 기본값으로 사용 (여러 항목이 선택된 경우 공통된 값만 표시)
         const firstResult = validResults[0];
-        console.log('첫 번째 유효한 결과 상세:', firstResult);
-        
         // 기존 첨부파일을 UnifiedAttachment 형태로 변환
         let existingAttachments: UnifiedAttachment[] = [];
         if (firstResult.attachments && Array.isArray(firstResult.attachments)) {
@@ -173,8 +160,6 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
           }));
         }
         
-        console.log('변환된 첨부파일:', existingAttachments);
-        
         // 폼 데이터 설정 - API 응답 구조에 맞게 안전하게 처리
         const newFormData = {
           auditResultStatusCd: firstResult.auditResultStatusCd || '',
@@ -185,25 +170,11 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
           attachments: existingAttachments,
         };
         
-        console.log('폼 데이터 각 필드 상세 확인:', {
-          'auditResultStatusCd': `"${firstResult.auditResultStatusCd}"`,
-          'auditResult': `"${firstResult.auditResult}"`,
-          'beforeAuditYn': `"${firstResult.beforeAuditYn}"`,
-          'auditDetailContent': `"${firstResult.auditDetailContent}"`,
-          'auditDoneDt': `"${firstResult.auditDoneDt}"`,
-          'attachments 개수': firstResult.attachments?.length || 0
-        });
-        
-        console.log('설정할 폼 데이터:', newFormData);
-        
         // React 18의 상태 업데이트 방식에 맞게 수정
         setFormData(prevData => {
-          console.log('이전 폼 데이터:', prevData);
-          console.log('새로운 폼 데이터로 업데이트:', newFormData);
           return newFormData;
         });
       } else {
-        console.log('auditResultStatusCd가 있는 기존 점검결과 데이터가 없습니다.');
       }
       
     } catch (error) {
@@ -222,10 +193,8 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
       
       // view 또는 edit 모드인 경우 기존 데이터 로드
       if (mode === 'view' || mode === 'edit') {
-        console.log('🔍🔍🔍 기존 데이터 로드 시작 - 모드:', mode, '🔍🔍🔍');
         loadExistingAuditResults();
       } else {
-        console.log('>>> 새로운 데이터 작성 모드:', mode);
         // create 모드인 경우 폼 초기화
         setFormData({
           auditResultStatusCd: '',
@@ -394,7 +363,6 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
 
     try {
       // 실제 구현에서는 파일 다운로드 API를 호출해야 합니다
-      console.log('파일 다운로드:', attachment.name, attachment.attachId);
       // TODO: 파일 다운로드 API 구현 필요
       // const blob = await downloadAttachment(attachment.attachId);
       // const url = window.URL.createObjectURL(blob);
@@ -507,7 +475,6 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
 
   // 다이얼로그 닫기
   const handleClose = () => {
-    console.log('다이얼로그 닫기 - 폼 데이터 초기화');
     setFormData({
       auditResultStatusCd: '',
       auditResult: '',
@@ -586,20 +553,6 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
       </Box>
     );
   };
-
-  // 렌더링 시 현재 formData 상태 로그 (개발용)
-  // console.log('💎💎💎 AuditResultDialog 렌더링 💎💎💎');
-  // console.log('💎 전달받은 mode prop:', mode);
-  // console.log('💎 open 상태:', open);
-  console.log('💎 현재 formData:', {
-    auditResultStatusCd: formData.auditResultStatusCd,
-    auditResult: formData.auditResult,
-    beforeAuditYn: formData.beforeAuditYn,
-    auditDetailContent: formData.auditDetailContent,
-    auditDoneDt: formData.auditDoneDt,
-    attachments: formData.attachments?.length || 0
-  });
-  // console.log('💎💎💎 렌더링 완료 💎💎💎');
 
   return (
     <BaseDialog
@@ -835,7 +788,6 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
                 label="점검 결과"
                 value={formData.auditResultStatusCd}
                 onChange={(value: string) => {
-                  console.log('RadioGroup 값 변경:', value);
                   handleFormChange('auditResultStatusCd', value);
                 }}
                 options={auditResultOptions}
@@ -855,7 +807,6 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
                 label="점검결과작성 *"
                 value={formData.auditResult}
                 onChange={(e) => {
-                  console.log('TextField 값 변경:', e.target.value);
                   handleFormChange('auditResult', e.target.value);
                 }}
                 fullWidth

@@ -98,25 +98,15 @@ export const responsibilityApi = {
     data: ResponsibilityRequestDto
   ): Promise<ResponsibilityRow> => {
     try {
-      console.log(
-        `[responsibilityApi] update 호출 - responsibilityId: ${responsibilityId}, data:`,
-        data
-      );
-      console.log(responsibilityId);
       const response = await apiClient.put<ResponsibilityRow>(
         `/responsibilities/${responsibilityId}`,
         data
       );
 
-      console.log('[responsibilityApi] update 응답:', response);
-
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
       const result = response;
-      console.log('[responsibilityApi] update 결과:', result);
-
       return result;
     } catch (error) {
-      console.error('[responsibilityApi] update 에러:', error);
       throw error;
     }
   },

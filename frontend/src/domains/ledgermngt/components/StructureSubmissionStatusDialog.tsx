@@ -174,7 +174,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
 
     try {
       setUploadingFile(true);
-      console.log("selectedFile",selectedFile);
+      console.log("selectedFile", selectedFile);
       await uploadAttachment(selectedFile, {
         entityType: 'audit_prog_mngt_detail',
         entityId: itemId,
@@ -246,7 +246,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
     try {
       // 선택된 직책의 임원 정보를 조회
       const executiveInfo = await fetchExecutiveByPositionId(position.positionsId);
-      
+
       setRegistrationData(prev => ({
         ...prev,
         position: { value: position.positionsNm, label: position.positionsNm },
@@ -255,7 +255,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         ledgerOrder: position.ledgerOrder,
         // 임원 정보 자동 설정
         execofficerId: executiveInfo?.execofficerId || null,
-        executiveName: executiveInfo?.empName ? 
+        executiveName: executiveInfo?.empName ?
           { value: executiveInfo.empName, label: executiveInfo.empName } : null
       }));
     } catch (error) {
@@ -309,7 +309,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
       // 새로 선택한 파일이 있으면 첨부파일 업로드
       if (selectedFile && mode !== 'view') {
         const targetEntityId = mode === 'edit' && itemId ? itemId : result?.id;
-        
+
         if (targetEntityId) {
           try {
             await uploadAttachment(selectedFile, {
@@ -357,18 +357,20 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
 
   // 다이얼로그 닫기 핸들러 - 파일 상태 초기화 포함
   const handleClose = () => {
-    // 파일 관련 상태 초기화
     setSelectedFile(null);
     setUploadingFile(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    // registrationData의 attachmentFile도 초기화
     setRegistrationData(prev => ({
       ...prev,
       attachmentFile: ''
     }));
-    
+    // 수정 모드에서 취소 시 view 모드로 변경
+    if (mode === 'edit' && onModeChange) {
+      onModeChange('view');
+      return;
+    }
     onClose();
   };
 
@@ -597,6 +599,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
               remarks: value ? { value, label: value } : null
             }));
           }}
+          mode={mode === 'view' ? 'readonly' : 'editable'}
           placeholder="비고를 입력하세요"
           multiline
           rows={4}

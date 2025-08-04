@@ -106,7 +106,6 @@ const MyApprovalListPage: React.FC = () => {
 
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = useCallback(async () => {
-    console.log('내 결재 목록 엑셀 다운로드', { status: selectedStatus, count: approvals.length });
   }, [selectedStatus, approvals.length]);
 
   // 결재 상세 보기

@@ -104,7 +104,6 @@ const ApprovalDashboardPage: React.FC = () => {
 
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = useCallback(async () => {
-    console.log('결재 대시보드 엑셀 다운로드');
   }, []);
 
   // 결재 상세 보기

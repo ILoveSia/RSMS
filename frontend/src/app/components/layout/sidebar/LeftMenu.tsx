@@ -203,9 +203,6 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         }
       });
 
-      // console.log('🔍 [LeftMenu] 최상위 메뉴 개수:', rootMenus.length);
-      // console.log('🔍 [LeftMenu] 계층형 구조:', rootMenus);
-
       // Menu 데이터를 MenuItemProps로 변환
       const convertedMenus = rootMenus
         .sort((a, b) => a.sortOrder - b.sortOrder) // 정렬 순서 적용

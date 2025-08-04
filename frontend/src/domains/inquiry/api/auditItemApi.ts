@@ -26,6 +26,7 @@ export interface AuditItemStatusResponse {
   auditDetailcontent: string;      // 점검 세부내용
   auditDoneContent: string;         // 이행결과보고
   auditStatusCd: string;            // 점검상태코드 (audit_prog_mngt 테이블)
+  responsibilityId: number;         // 책무 ID
 }
 
 // 점검 현황(항목별) 조회 요청 파라미터

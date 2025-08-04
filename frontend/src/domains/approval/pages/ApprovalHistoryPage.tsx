@@ -147,7 +147,6 @@ const ApprovalHistoryPage: React.FC = () => {
 
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = useCallback(async () => {
-    console.log('결재 히스토리 엑셀 다운로드', { criteria: searchCriteria, count: approvals.length });
   }, [searchCriteria, approvals.length]);
 
   // 결재 상세 보기
