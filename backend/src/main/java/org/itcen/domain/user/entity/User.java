@@ -90,6 +90,12 @@ public class User {
     private String jobTitleCd;
 
     /**
+     * 사번 (employee number)
+     */
+    @Column(name = "emp_no", length = 100)
+    private String empNo;
+
+    /**
      * 생성일시
      */
     @CreationTimestamp

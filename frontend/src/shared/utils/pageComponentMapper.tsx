@@ -196,6 +196,21 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '결재 히스토리',
     icon: 'business_center',
   },
+
+  // 시스템관리
+  '/system/menu-permission': {
+    component: () => import('@/domains/admin/pages/MenuPermissionManagePage'),
+    title: '화면별 권한 관리',
+    icon: 'business_center',
+  },
+  
+  '/system/user-permission': {
+    component: () => import('@/domains/admin/pages/UserPermissionManagePage'),
+    title: '사용자 권한 관리',
+    icon: 'business_center',
+  },
+
+
 };
 
 /**
