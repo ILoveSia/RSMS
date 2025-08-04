@@ -312,16 +312,7 @@ const ApprovalHistoryPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <PageContainer>
       <PageHeader 
         title="[결재관리] 결재 히스토리" 
         icon={<HistoryIcon />}

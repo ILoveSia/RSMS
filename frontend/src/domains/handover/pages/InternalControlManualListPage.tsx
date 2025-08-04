@@ -312,16 +312,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   }, [handleSearch]);
 
   return (
-    <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <PageContainer>
       <PageHeader
         title='내부통제 업무메뉴얼 관리'
         icon={<DocumentIcon />}

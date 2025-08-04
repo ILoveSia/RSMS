@@ -311,16 +311,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
   }, [handleSearch]);
 
   return (
-    <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <PageContainer>
       <PageHeader
         title='책무기술서 관리'
         icon={<DocumentIcon />}

@@ -326,16 +326,7 @@ const MyApprovalListPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <PageContainer>      
       <PageHeader 
         title="[결재관리] 내 결재 목록" 
         icon={<AssignmentIcon />}

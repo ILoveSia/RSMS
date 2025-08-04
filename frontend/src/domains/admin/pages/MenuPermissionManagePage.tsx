@@ -244,16 +244,7 @@ const MenuPermissionManagePage: React.FC = () => {
   }
 
   return (
-    <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <PageContainer>
       <PageHeader
         title="[900] 화면별 권한 관리"
         icon={<SecurityIcon />}

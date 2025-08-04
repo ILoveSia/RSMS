@@ -213,16 +213,7 @@ const UserPermissionManagePage: React.FC = () => {
   }
 
   return (
-    <PageContainer
-      sx={{
-        height: '100%',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
+    <PageContainer>
       <PageHeader
         title="[901] 사용자 권한 관리"
         icon={<PersonIcon />}
