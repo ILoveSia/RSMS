@@ -1,5 +1,7 @@
 package org.itcen.domain.user.repository;
 
+import org.itcen.domain.departments.entity.Department;
+import org.itcen.domain.employee.entity.Employee;
 import org.itcen.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -93,4 +95,13 @@ public interface UserRepository extends JpaRepository<User, String> {
      */
     @Query("SELECT COUNT(u) FROM User u")
     long countAllUsers();
+
+    /**
+     * 사용자 목록을 employee와 조인하여 조회
+     * 부서명, 직급명 정보를 포함하여 반환
+     */
+    @Query("SELECT u, e FROM User u " +
+           "LEFT JOIN Employee e ON u.empNo = e.empNo " +
+           "ORDER BY u.username")
+    List<Object[]> findUsersWithEmployee();
 } 

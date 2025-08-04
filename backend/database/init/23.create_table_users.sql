@@ -6,6 +6,7 @@
 
 CREATE TABLE public.users (
 	id varchar(100) NOT NULL, -- 사용자ID
+	emp_no varchar(20) NULL, -- 사번
 	username varchar(50) NOT NULL, -- 사용자명
 	email varchar(100) NOT NULL, -- 이메일
 	address varchar(255) NOT NULL, -- 주소
