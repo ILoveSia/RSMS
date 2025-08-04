@@ -53,7 +53,6 @@ interface IAuditProgMngtStatusPageProps {
  * API 응답을 AuditProgRow로 변환하는 함수
  */
 const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditProgRow => {
-  console.log("response", response)
   return {
     id: response.auditProgMngtCd, // DataGrid용 고유 식별자
     auditProgMngtCd: response.auditProgMngtCd,
@@ -239,18 +238,10 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         formatDate(endDate)
       );
 
-      console.log('API Response:', apiResponse);
-      console.log('API Response type:', typeof apiResponse);
-      console.log('API Response is array:', Array.isArray(apiResponse));
-      console.log('API Response length:', apiResponse?.length);
-
       if (apiResponse && Array.isArray(apiResponse)) {
-        console.log('First item:', apiResponse[0]);
 
         // API 응답을 화면용 데이터로 변환
         const convertedData = apiResponse.map(convertApiResponseToRow);
-        console.log('Converted Data:', convertedData);
-        console.log('Converted Data length:', convertedData.length);
         setAuditRows(convertedData);
       } else {
         console.error('API 응답이 배열이 아닙니다:', apiResponse);
@@ -350,12 +341,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     try {
       setIsLoading(true);
 
-      console.log('=== 점검계획관리 등록/수정 데이터 ===');
-      console.log('받은 data:', data);
-      console.log('data.targetItemIds:', data.targetItemIds);
-      console.log('data.targetItemData:', data.targetItemData);
-      console.log('selectedTargetItems (페이지 상태):', selectedTargetItems);
-
       // AuditProgramData를 AuditProgMngtRequest로 변환
       const request: AuditProgMngtRequest = {
         ledgerOrdersHod: data.ledgerOrdersHod,
@@ -406,8 +391,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
   // 점검 대상 선정 완료 핸들러
   const handleTargetSelectionComplete = useCallback((selectedItems: InspectionTargetItem[]) => {
-    console.log('선택된 점검 대상:', selectedItems);
-    console.log('선택된 점검 대상 IDs:', selectedItems.map(item => item.id));
     setSelectedTargetItems(selectedItems);
     setTargetSelectionOpen(false);
   }, []);
@@ -442,7 +425,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = async () => {
     try {
-      console.log('점검계획관리 현황 엑셀 다운로드 시작');
 
       // 현재 표시된 데이터를 엑셀 형태로 변환
       const excelData = convertToExcelData(auditRows);

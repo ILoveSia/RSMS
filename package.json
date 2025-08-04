@@ -7,6 +7,8 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && gradlew bootRun --args='--spring.profiles.active=local'",
+    "d": "concurrently \"npm run dev:be\" \"npm run dev:frontend\"",
+    "dev:be": "cd backend && gradlew bootRun --args='--spring.profiles.active=docker'",
     "dev:local": "npm run setup:db && npm run dev",
     "dev:db": "docker-compose up postgres redis -d",
     "dev:full": "docker-compose up -d",

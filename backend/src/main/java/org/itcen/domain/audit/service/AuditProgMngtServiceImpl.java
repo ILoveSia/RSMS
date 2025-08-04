@@ -269,11 +269,18 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
     private AuditProgMngtDto convertToStatusDto(AuditProgMngt entity, int targetItemCount) {
         AuditProgMngtDto dto = AuditProgMngtDto.fromEntity(entity);
         
+        // 점검계획ID로 연결된 책무 내용들 조회
+        List<String> responsibilityContents = auditProgMngtRepository
+                .findResponsibilityContentsByAuditProgMngtId(entity.getAuditProgMngtId());
+        
+        // 책무 내용들을 auditTarget으로 설정
+        String auditTarget = formatResponsibilityContents(responsibilityContents);
+        
         // 현황 조회용 추가 필드 설정
         dto.setAuditProgName(entity.getAuditTitle()); // auditTitle을 auditProgName으로 매핑
         dto.setAuditTypeCd("REGULAR"); // 기본값: 정기점검
         dto.setAuditTypeName("정기점검"); // 기본값
-        dto.setAuditTarget(entity.getAuditTitle()); // auditTitle을 auditTarget으로도 매핑
+        dto.setAuditTarget(auditTarget); // 실제 책무 내용들로 설정
         dto.setAuditStartDate(entity.getAuditStartDt().toString());
         dto.setAuditEndDate(entity.getAuditEndDt().toString());
         dto.setAuditTeamLeader("시스템관리자"); // 기본값
@@ -287,6 +294,36 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         dto.setUpdatedAt(entity.getUpdatedAt().toLocalDate().toString());
         
         return dto;
+    }
+    
+    /**
+     * 책무 내용들을 표시용 문자열로 포맷팅
+     */
+    private String formatResponsibilityContents(List<String> responsibilityContents) {
+        if (responsibilityContents == null || responsibilityContents.isEmpty()) {
+            return "선정된 항목 없음";
+        }
+        
+        // null이나 빈 문자열 제거
+        List<String> validContents = responsibilityContents.stream()
+                .filter(content -> content != null && !content.trim().isEmpty())
+                .collect(Collectors.toList());
+        
+        if (validContents.isEmpty()) {
+            return "선정된 항목 없음";
+        }
+        
+        if (validContents.size() == 1) {
+            return validContents.get(0);
+        }
+        
+        if (validContents.size() <= 3) {
+            // 3개 이하면 모두 표시
+            return String.join(", ", validContents);
+        } else {
+            // 3개 초과면 첫 번째 항목과 개수 표시
+            return validContents.get(0) + " 외 " + (validContents.size() - 1) + "개";
+        }
     }
 
     /**
