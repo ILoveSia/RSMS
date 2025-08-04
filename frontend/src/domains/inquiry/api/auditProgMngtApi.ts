@@ -144,7 +144,6 @@ export const getAuditProgMngtByCode = async (
       return response;
     } else if (response && typeof response === 'object' && response.auditProgMngtCd) {
       // response 자체가 데이터인 경우 (비정상적이지만 처리)
-      console.log('response 자체를 데이터로 사용');
       return response as AuditProgMngtDto;
     } else {
       throw new Error('유효하지 않은 응답 구조');

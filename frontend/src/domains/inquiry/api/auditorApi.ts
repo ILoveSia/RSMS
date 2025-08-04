@@ -46,13 +46,11 @@ export interface AuditorAssignmentResponse {
  */
 export const searchAuditorsByName = async (empName: string): Promise<AuditorInfo[]> => {
   try {
-    console.log('점검자 검색 요청:', { empName });
     
     const response = await apiClient.get<AuditorInfo[]>('/auditors/search', {
       params: { empName: empName || '' }
     });
     
-    console.log('점검자 검색 응답:', response);
     
     // ApiResponse 구조 처리
     if (response && typeof response === 'object' && 'data' in response) {
@@ -81,11 +79,9 @@ export const searchAuditorsByName = async (empName: string): Promise<AuditorInfo
  */
 export const searchAuditors = async (searchRequest: AuditorSearchRequest): Promise<AuditorInfo[]> => {
   try {
-    console.log('점검자 상세 검색 요청:', searchRequest);
     
     const response = await apiClient.post<AuditorInfo[]>('/auditors/search', searchRequest);
     
-    console.log('점검자 상세 검색 응답:', response);
     
     // ApiResponse 구조 처리
     if (response && typeof response === 'object' && 'data' in response) {
@@ -114,11 +110,9 @@ export const searchAuditors = async (searchRequest: AuditorSearchRequest): Promi
  */
 export const assignAuditor = async (assignmentRequest: AuditorAssignmentRequest): Promise<AuditorAssignmentResponse> => {
   try {
-    console.log('점검자 지정 요청:', assignmentRequest);
     
     const response = await apiClient.post<AuditorAssignmentResponse>('/auditors/assign', assignmentRequest);
     
-    console.log('점검자 지정 응답:', response);
     
     // ApiResponse 구조 처리
     if (response && typeof response === 'object' && 'data' in response) {

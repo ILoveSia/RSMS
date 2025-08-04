@@ -45,7 +45,6 @@ export const getAuditItemStatusList = async (
   params: AuditItemStatusRequest
 ): Promise<AuditItemStatusResponse[]> => {
   try {
-    console.log('점검 현황(항목별) 조회 요청:', params);
     
     const response = await apiClient.get<AuditItemStatusResponse[]>('/audit-prog-mngt/item-status', { 
       params: {

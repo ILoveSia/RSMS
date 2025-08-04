@@ -18,8 +18,8 @@ import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import AuditProgMngtDialog, { type AuditProgramData } from '../components/AuditProgMngtDialog';
 import InspectionTargetSelectionDialog, { type InspectionTargetItem } from '../components/InspectionTargetSelectionDialog';
-import { 
-  getAllAuditProgMngtStatusList, 
+import {
+  getAllAuditProgMngtStatusList,
   deleteMultipleAuditProgMngt,
   createAuditProgMngt,
   updateAuditProgMngt,
@@ -53,6 +53,7 @@ interface IAuditProgMngtStatusPageProps {
  * API 응답을 AuditProgRow로 변환하는 함수
  */
 const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditProgRow => {
+  console.log("response", response)
   return {
     id: response.auditProgMngtCd, // DataGrid용 고유 식별자
     auditProgMngtCd: response.auditProgMngtCd,
@@ -144,6 +145,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   const [targetSelectionOpen, setTargetSelectionOpen] = useState(false);
   const [currentLedgerOrdersHod, setCurrentLedgerOrdersHod] = useState<string>('');
   const [selectedTargetItems, setSelectedTargetItems] = useState<InspectionTargetItem[]>([]);
+  const [targetSelectionKey, setTargetSelectionKey] = useState<string>('initial');
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<AuditProgRow>[] = [
@@ -201,13 +203,13 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         <Chip
           label={
             value === 'AA03' ? '점검마감' :
-            value === 'AA02' ? '점검진행' :
-            value === 'AA01' ? '점검신청' : value
+              value === 'AA02' ? '점검진행' :
+                value === 'AA01' ? '점검신청' : value
           }
           color={
             value === 'AA03' ? 'success' :
-            value === 'AA02' ? 'primary' :
-            value === 'AA01' ? 'default' : 'warning'
+              value === 'AA02' ? 'primary' :
+                value === 'AA01' ? 'default' : 'warning'
           }
           size="small"
         />
@@ -224,27 +226,27 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   const handleFetchAuditPrograms = useCallback(async () => {
     try {
       setIsLoading(true);
-      
+
       // 날짜를 문자열로 포맷팅
       const formatDate = (date: Date | null): string | undefined => {
         if (!date) return undefined;
         return date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
       };
-      
+
       // API 호출
       const apiResponse = await getAllAuditProgMngtStatusList(
         formatDate(startDate),
         formatDate(endDate)
       );
-      
+
       console.log('API Response:', apiResponse);
       console.log('API Response type:', typeof apiResponse);
       console.log('API Response is array:', Array.isArray(apiResponse));
       console.log('API Response length:', apiResponse?.length);
-      
+
       if (apiResponse && Array.isArray(apiResponse)) {
         console.log('First item:', apiResponse[0]);
-        
+
         // API 응답을 화면용 데이터로 변환
         const convertedData = apiResponse.map(convertApiResponseToRow);
         console.log('Converted Data:', convertedData);
@@ -254,7 +256,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         console.error('API 응답이 배열이 아닙니다:', apiResponse);
         setAuditRows([]);
       }
-      
+
     } catch (error) {
       console.error('점검계획관리 현황 조회 오류:', error);
       setErrorMessage('점검계획관리 현황 조회 중 오류가 발생했습니다.');
@@ -269,25 +271,35 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     handleFetchAuditPrograms();
   }, [handleFetchAuditPrograms]);
 
+  // 체크박스 상태 변경 추적을 위한 ref
+  const [isCheckboxChanging, setIsCheckboxChanging] = useState(false);
+
   // 행 선택 변경 핸들러
   const handleAuditRowSelectionModelChange = (
     selectedRows: (string | number)[]
   ) => {
+    setIsCheckboxChanging(true);
     setSelectedAuditIds(selectedRows.map(id => String(id)));
+
+    // 체크박스 변경 상태를 잠시 후 해제
+    setTimeout(() => {
+      setIsCheckboxChanging(false);
+    }, 100);
   };
 
   // 행 클릭 핸들러 (상세보기)
   const handleAuditRowClick = async (row: AuditProgRow) => {
-    if (isRegistrationMode) {
+    // 체크박스 변경 중이거나 등록 모드일 때는 행 클릭 이벤트 무시
+    if (isRegistrationMode || isCheckboxChanging) {
       return;
     }
-    
+
     try {
       // 행 클릭은 단순 상세보기이므로 전체 페이지 로딩 상태를 변경하지 않음
-      
+
       // 기존 점검계획 상세 정보 조회 (점검대상 정보 포함)
       const detailResponse = await getAuditProgMngtByCode(row.auditProgMngtCd);
-      
+
       // 기존에 선정된 점검대상이 있다면 selectedTargetItems에 설정
       if (detailResponse.targetItemData && detailResponse.targetItemData.length > 0) {
         const targetItems = detailResponse.targetItemData.map(item => ({
@@ -303,11 +315,11 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       } else {
         setSelectedTargetItems([]);
       }
-      
+
       setSelectedItem(row);
       setDialogMode('view');
       setIsRegistrationMode(true);
-      
+
     } catch (error) {
       console.error('점검계획 상세 조회 오류:', error);
       setErrorMessage('점검계획 상세 정보를 불러오는 중 오류가 발생했습니다.');
@@ -337,13 +349,13 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   const handleSubmit = async (data: AuditProgramData): Promise<void> => {
     try {
       setIsLoading(true);
-      
+
       console.log('=== 점검계획관리 등록/수정 데이터 ===');
       console.log('받은 data:', data);
       console.log('data.targetItemIds:', data.targetItemIds);
       console.log('data.targetItemData:', data.targetItemData);
       console.log('selectedTargetItems (페이지 상태):', selectedTargetItems);
-      
+
       // AuditProgramData를 AuditProgMngtRequest로 변환
       const request: AuditProgMngtRequest = {
         ledgerOrdersHod: data.ledgerOrdersHod,
@@ -355,8 +367,8 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         targetItemIds: data.targetItemIds || [], // 호환성 유지
         targetItemData: data.targetItemData || [] // 새로운 방식
       };
-      
-      
+
+
       if (dialogMode === 'create') {
         // 등록 시 auditProgMngtCd는 자동 생성되므로 제외
         await createAuditProgMngt(request);
@@ -365,7 +377,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         request.auditProgMngtCd = data.planCode;
         await updateAuditProgMngt(data.planCode, request);
       }
-      
+
       handleDialogClose();
       handleFetchAuditPrograms();
     } catch (error) {
@@ -382,6 +394,13 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     // 현재 선택된 항목의 책무번호 또는 전달받은 책무번호 사용
     const ledgerOrdersHod = formData?.ledgerOrdersHod || selectedItem?.ledgerOrdersHod || '';
     setCurrentLedgerOrdersHod(ledgerOrdersHod);
+    
+    // 팝업이 열릴 때마다 이전 선택 초기화
+    setSelectedTargetItems([]);
+    
+    // 팝업 강제 리렌더링을 위한 고유 키 생성
+    setTargetSelectionKey(`target-${Date.now()}`);
+    
     setTargetSelectionOpen(true);
   }, [selectedItem]);
 
@@ -424,15 +443,15 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   const handleExcelDownload = async () => {
     try {
       console.log('점검계획관리 현황 엑셀 다운로드 시작');
-      
+
       // 현재 표시된 데이터를 엑셀 형태로 변환
       const excelData = convertToExcelData(auditRows);
-      
+
       console.log('엑셀 다운로드 데이터:', excelData);
-      
+
       // TODO: 실제 엑셀 파일 생성 및 다운로드 로직 구현
       // 예: XLSX 라이브러리 사용하여 파일 생성 후 다운로드
-      
+
     } catch (error) {
       console.error('엑셀 다운로드 오류:', error);
       setErrorMessage('엑셀 다운로드 중 오류가 발생했습니다.');
@@ -451,10 +470,10 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
     try {
       setIsLoading(true);
-      
+
       // API 호출
       await deleteMultipleAuditProgMngt(selectedAuditIds);
-      
+
       setSelectedAuditIds([]);
       handleFetchAuditPrograms();
     } catch (error) {
@@ -498,10 +517,10 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         </SearchConditionPanel>
 
         {/* 버튼 영역 */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          mb: 0.5, 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          mb: 0.5,
           gap: 1,
           alignItems: 'center',
           height: '32px',
@@ -539,7 +558,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
           <DataGrid
             data={auditRows}
             columns={columns}
-            height={600} 
+            height={600}
             loading={isLoading}
             error={null}
             onRowClick={handleAuditRowClick}
@@ -547,6 +566,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
             checkboxSelection={true}
             multiSelect={false}
             rowSelectionModel={selectedAuditIds}
+            disableRowSelectionOnClick={true}
             sx={{
               height: '600px',
               '& .MuiDataGrid-virtualScroller': {
@@ -573,6 +593,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
         {/* 점검 대상 선정 다이얼로그 */}
         <InspectionTargetSelectionDialog
+          key={targetSelectionKey}
           open={targetSelectionOpen}
           onClose={() => setTargetSelectionOpen(false)}
           onSelect={handleTargetSelectionComplete}

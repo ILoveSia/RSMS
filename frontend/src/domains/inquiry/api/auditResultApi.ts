@@ -86,15 +86,10 @@ export const getHodIcItemDetail = async (
   hodIcItemId: number
 ): Promise<HodIcItemDetailResponse> => {
   try {
-    console.log('HOD IC ITEM 상세 정보 조회 요청:', hodIcItemId);
     
     const response = await apiClient.get<HodIcItemDetailResponse>(
       `/inquiry/hod-ic-items/${hodIcItemId}/detail`
     );
-    
-    console.log('HOD IC ITEM 상세 정보 조회 응답:', response);
-    console.log('HOD IC ITEM 응답 타입:', typeof response);
-    console.log('HOD IC ITEM 응답 값:', JSON.stringify(response, null, 2));
     
     // apiClient.get은 이미 데이터를 반환하므로 response.data가 아니라 response 자체를 반환
     return response;
@@ -113,15 +108,13 @@ export const saveAuditResult = async (
   data: AuditResultSaveRequest
 ): Promise<AuditResultSaveResponse> => {
   try {
-    console.log('점검결과 저장 요청:', data);
     
     const response = await apiClient.post<AuditResultSaveResponse>(
       '/inquiry/audit-result/save',
       data
     );
     
-    console.log('점검결과 저장 응답:', response);
-    return response.data;
+    return response;
   } catch (error) {
     console.error('점검결과 저장 오류:', error);
     throw error;

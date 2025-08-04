@@ -72,7 +72,7 @@ const generatePlanCode = (): string => {
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
-  
+
   return `AUDIT-${year}${month}${day}-${hours}${minutes}${seconds}`;
 };
 
@@ -146,7 +146,7 @@ const useFormValidation = (data: AuditProgramData): ValidationResult => {
     if (!data.targetItemIds || data.targetItemIds.length === 0) {
       errors.targetSelection = '점검 대상 항목을 선정해주세요.';
     }
-    console.log("errors",errors);
+    console.log("errors", errors);
     return {
       isValid: Object.keys(errors).length === 0,
       errors,
@@ -179,9 +179,10 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
   const [formData, setFormData] = useState<AuditProgramData>(
     initialData || createDefaultAuditProgramData()
   );
-  
+
   // 점검 대상 선정 팝업 상태
   const [targetSelectionOpen, setTargetSelectionOpen] = useState(false);
+  const [targetSelectionKey, setTargetSelectionKey] = useState<string>('initial');
 
   // 폼 유효성 검증
   const validation = useFormValidation(formData);
@@ -195,6 +196,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
    * 책임: 모드 변경 시 적절한 초기 데이터 설정
    */
   useEffect(() => {
+    console.log("initialdata ", initialData)
     if (mode === 'create') {
       // 새로운 점검계획 코드를 생성하여 설정
       setFormData(createDefaultAuditProgramData());
@@ -212,7 +214,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
       isInitialLoadRef.current = true;
     }
   }, [open]);
-  
+
   /**
    * 선택된 타겟 항목 업데이트
    * 사용자가 입력한 다른 필드들은 보존하면서 점검대상 관련 필드만 업데이트
@@ -270,12 +272,12 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
   ) => {
     setFormData(prev => {
       const newData = { ...prev, [field]: date };
-      
+
       // 시작일 변경 시 종료일이 더 이전이면 종료일을 시작일로 맞춤
       if (field === 'startDate' && date && prev.endDate && date > prev.endDate) {
         newData.endDate = date;
       }
-      
+
       return newData;
     });
   }, []);
@@ -291,7 +293,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
     }
 
     try {
-      console.log("formdata",formData);
+      console.log("formdata", formData);
       await onSave(formData);
     } catch (error) {
       console.error('점검 계획 저장 중 오류 발생:', error);
@@ -309,10 +311,22 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
       onTargetSelection(formData);
     } else {
       // 자체적으로 팝업을 관리하는 경우
+      // 팝업이 열릴 때마다 이전 선택 초기화
+      setFormData(prev => ({
+        ...prev,
+        targetItems: [],
+        targetItemIds: [],
+        targetItemData: [],
+        targetSelection: ''
+      }));
+
+      // 팝업 강제 리렌더링을 위한 고유 키 생성
+      setTargetSelectionKey(`target-${Date.now()}`);
+
       setTargetSelectionOpen(true);
     }
   }, [onTargetSelection, formData]);
-  
+
   /**
    * 점검 대상 선정 완료 핸들러
    */
@@ -341,8 +355,8 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
       onModeChange={onModeChange}
       title={
         mode === 'create' ? '점검 계획 등록' :
-        mode === 'edit' ? '점검 계획 수정' :
-        '점검 계획 상세'
+          mode === 'edit' ? '점검 계획 수정' :
+            '점검 계획 상세'
       }
       loading={loading}
       disableSave={!validation.isValid}
@@ -363,7 +377,7 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
             InputProps={{
               readOnly: true,
             }}
-            sx={{ 
+            sx={{
               flex: 1,
               '& .MuiInputBase-input': {
                 backgroundColor: '#f5f5f5',
@@ -375,9 +389,9 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
 
         {/* 책무번호 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
+          <Typography
+            variant="subtitle2"
+            sx={{
               fontWeight: 600,
               color: 'var(--bank-text-primary)'
             }}
@@ -414,9 +428,9 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
 
         {/* 점검 기간 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
+          <Typography
+            variant="subtitle2"
+            sx={{
               fontWeight: 600,
               color: 'var(--bank-text-primary)',
               '&::after': {
@@ -458,9 +472,9 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
 
         {/* 점검 대상 선정 */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography 
-            variant="subtitle2" 
-            sx={{ 
+          <Typography
+            variant="subtitle2"
+            sx={{
               fontWeight: 600,
               color: 'var(--bank-text-primary)',
               '&::after': {
@@ -512,10 +526,11 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
           />
         </Box>
       </Box>
-      
+
       {/* 점검 대상 선정 다이얼로그 */}
       {!onTargetSelection && (
         <InspectionTargetSelectionDialog
+          key={targetSelectionKey}
           open={targetSelectionOpen}
           onClose={() => setTargetSelectionOpen(false)}
           onSelect={handleTargetSelectionComplete}
