@@ -11,7 +11,8 @@
  */
 
 import apiClient from '@/app/common/api/client';
-
+import { Utils } from '@/app/utils';
+import { getCodeNameSync, getDepartmentName, extractCommonCodes, getEmployeeNameSync } from '@/shared/utils/codeUtils';
 // 페이지네이션 파라미터 타입
 export interface PaginationParams {
   page: number;
@@ -32,7 +33,9 @@ export interface BusinessPlanInspectionDto {
   assignmentId: number;
   inspectionTitle: string;
   inspectionType: 'QUARTERLY' | 'SEMI_ANNUAL' | 'ANNUAL' | 'SPECIAL';
+  inspectionTypeName?: string; // 점검 유형 이름
   status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  statusName?: string; // 상태 이름
 
   // 계획 정보
   planYear: number;
@@ -137,6 +140,29 @@ export interface InspectionSearchParams {
  */
 export class BusinessPlanInspectionApi {
   private static readonly BASE_URL = '/handover/inspections';
+  private static readonly utils = Utils.getInstance();
+
+  // 공통코드 데이터를 가져오는 헬퍼 메서드
+  private static async getCommonCodes() {
+    try {
+      const response: any = await apiClient.get('/common-codes');
+      return extractCommonCodes(response);
+    } catch (error) {
+      console.error('공통코드 조회 실패:', error);
+      return [];
+    }
+  }
+
+  // 부서 데이터를 가져오는 헬퍼 메서드
+  private static async getDepartments() {
+    try {
+      const response = await apiClient.get('/departments');
+      return Array.isArray(response) ? response : response?.data || [];
+    } catch (error) {
+      console.error('부서 조회 실패:', error);
+      return [];
+    }
+  }
 
   /**
    * 사업계획 점검 목록 조회
@@ -172,41 +198,59 @@ export class BusinessPlanInspectionApi {
         );
       }
 
-      // DTO 형태로 변환
-      const convertedData: BusinessPlanInspectionDto[] = inspectionData.map((item: any) => ({
-        inspectionId: item.inspectionId,
-        assignmentId: item.inspectionId,
-        inspectionTitle: item.inspectionTitle,
-        inspectionType: item.inspectionType,
-        status: item.status,
-        planYear: item.inspectionYear,
-        planQuarter: item.inspectionQuarter,
-        targetDept: item.deptCd,
-        targetDeptName: this.getDepartmentName(item.deptCd),
-        inspectionScope: item.inspectionScope,
-        inspectionCriteria: item.inspectionCriteria,
-        inspectionItems: item.inspectionScope || '', // 임시로 scope를 items로 사용
-        plannedStartDate: item.plannedStartDate,
-        plannedEndDate: item.plannedEndDate,
-        actualStartDate: item.actualStartDate,
-        actualEndDate: item.actualEndDate,
-        inspectorEmpNo: item.inspectorEmpNo,
-        inspectorName: this.getEmployeeName(item.inspectorEmpNo),
-        managerEmpNo: item.inspecteeEmpNo,
-        managerName: this.getEmployeeName(item.inspecteeEmpNo),
-        progressRate: this.calculateProgressRate(item.status),
-        currentPhase: this.getCurrentPhase(item.status),
-        phaseDescription: this.getPhaseDescription(item.status),
-        overallScore: this.calculateOverallScore(item.overallGrade),
-        overallGrade: item.overallGrade,
-        totalIssueCount: 0,
-        criticalIssueCount: 0,
-        majorIssueCount: 0,
-        minorIssueCount: 0,
-        attachmentCount: 0,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-      }));
+      // 공통코드 및 부서 데이터 가져오기
+      const [commonCodes, departments] = await Promise.all([
+        this.getCommonCodes(),
+        this.getDepartments()
+      ]);
+      // console.log(commonCodes);
+      console.log(departments);
+      // DTO 형태로 변환 (사원명 비동기 조회 포함)
+      const convertedData: BusinessPlanInspectionDto[] = await Promise.all(
+        inspectionData.map(async (item: any) => {
+          const [inspectorName, managerName] = await Promise.all([
+            getEmployeeNameSync(item.inspectorEmpNo),
+            getEmployeeNameSync(item.inspecteeEmpNo)
+          ]);
+
+          return {
+            inspectionId: item.inspectionId,
+            assignmentId: item.inspectionId,
+            inspectionTitle: item.inspectionTitle,
+            inspectionType: item.inspectionType,
+            inspectionTypeName: getCodeNameSync(commonCodes, 'BUSINESSPLAN_STATUS', item.inspectionType),
+            status: item.status,
+            statusName: getCodeNameSync(commonCodes, 'BUSINESSPLAN_STATUS', item.status),
+            planYear: item.inspectionYear,
+            planQuarter: item.inspectionQuarter,
+            targetDept: item.deptCd,
+            targetDeptName: getDepartmentName(departments, item.deptCd),
+            inspectionScope: item.inspectionScope,
+            inspectionCriteria: item.inspectionCriteria,
+            inspectionItems: item.inspectionScope || '', // 임시로 scope를 items로 사용
+            plannedStartDate: item.plannedStartDate,
+            plannedEndDate: item.plannedEndDate,
+            actualStartDate: item.actualStartDate,
+            actualEndDate: item.actualEndDate,
+            inspectorEmpNo: item.inspectorEmpNo,
+            inspectorName: inspectorName,
+            managerEmpNo: item.inspecteeEmpNo,
+            managerName: managerName,
+            progressRate: 0,
+            currentPhase: '',
+            phaseDescription: '',
+            overallScore: 0,
+            overallGrade: item.overallGrade,
+            totalIssueCount: 0,
+            criticalIssueCount: 0,
+            majorIssueCount: 0,
+            minorIssueCount: 0,
+            attachmentCount: 0,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          };
+        })
+      );
 
       return {
         data: convertedData,
@@ -218,79 +262,7 @@ export class BusinessPlanInspectionApi {
     }
   }
 
-  // Helper methods
-  private static getDepartmentName(deptCd: string): string {
-    if (!deptCd) return '';
 
-    const deptMap: { [key: string]: string } = {
-      'IT001': '정보기술부',
-      'MGMT001': '경영관리부',
-      'RISK001': '리스크관리부',
-    };
-
-    return deptMap[deptCd] || `${deptCd}부서`;
-  }
-
-  private static getEmployeeName(empNo: string): string {
-    if (!empNo) return '';
-
-    const empMap: { [key: string]: string } = {
-      'E001': '김점검',
-      'E002': '이관리',
-      'E003': '박점검',
-      'E004': '최관리',
-      'E005': '정점검',
-      'E006': '한관리',
-    };
-
-    return empMap[empNo] || `${empNo}님`;
-  }
-
-  private static calculateProgressRate(status: string): number {
-    const statusMap: { [key: string]: number } = {
-      'PLANNED': 0,
-      'IN_PROGRESS': 65,
-      'COMPLETED': 100,
-      'CANCELLED': 0,
-    };
-
-    return statusMap[status] || 0;
-  }
-
-  private static getCurrentPhase(status: string): string {
-    const phaseMap: { [key: string]: string } = {
-      'PLANNED': '계획수립',
-      'IN_PROGRESS': '현장점검',
-      'COMPLETED': '완료',
-      'CANCELLED': '취소',
-    };
-
-    return phaseMap[status] || '미정';
-  }
-
-  private static getPhaseDescription(status: string): string {
-    const descMap: { [key: string]: string } = {
-      'PLANNED': '점검 계획 수립 및 점검팀 구성 중',
-      'IN_PROGRESS': '각 부서별 업무 프로세스 점검 진행 중',
-      'COMPLETED': '점검 완료 및 결과 보고서 작성',
-      'CANCELLED': '점검이 취소되었습니다',
-    };
-
-    return descMap[status] || '';
-  }
-
-  private static calculateOverallScore(grade: string): number | undefined {
-    if (!grade) return undefined;
-
-    const gradeMap: { [key: string]: number } = {
-      'A': 95,
-      'B': 85,
-      'C': 75,
-      'D': 65,
-    };
-
-    return gradeMap[grade];
-  }
 
   /**
    * 사업계획 점검 상세 조회

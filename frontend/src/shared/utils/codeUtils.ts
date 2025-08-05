@@ -1,7 +1,7 @@
 /**
  * 공통코드 및 부서 관련 유틸리티 함수
  */
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo, useEffect, useState } from "react";
 import { useReduxState } from "@/app/store/use-store";
 import apiClient from "@/app/common/api/client";
 
@@ -135,6 +135,49 @@ export const getDepartmentName = (
   
   const dept = departments.find(d => d.departmentId === deptCd);
   return dept ? dept.departmentName : deptCd;
+};
+
+/**
+ * 사원번호로 사원명 가져오기 함수 (순수 함수)
+ * @param empNo 사원번호
+ * @returns 사원명 (없으면 사원번호 그대로 반환)
+ */
+export const getEmployeeNameSync = async (empNo: string): Promise<string> => {
+  if (!empNo) return '';
+  
+  try {
+    const response: any = await apiClient.get(`/users/num/${empNo}`);
+    return response?.username || empNo;
+  } catch (error) {
+    console.error('사원 정보 조회 실패:', error);
+    return empNo;
+  }
+};
+
+/**
+ * 사원번호로 사원명 가져오기 함수 (Hook 버전)
+ * React 컴포넌트에서 직접 사용 가능
+ * @param empNo 사원번호
+ * @returns 사원명 (없으면 사원번호 그대로 반환)
+ */
+export const getEmployeeName = (empNo: string): string => {
+  const [empName, setEmpName] = useState<string>(empNo);
+  
+  useEffect(() => {
+    if (empNo) {
+      getEmployeeNameSync(empNo).then(setEmpName);
+    }
+  }, [empNo]);
+  
+  return empName;
+};
+
+/**
+ * 콜백 함수에서 사용할 수 있는 getEmployeeName 함수를 반환하는 Hook
+ * @returns getEmployeeName 함수
+ */
+export const useGetEmployeeName = () => {
+  return useCallback((empNo: string) => getEmployeeNameSync(empNo), []);
 };
 /**
  * 공통코드 배열 추출 함수

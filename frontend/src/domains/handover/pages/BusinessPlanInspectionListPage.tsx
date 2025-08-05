@@ -17,7 +17,6 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
-import { useGetCodeName } from '@/shared/utils/codeUtils';
 import { Assessment as InspectionIcon } from '@mui/icons-material';
 import { Box, Chip, Typography, LinearProgress } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -40,13 +39,12 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedInspectionId, setSelectedInspectionId] = useState<number | undefined>();
+  const [selectedInspectionData, setSelectedInspectionData] = useState<BusinessPlanInspectionDto | undefined>();
 
-  // codeutils 훅
-  const getCodeName = useGetCodeName();
+
 
   // 상태 표시 함수
-  const getStatusChip = (status: string) => {
-    const statusName = getCodeName('BUSINESSPLAN_STATUS', status);
+  const getStatusChip = (status: string, statusName: string) => {
     const statusConfig = {
       PLANNED: { color: 'default' as const },
       IN_PROGRESS: { color: 'warning' as const },
@@ -58,15 +56,15 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
   };
 
   // 점검 유형 표시 함수
-  const getTypeChip = (type: string) => {
-    const statusname=getCodeName('BUSINESSPLAN_STATUS', type);
+  const getTypeChip = (type: string, typeName: string) => {
     const typeConfig = {
-      QUARTERLY: {color: 'primary' as const },
+      QUARTERLY: { color: 'primary' as const },
+      SEMI_ANNUAL: { color: 'secondary' as const },
       ANNUAL: { color: 'info' as const },
       SPECIAL: { color: 'warning' as const },
     };
-    const config = typeConfig[type as keyof typeof typeConfig] || { label: type, color: 'default' as const };
-    return <Chip label={statusname} color={config.color} size="small" variant="outlined" />;
+    const config = typeConfig[type as keyof typeof typeConfig] || { color: 'default' as const };
+    return <Chip label={typeName} color={config.color} size="small" variant="outlined" />;
   };
 
   // 진행률 표시 함수
@@ -92,7 +90,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
       width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => getTypeChip(params.value as string),
+      renderCell: params => getTypeChip(params.value as string, params.row.inspectionTypeName || params.value as string),
     },
     {
       field: 'inspectionTitle',
@@ -132,7 +130,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
       width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => getStatusChip(params.value as string),
+      renderCell: params => getStatusChip(params.value as string, params.row.statusName || params.value as string),
     },
     {
       field: 'progressRate',
@@ -213,6 +211,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
         searchParams,
         { page: 0, size: 100 }
       );
+      console.log(response.data);
       setRows(response.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -230,18 +229,21 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
   const handleCreateClick = useCallback(() => {
     setDialogMode('create');
     setSelectedInspectionId(undefined);
+    setSelectedInspectionData(undefined);
     setDialogOpen(true);
   }, []);
 
   const handleRowDoubleClick = useCallback((row: BusinessPlanInspectionDto) => {
     setDialogMode('view');
     setSelectedInspectionId(row.inspectionId);
+    setSelectedInspectionData(row);
     setDialogOpen(true);
   }, []);
 
   const handleRowClick = useCallback((row: BusinessPlanInspectionDto) => {
     setDialogMode('view');
     setSelectedInspectionId(row.inspectionId);
+    setSelectedInspectionData(row);
     setDialogOpen(true);
   }, []);
 
@@ -276,6 +278,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
     setSelectedInspectionId(undefined);
+    setSelectedInspectionData(undefined);
   }, []);
 
   const handleDialogSuccess = useCallback(async () => {
@@ -379,7 +382,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
             loading={loading}
             height={600}
             selectable={true}
-            multiSelect={true}
+            multiSelect={false}
             selectedRows={selectedIds}
             onRowSelectionChange={selectedRows => {
               setSelectedIds(selectedRows.map(id => Number(id)));
@@ -408,6 +411,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
         onClose={handleDialogClose}
         mode={dialogMode}
         inspectionId={selectedInspectionId}
+        inspectionData={selectedInspectionData}
         onSuccess={handleDialogSuccess}
       />
     </PageContainer>

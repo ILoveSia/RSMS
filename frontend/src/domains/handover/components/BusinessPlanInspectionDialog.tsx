@@ -45,6 +45,7 @@ interface BusinessPlanInspectionDialogProps {
   onClose: () => void;
   mode: 'create' | 'edit' | 'view';
   inspectionId?: number;
+  inspectionData?: BusinessPlanInspectionDto;
   onSuccess?: () => void;
 }
 
@@ -103,6 +104,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
   onClose,
   mode: initialMode,
   inspectionId,
+  inspectionData,
   onSuccess,
 }) => {
   const [mode, setMode] = useState<'create' | 'edit' | 'view'>(initialMode);
@@ -174,11 +176,12 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
 
       // 연도 처리
       if (groupCode === 'YEAR') {
-        return [
-          { value: '2024', label: '2024년' },
-          { value: '2023', label: '2023년' },
-          { value: '2022', label: '2022년' },
-        ];
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let year = currentYear + 1; year >= currentYear - 5; year--) {
+          years.push({ value: year.toString(), label: `${year}년` });
+        }
+        return years;
       }
 
       // 분기 처리
@@ -237,104 +240,41 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
 
   // 데이터 로드 함수
   const loadInspectionData = useCallback(async () => {
+    // inspectionData가 있으면 API 호출 없이 바로 사용
+    if (inspectionData) {
+      console.log('inspectionData:', inspectionData);
+      setFormData({
+        assignmentId: inspectionData.assignmentId || inspectionData.inspectionId || '',
+        inspectionTitle: inspectionData.inspectionTitle || '',
+        inspectionType: inspectionData.inspectionType || 'QUARTERLY',
+        planYear: inspectionData.planYear ?? new Date().getFullYear(),
+        planQuarter: inspectionData.planQuarter ?? undefined,
+        targetDept: inspectionData.targetDept || '',
+        targetDeptName: inspectionData.targetDeptName || '',
+        inspectionScope: inspectionData.inspectionScope || '',
+        inspectionCriteria: inspectionData.inspectionCriteria || '',
+        inspectionItems: inspectionData.inspectionItems || '',
+        plannedStartDate: inspectionData.plannedStartDate || '',
+        plannedEndDate: inspectionData.plannedEndDate || '',
+        actualStartDate: inspectionData.actualStartDate || '',
+        actualEndDate: inspectionData.actualEndDate || '',
+        inspectorEmpNo: inspectionData.inspectorEmpNo || '',
+        inspectorName: inspectionData.inspectorName || '',
+        managerEmpNo: inspectionData.managerEmpNo || '',
+        managerName: inspectionData.managerName || '',
+        status: inspectionData.status || 'PLANNED',
+        progressRate: inspectionData.progressRate ?? 0,
+        currentPhase: inspectionData.currentPhase || '계획수립',
+        phaseDescription: inspectionData.phaseDescription || '',
+      });
+      return;
+    }
+
     if (!inspectionId) return;
 
     setLoading(true);
     setError(null);
-    try {
-      // TODO: 실제 API 호출로 대체
-      // const data = await businessPlanInspectionApi.getInspection(inspectionId);
-      
-      // Mock 데이터
-      const mockData: BusinessPlanInspectionDto = {
-        inspectionId,
-        assignmentId: 1,
-        inspectionTitle: '2024년 1분기 IT부서 사업계획 점검',
-        inspectionType: 'QUARTERLY',
-        status: 'IN_PROGRESS',
-        planYear: 2024,
-        planQuarter: 1,
-        targetDept: 'IT001',
-        targetDeptName: '정보기술부',
-        inspectionScope: `분기별 사업계획 이행 현황 점검
-
-주요 점검 영역:
-- 분기별 목표 대비 성과 달성도
-- 예산 집행 현황 및 효율성
-- 주요 업무 프로세스 운영 상태
-- 내부통제 시스템 운영 현황
-- 리스크 관리 체계 운영`,
-        inspectionCriteria: `점검 기준:
-
-1. 계획 대비 성과 달성률 (35%)
-   - 분기별 KPI 달성 현황
-   - 주요 프로젝트 진행률
-
-2. 예산 집행의 적정성 (30%)
-   - 예산 대비 집행률
-   - 집행 절차의 적정성
-
-3. 업무 프로세스 효율성 (25%)
-   - 표준 프로세스 준수도
-   - 업무 처리 시간 단축
-
-4. 내부통제 운영 (10%)
-   - 내부통제 절차 준수
-   - 위험 관리 활동`,
-        inspectionItems: '성과관리, 예산관리, 프로세스관리, 내부통제관리',
-        plannedStartDate: '2024-01-15',
-        plannedEndDate: '2024-01-31',
-        actualStartDate: '2024-01-15',
-        inspectorEmpNo: 'E001',
-        inspectorName: '김점검',
-        managerEmpNo: 'E002',
-        managerName: '이관리',
-        progressRate: 65,
-        currentPhase: '현장점검',
-        phaseDescription: '각 부서별 업무 프로세스 점검 진행 중',
-        overallScore: 85,
-        overallGrade: 'B+',
-        totalIssueCount: 5,
-        criticalIssueCount: 0,
-        majorIssueCount: 2,
-        minorIssueCount: 3,
-        attachmentCount: 8,
-        createdAt: '2024-01-10',
-        updatedAt: '2024-01-20',
-      };
-
-      setFormData({
-        assignmentId: mockData.assignmentId || '',
-        inspectionTitle: mockData.inspectionTitle,
-        inspectionType: mockData.inspectionType,
-        planYear: mockData.planYear,
-        planQuarter: mockData.planQuarter,
-        targetDept: mockData.targetDept || '',
-        targetDeptName: mockData.targetDeptName || '',
-        inspectionScope: mockData.inspectionScope,
-        inspectionCriteria: mockData.inspectionCriteria,
-        inspectionItems: mockData.inspectionItems,
-        plannedStartDate: mockData.plannedStartDate || '',
-        plannedEndDate: mockData.plannedEndDate || '',
-        actualStartDate: mockData.actualStartDate || '',
-        actualEndDate: mockData.actualEndDate || '',
-        inspectorEmpNo: mockData.inspectorEmpNo || '',
-        inspectorName: mockData.inspectorName || '',
-        managerEmpNo: mockData.managerEmpNo || '',
-        managerName: mockData.managerName || '',
-        status: mockData.status,
-        progressRate: mockData.progressRate,
-        currentPhase: mockData.currentPhase || '계획수립',
-        phaseDescription: mockData.phaseDescription || '',
-      });
-
-    } catch (err) {
-      console.error('Failed to load inspection data:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [inspectionId]);
+  }, [inspectionId, inspectionData]);
 
   // initialMode이 변경될 때 내부 mode 상태 업데이트
   useEffect(() => {
@@ -343,7 +283,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
 
   // 데이터 로드
   useEffect(() => {
-    if (open && inspectionId && (isEditMode || isViewMode)) {
+    if (open && (inspectionData || inspectionId) && (isEditMode || isViewMode)) {
       loadInspectionData();
     } else if (open && isCreateMode) {
       setFormData(initialFormData);
@@ -352,6 +292,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
   }, [
     open,
     inspectionId,
+    inspectionData,
     mode,
     isEditMode,
     isViewMode,
@@ -490,7 +431,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
         mode={mode}
         title={mode === 'create' ? '사업계획 점검 등록' : mode === 'edit' ? '사업계획 점검 수정' : '사업계획 점검 조회'}
       >
-        <DialogContent sx={{ 
+        <DialogContent sx={{
           p: 3,
           // view 모드에서 텍스트 스타일 진하게 통일
           ...(isViewMode && {
@@ -577,7 +518,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                   {/* 인수인계 지정 */}
                   <Grid item xs={12} sm={6}>
                     <Select
-                      value={formData.assignmentId}
+                      value={formData.assignmentId ? formData.assignmentId.toString() : ''}
                       label='인수인계 지정 *'
                       options={[
                         { value: '', label: '선택하세요' },
@@ -605,18 +546,19 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                   {/* 점검 제목 */}
                   <Grid item xs={12}>
                     <TextField
+                      mode={mode === 'view' ? 'readonly' : 'editable'}
+
                       fullWidth
                       label='점검 제목 *'
                       value={formData.inspectionTitle}
                       onChange={e => handleInputChange('inspectionTitle', e.target.value)}
-                      disabled={isViewMode}
                     />
                   </Grid>
 
                   {/* 점검 연도 */}
                   <Grid item xs={12} sm={4}>
                     <Select
-                      value={formData.planYear}
+                      value={formData.planYear ? formData.planYear.toString() : ''}
                       label='점검 연도 *'
                       options={[
                         { value: '', label: '선택하세요' },
@@ -631,7 +573,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                   {formData.inspectionType === 'QUARTERLY' && (
                     <Grid item xs={12} sm={4}>
                       <Select
-                        value={formData.planQuarter || ''}
+                        value={formData.planQuarter ? formData.planQuarter.toString() : ''}
                         label='분기'
                         options={[
                           { value: '', label: '선택하세요' },
@@ -648,6 +590,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <TextField
                         fullWidth
+                        mode='readonly'
                         label='대상부서 *'
                         value={formData.targetDeptName}
                         disabled
@@ -671,6 +614,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
+                      mode={mode === 'view' ? 'readonly' : 'editable'}
                       label='계획 시작일'
                       type='date'
                       value={formData.plannedStartDate}
@@ -686,6 +630,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                   <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
+                      mode={mode === 'view' ? 'readonly' : 'editable'}
                       label='계획 종료일'
                       type='date'
                       value={formData.plannedEndDate}
@@ -711,7 +656,6 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                         disabled={isViewMode}
                         sx={{ flex: 1 }}
                       />
-                      {isViewMode && getStatusChip(formData.status)}
                     </Box>
                   </Grid>
                 </Grid>
