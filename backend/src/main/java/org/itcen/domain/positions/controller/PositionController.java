@@ -102,7 +102,7 @@ public class PositionController {
 
     @GetMapping(value = "/search")
     public ResponseEntity<ApiResponse<List<PositionDto>>> searchPositions(
-            @RequestParam(required = false) String ledgerOrder,
+            @RequestParam(required = false) Long ledgerOrder,
             @RequestParam(required = false) String positionsNm,
             @RequestParam(required = false) String writeDeptCd,
             @RequestParam(required = false) String confirmGubunCd) {        

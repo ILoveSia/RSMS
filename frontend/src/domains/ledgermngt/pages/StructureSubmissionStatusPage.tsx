@@ -88,7 +88,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       </div>
       {row.positionsNm && (
         <div style={{ fontSize: '0.75rem', color: '#666' }}>
-          원장차수: {row.ledgerOrder || '-'}
+          원장차수: {row.ledgerOrders || '-'}
         </div>
       )}
     </div>
@@ -138,7 +138,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   const handleFetchSubmissionHistory = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await fetchSubmissionHistory(startDate, endDate, ledgerOrder || undefined);
+      const data = await fetchSubmissionHistory(startDate, endDate, ledgerOrder ? Number(ledgerOrder) : undefined);
       setHistoryRows(data);
     } catch (error) {
       showError('제출 이력 조회 중 오류가 발생했습니다.');
@@ -362,7 +362,7 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               remarks: selectedItem.remarks ? { value: selectedItem.remarks, label: selectedItem.remarks } : null,
               positionsId: selectedItem.positionsId,
               positionsNm: selectedItem.positionsNm,
-              ledgerOrder: selectedItem.ledgerOrder
+              ledgerOrders: selectedItem.ledgerOrders
             } : undefined}
             onModeChange={handleModeChange}
           />

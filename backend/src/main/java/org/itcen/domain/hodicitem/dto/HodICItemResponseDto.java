@@ -58,7 +58,12 @@ public class HodICItemResponseDto {
     /**
      * 책무번호(원장차수)
      */
-    private String ledgerOrder;
+    private Long ledgerOrders;
+
+    /**
+     * 부서장 책무번호(원장차수)
+     */
+    private Long ledgerOrdersHod;
 
     /**
      * 책무상태코드
@@ -179,7 +184,8 @@ public class HodICItemResponseDto {
                     entity.getResponsibilityDetail().getResponsibilityDetailContent() : null)
                 .responsibilityRelEvid(entity.getResponsibilityDetail() != null ?
                     entity.getResponsibilityDetail().getResponsibilityRelEvid() : null)
-                .ledgerOrder(entity.getLedgerOrder())
+                .ledgerOrders(entity.getLedgerOrders())
+                .ledgerOrdersHod(entity.getLedgerOrdersHod())
                 .orderStatus(entity.getOrderStatus())
                 .approvalId(entity.getApprovalId())
                 .dateExpired(entity.getDateExpired())

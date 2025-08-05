@@ -31,7 +31,7 @@ public class HodIcItemController {
      */
     @GetMapping
     public ResponseEntity<List<HodIcItemDto>> getItemsByLedgerOrdersHod(
-            @RequestParam String ledgerOrdersHod) {
+            @RequestParam Long ledgerOrdersHod) {
         log.info("내부통제 항목 조회 요청 - 책무번호: {}", ledgerOrdersHod);
         
         List<HodIcItemDto> items = hodIcItemService.getItemsByLedgerOrdersHod(ledgerOrdersHod);

@@ -1,4 +1,4 @@
--- DROP TABLE public.execofficer
+-- DROP TABLE public.execofficer CASCADE
 -- 임원현황 테이블
 
 CREATE TABLE public.execofficer (
@@ -10,7 +10,7 @@ CREATE TABLE public.execofficer (
     dual_details            VARCHAR(1000)           NULL,                   -- 겸직사항
     positions_id            int8                    NOT NULL,               -- 직책ID
     approval_id             int8                    NULL,                   -- 결재ID
-    ledger_order            varchar(100) NULL,                              -- 원장차수
+    ledger_order            int8                    NULL,                   -- 원장차수
     date_expired            date DEFAULT '9999-12-31'::date NULL,           -- 만료일
     created_id              VARCHAR(100)            NULL,
     updated_id              VARCHAR(100)            NULL,

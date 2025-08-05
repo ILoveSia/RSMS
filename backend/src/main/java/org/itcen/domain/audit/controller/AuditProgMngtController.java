@@ -206,7 +206,7 @@ public class AuditProgMngtController {
      */
     @GetMapping("/item-status")
     public ResponseEntity<List<AuditItemStatusResponseDto>> getAuditItemStatus(
-            @RequestParam(required = false) String ledgerOrdersHod,
+            @RequestParam(required = false) Long ledgerOrdersHod,
             @RequestParam(required = false) String auditResultStatusCd) {
         log.info("점검 현황(항목별) 조회 요청 - ledgerOrdersHod: {}, auditResultStatusCd: {}", 
                 ledgerOrdersHod, auditResultStatusCd);

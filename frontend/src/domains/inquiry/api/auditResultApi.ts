@@ -12,7 +12,7 @@ export interface HodIcItemDetailResponse {
   responsibilityContent: string;        // 책무 내용
   responsibilityDetailId: number;       // 책무상세 ID
   responsibilityDetailContent: string;  // 책무상세 내용
-  ledgerOrder: string;                 // 원장순서
+  ledgerOrders: number;                 // 원장순서
   orderStatus?: string;                // 순서상태 (선택적)
   approvalId?: number;                 // 승인 ID (선택적)
   dateExpired: string;                 // 만료일자 (YYYY-MM-DD)

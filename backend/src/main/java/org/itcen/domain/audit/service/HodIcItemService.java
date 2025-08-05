@@ -18,7 +18,7 @@ public interface HodIcItemService {
      * @param ledgerOrdersHod 책무번호
      * @return 내부통제 항목 DTO 목록
      */
-    List<HodIcItemDto> getItemsByLedgerOrdersHod(String ledgerOrdersHod);
+    List<HodIcItemDto> getItemsByLedgerOrdersHod(Long ledgerOrdersHod);
 
     /**
      * ID로 HOD IC ITEM 상세 정보 조회

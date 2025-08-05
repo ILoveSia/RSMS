@@ -36,8 +36,11 @@ public class HodIcItem extends BaseTimeEntity {
     @Column(name = "responsibility_detail_id")
     private Long responsibilityDetailId;
 
-    @Column(name = "ledger_order", length = 100)
-    private String ledgerOrder;
+    @Column(name = "ledger_orders")
+    private Long ledgerOrders;
+
+    @Column(name = "ledger_orders_hod")
+    private Long ledgerOrdersHod;
 
     @Column(name = "order_status", length = 20)
     private String orderStatus;

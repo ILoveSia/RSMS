@@ -34,8 +34,8 @@ public class RoleRespStatus extends BaseTimeEntity {
     @Column(name = "role_start_dt", length = 8)
     private String roleStartDt;
 
-    @Column(name = "ledger_order", length = 100)
-    private String ledgerOrder;
+    @Column(name = "ledger_order")
+    private Long ledgerOrder;
 
     @Column(name = "approval_id")
     private Long approvalId;

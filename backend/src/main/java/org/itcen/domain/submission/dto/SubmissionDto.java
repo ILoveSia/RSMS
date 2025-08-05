@@ -19,7 +19,7 @@ public class SubmissionDto {
     
     // positions 테이블과 조인된 정보
     private String positionsNm;  // positions 테이블의 직책명
-    private String ledgerOrder;
+    private Long ledgerOrder;
     private String confirmGubunCd;
     private String writeDeptCd;
     

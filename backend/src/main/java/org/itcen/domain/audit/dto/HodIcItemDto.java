@@ -25,7 +25,8 @@ public class HodIcItemDto {
     private String responsibilityContent; // 책무 내용
     private Long responsibilityDetailId; // 책무상세 ID
     private String responsibilityDetailContent; // 책무상세 내용
-    private String ledgerOrder;      // 원장순서
+    private Long ledgerOrders;      // 원장순서
+    private Long ledgerOrdersHod;   // 부서장 원장순서
     private String orderStatus;      // 순서상태
     private Long approvalId;         // 승인 ID
     private LocalDate dateExpired;   // 만료일자
@@ -57,7 +58,8 @@ public class HodIcItemDto {
                 .responsibilityDetailId(entity.getResponsibilityDetailId())
                 .responsibilityDetailContent(entity.getResponsibilityDetail() != null ? 
                     entity.getResponsibilityDetail().getResponsibilityDetailContent() : "")
-                .ledgerOrder(entity.getLedgerOrder())
+                .ledgerOrders(entity.getLedgerOrders())
+                .ledgerOrdersHod(entity.getLedgerOrdersHod())
                 .orderStatus(entity.getOrderStatus())
                 .approvalId(entity.getApprovalId())
                 .dateExpired(entity.getDateExpired())

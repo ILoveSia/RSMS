@@ -38,7 +38,7 @@ export interface ExecOfficer {
   dual_details:string;
   positions_id:number;
   approval_id:number;
-  ledger_order:string;
+  ledger_orders:number;
   order_status:string;
   created_id:string;
   updated_id:string;
@@ -88,14 +88,14 @@ export interface PositionResponsibility {
   classification: '핵심' | '중요' | '일반';
   positionId: string;
   positionName: string;
-  ledgerOrder: string;
+  ledgerOrders: number;
   responsibilityOverview: string;
   responsibilityStartDate: string;
   lastModifiedDate: string;
 }
 
 export interface PositionResponsibilitySearchRequest {
-  ledgerOrder?: string;
+  ledgerOrders?: number;
   positionName?: string;
   searchTerm?: string;
   page?: number;

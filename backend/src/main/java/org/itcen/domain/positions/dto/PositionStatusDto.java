@@ -18,4 +18,6 @@ public class PositionStatusDto {
     private String writeDeptNm;
     private String ownerDeptNms;
     private Long adminCount;
+    private String ledgerOrdersTitle; // 책무번호 제목
+    private String ledgerOrdersStatusCd; // 진행상태 코드
 } 

@@ -9,4 +9,6 @@ public interface PositionStatusProjection {
     String getWriteDeptNm();
     String getOwnerDeptNms();
     Long getAdminCount();
+    String getLedgerOrdersTitle(); // 책무번호 제목
+    String getLedgerOrdersStatusCd(); // 진행상태 코드
 } 

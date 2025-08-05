@@ -334,16 +334,15 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
      * role_resp_status는 left outer 조인
      */
     @Override
-    public List<AuditItemStatusResponseDto> getAuditItemStatus(String ledgerOrdersHod, String auditResultStatusCd) {
+    public List<AuditItemStatusResponseDto> getAuditItemStatus(Long ledgerOrdersHod, String auditResultStatusCd) {
         log.debug("점검 현황(항목별) 조회 - ledgerOrdersHod: {}, auditResultStatusCd: {}", 
                 ledgerOrdersHod, auditResultStatusCd);
 
         // 빈 문자열을 null로 변환 (Optional 조건 처리를 위해)
-        String finalLedgerOrdersHod = (ledgerOrdersHod != null && ledgerOrdersHod.trim().isEmpty()) ? null : ledgerOrdersHod;
         String finalAuditResultStatusCd = (auditResultStatusCd != null && auditResultStatusCd.trim().isEmpty()) ? null : auditResultStatusCd;
 
         List<AuditItemStatusResponseDto> result = auditProgMngtRepository.findAuditItemStatus(
-                finalLedgerOrdersHod, 
+                ledgerOrdersHod, 
                 finalAuditResultStatusCd
         );
 

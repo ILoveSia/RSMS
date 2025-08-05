@@ -76,5 +76,5 @@ public interface AuditProgMngtService {
      * @param auditResultStatusCd 점검결과 (조회조건)
      * @return 점검 현황(항목별) 목록
      */
-    List<AuditItemStatusResponseDto> getAuditItemStatus(String ledgerOrdersHod, String auditResultStatusCd);
+    List<AuditItemStatusResponseDto> getAuditItemStatus(Long ledgerOrdersHod, String auditResultStatusCd);
 }

@@ -57,8 +57,14 @@ public class HodICItem extends BaseTimeEntity {
     /**
      * 책무번호(원장차수)
      */
-    @Column(name = "ledger_order", length = 100)
-    private String ledgerOrder;
+    @Column(name = "ledger_orders")
+    private Long ledgerOrders;
+
+    /**
+     * 부서장책무번호(원장차수)
+     */
+    @Column(name = "ledger_orders_hod")
+    private Long ledgerOrdersHod;
 
     /**
      * 책무상태코드

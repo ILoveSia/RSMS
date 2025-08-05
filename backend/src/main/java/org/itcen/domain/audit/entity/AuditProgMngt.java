@@ -33,8 +33,8 @@ public class AuditProgMngt extends BaseTimeEntity {
     @Column(name = "audit_prog_mngt_cd", length = 100, nullable = false)
     private String auditProgMngtCd;
 
-    @Column(name = "ledger_orders_hod", length = 100, nullable = false)
-    private String ledgerOrdersHod;
+    @Column(name = "ledger_orders_hod", nullable = false)
+    private Long ledgerOrdersHod;
 
     @Column(name = "audit_title", length = 300, nullable = false)
     private String auditTitle;

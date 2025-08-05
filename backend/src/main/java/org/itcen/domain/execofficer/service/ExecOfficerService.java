@@ -51,7 +51,7 @@ public class ExecOfficerService {
                 dto.setDualYn((String) row[5]);
                 dto.setDualDetails((String) row[6]);
                 dto.setApprovalId(row[7] != null ? ((Number) row[7]).longValue() : null);
-                dto.setLedgerOrder((String) row[8]);
+                dto.setLedgerOrder(row[8] != null ? ((Number) row[8]).longValue() : null);
                 dto.setOrderStatus((String) row[9]);
                 dto.setEmpName((String) row[10]);
                 dto.setCreatedId((String) row[11]);
