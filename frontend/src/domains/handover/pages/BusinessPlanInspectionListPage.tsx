@@ -17,6 +17,7 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
 import { Assessment as InspectionIcon } from '@mui/icons-material';
 import { Box, Chip, Typography, LinearProgress } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -40,28 +41,32 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedInspectionId, setSelectedInspectionId] = useState<number | undefined>();
 
+  // codeutils 훅
+  const getCodeName = useGetCodeName();
+
   // 상태 표시 함수
   const getStatusChip = (status: string) => {
+    const statusName = getCodeName('BUSINESSPLAN_STATUS', status);
     const statusConfig = {
-      PLANNED: { label: '계획됨', color: 'default' as const },
-      IN_PROGRESS: { label: '진행중', color: 'warning' as const },
-      COMPLETED: { label: '완료', color: 'success' as const },
-      CANCELLED: { label: '취소', color: 'error' as const },
+      PLANNED: { color: 'default' as const },
+      IN_PROGRESS: { color: 'warning' as const },
+      COMPLETED: { color: 'success' as const },
+      CANCELLED: { color: 'error' as const },
     };
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, color: 'default' as const };
-    return <Chip label={config.label} color={config.color} size="small" />;
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: 'default' as const };
+    return <Chip label={statusName} color={config.color} size="small" />;
   };
 
   // 점검 유형 표시 함수
   const getTypeChip = (type: string) => {
+    const statusname=getCodeName('BUSINESSPLAN_STATUS', type);
     const typeConfig = {
-      QUARTERLY: { label: '분기별', color: 'primary' as const },
-      SEMI_ANNUAL: { label: '반기별', color: 'secondary' as const },
-      ANNUAL: { label: '연간', color: 'info' as const },
-      SPECIAL: { label: '특별점검', color: 'warning' as const },
+      QUARTERLY: {color: 'primary' as const },
+      ANNUAL: { color: 'info' as const },
+      SPECIAL: { color: 'warning' as const },
     };
     const config = typeConfig[type as keyof typeof typeConfig] || { label: type, color: 'default' as const };
-    return <Chip label={config.label} color={config.color} size="small" variant="outlined" />;
+    return <Chip label={statusname} color={config.color} size="small" variant="outlined" />;
   };
 
   // 진행률 표시 함수
@@ -208,7 +213,6 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
         searchParams,
         { page: 0, size: 100 }
       );
-      console.log(response)
       setRows(response.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -324,7 +328,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>상태</span>
           <CommonCodeSelect
-            groupCode="INSPECTION_STATUS"
+            groupCode="BUSINESSPLAN_STATUS"
             value={selectedStatus}
             onChange={setSelectedStatus}
             size='small'
