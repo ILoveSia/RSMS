@@ -261,6 +261,38 @@ export class HandoverApi {
   }
 
   /**
+   * 인수인계 지정 검색 (프론트엔드 호환)
+   */
+  static async searchAssignments(
+    searchParams: { status?: string; handoverType?: string },
+    paginationParams: PaginationParams
+  ): Promise<{ data: HandoverAssignmentDto[] }> {
+    const params = new URLSearchParams();
+    params.append('page', paginationParams.page.toString());
+    params.append('size', paginationParams.size.toString());
+    
+    if (searchParams.status) {
+      params.append('status', searchParams.status);
+    }
+    if (searchParams.handoverType) {
+      params.append('handoverType', searchParams.handoverType);
+    }
+
+    const response = await apiClient.get<PageResponse<HandoverAssignmentDto>>(
+      `${this.BASE_PATH}/list?${params.toString()}`
+    );
+    
+    return { data: response.content || [] };
+  }
+
+  /**
+   * 인수인계 지정 삭제 (프론트엔드 호환)
+   */
+  static async deleteAssignment(assignmentId: number): Promise<void> {
+    return this.deleteHandoverAssignment(assignmentId);
+  }
+
+  /**
    * 인수인계 통계
    */
   static async getHandoverStatistics(): Promise<HandoverStatistics> {

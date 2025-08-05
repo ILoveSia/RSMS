@@ -39,11 +39,12 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | undefined>();
+  const [selectedAssignmentData, setSelectedAssignmentData] = useState<HandoverAssignmentDto | undefined>();
 
   // 상태 표시 함수
   const getStatusChip = (status: string) => {
     const statusConfig = {
-      PENDING: { label: '대기', color: 'default' as const },
+      PLANNED: { label: '계획됨', color: 'default' as const },
       IN_PROGRESS: { label: '진행중', color: 'warning' as const },
       COMPLETED: { label: '완료', color: 'success' as const },
       CANCELLED: { label: '취소', color: 'error' as const },
@@ -54,47 +55,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
 
   // 컬럼 정의
   const columns: DataGridColumn<HandoverAssignmentDto>[] = [
-    {
-      field: 'assignmentTitle',
-      headerName: '인수인계 제목',
-      width: 300,
-      align: 'left',
-      headerAlign: 'center',
-      renderCell: params => {
-        return (
-          <Box
-            component="span"
-            sx={{
-              color: 'var(--bank-primary)',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              '&:hover': {
-                color: 'var(--bank-primary-dark)',
-              },
-            }}
-            onClick={() => handleRowClick(params.row)}
-          >
-            {params.value}
-          </Box>
-        );
-      },
-    },
-    {
-      field: 'assignmentType',
-      headerName: '유형',
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        const typeMap = {
-          POSITION_CHANGE: '직위변경',
-          DEPARTMENT_CHANGE: '부서이동',
-          RETIREMENT: '퇴직',
-          NEW_ASSIGNMENT: '신규배치',
-        };
-        return typeMap[params.value as keyof typeof typeMap] || params.value;
-      },
-    },
     {
       field: 'assignorName',
       headerName: '인계자',
@@ -108,6 +68,20 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
       width: 120,
       align: 'center',
       headerAlign: 'center',
+    },
+    {
+      field: 'assignmentType',
+      headerName: '유형',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        const typeMap = {
+          POSITION: '직책',
+          RESPONSIBILITY: '책무',
+        };
+        return typeMap[params.value as keyof typeof typeMap] || params.value;
+      },
     },
     {
       field: 'deptName',
@@ -166,89 +140,23 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
     setError(null);
 
     try {
-      // TODO: 실제 API 호출로 대체
-      // const data = await handoverApi.searchAssignments(searchParams, { page: 0, size: 100 });
-      
-      // Mock 데이터
-      const mockData: HandoverAssignmentDto[] = [
-        {
-          assignmentId: 1,
-          assignmentTitle: '정보기술부 부서장 인수인계',
-          assignmentType: 'POSITION_CHANGE',
-          assignorEmpNo: 'E001',
-          assignorName: '김인계',
-          assigneeEmpNo: 'E002',
-          assigneeName: '이인수',
-          deptCd: 'IT001',
-          deptName: '정보기술부',
-          positionCd: 'POS001',
-          positionName: '부서장',
-          status: 'IN_PROGRESS',
-          targetDate: '2024-02-01',
-          description: 'IT부서장 직위 변경에 따른 인수인계',
-          assignorApprovalStatus: 'APPROVED',
-          assigneeApprovalStatus: 'PENDING',
-          managerApprovalStatus: 'PENDING',
-          createdAt: '2024-01-15',
-          updatedAt: '2024-01-20',
-        },
-        {
-          assignmentId: 2,
-          assignmentTitle: '경영관리부 팀장 인수인계',
-          assignmentType: 'DEPARTMENT_CHANGE',
-          assignorEmpNo: 'E003',
-          assignorName: '박인계',
-          assigneeEmpNo: 'E004',
-          assigneeName: '최인수',
-          deptCd: 'MGMT001',
-          deptName: '경영관리부',
-          positionCd: 'POS002',
-          positionName: '팀장',
-          status: 'COMPLETED',
-          targetDate: '2024-01-31',
-          description: '부서 이동에 따른 인수인계',
-          assignorApprovalStatus: 'APPROVED',
-          assigneeApprovalStatus: 'APPROVED',
-          managerApprovalStatus: 'APPROVED',
-          createdAt: '2024-01-10',
-          updatedAt: '2024-01-31',
-        },
-        {
-          assignmentId: 3,
-          assignmentTitle: '리스크관리부 선임 퇴직 인수인계',
-          assignmentType: 'RETIREMENT',
-          assignorEmpNo: 'E005',
-          assignorName: '정인계',
-          assigneeEmpNo: 'E006',
-          assigneeName: '한인수',
-          deptCd: 'RISK001',
-          deptName: '리스크관리부',
-          positionCd: 'POS003',
-          positionName: '선임',
-          status: 'PENDING',
-          targetDate: '2024-02-15',
-          description: '퇴직에 따른 업무 인수인계',
-          assignorApprovalStatus: 'PENDING',
-          assigneeApprovalStatus: 'PENDING',
-          managerApprovalStatus: 'PENDING',
-          createdAt: '2024-01-20',
-          updatedAt: '2024-01-22',
-        },
-      ];
+      // 실제 API 호출
+      const searchParams = {
+        status: selectedStatus === 'ALL' ? undefined : selectedStatus,
+        handoverType: selectedAssignmentType === 'ALL' ? undefined : selectedAssignmentType
+      };
 
-      // 필터링 적용
-      let filteredData = mockData;
-      if (selectedStatus !== 'ALL') {
-        filteredData = filteredData.filter(item => item.status === selectedStatus);
-      }
-      if (selectedAssignmentType !== 'ALL') {
-        filteredData = filteredData.filter(item => item.assignmentType === selectedAssignmentType);
-      }
+      const response = await handoverApi.searchAssignments(
+        searchParams,
+        { page: 0, size: 100 }
+      );
 
-      setRows(filteredData);
+      console.log('HandoverAssignment API Response:', response.data);
+      setRows(response.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      setRows([]);
     } finally {
       setLoading(false);
     }
@@ -261,18 +169,21 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
   const handleCreateClick = useCallback(() => {
     setDialogMode('create');
     setSelectedAssignmentId(undefined);
+    setSelectedAssignmentData(undefined);
     setDialogOpen(true);
   }, []);
 
   const handleRowDoubleClick = useCallback((row: HandoverAssignmentDto) => {
     setDialogMode('view');
     setSelectedAssignmentId(row.assignmentId);
+    setSelectedAssignmentData(row);
     setDialogOpen(true);
   }, []);
 
   const handleRowClick = useCallback((row: HandoverAssignmentDto) => {
     setDialogMode('view');
     setSelectedAssignmentId(row.assignmentId);
+    setSelectedAssignmentData(row);
     setDialogOpen(true);
   }, []);
 
@@ -307,6 +218,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
     setSelectedAssignmentId(undefined);
+    setSelectedAssignmentData(undefined);
   }, []);
 
   const handleDialogSuccess = useCallback(async () => {
@@ -358,7 +270,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             sx={{ minWidth: 120, maxWidth: 180 }}
             options={[
               { value: 'ALL', label: '전체' },
-              { value: 'PENDING', label: '대기' },
+              { value: 'PLANNED', label: '계획됨' },
               { value: 'IN_PROGRESS', label: '진행중' },
               { value: 'COMPLETED', label: '완료' },
               { value: 'CANCELLED', label: '취소' },
@@ -373,10 +285,8 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             sx={{ minWidth: 150, maxWidth: 200 }}
             options={[
               { value: 'ALL', label: '전체' },
-              { value: 'POSITION_CHANGE', label: '직위변경' },
-              { value: 'DEPARTMENT_CHANGE', label: '부서이동' },
-              { value: 'RETIREMENT', label: '퇴직' },
-              { value: 'NEW_ASSIGNMENT', label: '신규배치' },
+              { value: 'POSITION', label: '직책' },
+              { value: 'RESPONSIBILITY', label: '책무' },
             ]}
           />
           <SearchButton
@@ -386,10 +296,10 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
           />
         </Box>
 
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          mb: 0.5, 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          mb: 0.5,
           gap: 1,
           alignItems: 'center',
           height: '32px',
@@ -423,7 +333,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             data={rows}
             columns={columns}
             loading={loading}
-            height={600} 
+            height={600}
             selectable={true}
             multiSelect={true}
             selectedRows={selectedIds}
@@ -454,6 +364,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
         onClose={handleDialogClose}
         mode={dialogMode}
         assignmentId={selectedAssignmentId}
+        assignmentData={selectedAssignmentData}
         onSuccess={handleDialogSuccess}
       />
     </PageContainer>

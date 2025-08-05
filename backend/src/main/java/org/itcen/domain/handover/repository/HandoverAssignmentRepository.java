@@ -13,111 +13,140 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 인수인계 지정 Repository
- * 인수인계 지정 데이터 접근을 담당
- * 
- * SOLID 원칙:
- * - Single Responsibility: 인수인계 지정 데이터 접근만 담당
- * - Interface Segregation: 필요한 메서드만 정의
+ * 인수인계 지정 레포지토리
  */
 @Repository
 public interface HandoverAssignmentRepository extends JpaRepository<HandoverAssignment, Long> {
 
     /**
-     * 직책 ID로 인수인계 지정 조회
+     * 상태별 조회
      */
-    List<HandoverAssignment> findByPositionId(Long positionId);
-
-    /**
-     * 인계자 사번으로 인수인계 지정 조회
-     */
-    List<HandoverAssignment> findByHandoverFromEmpNo(String handoverFromEmpNo);
-
-    /**
-     * 인수자 사번으로 인수인계 지정 조회
-     */
-    List<HandoverAssignment> findByHandoverToEmpNo(String handoverToEmpNo);
-
-    /**
-     * 상태별 인수인계 지정 조회
-     */
-    List<HandoverAssignment> findByStatus(HandoverAssignment.HandoverStatus status);
+    Page<HandoverAssignment> findByStatus(HandoverAssignment.HandoverStatus status, Pageable pageable);
 
     /**
      * 인수인계 유형별 조회
      */
-    List<HandoverAssignment> findByHandoverType(HandoverAssignment.HandoverType handoverType);
+    Page<HandoverAssignment> findByHandoverType(HandoverAssignment.HandoverType handoverType, Pageable pageable);
 
     /**
-     * 진행중인 인수인계 조회
+     * 상태와 유형으로 조회
      */
-    @Query("SELECT ha FROM HandoverAssignment ha WHERE ha.status IN ('PLANNED', 'IN_PROGRESS')")
-    List<HandoverAssignment> findActiveHandovers();
+    Page<HandoverAssignment> findByStatusAndHandoverType(HandoverAssignment.HandoverStatus status, HandoverAssignment.HandoverType handoverType, Pageable pageable);
 
     /**
-     * 특정 기간 내 계획된 인수인계 조회
+     * 인계자 사번으로 조회
      */
-    @Query("SELECT ha FROM HandoverAssignment ha WHERE ha.plannedStartDate BETWEEN :startDate AND :endDate")
-    List<HandoverAssignment> findByPlannedDateRange(@Param("startDate") LocalDate startDate, 
-                                                    @Param("endDate") LocalDate endDate);
+    List<HandoverAssignment> findByHandoverFromEmpNo(String empNo);
 
     /**
-     * 지연된 인수인계 조회 (예정일 지남)
+     * 인수자 사번으로 조회
      */
-    @Query("SELECT ha FROM HandoverAssignment ha WHERE ha.status = 'IN_PROGRESS' AND ha.plannedEndDate < :currentDate")
-    List<HandoverAssignment> findDelayedHandovers(@Param("currentDate") LocalDate currentDate);
+    List<HandoverAssignment> findByHandoverToEmpNo(String empNo);
 
     /**
-     * 사용자별 인수인계 현황 조회 (인계자 또는 인수자)
+     * 기간별 조회
      */
-    @Query("SELECT ha FROM HandoverAssignment ha WHERE ha.handoverFromEmpNo = :empNo OR ha.handoverToEmpNo = :empNo")
-    List<HandoverAssignment> findByEmployeeNo(@Param("empNo") String empNo);
-
-    /**
-     * 직책과 상태로 인수인계 지정 조회
-     */
-    Optional<HandoverAssignment> findByPositionIdAndStatus(Long positionId, HandoverAssignment.HandoverStatus status);
+    @Query("SELECT h FROM HandoverAssignment h WHERE " +
+           "(:startDate IS NULL OR h.plannedStartDate >= :startDate) AND " +
+           "(:endDate IS NULL OR h.plannedEndDate <= :endDate)")
+    Page<HandoverAssignment> findByDateRange(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable);
 
     /**
      * 복합 조건 검색
      */
-    @Query("SELECT ha FROM HandoverAssignment ha WHERE " +
-           "(:positionId IS NULL OR ha.positionId = :positionId) AND " +
-           "(:handoverType IS NULL OR ha.handoverType = :handoverType) AND " +
-           "(:status IS NULL OR ha.status = :status) AND " +
-           "(:handoverFromEmpNo IS NULL OR ha.handoverFromEmpNo LIKE %:handoverFromEmpNo%) AND " +
-           "(:handoverToEmpNo IS NULL OR ha.handoverToEmpNo LIKE %:handoverToEmpNo%)")
-    Page<HandoverAssignment> findBySearchCriteria(@Param("positionId") Long positionId,
-                                                  @Param("handoverType") HandoverAssignment.HandoverType handoverType,
-                                                  @Param("status") HandoverAssignment.HandoverStatus status,
-                                                  @Param("handoverFromEmpNo") String handoverFromEmpNo,
-                                                  @Param("handoverToEmpNo") String handoverToEmpNo,
-                                                  Pageable pageable);
+    @Query("SELECT h FROM HandoverAssignment h WHERE " +
+           "(:status IS NULL OR h.status = :status) AND " +
+           "(:handoverType IS NULL OR h.handoverType = :handoverType) AND " +
+           "(:fromEmpNo IS NULL OR h.handoverFromEmpNo LIKE %:fromEmpNo%) AND " +
+           "(:toEmpNo IS NULL OR h.handoverToEmpNo LIKE %:toEmpNo%) AND " +
+           "(:startDate IS NULL OR h.plannedStartDate >= :startDate) AND " +
+           "(:endDate IS NULL OR h.plannedEndDate <= :endDate)")
+    Page<HandoverAssignment> findBySearchConditions(
+            @Param("status") HandoverAssignment.HandoverStatus status,
+            @Param("handoverType") HandoverAssignment.HandoverType handoverType,
+            @Param("fromEmpNo") String fromEmpNo,
+            @Param("toEmpNo") String toEmpNo,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            Pageable pageable);
 
     /**
-     * 진행률별 통계 조회
+     * 진행 중인 인수인계 건수 조회
      */
-    @Query("SELECT ha.status, AVG(ha.progressRate), COUNT(ha) FROM HandoverAssignment ha GROUP BY ha.status")
-    List<Object[]> getProgressStatistics();
+    @Query("SELECT COUNT(h) FROM HandoverAssignment h WHERE h.status = org.itcen.domain.handover.entity.HandoverAssignment$HandoverStatus.IN_PROGRESS")
+    long countInProgress();
 
     /**
-     * 월별 인수인계 완료 통계
+     * 완료된 인수인계 건수 조회
      */
-    @Query("SELECT YEAR(ha.actualEndDate), MONTH(ha.actualEndDate), COUNT(ha) " +
-           "FROM HandoverAssignment ha WHERE ha.status = 'COMPLETED' " +
-           "GROUP BY YEAR(ha.actualEndDate), MONTH(ha.actualEndDate) " +
-           "ORDER BY YEAR(ha.actualEndDate) DESC, MONTH(ha.actualEndDate) DESC")
-    List<Object[]> getMonthlyCompletionStatistics();
+    @Query("SELECT COUNT(h) FROM HandoverAssignment h WHERE h.status = org.itcen.domain.handover.entity.HandoverAssignment$HandoverStatus.COMPLETED")
+    long countCompleted();
 
     /**
-     * 전체 인수인계 수 조회
+     * 지연된 인수인계 조회 (예정 완료일이 지났는데 완료되지 않은 건)
      */
-    @Query("SELECT COUNT(ha) FROM HandoverAssignment ha")
-    long countAllHandovers();
+    @Query("SELECT h FROM HandoverAssignment h WHERE " +
+           "h.status IN (org.itcen.domain.handover.entity.HandoverAssignment$HandoverStatus.PLANNED, org.itcen.domain.handover.entity.HandoverAssignment$HandoverStatus.IN_PROGRESS) AND " +
+           "h.plannedEndDate < CURRENT_DATE")
+    List<HandoverAssignment> findDelayedAssignments();
 
     /**
-     * 상태별 인수인계 수 조회
+     * 상태별 건수 조회
      */
-    @Query("SELECT ha.status, COUNT(ha) FROM HandoverAssignment ha GROUP BY ha.status")
-    List<Object[]> countByStatus();
+    long countByStatus(HandoverAssignment.HandoverStatus status);
+
+    /**
+     * 상태별 조회 (Pageable 없는 버전)
+     */
+    List<HandoverAssignment> findByStatus(HandoverAssignment.HandoverStatus status);
+
+    /**
+     * 직책 ID와 상태로 조회
+     */
+    Optional<HandoverAssignment> findByPositionIdAndStatus(Long positionId, HandoverAssignment.HandoverStatus status);
+
+    /**
+     * 직책 ID로 조회
+     */
+    List<HandoverAssignment> findByPositionId(Long positionId);
+
+    /**
+     * 사원번호로 조회 (인계자 또는 인수자)
+     */
+    @Query("SELECT h FROM HandoverAssignment h WHERE h.handoverFromEmpNo = :empNo OR h.handoverToEmpNo = :empNo")
+    List<HandoverAssignment> findByEmployeeNo(@Param("empNo") String empNo);
+
+    /**
+     * 활성 인수인계 조회 (진행중인 것들)
+     */
+    @Query("SELECT h FROM HandoverAssignment h WHERE h.status = org.itcen.domain.handover.entity.HandoverAssignment$HandoverStatus.IN_PROGRESS")
+    List<HandoverAssignment> findActiveHandovers();
+
+    /**
+     * 지연된 인수인계 조회 (날짜 파라미터 포함)
+     */
+    @Query("SELECT h FROM HandoverAssignment h WHERE " +
+           "h.status IN (org.itcen.domain.handover.entity.HandoverAssignment$HandoverStatus.PLANNED, org.itcen.domain.handover.entity.HandoverAssignment$HandoverStatus.IN_PROGRESS) AND " +
+           "h.plannedEndDate < :currentDate")
+    List<HandoverAssignment> findDelayedHandovers(@Param("currentDate") LocalDate currentDate);
+
+    /**
+     * 검색 조건으로 조회
+     */
+    @Query("SELECT h FROM HandoverAssignment h WHERE " +
+           "(:positionId IS NULL OR h.positionId = :positionId) AND " +
+           "(:handoverType IS NULL OR h.handoverType = :handoverType) AND " +
+           "(:status IS NULL OR h.status = :status) AND " +
+           "(:fromEmpNo IS NULL OR h.handoverFromEmpNo LIKE %:fromEmpNo%) AND " +
+           "(:toEmpNo IS NULL OR h.handoverToEmpNo LIKE %:toEmpNo%)")
+    Page<HandoverAssignment> findBySearchCriteria(
+            @Param("positionId") Long positionId,
+            @Param("handoverType") HandoverAssignment.HandoverType handoverType,
+            @Param("status") HandoverAssignment.HandoverStatus status,
+            @Param("fromEmpNo") String fromEmpNo,
+            @Param("toEmpNo") String toEmpNo,
+            Pageable pageable);
 }

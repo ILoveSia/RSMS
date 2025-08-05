@@ -56,6 +56,20 @@ public abstract class BaseEntity {
     private String updatedId;
 
     /**
+     * 생성자 ID 수동 설정
+     */
+    public void setCreatedId(String createdId) {
+        this.createdId = createdId;
+    }
+
+    /**
+     * 수정자 ID 수동 설정
+     */
+    public void setUpdatedId(String updatedId) {
+        this.updatedId = updatedId;
+    }
+
+    /**
      * 엔티티가 저장되기 전에 호출되는 메서드
      * 생성일시, 수정일시, 생성자ID, 수정자ID를 설정합니다.
      */

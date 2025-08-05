@@ -25,10 +25,10 @@ import java.util.List;
  * - Dependency Inversion: HandoverService 인터페이스에 의존
  */
 @Slf4j
-@RestController
-@RequestMapping("/handover/assignments")
+// @RestControl 비활성화
+@RequestMapping("/handover/legacy-assignments")
 @RequiredArgsConstructor
-public class HandoverController {
+public class HandoverLegacyController {
 
     private final HandoverService handoverService;
 
