@@ -94,6 +94,20 @@ public class BusinessPlanInspectionController {
     }
 
     /**
+     * 모든 사업계획 점검 조회 (리스트 형태) - 프론트엔드용
+     */
+    @GetMapping("/list")
+    public ResponseEntity<Page<BusinessPlanInspection>> getAllInspectionsList(@PageableDefault Pageable pageable) {
+        log.debug("모든 사업계획 점검 목록 조회 요청");
+        
+        // 실제 데이터베이스에서 데이터 조회
+        Page<BusinessPlanInspection> inspections = businessPlanInspectionService.getAllInspections(pageable);
+        return ResponseEntity.ok(inspections);
+    }
+
+
+
+    /**
      * 점검 시작
      */
     @PostMapping("/{inspectionId}/start")
