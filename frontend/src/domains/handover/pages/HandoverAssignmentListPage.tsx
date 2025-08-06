@@ -22,6 +22,7 @@ import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { handoverApi, type HandoverAssignmentDto } from '../api/handoverApi';
 import HandoverAssignmentDialog from '../components/HandoverAssignmentDialog';
+import { getDepartmentNameSync, useDepartments } from '@/shared/utils/codeUtils';
 
 interface IHandoverAssignmentListPageProps {
   className?: string;
@@ -40,6 +41,9 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | undefined>();
   const [selectedAssignmentData, setSelectedAssignmentData] = useState<HandoverAssignmentDto | undefined>();
+
+  // 부서 정보 가져오기
+  const departments = useDepartments();
 
   // 상태 표시 함수
   const getStatusChip = (status: string) => {
@@ -107,6 +111,13 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
       width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderCell: params => {
+        // handoverFromDept를 부서코드로 사용해서 부서명으로 변환
+        if (params.row.handoverFromDept) {
+          return getDepartmentNameSync(departments, params.row.handoverFromDept);
+        }
+        return params.value || '';
+      },
     },
     {
       field: 'status',
@@ -169,7 +180,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
         { page: 0, size: 100 }
       );
 
-      console.log('HandoverAssignment API Response:', response.data);
       setRows(response.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);

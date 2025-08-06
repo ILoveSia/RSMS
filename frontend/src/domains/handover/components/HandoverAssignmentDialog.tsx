@@ -12,6 +12,7 @@
 
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
+import { getDepartmentName } from '@/shared/utils/codeUtils';
 import {
   DepartmentSearchPopup,
   EmployeeSearchPopup,
@@ -97,6 +98,9 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
     'codeStore/allCodes'
   );
 
+  // 부서 정보 가져오기
+  const { data: departments } = useReduxState<any>('departmentStore/departments');
+
   const isViewMode = mode === 'view';
   const isCreateMode = mode === 'create';
   const isEditMode = mode === 'edit';
@@ -162,6 +166,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
     if (open) {
       if ((initialMode === 'edit' || initialMode === 'view') && assignmentData) {
         setLoading(true);
+        console.log(assignmentData)
         setFormData({
           assignmentType: assignmentData.assignmentType,
           assignorEmpNo: assignmentData.assignorEmpNo,
@@ -470,10 +475,9 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
-                    mode='readonly'
                       fullWidth
                       label='부서명 *'
-                      value={formData.deptName}
+                      value={formData.deptCd ? getDepartmentName(departments, formData.deptCd) : formData.deptName}
                       disabled
                       placeholder='부서를 선택하세요'
                       helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}

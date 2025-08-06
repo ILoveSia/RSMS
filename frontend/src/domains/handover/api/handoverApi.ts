@@ -65,6 +65,7 @@ export interface HandoverAssignment {
 }
 
 export interface HandoverAssignmentDto extends HandoverAssignment {
+  // 기존 필드들
   positionName?: string;
   isDelayed?: boolean;
   isOnSchedule?: boolean;
@@ -75,6 +76,17 @@ export interface HandoverAssignmentDto extends HandoverAssignment {
   updatedByName?: string;
   createdAt?: string;
   updatedAt?: string;
+  
+  // 프론트엔드 호환을 위한 추가 필드들
+  assignorName?: string;        // handoverFromName과 동일
+  assigneeName?: string;        // handoverToName과 동일
+  assignorEmpNo?: string;       // handoverFromEmpNo와 동일
+  assigneeEmpNo?: string;       // handoverToEmpNo와 동일
+  deptName?: string;            // handoverToDept와 동일 (인수자 부서)
+  deptCd?: string;              // 부서코드 (백엔드에서 추가 필요)
+  assignmentType?: string;      // handoverType과 동일
+  targetDate?: string;          // plannedEndDate와 동일
+  description?: string;         // notes와 동일
 }
 
 export interface HandoverSearchParams {
