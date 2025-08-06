@@ -255,10 +255,11 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
 
   // 인계자 선택 핸들러
   const handleAssignorSelect = (employee: Employee) => {
+    console.log('Selected employee:', employee);
     setFormData(prev => ({
       ...prev,
-      assignorEmpNo: employee.empNo,
-      assignorName: employee.empName,
+      assignorEmpNo: employee.num,
+      assignorName: employee.username,
     }));
     setAssignorSearchOpen(false);
   };
@@ -267,8 +268,8 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   const handleAssigneeSelect = (employee: Employee) => {
     setFormData(prev => ({
       ...prev,
-      handoverToEmpNo: employee.empNo,
-      handoverToName: employee.empName,
+      assigneeEmpNo: employee.num,
+      assigneeName: employee.username,
     }));
     setAssigneeSearchOpen(false);
   };
