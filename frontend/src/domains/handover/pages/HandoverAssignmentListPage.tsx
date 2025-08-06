@@ -61,6 +61,24 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
       width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderCell: params => (
+        <Box
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRowClick(params.row);
+          }}
+          sx={{
+            cursor: 'pointer',
+            color: 'primary.main',
+            textDecoration: 'underline',
+            '&:hover': {
+              color: 'primary.dark',
+            },
+          }}
+        >
+          {params.value}
+        </Box>
+      ),
     },
     {
       field: 'assigneeName',
@@ -340,8 +358,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             onRowSelectionChange={selectedRows => {
               setSelectedIds(selectedRows.map(id => Number(id)));
             }}
-            onRowClick={handleRowClick}
-            onRowDoubleClick={handleRowDoubleClick}
+
             rowIdField='assignmentId'
             sx={{
               width: '100%',
@@ -349,9 +366,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary) !important',
                 fontWeight: 'bold',
-              },
-              '& .MuiDataGrid-row': {
-                cursor: 'pointer',
               },
             }}
           />

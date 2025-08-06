@@ -192,7 +192,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   };
 
   const validateForm = (): boolean => {
-    
+
     if (!formData.assignmentType) {
       setError('인수인계 유형을 선택해주세요.');
       return false;
@@ -305,7 +305,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
         mode={mode}
         title={mode === 'create' ? '인수인계 지정 등록' : mode === 'edit' ? '인수인계 지정 수정' : '인수인계 지정 조회'}
       >
-        <DialogContent sx={{ 
+        <DialogContent sx={{
           p: 3,
           // view 모드에서 텍스트 스타일 진하게 통일
           ...(isViewMode && {
@@ -380,7 +380,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
               )}
 
               <Grid container spacing={2}>
-                
+
 
                 {/* 인수인계 유형 */}
                 <Grid item xs={12} sm={6}>
@@ -399,6 +399,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 {/* 목표일자 */}
                 <Grid item xs={12} sm={6}>
                   <TextField
+                    mode={mode==='view'?'readonly':'editable'}
                     fullWidth
                     label='목표일자 *'
                     type='date'
@@ -416,6 +417,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       fullWidth
+                      mode='readonly'
                       label='인계자 *'
                       value={formData.assignorName || `${formData.assignorEmpNo}`}
                       disabled
@@ -441,6 +443,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
+                    mode='readonly'
                       fullWidth
                       label='인수자 *'
                       value={formData.assigneeName || `${formData.assigneeEmpNo}`}
@@ -467,6 +470,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
+                    mode='readonly'
                       fullWidth
                       label='부서명 *'
                       value={formData.deptName}
@@ -504,6 +508,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 {/* 설명 */}
                 <Grid item xs={12}>
                   <TextField
+                  mode={mode==='view'?'readonly':'editable'}
                     fullWidth
                     label='인수인계 설명'
                     value={formData.description}
