@@ -42,8 +42,7 @@ public class HandoverAssignment extends BaseEntity {
     @Column(name = "handover_from_name", length = 50)
     private String handoverFromName;
 
-    @Column(name = "handover_from_dept", length = 100)
-    private String handoverFromDept;
+
 
     // 인수자 정보
     @Column(name = "handover_to_emp_no", nullable = false, length = 20)
@@ -52,8 +51,7 @@ public class HandoverAssignment extends BaseEntity {
     @Column(name = "handover_to_name", nullable = false, length = 50)
     private String handoverToName;
 
-    @Column(name = "handover_to_dept", length = 100)
-    private String handoverToDept;
+
 
     // 일정 정보
     @Column(name = "planned_start_date")

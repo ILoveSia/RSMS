@@ -53,10 +53,8 @@ export interface HandoverAssignment {
   handoverType: 'POSITION_CHANGE' | 'RETIREMENT' | 'RESIGNATION' | 'TRANSFER';
   handoverFromEmpNo: string;
   handoverFromName: string;
-  handoverFromDept: string;
   handoverToEmpNo: string;
   handoverToName: string;
-  handoverToDept: string;
   plannedStartDate: string;
   plannedEndDate: string;
   status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
@@ -70,20 +68,20 @@ export interface HandoverAssignmentDto extends HandoverAssignment {
   isDelayed?: boolean;
   isOnSchedule?: boolean;
   daysRemaining?: number;
+  deptName?: String;
   actualStartDate?: string;
   actualEndDate?: string;
   createdByName?: string;
   updatedByName?: string;
   createdAt?: string;
   updatedAt?: string;
-  
+
   // 프론트엔드 호환을 위한 추가 필드들
   assignorName?: string;        // handoverFromName과 동일
   assigneeName?: string;        // handoverToName과 동일
   assignorEmpNo?: string;       // handoverFromEmpNo와 동일
   assigneeEmpNo?: string;       // handoverToEmpNo와 동일
-  deptName?: string;            // handoverToDept와 동일 (인수자 부서)
-  deptCd?: string;              // 부서코드 (백엔드에서 추가 필요)
+  deptCode?: string;              // 부서코드 (백엔드에서 추가 필요)
   assignmentType?: string;      // handoverType과 동일
   targetDate?: string;          // plannedEndDate와 동일
   description?: string;         // notes와 동일
@@ -144,7 +142,7 @@ export class HandoverApi {
    * 인수인계 지정 수정
    */
   static async updateHandoverAssignment(
-    assignmentId: number, 
+    assignmentId: number,
     data: HandoverAssignment
   ): Promise<HandoverAssignment> {
     return apiClient.put<HandoverAssignment>(`${this.BASE_PATH}/${assignmentId}`, data);
@@ -195,8 +193,8 @@ export class HandoverApi {
    * 인수인계 취소
    */
   static async cancelHandover(
-    assignmentId: number, 
-    actorEmpNo: string, 
+    assignmentId: number,
+    actorEmpNo: string,
     reason?: string
   ): Promise<void> {
     const params: any = { actorEmpNo };
@@ -212,8 +210,8 @@ export class HandoverApi {
    * 진행률 업데이트
    */
   static async updateProgress(
-    assignmentId: number, 
-    progressRate: number, 
+    assignmentId: number,
+    progressRate: number,
     actorEmpNo: string
   ): Promise<void> {
     return apiClient.post(`${this.BASE_PATH}/${assignmentId}/progress`, null, {
@@ -282,7 +280,7 @@ export class HandoverApi {
     const params = new URLSearchParams();
     params.append('page', paginationParams.page.toString());
     params.append('size', paginationParams.size.toString());
-    
+
     if (searchParams.status) {
       params.append('status', searchParams.status);
     }
@@ -293,7 +291,7 @@ export class HandoverApi {
     const response = await apiClient.get<PageResponse<HandoverAssignmentDto>>(
       `${this.BASE_PATH}/list?${params.toString()}`
     );
-    
+
     return { data: response.content || [] };
   }
 

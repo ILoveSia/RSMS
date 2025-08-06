@@ -147,7 +147,7 @@ const HandoverInfoCard: React.FC<HandoverInfoCardProps> = ({
                   {assignment.handoverFromName}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" noWrap>
-                  {assignment.handoverFromDept}
+                  {assignment.deptName}
                 </Typography>
               </Box>
             </Box>
@@ -165,7 +165,7 @@ const HandoverInfoCard: React.FC<HandoverInfoCardProps> = ({
                   {assignment.handoverToName}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" noWrap>
-                  {assignment.handoverToDept}
+                  {assignment.deptCodet}
                 </Typography>
               </Box>
             </Box>

@@ -232,10 +232,10 @@ export class BusinessPlanInspectionApi {
             plannedEndDate: item.plannedEndDate,
             actualStartDate: item.actualStartDate,
             actualEndDate: item.actualEndDate,
-            inspectorEmpNo: item.inspectorEmpNo,
-            inspectorName: inspectorName,
-            managerEmpNo: item.inspecteeEmpNo,
-            managerName: managerName,
+            inspectorEmpNo: item.inspecteeEmpNo, // 인계자 (피점검자)
+            inspectorName: managerName, // 인계자명
+            managerEmpNo: item.inspectorEmpNo, // 인수자 (점검자)
+            managerName: inspectorName, // 인수자명
             progressRate: 0,
             currentPhase: '',
             phaseDescription: '',

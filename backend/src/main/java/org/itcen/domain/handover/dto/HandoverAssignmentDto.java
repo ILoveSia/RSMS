@@ -24,12 +24,12 @@ public class HandoverAssignmentDto {
     // 인계자 정보
     private String handoverFromEmpNo;
     private String handoverFromName;
-    private String handoverFromDept;
+
 
     // 인수자 정보
     private String handoverToEmpNo;
     private String handoverToName;
-    private String handoverToDept;
+
 
     // 일정 정보
     private LocalDate plannedStartDate;
@@ -58,7 +58,6 @@ public class HandoverAssignmentDto {
     private String assigneeEmpNo;
     private String assigneeName;
     private String deptCd;
-    private String deptName;
     private String positionCd;
     private String positionName;
     private String targetDate;
@@ -71,19 +70,19 @@ public class HandoverAssignmentDto {
      * 프론트엔드 호환성을 위한 매핑 메서드
      */
     public void mapForFrontend() {
-        this.assignmentTitle = (this.handoverFromName != null ? this.handoverFromName : "미지정") + 
-                              " → " + 
-                              (this.handoverToName != null ? this.handoverToName : "미지정") + 
-                              " 인수인계";
+        this.assignmentTitle = (this.handoverFromName != null ? this.handoverFromName : "미지정") +
+                " → " +
+                (this.handoverToName != null ? this.handoverToName : "미지정") +
+                " 인수인계";
         this.assignmentType = this.handoverType;
         this.assignorEmpNo = this.handoverFromEmpNo;
         this.assignorName = this.handoverFromName;
         this.assigneeEmpNo = this.handoverToEmpNo;
         this.assigneeName = this.handoverToName;
-        this.deptName = this.handoverToDept;
+
         this.targetDate = this.plannedEndDate != null ? this.plannedEndDate.toString() : null;
         this.description = this.notes;
-        
+
         // 승인 상태는 임시로 설정 (실제로는 별도 테이블에서 관리)
         this.assignorApprovalStatus = "APPROVED";
         this.assigneeApprovalStatus = "PENDING";

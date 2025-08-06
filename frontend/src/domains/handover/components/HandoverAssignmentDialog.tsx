@@ -12,7 +12,7 @@
 
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import { getDepartmentName } from '@/shared/utils/codeUtils';
+import { getDepartmentNameSync, useDepartments } from '@/shared/utils/codeUtils';
 import {
   DepartmentSearchPopup,
   EmployeeSearchPopup,
@@ -99,7 +99,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   );
 
   // 부서 정보 가져오기
-  const { data: departments } = useReduxState<any>('departmentStore/departments');
+  const departments = useDepartments();
 
   const isViewMode = mode === 'view';
   const isCreateMode = mode === 'create';
@@ -132,16 +132,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
         ];
       }
 
-      // 직위 코드 처리
-      if (groupCode === 'POSITION') {
-        return [
-          { value: 'POS001', label: '부서장' },
-          { value: 'POS002', label: '팀장' },
-          { value: 'POS003', label: '선임' },
-          { value: 'POS004', label: '대리' },
-          { value: 'POS005', label: '사원' },
-        ];
-      }
 
       // 기타 공통코드 처리
       const filteredCodes = codes.filter(
@@ -165,6 +155,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
     setMode(initialMode);
     if (open) {
       if ((initialMode === 'edit' || initialMode === 'view') && assignmentData) {
+        console.log(assignmentData)
         setLoading(true);
         console.log(assignmentData)
         setFormData({
@@ -173,7 +164,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
           assignorName: assignmentData.assignorName || '',
           assigneeEmpNo: assignmentData.assigneeEmpNo,
           assigneeName: assignmentData.assigneeName || '',
-          deptCd: assignmentData.deptCd,
+          deptCd: assignmentData.deptCode || '',
           deptName: assignmentData.deptName || '',
           positionCd: assignmentData.positionCd || '',
           positionName: assignmentData.positionName || '',
@@ -197,7 +188,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   };
 
   const validateForm = (): boolean => {
-
+    console.log(formData)
     if (!formData.assignmentType) {
       setError('인수인계 유형을 선택해주세요.');
       return false;
@@ -404,7 +395,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 {/* 목표일자 */}
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    mode={mode==='view'?'readonly':'editable'}
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
                     fullWidth
                     label='목표일자 *'
                     type='date'
@@ -448,7 +439,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
-                    mode='readonly'
+                      mode='readonly'
                       fullWidth
                       label='인수자 *'
                       value={formData.assigneeName || `${formData.assigneeEmpNo}`}
@@ -472,47 +463,53 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 </Grid>
 
                 {/* 부서명 */}
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} >
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       fullWidth
-                      label='부서명 *'
-                      value={formData.deptCd ? getDepartmentName(departments, formData.deptCd) : formData.deptName}
+                      mode='readonly'
+                      label='인계자 부서'
+                      value={formData.deptCd ? getDepartmentNameSync(departments, formData.deptCd) : formData.deptName}
                       disabled
                       placeholder='부서를 선택하세요'
                       helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
                     />
-                    {!isViewMode && (
-                      <Button
-                        variant='outlined'
-                        onClick={() => setDepartmentSearchOpen(true)}
-                        sx={{ minWidth: 100 }}
-                        startIcon={<SearchIcon />}
-                      >
-                        조회
-                      </Button>
-                    )}
+                {/* <Box sx={{ fontWeight: 'bold', fontSize: '2rem', minWidth: '60px', textAlign: 'center'}}>→</Box> */}
+                    
+                    <TextField
+                      fullWidth
+                      mode='readonly'
+                      label='인수자 부서'
+                      value={formData.deptCd ? getDepartmentNameSync(departments, formData.deptCd) : formData.deptName}
+                      disabled
+                      placeholder='부서를 선택하세요'
+                      helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
+                    />
                   </Box>
                 </Grid>
-
-                {/* 직위 */}
-                <Grid item xs={12} sm={6}>
-                  <Select
-                    value={formData.positionCd}
-                    label='직위'
-                    options={[
-                      { value: '', label: '선택하세요' },
-                      ...getCommonCodeOptions('POSITION')
-                    ]}
-                    onChange={(value) => handleInputChange('positionCd', value as string)}
-                    disabled={isViewMode}
-                  />
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                    <TextField
+                      fullWidth
+                      value={formData.positionCd}
+                      label='인계자 직위'
+                      disabled={isViewMode}
+                      mode='readonly'
+                    />
+                    {/* <Box sx={{ fontWeight: 'bold', fontSize: '2rem', minWidth: '60px', textAlign: 'center'}}>→</Box> */}
+                    <TextField
+                      fullWidth
+                      value={formData.positionCd}
+                      label='인수자 직위'
+                      disabled={isViewMode}
+                      mode='readonly'
+                    />
+                    </Box>
                 </Grid>
 
-                {/* 설명 */}
                 <Grid item xs={12}>
                   <TextField
-                  mode={mode==='view'?'readonly':'editable'}
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
                     fullWidth
                     label='인수인계 설명'
                     value={formData.description}

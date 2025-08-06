@@ -85,10 +85,8 @@ public class HandoverServiceImpl implements HandoverService {
         existingAssignment.setHandoverType(handoverAssignment.getHandoverType());
         existingAssignment.setHandoverFromEmpNo(handoverAssignment.getHandoverFromEmpNo());
         existingAssignment.setHandoverFromName(handoverAssignment.getHandoverFromName());
-        existingAssignment.setHandoverFromDept(handoverAssignment.getHandoverFromDept());
         existingAssignment.setHandoverToEmpNo(handoverAssignment.getHandoverToEmpNo());
         existingAssignment.setHandoverToName(handoverAssignment.getHandoverToName());
-        existingAssignment.setHandoverToDept(handoverAssignment.getHandoverToDept());
         existingAssignment.setPlannedStartDate(handoverAssignment.getPlannedStartDate());
         existingAssignment.setPlannedEndDate(handoverAssignment.getPlannedEndDate());
         existingAssignment.setNotes(handoverAssignment.getNotes());
@@ -367,16 +365,10 @@ public class HandoverServiceImpl implements HandoverService {
             public String getHandoverFromName() { return assignment.getHandoverFromName(); }
             
             @Override
-            public String getHandoverFromDept() { return assignment.getHandoverFromDept(); }
-            
-            @Override
             public String getHandoverToEmpNo() { return assignment.getHandoverToEmpNo(); }
             
             @Override
             public String getHandoverToName() { return assignment.getHandoverToName(); }
-            
-            @Override
-            public String getHandoverToDept() { return assignment.getHandoverToDept(); }
             
             @Override
             public LocalDate getPlannedStartDate() { return assignment.getPlannedStartDate(); }

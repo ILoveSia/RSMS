@@ -128,10 +128,8 @@ public interface HandoverService {
         HandoverAssignment.HandoverType getHandoverType();
         String getHandoverFromEmpNo();
         String getHandoverFromName();
-        String getHandoverFromDept();
         String getHandoverToEmpNo();
         String getHandoverToName();
-        String getHandoverToDept();
         LocalDate getPlannedStartDate();
         LocalDate getPlannedEndDate();
         HandoverAssignment.HandoverStatus getStatus();

@@ -42,9 +42,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | undefined>();
   const [selectedAssignmentData, setSelectedAssignmentData] = useState<HandoverAssignmentDto | undefined>();
 
-  // 부서 정보 가져오기
-  const departments = useDepartments();
-
   // 상태 표시 함수
   const getStatusChip = (status: string) => {
     const statusConfig = {
@@ -61,35 +58,32 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
   const columns: DataGridColumn<HandoverAssignmentDto>[] = [
     {
       field: 'assignorName',
-      headerName: '인계자',
-      width: 120,
+      headerName: '인계자→인수자',
+      width: 150,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => (
-        <Box
-          onClick={(e) => {
-            e.stopPropagation();
-            handleRowClick(params.row);
-          }}
-          sx={{
-            cursor: 'pointer',
-            color: 'primary.main',
-            textDecoration: 'underline',
-            '&:hover': {
-              color: 'primary.dark',
-            },
-          }}
-        >
-          {params.value}
-        </Box>
-      ),
-    },
-    {
-      field: 'assigneeName',
-      headerName: '인수자',
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
+      renderCell: params => {
+        const assignorName = params.row.assignorName || '';
+        const assigneeName = params.row.assigneeName || '';
+        return (
+          <Box
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRowClick(params.row);
+            }}
+            sx={{
+              cursor: 'pointer',
+              color: 'primary.main',
+              textDecoration: 'underline',
+              '&:hover': {
+                color: 'primary.dark',
+              },
+            }}
+          >
+            {`${assignorName} → ${assigneeName}`}
+          </Box>
+        );
+      },
     },
     {
       field: 'assignmentType',
@@ -103,20 +97,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
           RESPONSIBILITY: '책무',
         };
         return typeMap[params.value as keyof typeof typeMap] || params.value;
-      },
-    },
-    {
-      field: 'deptName',
-      headerName: '부서',
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        // handoverFromDept를 부서코드로 사용해서 부서명으로 변환
-        if (params.row.handoverFromDept) {
-          return getDepartmentNameSync(departments, params.row.handoverFromDept);
-        }
-        return params.value || '';
       },
     },
     {
@@ -179,7 +159,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
         searchParams,
         { page: 0, size: 100 }
       );
-
       setRows(response.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -296,13 +275,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             onChange={setSelectedStatus}
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
-            options={[
-              { value: 'ALL', label: '전체' },
-              { value: 'PLANNED', label: '계획됨' },
-              { value: 'IN_PROGRESS', label: '진행중' },
-              { value: 'COMPLETED', label: '완료' },
-              { value: 'CANCELLED', label: '취소' },
-            ]}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>유형</span>
           <CommonCodeSelect
@@ -311,11 +283,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             onChange={setSelectedAssignmentType}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
-            options={[
-              { value: 'ALL', label: '전체' },
-              { value: 'POSITION', label: '직책' },
-              { value: 'RESPONSIBILITY', label: '책무' },
-            ]}
           />
           <SearchButton
             onClick={handleSearch}
@@ -347,7 +314,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             showRefresh={false}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
-            registerLabel="신규 지정"
             align="right"
             sx={{
               mb: 0,

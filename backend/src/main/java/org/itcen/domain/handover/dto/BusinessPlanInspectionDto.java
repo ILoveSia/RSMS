@@ -26,8 +26,6 @@ import java.time.LocalDate;
 public class BusinessPlanInspectionDto {
     
     private Long inspectionId;
-    private String deptCd;
-    private String deptName;
     private Integer inspectionYear;
     private Integer inspectionQuarter;
     private String inspectionTitle;
