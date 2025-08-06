@@ -12,12 +12,12 @@
 
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import { getDepartmentNameSync, useDepartments } from '@/shared/utils/codeUtils';
+import { getDepartmentNameSync, useDepartments, getEmployeeNameSync } from '@/shared/utils/codeUtils';
 import {
   DepartmentSearchPopup,
   EmployeeSearchPopup,
   type Department,
-  type Employee,
+  type EmployeeSearchResult,
 } from '@/domains/common/components/search';
 import type { SelectOption } from '@/shared/types/common';
 import { Search as SearchIcon } from '@mui/icons-material';
@@ -35,6 +35,7 @@ import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
 import { handoverApi, type HandoverAssignmentDto } from '../api/handoverApi';
+import apiClient from '@/app/common/api/client';
 
 interface HandoverAssignmentDialogProps {
   open: boolean;
@@ -51,10 +52,12 @@ interface FormData {
   assignorName: string;
   assigneeEmpNo: string;
   assigneeName: string;
-  deptCd: string;
-  deptName: string;
-  positionCd: string;
-  positionName: string;
+  assignorDeptCd: string;
+  assignorDeptName: string;
+  assigneeDeptCd: string;
+  assigneeDeptName: string;
+  assignorPositionCd: string;
+  assigneePositionCd: string;
   targetDate: string;
   description: string;
 }
@@ -66,10 +69,12 @@ const initialFormData: FormData = {
   assignorName: '',
   assigneeEmpNo: '',
   assigneeName: '',
-  deptCd: '',
-  deptName: '',
-  positionCd: '',
-  positionName: '',
+  assignorDeptCd: '',
+  assignorDeptName: '',
+  assigneeDeptCd: '',
+  assigneeDeptName: '',
+  assignorPositionCd: '',
+  assigneePositionCd: '',
   targetDate: '',
   description: '',
 };
@@ -122,17 +127,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
     (groupCode: string): SelectOption[] => {
       const codes = getCodesArray();
 
-      // 인수인계 유형 처리
-      if (groupCode === 'ASSIGNMENT_TYPE') {
-        return [
-          { value: 'POSITION_CHANGE', label: '직위변경' },
-          { value: 'DEPARTMENT_CHANGE', label: '부서이동' },
-          { value: 'RETIREMENT', label: '퇴직' },
-          { value: 'NEW_ASSIGNMENT', label: '신규배치' },
-        ];
-      }
-
-
       // 기타 공통코드 처리
       const filteredCodes = codes.filter(
         code => code.groupCode === groupCode && code.useYn === 'Y'
@@ -157,22 +151,54 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       if ((initialMode === 'edit' || initialMode === 'view') && assignmentData) {
         console.log(assignmentData)
         setLoading(true);
-        console.log(assignmentData)
-        setFormData({
-          assignmentType: assignmentData.assignmentType,
-          assignorEmpNo: assignmentData.assignorEmpNo,
-          assignorName: assignmentData.assignorName || '',
-          assigneeEmpNo: assignmentData.assigneeEmpNo,
-          assigneeName: assignmentData.assigneeName || '',
-          deptCd: assignmentData.deptCode || '',
-          deptName: assignmentData.deptName || '',
-          positionCd: assignmentData.positionCd || '',
-          positionName: assignmentData.positionName || '',
-          targetDate: assignmentData.targetDate || '',
-          description: assignmentData.description || '',
-        });
+        
+        // 사원 정보 비동기 조회
+        const loadEmployeeInfo = async () => {
+          try {
+            const [assignorResponse, assigneeResponse] = await Promise.all([
+              apiClient.get(`/users/num/${assignmentData.assignorEmpNo}`),
+              apiClient.get(`/users/num/${assignmentData.assigneeEmpNo}`)
+            ]);
+            console.log(assignorResponse)
+            console.log(assigneeResponse)
+            setFormData({
+              assignmentType: assignmentData.assignmentType,
+              assignorEmpNo: assignmentData.assignorEmpNo,
+              assignorName:assignmentData.assignorName || '',
+              assigneeEmpNo: assignmentData.assigneeEmpNo,
+              assigneeName:assignmentData.assigneeName || '',
+              assignorDeptCd: assignorResponse?.deptCd || assignmentData.deptCode || '',
+              assignorDeptName: '',
+              assigneeDeptCd: assigneeResponse?.deptCd || assignmentData.deptCode || '',
+              assigneeDeptName: '',
+              assignorPositionCd: assignorResponse?.jobTitleCd || assignmentData.positionCd || '',
+              assigneePositionCd: assigneeResponse?.jobTitleCd || assignmentData.positionCd || '',
+              targetDate: assignmentData.targetDate || '',
+              description: assignmentData.description || '',
+            });
+          } catch (error) {
+            console.error('사원명 조회 실패:', error);
+            // 사원명 조회 실패 시 기본값 사용
+            setFormData({
+              assignmentType: assignmentData.assignmentType,
+              assignorEmpNo: assignmentData.assignorEmpNo,
+              assignorName: assignmentData.assignorName || '',
+              assigneeEmpNo: assignmentData.assigneeEmpNo,
+              assigneeName: assignmentData.assigneeName || '',
+              deptCd: assignmentData.deptCode || '',
+              deptName: assignmentData.deptName || '',
+              positionCd: assignmentData.positionCd || '',
+              positionName: assignmentData.positionName || '',
+              targetDate: assignmentData.targetDate || '',
+              description: assignmentData.description || '',
+            });
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        loadEmployeeInfo();
         setError(null);
-        setLoading(false);
       } else if (initialMode === 'create') {
         setFormData(initialFormData);
         setError(null);
@@ -201,10 +227,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       setError('인수자를 선택해주세요.');
       return false;
     }
-    if (!formData.deptCd.trim()) {
-      setError('부서를 선택해주세요.');
-      return false;
-    }
     if (!formData.targetDate.trim()) {
       setError('목표일자를 선택해주세요.');
       return false;
@@ -224,8 +246,10 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
         assignmentType: formData.assignmentType,
         assignorEmpNo: formData.assignorEmpNo,
         assigneeEmpNo: formData.assigneeEmpNo,
-        deptCd: formData.deptCd,
-        positionCd: formData.positionCd,
+        assignorDeptCd: formData.assignorDeptCd,
+        assigneeDeptCd: formData.assigneeDeptCd,
+        assignorPositionCd: formData.assignorPositionCd,
+        assigneePositionCd: formData.assigneePositionCd,
         targetDate: formData.targetDate,
         description: formData.description,
         status: 'PENDING',
@@ -250,23 +274,30 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   };
 
   // 인계자 선택 핸들러
-  const handleAssignorSelect = (employee: Employee) => {
-    console.log('Selected employee:', employee);
+  const handleAssignorSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
       assignorEmpNo: employee.num,
       assignorName: employee.username,
+      assignorDeptCd: employee.deptCd || '',
+      assignorDeptName: employee.deptName || '',
+      assignorPositionCd: employee.jobTitleCd || '',
     }));
+    
     setAssignorSearchOpen(false);
   };
 
   // 인수자 선택 핸들러
-  const handleAssigneeSelect = (employee: Employee) => {
+  const handleAssigneeSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
       assigneeEmpNo: employee.num,
       assigneeName: employee.username,
+      assigneeDeptCd: employee.deptCd || '',
+      assigneeDeptName: employee.deptName || '',
+      assigneePositionCd: employee.jobTitleCd || '',
     }));
+    
     setAssigneeSearchOpen(false);
   };
 
@@ -469,10 +500,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                       fullWidth
                       mode='readonly'
                       label='인계자 부서'
-                      value={formData.deptCd ? getDepartmentNameSync(departments, formData.deptCd) : formData.deptName}
-                      disabled
-                      placeholder='부서를 선택하세요'
-                      helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
+                      value={formData.assignorDeptCd ? getDepartmentNameSync(departments, formData.assignorDeptCd) : formData.assignorDeptName}
                     />
                 {/* <Box sx={{ fontWeight: 'bold', fontSize: '2rem', minWidth: '60px', textAlign: 'center'}}>→</Box> */}
                     
@@ -480,10 +508,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                       fullWidth
                       mode='readonly'
                       label='인수자 부서'
-                      value={formData.deptCd ? getDepartmentNameSync(departments, formData.deptCd) : formData.deptName}
-                      disabled
-                      placeholder='부서를 선택하세요'
-                      helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
+                      value={formData.assigneeDeptCd ? getDepartmentNameSync(departments, formData.assigneeDeptCd) : formData.assigneeDeptName}
                     />
                   </Box>
                 </Grid>
@@ -491,7 +516,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                   <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
                     <TextField
                       fullWidth
-                      value={formData.positionCd}
+                      value={formData.assignorPositionCd}
                       label='인계자 직위'
                       disabled={isViewMode}
                       mode='readonly'
@@ -499,7 +524,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                     {/* <Box sx={{ fontWeight: 'bold', fontSize: '2rem', minWidth: '60px', textAlign: 'center'}}>→</Box> */}
                     <TextField
                       fullWidth
-                      value={formData.positionCd}
+                      value={formData.assigneePositionCd}
                       label='인수자 직위'
                       disabled={isViewMode}
                       mode='readonly'
