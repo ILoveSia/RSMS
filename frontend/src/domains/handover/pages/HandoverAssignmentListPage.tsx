@@ -180,12 +180,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
     setDialogOpen(true);
   }, []);
 
-  const handleRowDoubleClick = useCallback((row: HandoverAssignmentDto) => {
-    setDialogMode('view');
-    setSelectedAssignmentId(row.assignmentId);
-    setSelectedAssignmentData(row);
-    setDialogOpen(true);
-  }, []);
 
   const handleRowClick = useCallback((row: HandoverAssignmentDto) => {
     setDialogMode('view');

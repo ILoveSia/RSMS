@@ -37,7 +37,6 @@ public class HandoverLegacyController {
      */
     @PostMapping
     public ResponseEntity<HandoverAssignment> createHandoverAssignment(@RequestBody HandoverAssignment handoverAssignment) {
-        log.debug("인수인계 지정 생성 요청 - positionId: {}", handoverAssignment.getPositionId());
         
         HandoverAssignment created = handoverService.createHandoverAssignment(handoverAssignment);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -142,19 +141,6 @@ public class HandoverLegacyController {
         
         handoverService.updateProgress(assignmentId, progressRate, actorEmpNo);
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 직책별 인수인계 지정 조회
-     */
-    @GetMapping("/position/{positionId}")
-    public ResponseEntity<List<HandoverService.HandoverAssignmentDto>> getHandoverAssignmentsByPosition(
-            @PathVariable Long positionId) {
-        log.debug("직책별 인수인계 지정 조회 요청 - positionId: {}", positionId);
-        
-        List<HandoverService.HandoverAssignmentDto> assignments = 
-                handoverService.getHandoverAssignmentsByPosition(positionId);
-        return ResponseEntity.ok(assignments);
     }
 
     /**

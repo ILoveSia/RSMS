@@ -47,44 +47,17 @@ export interface PageResponse<T> {
 }
 
 // Types
-export interface HandoverAssignment {
-  assignmentId?: number;
-  positionId: number;
-  handoverType: 'POSITION_CHANGE' | 'RETIREMENT' | 'RESIGNATION' | 'TRANSFER';
-  handoverFromEmpNo: string;
-  handoverFromName: string;
-  handoverToEmpNo: string;
-  handoverToName: string;
-  plannedStartDate: string;
-  plannedEndDate: string;
-  status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  progressRate?: number;
-  notes?: string;
+export interface HandoverAssignment {  
+  handover_type: string,
+  handover_from_emp_no: string,
+  handover_to_emp_no: string,
+  notes: string,
 }
 
 export interface HandoverAssignmentDto extends HandoverAssignment {
   // 기존 필드들
-  positionName?: string;
-  isDelayed?: boolean;
-  isOnSchedule?: boolean;
-  daysRemaining?: number;
-  deptName?: String;
-  actualStartDate?: string;
-  actualEndDate?: string;
-  createdByName?: string;
-  updatedByName?: string;
-  createdAt?: string;
-  updatedAt?: string;
 
   // 프론트엔드 호환을 위한 추가 필드들
-  assignorName?: string;        // handoverFromName과 동일
-  assigneeName?: string;        // handoverToName과 동일
-  assignorEmpNo?: string;       // handoverFromEmpNo와 동일
-  assigneeEmpNo?: string;       // handoverToEmpNo와 동일
-  deptCode?: string;              // 부서코드 (백엔드에서 추가 필요)
-  assignmentType?: string;      // handoverType과 동일
-  targetDate?: string;          // plannedEndDate와 동일
-  description?: string;         // notes와 동일
 }
 
 export interface HandoverSearchParams {
@@ -134,8 +107,8 @@ export class HandoverApi {
   /**
    * 인수인계 지정 생성
    */
-  static async createHandoverAssignment(data: HandoverAssignment): Promise<HandoverAssignment> {
-    return apiClient.post<HandoverAssignment>(this.BASE_PATH, data);
+  static async createHandoverAssignment(data: HandoverAssignmentDto): Promise<HandoverAssignmentDto> {
+    return apiClient.post<HandoverAssignmentDto>(this.BASE_PATH, data);
   }
 
   /**

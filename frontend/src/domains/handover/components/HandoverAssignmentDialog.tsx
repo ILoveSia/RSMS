@@ -29,7 +29,7 @@ import {
   DialogActions,
   Grid,
 } from '@mui/material';
-import { Select } from '@/shared/components/ui/form';
+import { CommonCodeSelect, Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
@@ -42,15 +42,16 @@ interface HandoverAssignmentDialogProps {
   onClose: () => void;
   mode: 'create' | 'edit' | 'view';
   assignmentId?: number;
+  assignmentData?: HandoverAssignmentDto;
   onSuccess?: () => void;
 }
 
 interface FormData {
   // assignmentTitle: string;
   assignmentType: string;
-  assignorEmpNo: string;
+  handoverFromEmpNo: string;
   assignorName: string;
-  assigneeEmpNo: string;
+  handoverToEmpNo: string;
   assigneeName: string;
   assignorDeptCd: string;
   assignorDeptName: string;
@@ -65,9 +66,9 @@ interface FormData {
 const initialFormData: FormData = {
   // assignmentTitle: '',
   assignmentType: '',
-  assignorEmpNo: '',
+  handoverFromEmpNo: '',
   assignorName: '',
-  assigneeEmpNo: '',
+  handoverToEmpNo: '',
   assigneeName: '',
   assignorDeptCd: '',
   assignorDeptName: '',
@@ -156,16 +157,16 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
         const loadEmployeeInfo = async () => {
           try {
             const [assignorResponse, assigneeResponse] = await Promise.all([
-              apiClient.get(`/users/num/${assignmentData.assignorEmpNo}`),
-              apiClient.get(`/users/num/${assignmentData.assigneeEmpNo}`)
+              apiClient.get(`/users/num/${assignmentData.handoverFromEmpNo}`),
+              apiClient.get(`/users/num/${assignmentData.handoverToEmpNo}`)
             ]);
             console.log(assignorResponse)
             console.log(assigneeResponse)
             setFormData({
               assignmentType: assignmentData.assignmentType,
-              assignorEmpNo: assignmentData.assignorEmpNo,
+              handoverFromEmpNo: assignmentData.handoverFromEmpNo,
               assignorName:assignmentData.assignorName || '',
-              assigneeEmpNo: assignmentData.assigneeEmpNo,
+              handoverToEmpNo: assignmentData.handoverToEmpNo,
               assigneeName:assignmentData.assigneeName || '',
               assignorDeptCd: assignorResponse?.deptCd || assignmentData.deptCode || '',
               assignorDeptName: '',
@@ -181,9 +182,9 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
             // 사원명 조회 실패 시 기본값 사용
             setFormData({
               assignmentType: assignmentData.assignmentType,
-              assignorEmpNo: assignmentData.assignorEmpNo,
+              handoverFromEmpNo: assignmentData.handoverFromEmpNo,
               assignorName: assignmentData.assignorName || '',
-              assigneeEmpNo: assignmentData.assigneeEmpNo,
+              handoverToEmpNo: assignmentData.handoverToEmpNo,
               assigneeName: assignmentData.assigneeName || '',
               deptCd: assignmentData.deptCode || '',
               deptName: assignmentData.deptName || '',
@@ -219,11 +220,11 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       setError('인수인계 유형을 선택해주세요.');
       return false;
     }
-    if (!formData.assignorEmpNo.trim()) {
+    if (!formData.handoverFromEmpNo.trim()) {
       setError('인계자를 선택해주세요.');
       return false;
     }
-    if (!formData.assigneeEmpNo.trim()) {
+    if (!formData.handoverToEmpNo.trim()) {
       setError('인수자를 선택해주세요.');
       return false;
     }
@@ -242,22 +243,18 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
 
     try {
       const requestData = {
-        // assignmentTitle: formData.assignmentTitle,
-        assignmentType: formData.assignmentType,
-        assignorEmpNo: formData.assignorEmpNo,
-        assigneeEmpNo: formData.assigneeEmpNo,
-        assignorDeptCd: formData.assignorDeptCd,
-        assigneeDeptCd: formData.assigneeDeptCd,
-        assignorPositionCd: formData.assignorPositionCd,
-        assigneePositionCd: formData.assigneePositionCd,
-        targetDate: formData.targetDate,
-        description: formData.description,
-        status: 'PENDING',
+        handoverType: formData.assignmentType,
+        handoverFromEmpNo: formData.handoverFromEmpNo,
+        handoverToEmpNo: formData.handoverToEmpNo,
+        notes: formData.description,
+        plannedStartDate: formData.targetDate,
+        plannedEndDate: formData.targetDate,
       };
+      console.log("requestData", requestData)
 
       if (isCreateMode) {
         // TODO: 실제 API 호출로 대체
-        // await handoverApi.createAssignment(requestData);
+        await handoverApi.createHandoverAssignment(requestData);
       } else if (isEditMode && assignmentId) {
         // TODO: 실제 API 호출로 대체
         // await handoverApi.updateAssignment(assignmentId, requestData);
@@ -277,7 +274,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   const handleAssignorSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
-      assignorEmpNo: employee.num,
+      handoverFromEmpNo: employee.num,
       assignorName: employee.username,
       assignorDeptCd: employee.deptCd || '',
       assignorDeptName: employee.deptName || '',
@@ -291,7 +288,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   const handleAssigneeSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
-      assigneeEmpNo: employee.num,
+      handoverToEmpNo: employee.num,
       assigneeName: employee.username,
       assigneeDeptCd: employee.deptCd || '',
       assigneeDeptName: employee.deptName || '',
@@ -411,15 +408,13 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
 
                 {/* 인수인계 유형 */}
                 <Grid item xs={12} sm={6}>
-                  <Select
+                  <CommonCodeSelect
+                    minWidth='100%'
+                    groupCode='HANDOVER_STATUS'
                     value={formData.assignmentType}
-                    label='인수인계 유형 *'
-                    options={[
-                      { value: '', label: '선택하세요' },
-                      ...getCommonCodeOptions('ASSIGNMENT_TYPE')
-                    ]}
-                    onChange={(value) => handleInputChange('assignmentType', value as string)}
+                    onChange={value => handleInputChange('assignmentType', value)}
                     disabled={isViewMode}
+                    
                   />
                 </Grid>
 
@@ -446,11 +441,11 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                       fullWidth
                       mode='readonly'
                       label='인계자 *'
-                      value={formData.assignorName || `${formData.assignorEmpNo}`}
+                      value={formData.assignorName || `${formData.handoverFromEmpNo}`}
                       disabled
                       placeholder='인계자를 선택하세요'
                       helperText={
-                        formData.assignorEmpNo ? `사번: ${formData.assignorEmpNo}` : ''
+                        formData.handoverFromEmpNo ? `사번: ${formData.handoverFromEmpNo}` : ''
                       }
                     />
                     {!isViewMode && (
@@ -473,11 +468,11 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                       mode='readonly'
                       fullWidth
                       label='인수자 *'
-                      value={formData.assigneeName || `${formData.assigneeEmpNo}`}
+                      value={formData.assigneeName || `${formData.handoverToEmpNo}`}
                       disabled
                       placeholder='인수자를 선택하세요'
                       helperText={
-                        formData.assigneeEmpNo ? `사번: ${formData.assigneeEmpNo}` : ''
+                        formData.handoverToEmpNo ? `사번: ${formData.handoverToEmpNo}` : ''
                       }
                     />
                     {!isViewMode && (

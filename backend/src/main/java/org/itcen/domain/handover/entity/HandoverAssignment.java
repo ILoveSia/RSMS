@@ -28,8 +28,6 @@ public class HandoverAssignment extends BaseEntity {
     @Column(name = "assignment_id")
     private Long assignmentId;
 
-    @Column(name = "position_id", nullable = false)
-    private Long positionId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "handover_type", nullable = false, length = 20)
@@ -39,17 +37,12 @@ public class HandoverAssignment extends BaseEntity {
     @Column(name = "handover_from_emp_no", length = 20)
     private String handoverFromEmpNo;
 
-    @Column(name = "handover_from_name", length = 50)
-    private String handoverFromName;
-
 
 
     // 인수자 정보
     @Column(name = "handover_to_emp_no", nullable = false, length = 20)
     private String handoverToEmpNo;
 
-    @Column(name = "handover_to_name", nullable = false, length = 50)
-    private String handoverToName;
 
 
 

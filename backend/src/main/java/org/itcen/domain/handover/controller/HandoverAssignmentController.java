@@ -95,7 +95,7 @@ public class HandoverAssignmentController {
             @RequestHeader(value = "X-User-Id", defaultValue = "system") String actorId) {
         
         log.info("인수인계 지정 생성 요청 - 인계자: {}, 인수자: {}", 
-                dto.getHandoverFromEmpNo(), dto.getHandoverToEmpNo());
+                dto.getAssignorEmpNo(), dto.getAssigneeEmpNo());
         
         HandoverAssignmentDto createdAssignment = handoverAssignmentService.createAssignment(dto, actorId);
         return ResponseEntity.ok(createdAssignment);

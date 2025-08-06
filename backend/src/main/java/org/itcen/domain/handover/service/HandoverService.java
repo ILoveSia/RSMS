@@ -75,7 +75,6 @@ public interface HandoverService {
     /**
      * 직책별 인수인계 지정 조회
      */
-    List<HandoverAssignmentDto> getHandoverAssignmentsByPosition(Long positionId);
 
     /**
      * 사용자별 인수인계 현황 조회 (인계자 또는 인수자)
@@ -123,13 +122,9 @@ public interface HandoverService {
 
     interface HandoverAssignmentDto {
         Long getAssignmentId();
-        Long getPositionId();
-        String getPositionName();
         HandoverAssignment.HandoverType getHandoverType();
         String getHandoverFromEmpNo();
-        String getHandoverFromName();
         String getHandoverToEmpNo();
-        String getHandoverToName();
         LocalDate getPlannedStartDate();
         LocalDate getPlannedEndDate();
         HandoverAssignment.HandoverStatus getStatus();
@@ -138,7 +133,6 @@ public interface HandoverService {
     }
 
     interface HandoverAssignmentSearchDto {
-        Long getPositionId();
         HandoverAssignment.HandoverType getHandoverType();
         HandoverAssignment.HandoverStatus getStatus();
         String getHandoverFromEmpNo();

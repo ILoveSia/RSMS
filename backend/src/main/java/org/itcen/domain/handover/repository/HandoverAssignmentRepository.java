@@ -106,12 +106,10 @@ public interface HandoverAssignmentRepository extends JpaRepository<HandoverAssi
     /**
      * 직책 ID와 상태로 조회
      */
-    Optional<HandoverAssignment> findByPositionIdAndStatus(Long positionId, HandoverAssignment.HandoverStatus status);
 
     /**
      * 직책 ID로 조회
      */
-    List<HandoverAssignment> findByPositionId(Long positionId);
 
     /**
      * 사원번호로 조회 (인계자 또는 인수자)
@@ -137,13 +135,11 @@ public interface HandoverAssignmentRepository extends JpaRepository<HandoverAssi
      * 검색 조건으로 조회
      */
     @Query("SELECT h FROM HandoverAssignment h WHERE " +
-           "(:positionId IS NULL OR h.positionId = :positionId) AND " +
            "(:handoverType IS NULL OR h.handoverType = :handoverType) AND " +
            "(:status IS NULL OR h.status = :status) AND " +
            "(:fromEmpNo IS NULL OR h.handoverFromEmpNo LIKE %:fromEmpNo%) AND " +
            "(:toEmpNo IS NULL OR h.handoverToEmpNo LIKE %:toEmpNo%)")
     Page<HandoverAssignment> findBySearchCriteria(
-            @Param("positionId") Long positionId,
             @Param("handoverType") HandoverAssignment.HandoverType handoverType,
             @Param("status") HandoverAssignment.HandoverStatus status,
             @Param("fromEmpNo") String fromEmpNo,

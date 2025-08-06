@@ -40,16 +40,6 @@ public class HandoverServiceImpl implements HandoverService {
     @Override
     @Transactional
     public HandoverAssignment createHandoverAssignment(HandoverAssignment handoverAssignment) {
-        log.debug("인수인계 지정 생성 시작 - positionId: {}, handoverToEmpNo: {}", 
-                  handoverAssignment.getPositionId(), handoverAssignment.getHandoverToEmpNo());
-
-        // 중복 체크: 같은 직책에 대한 진행중인 인수인계가 있는지 확인
-        Optional<HandoverAssignment> existingAssignment = handoverAssignmentRepository
-                .findByPositionIdAndStatus(handoverAssignment.getPositionId(), HandoverAssignment.HandoverStatus.IN_PROGRESS);
-        
-        if (existingAssignment.isPresent()) {
-            throw new BusinessException("해당 직책에 이미 진행중인 인수인계가 있습니다.");
-        }
 
         // 인수인계 지정 저장
         HandoverAssignment savedAssignment = handoverAssignmentRepository.save(handoverAssignment);
@@ -84,9 +74,7 @@ public class HandoverServiceImpl implements HandoverService {
         // 필드 업데이트
         existingAssignment.setHandoverType(handoverAssignment.getHandoverType());
         existingAssignment.setHandoverFromEmpNo(handoverAssignment.getHandoverFromEmpNo());
-        existingAssignment.setHandoverFromName(handoverAssignment.getHandoverFromName());
         existingAssignment.setHandoverToEmpNo(handoverAssignment.getHandoverToEmpNo());
-        existingAssignment.setHandoverToName(handoverAssignment.getHandoverToName());
         existingAssignment.setPlannedStartDate(handoverAssignment.getPlannedStartDate());
         existingAssignment.setPlannedEndDate(handoverAssignment.getPlannedEndDate());
         existingAssignment.setNotes(handoverAssignment.getNotes());
@@ -266,12 +254,6 @@ public class HandoverServiceImpl implements HandoverService {
     // 조회 메서드들은 실제 DTO 변환 로직으로 구현 예정
     // 현재는 기본 구조만 제공
 
-    @Override
-    public List<HandoverAssignmentDto> getHandoverAssignmentsByPosition(Long positionId) {
-        log.debug("직책별 인수인계 지정 조회 - positionId: {}", positionId);
-        List<HandoverAssignment> assignments = handoverAssignmentRepository.findByPositionId(positionId);
-        return convertToDto(assignments);
-    }
 
     @Override
     public List<HandoverAssignmentDto> getHandoverAssignmentsByEmployee(String empNo) {
@@ -306,7 +288,6 @@ public class HandoverServiceImpl implements HandoverService {
         log.debug("복합 조건 검색 - searchDto: {}", searchDto);
         
         Page<HandoverAssignment> assignments = handoverAssignmentRepository.findBySearchCriteria(
-                searchDto.getPositionId(),
                 searchDto.getHandoverType(),
                 searchDto.getStatus(),
                 searchDto.getHandoverFromEmpNo(),
@@ -349,11 +330,6 @@ public class HandoverServiceImpl implements HandoverService {
             @Override
             public Long getAssignmentId() { return assignment.getAssignmentId(); }
             
-            @Override
-            public Long getPositionId() { return assignment.getPositionId(); }
-            
-            @Override
-            public String getPositionName() { return null; } // TODO: Position 조인 후 구현
             
             @Override
             public HandoverAssignment.HandoverType getHandoverType() { return assignment.getHandoverType(); }
@@ -361,14 +337,9 @@ public class HandoverServiceImpl implements HandoverService {
             @Override
             public String getHandoverFromEmpNo() { return assignment.getHandoverFromEmpNo(); }
             
-            @Override
-            public String getHandoverFromName() { return assignment.getHandoverFromName(); }
-            
-            @Override
+            @Override           
             public String getHandoverToEmpNo() { return assignment.getHandoverToEmpNo(); }
             
-            @Override
-            public String getHandoverToName() { return assignment.getHandoverToName(); }
             
             @Override
             public LocalDate getPlannedStartDate() { return assignment.getPlannedStartDate(); }

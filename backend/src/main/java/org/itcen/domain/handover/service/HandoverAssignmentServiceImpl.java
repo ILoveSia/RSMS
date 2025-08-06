@@ -100,12 +100,9 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
         }
 
         HandoverAssignment assignment = HandoverAssignment.builder()
-                .positionId(dto.getPositionId())
                 .handoverType(typeEnum)
                 .handoverFromEmpNo(dto.getHandoverFromEmpNo())
-                .handoverFromName(dto.getHandoverFromName())
                 .handoverToEmpNo(dto.getHandoverToEmpNo())
-                .handoverToName(dto.getHandoverToName())
                 .plannedStartDate(dto.getPlannedStartDate())
                 .plannedEndDate(dto.getPlannedEndDate())
                 .status(HandoverAssignment.HandoverStatus.PLANNED)
@@ -130,9 +127,7 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
 
         // 수정 가능한 필드만 업데이트
         assignment.setHandoverFromEmpNo(dto.getHandoverFromEmpNo());
-        assignment.setHandoverFromName(dto.getHandoverFromName());
         assignment.setHandoverToEmpNo(dto.getHandoverToEmpNo());
-        assignment.setHandoverToName(dto.getHandoverToName());
         assignment.setPlannedStartDate(dto.getPlannedStartDate());
         assignment.setPlannedEndDate(dto.getPlannedEndDate());
         assignment.setNotes(dto.getNotes());
@@ -301,13 +296,10 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
     private HandoverAssignmentDto convertToDto(HandoverAssignment assignment) {
         HandoverAssignmentDto dto = HandoverAssignmentDto.builder()
                 .assignmentId(assignment.getAssignmentId())
-                .positionId(assignment.getPositionId())
                 .handoverType(assignment.getHandoverType() != null ? assignment.getHandoverType().name() : null)
                 .handoverFromEmpNo(assignment.getHandoverFromEmpNo())
-                .handoverFromName(assignment.getHandoverFromName())
 
                 .handoverToEmpNo(assignment.getHandoverToEmpNo())
-                .handoverToName(assignment.getHandoverToName())
 
                 .plannedStartDate(assignment.getPlannedStartDate())
                 .plannedEndDate(assignment.getPlannedEndDate())
