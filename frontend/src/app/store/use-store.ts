@@ -113,11 +113,12 @@ export const useReduxState = <T = unknown>(statePath: string) => {
       actionType = 'MenuStore/accessibleMenus/setData';
     } else if (storeName === 'codeStore' && actionName === 'allCodes') {
       actionType = 'codeStore/allCodes/setData';
+    } else if (storeName === 'departmentStore' && actionName === 'departments') {
+      actionType = 'departmentStore/departments/setData';
     } else {
       // 기본 패턴
       actionType = `${pathArray.join('/')}/setData`;
     }
-
 
     dispatch({
       type: actionType,

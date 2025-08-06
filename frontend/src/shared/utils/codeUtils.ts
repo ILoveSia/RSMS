@@ -40,11 +40,11 @@ export const getCodeNameSync = (
   if (!allCodes || allCodes.length === 0) {
     return codeValue;
   }
-  
+
   const code = allCodes.find(
     (c: CommonCode) => c.groupCode === groupCode && c.code === codeValue
   );
-  
+
   return code ? code.codeName : codeValue;
 };
 
@@ -69,7 +69,7 @@ export const getCodeName = (
  */
 export const useGetCodeName = () => {
   const allCodes = useCommonCodes();
-  return useCallback((groupCode: string, codeValue: string) => 
+  return useCallback((groupCode: string, codeValue: string) =>
     getCodeNameSync(allCodes, groupCode, codeValue), [allCodes]);
 };
 
@@ -88,11 +88,11 @@ export const getRoleTypeNameSync = (
   if (!allCodes || allCodes.length === 0) {
     return codeValue;
   }
-  
+
   // UNI_ROLE_TYPE에서 먼저 찾기
   const uniRoleName = getCodeNameSync(allCodes, 'UNI_ROLE_TYPE', codeValue);
   if (uniRoleName !== codeValue) return uniRoleName;
-  
+
   // COM_ROLE_TYPE에서 찾기
   return getCodeNameSync(allCodes, 'COM_ROLE_TYPE', codeValue);
 };
@@ -114,17 +114,17 @@ export const getRoleTypeName = (codeValue: string): string => {
  */
 export const useGetRoleTypeName = () => {
   const allCodes = useCommonCodes();
-  return useCallback((codeValue: string) => 
+  return useCallback((codeValue: string) =>
     getRoleTypeNameSync(allCodes, codeValue), [allCodes]);
 };
 
 /**
- * 부서명 가져오기 함수
+ * 부서명 가져오기 함수 (순수 함수)
  * @param departments 부서 정보 배열
  * @param deptCd 부서코드
  * @returns 부서명 (없으면 부서코드 그대로 반환)
  */
-export const getDepartmentName = (
+export const getDepartmentNameSync = (
   departments: Department[] | null | undefined,
   deptCd: string
 ): string => {
@@ -132,9 +132,30 @@ export const getDepartmentName = (
   if (!departments || departments.length === 0) {
     return deptCd;
   }
-  
+
   const dept = departments.find(d => d.departmentId === deptCd);
   return dept ? dept.departmentName : deptCd;
+};
+
+/**
+ * 부서명 가져오기 함수 (Hook 버전)
+ * React 컴포넌트에서 직접 사용 가능
+ * @param deptCd 부서코드
+ * @returns 부서명 (없으면 부서코드 그대로 반환)
+ */
+export const getDepartmentName = (deptCd: string): string => {
+  const departments = useDepartments();
+  return getDepartmentNameSync(departments, deptCd);
+};
+
+/**
+ * 콜백 함수에서 사용할 수 있는 getDepartmentName 함수를 반환하는 Hook
+ * @returns getDepartmentName 함수
+ */
+export const useGetDepartmentName = () => {
+  const departments = useDepartments();
+  return useCallback((deptCd: string) =>
+    getDepartmentNameSync(departments, deptCd), [departments]);
 };
 
 /**
@@ -144,7 +165,7 @@ export const getDepartmentName = (
  */
 export const getEmployeeNameSync = async (empNo: string): Promise<string> => {
   if (!empNo) return '';
-  
+
   try {
     const response: any = await apiClient.get(`/users/num/${empNo}`);
     return response?.username || empNo;
@@ -162,13 +183,13 @@ export const getEmployeeNameSync = async (empNo: string): Promise<string> => {
  */
 export const getEmployeeName = (empNo: string): string => {
   const [empName, setEmpName] = useState<string>(empNo);
-  
+
   useEffect(() => {
     if (empNo) {
       getEmployeeNameSync(empNo).then(setEmpName);
     }
   }, [empNo]);
-  
+
   return empName;
 };
 
@@ -193,13 +214,26 @@ export const extractCommonCodes = (
 };
 
 /**
+ * 부서 배열 추출 함수
+ * Redux store에서 가져온 데이터가 배열이거나 { data: Department[] } 형태일 수 있음
+ * @param departmentsData Redux store에서 가져온 부서 데이터
+ * @returns 부서 배열
+ */
+export const extractDepartments = (
+  departmentsData: { data: Department[] } | Department[] | null | undefined
+): Department[] => {
+  if (!departmentsData) return [];
+  return Array.isArray(departmentsData) ? departmentsData : departmentsData?.data || [];
+};
+
+/**
  * 공통코드 가져오기 Hook
  * React 컴포넌트에서만 사용 가능
  * 데이터가 비어있을 때 자동으로 API 호출하여 Redux store에 저장
  */
 export const useCommonCodes = (): CommonCode[] => {
   const { data: allCodesData, setData } = useReduxState<{ data: CommonCode[] } | CommonCode[]>('codeStore/allCodes');
-  
+
   // 데이터가 비어있을 때 자동으로 API 호출
   useEffect(() => {
     const fetchCommonCodes = async () => {
@@ -216,7 +250,49 @@ export const useCommonCodes = (): CommonCode[] => {
     if (!allCodesData || (Array.isArray(allCodesData) && allCodesData.length === 0)) {
       fetchCommonCodes();
     }
-  }, [allCodesData, setData]);
-  
+  }, [allCodesData]);
+
   return useMemo(() => extractCommonCodes(allCodesData), [allCodesData]);
+};
+
+/**
+ * 부서 정보 가져오기 Hook
+ * React 컴포넌트에서만 사용 가능
+ * 데이터가 비어있을 때 자동으로 API 호출하여 Redux store에 저장
+ */
+export const useDepartments = (): Department[] => {
+  // 임시로 로컬 상태 사용해서 테스트
+  const [localDepartments, setLocalDepartments] = useState<Department[]>([]);
+  const { data: departmentsData, setData } = useReduxState<{ data: Department[] } | Department[]>('departmentStore/departments');
+
+  // 데이터가 비어있을 때 자동으로 API 호출
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await apiClient.get('/departments');
+        if (response && Array.isArray(response)) {
+          setData({ data: response });
+          // 임시로 로컬 상태에도 저장
+          setLocalDepartments(response);
+        }
+      } catch (error) {
+        console.error('부서 정보 조회 실패:', error);
+      }
+    };
+
+    if ((!departmentsData || (Array.isArray(departmentsData) && departmentsData.length === 0)) && localDepartments.length === 0) {
+      fetchDepartments();
+    }
+  }, [departmentsData, localDepartments.length]);
+
+  // Redux에서 데이터가 있으면 Redux 사용, 없으면 로컬 상태 사용
+  const result = useMemo(() => {
+    const reduxResult = extractDepartments(departmentsData);
+    if (reduxResult.length > 0) {
+      return reduxResult;
+    }
+    return localDepartments;
+  }, [departmentsData, localDepartments]);
+
+  return result;
 };
