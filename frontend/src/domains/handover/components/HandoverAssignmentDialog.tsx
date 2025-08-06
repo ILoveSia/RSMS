@@ -44,7 +44,7 @@ interface HandoverAssignmentDialogProps {
 }
 
 interface FormData {
-  assignmentTitle: string;
+  // assignmentTitle: string;
   assignmentType: string;
   assignorEmpNo: string;
   assignorName: string;
@@ -59,7 +59,7 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  assignmentTitle: '',
+  // assignmentTitle: '',
   assignmentType: '',
   assignorEmpNo: '',
   assignorName: '',
@@ -78,6 +78,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   onClose,
   mode: initialMode,
   assignmentId,
+  assignmentData,
   onSuccess,
 }) => {
   const [mode, setMode] = useState<'create' | 'edit' | 'view'>(initialMode);
@@ -155,84 +156,33 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
     [getCodesArray]
   );
 
-  // 데이터 로드 함수
-  const loadAssignmentData = useCallback(async () => {
-    if (!assignmentId) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      // TODO: 실제 API 호출로 대체
-      // const data = await handoverApi.getAssignment(assignmentId);
-      
-      // Mock 데이터
-      const mockData: HandoverAssignmentDto = {
-        assignmentId,
-        assignmentTitle: '정보기술부 부서장 인수인계',
-        assignmentType: 'POSITION_CHANGE',
-        assignorEmpNo: 'E001',
-        assignorName: '김인계',
-        assigneeEmpNo: 'E002',
-        assigneeName: '이인수',
-        deptCd: 'IT001',
-        deptName: '정보기술부',
-        positionCd: 'POS001',
-        positionName: '부서장',
-        status: 'IN_PROGRESS',
-        targetDate: '2024-02-01',
-        description: 'IT부서장 직위 변경에 따른 인수인계',
-        assignorApprovalStatus: 'APPROVED',
-        assigneeApprovalStatus: 'PENDING',
-        managerApprovalStatus: 'PENDING',
-        createdAt: '2024-01-15',
-        updatedAt: '2024-01-20',
-      };
-
-      setFormData({
-        assignmentTitle: mockData.assignmentTitle,
-        assignmentType: mockData.assignmentType,
-        assignorEmpNo: mockData.assignorEmpNo,
-        assignorName: mockData.assignorName || '',
-        assigneeEmpNo: mockData.assigneeEmpNo,
-        assigneeName: mockData.assigneeName || '',
-        deptCd: mockData.deptCd,
-        deptName: mockData.deptName || '',
-        positionCd: mockData.positionCd || '',
-        positionName: mockData.positionName || '',
-        targetDate: mockData.targetDate || '',
-        description: mockData.description || '',
-      });
-
-    } catch (err) {
-      console.error('Failed to load assignment data:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [assignmentId]);
-
-  // initialMode이 변경될 때 내부 mode 상태 업데이트
+  // initialMode 또는 assignmentData가 변경될 때 상태 업데이트
   useEffect(() => {
     setMode(initialMode);
-  }, [initialMode]);
-
-  // 데이터 로드
-  useEffect(() => {
-    if (open && assignmentId && (isEditMode || isViewMode)) {
-      loadAssignmentData();
-    } else if (open && isCreateMode) {
-      setFormData(initialFormData);
-      setError(null);
+    if (open) {
+      if ((initialMode === 'edit' || initialMode === 'view') && assignmentData) {
+        setLoading(true);
+        setFormData({
+          assignmentType: assignmentData.assignmentType,
+          assignorEmpNo: assignmentData.assignorEmpNo,
+          assignorName: assignmentData.assignorName || '',
+          assigneeEmpNo: assignmentData.assigneeEmpNo,
+          assigneeName: assignmentData.assigneeName || '',
+          deptCd: assignmentData.deptCd,
+          deptName: assignmentData.deptName || '',
+          positionCd: assignmentData.positionCd || '',
+          positionName: assignmentData.positionName || '',
+          targetDate: assignmentData.targetDate || '',
+          description: assignmentData.description || '',
+        });
+        setError(null);
+        setLoading(false);
+      } else if (initialMode === 'create') {
+        setFormData(initialFormData);
+        setError(null);
+      }
     }
-  }, [
-    open,
-    assignmentId,
-    mode,
-    isEditMode,
-    isViewMode,
-    isCreateMode,
-    loadAssignmentData,
-  ]);
+  }, [open, initialMode, assignmentData]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
@@ -242,10 +192,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   };
 
   const validateForm = (): boolean => {
-    if (!formData.assignmentTitle.trim()) {
-      setError('인수인계 제목을 입력해주세요.');
-      return false;
-    }
+    
     if (!formData.assignmentType) {
       setError('인수인계 유형을 선택해주세요.');
       return false;
@@ -277,7 +224,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
 
     try {
       const requestData = {
-        assignmentTitle: formData.assignmentTitle,
+        // assignmentTitle: formData.assignmentTitle,
         assignmentType: formData.assignmentType,
         assignorEmpNo: formData.assignorEmpNo,
         assigneeEmpNo: formData.assigneeEmpNo,
@@ -320,8 +267,8 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   const handleAssigneeSelect = (employee: Employee) => {
     setFormData(prev => ({
       ...prev,
-      assigneeEmpNo: employee.empNo,
-      assigneeName: employee.empName,
+      handoverToEmpNo: employee.empNo,
+      handoverToName: employee.empName,
     }));
     setAssigneeSearchOpen(false);
   };
@@ -432,16 +379,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
               )}
 
               <Grid container spacing={2}>
-                {/* 인수인계 제목 */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='인수인계 제목 *'
-                    value={formData.assignmentTitle}
-                    onChange={e => handleInputChange('assignmentTitle', e.target.value)}
-                    disabled={isViewMode}
-                  />
-                </Grid>
+                
 
                 {/* 인수인계 유형 */}
                 <Grid item xs={12} sm={6}>
