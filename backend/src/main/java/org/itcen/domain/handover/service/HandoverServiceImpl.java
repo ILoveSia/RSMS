@@ -140,7 +140,6 @@ public class HandoverServiceImpl implements HandoverService {
         }
 
         // 인수인계 시작
-        assignment.startHandover();
         assignment.setUpdatedId(actorEmpNo);
         handoverAssignmentRepository.save(assignment);
 
@@ -171,7 +170,6 @@ public class HandoverServiceImpl implements HandoverService {
         }
 
         // 인수인계 완료
-        assignment.completeHandover();
         assignment.setUpdatedId(actorEmpNo);
         handoverAssignmentRepository.save(assignment);
 
@@ -219,37 +217,6 @@ public class HandoverServiceImpl implements HandoverService {
         log.debug("인수인계 취소 완료 - assignmentId: {}", assignmentId);
     }
 
-    @Override
-    @Transactional
-    public void updateProgress(Long assignmentId, Integer progressRate, String actorEmpNo) {
-        log.debug("진행률 업데이트 - assignmentId: {}, progressRate: {}", assignmentId, progressRate);
-
-        HandoverAssignment assignment = handoverAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new BusinessException("인수인계 지정을 찾을 수 없습니다: " + assignmentId));
-
-        // 진행률 업데이트 가능 여부 확인
-        if (assignment.getStatus() != HandoverAssignment.HandoverStatus.IN_PROGRESS) {
-            throw new BusinessException("진행중인 인수인계만 진행률을 업데이트할 수 있습니다.");
-        }
-
-        Integer previousProgress = assignment.getProgressRate();
-        assignment.updateProgress(progressRate);
-        assignment.setUpdatedId(actorEmpNo);
-        handoverAssignmentRepository.save(assignment);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createAssignmentHistory(
-                assignmentId,
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                String.format("진행률이 업데이트되었습니다. (%d%% → %d%%)", 
-                             previousProgress != null ? previousProgress : 0, progressRate),
-                actorEmpNo,
-                null
-        );
-        handoverHistoryRepository.save(history);
-
-        log.debug("진행률 업데이트 완료 - assignmentId: {}, progressRate: {}", assignmentId, progressRate);
-    }
 
     // 조회 메서드들은 실제 DTO 변환 로직으로 구현 예정
     // 현재는 기본 구조만 제공
@@ -350,8 +317,6 @@ public class HandoverServiceImpl implements HandoverService {
             @Override
             public HandoverAssignment.HandoverStatus getStatus() { return assignment.getStatus(); }
             
-            @Override
-            public Integer getProgressRate() { return assignment.getProgressRate(); }
             
             @Override
             public String getNotes() { return assignment.getNotes(); }

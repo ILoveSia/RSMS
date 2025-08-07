@@ -65,9 +65,7 @@ public class HandoverAssignment extends BaseEntity {
     @Builder.Default
     private HandoverStatus status = HandoverStatus.PLANNED;
 
-    @Column(name = "progress_rate")
-    @Builder.Default
-    private Integer progressRate = 0;
+    
 
     // 비고
     @Column(name = "notes", columnDefinition = "TEXT")
@@ -112,44 +110,10 @@ public class HandoverAssignment extends BaseEntity {
     }
 
     /**
-     * 인수인계 시작
-     */
-    public void startHandover() {
-        this.status = HandoverStatus.IN_PROGRESS;
-        this.actualStartDate = LocalDateTime.now();
-        if (this.progressRate == null || this.progressRate == 0) {
-            this.progressRate = 10; // 시작 시 10%로 설정
-        }
-    }
-
-    /**
-     * 인수인계 완료
-     */
-    public void completeHandover() {
-        this.status = HandoverStatus.COMPLETED;
-        this.actualEndDate = LocalDateTime.now();
-        this.progressRate = 100;
-    }
-
-    /**
      * 인수인계 취소
      */
     public void cancelHandover() {
         this.status = HandoverStatus.CANCELLED;
     }
 
-    /**
-     * 진행률 업데이트
-     */
-    public void updateProgress(Integer progressRate) {
-        if (progressRate < 0 || progressRate > 100) {
-            throw new IllegalArgumentException("진행률은 0-100 사이의 값이어야 합니다.");
-        }
-        this.progressRate = progressRate;
-        
-        // 100% 달성 시 자동 완료
-        if (progressRate == 100) {
-            completeHandover();
-        }
-    }
 }

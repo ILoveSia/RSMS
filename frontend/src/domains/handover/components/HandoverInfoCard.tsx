@@ -172,20 +172,6 @@ const HandoverInfoCard: React.FC<HandoverInfoCardProps> = ({
           </Stack>
         </Box>
 
-        {/* 진행률 (진행 중일 때만) */}
-        {assignment.status === 'IN_PROGRESS' && assignment.progressRate !== undefined && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="caption" color="text.secondary" gutterBottom>
-              진행률
-            </Typography>
-            <ProgressIndicator
-              value={assignment.progressRate}
-              status={assignment.status as any}
-              size="small"
-            />
-          </Box>
-        )}
-
         {!compact && (
           <>
             <Divider sx={{ my: 2 }} />
@@ -210,20 +196,6 @@ const HandoverInfoCard: React.FC<HandoverInfoCardProps> = ({
               )}
             </Stack>
           </>
-        )}
-
-        {/* 컴팩트 모드에서의 간단한 정보 */}
-        {compact && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              {assignment.plannedStartDate} ~ {assignment.plannedEndDate}
-            </Typography>
-            {assignment.progressRate !== undefined && assignment.progressRate > 0 && (
-              <Typography variant="caption" fontWeight="bold">
-                {assignment.progressRate}%
-              </Typography>
-            )}
-          </Box>
         )}
 
         {/* 비고 (있는 경우만) */}

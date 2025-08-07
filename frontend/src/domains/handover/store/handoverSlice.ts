@@ -123,22 +123,6 @@ export const cancelHandover = createAsyncThunk(
   }
 );
 
-export const updateProgress = createAsyncThunk(
-  'handover/updateProgress',
-  async ({ 
-    assignmentId, 
-    progressRate, 
-    actorEmpNo 
-  }: { 
-    assignmentId: number; 
-    progressRate: number; 
-    actorEmpNo: string;
-  }) => {
-    await HandoverApi.updateProgress(assignmentId, progressRate, actorEmpNo);
-    return { assignmentId, progressRate };
-  }
-);
-
 export const fetchHandoverStatistics = createAsyncThunk(
   'handover/fetchStatistics',
   async () => {
@@ -291,11 +275,9 @@ const handoverSlice = createSlice({
         );
         if (index !== -1) {
           state.assignments[index].status = 'COMPLETED';
-          state.assignments[index].progressRate = 100;
         }
         if (state.currentAssignment?.assignmentId === action.payload) {
           state.currentAssignment.status = 'COMPLETED';
-          state.currentAssignment.progressRate = 100;
         }
       })
 
@@ -309,20 +291,6 @@ const handoverSlice = createSlice({
         }
         if (state.currentAssignment?.assignmentId === action.payload) {
           state.currentAssignment.status = 'CANCELLED';
-        }
-      })
-
-    // Update progress
-      .addCase(updateProgress.fulfilled, (state, action) => {
-        const { assignmentId, progressRate } = action.payload;
-        const index = state.assignments.findIndex(
-          item => item.assignmentId === assignmentId
-        );
-        if (index !== -1) {
-          state.assignments[index].progressRate = progressRate;
-        }
-        if (state.currentAssignment?.assignmentId === assignmentId) {
-          state.currentAssignment.progressRate = progressRate;
         }
       })
 

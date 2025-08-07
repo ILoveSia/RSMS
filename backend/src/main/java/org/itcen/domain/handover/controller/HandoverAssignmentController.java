@@ -173,23 +173,6 @@ public class HandoverAssignmentController {
         HandoverAssignmentDto assignment = handoverAssignmentService.cancelHandover(assignmentId, reason, actorId);
         return ResponseEntity.ok(assignment);
     }
-
-    /**
-     * 진행률 업데이트
-     */
-    @PostMapping("/{assignmentId}/progress")
-    public ResponseEntity<HandoverAssignmentDto> updateProgress(
-            @PathVariable Long assignmentId,
-            @RequestBody Map<String, Integer> request,
-            @RequestHeader(value = "X-User-Id", defaultValue = "system") String actorId) {
-        
-        Integer progressRate = request.get("progressRate");
-        log.info("인수인계 진행률 업데이트 요청 - ID: {}, 진행률: {}%", assignmentId, progressRate);
-        
-        HandoverAssignmentDto assignment = handoverAssignmentService.updateProgress(assignmentId, progressRate, actorId);
-        return ResponseEntity.ok(assignment);
-    }
-
     /**
      * 사용자별 인수인계 목록 조회
      */

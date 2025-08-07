@@ -38,7 +38,6 @@ public class HandoverAssignmentDto {
 
     // 상태 관리
     private String status;
-    private Integer progressRate;
 
     // 비고
     private String notes;

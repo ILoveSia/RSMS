@@ -22,7 +22,9 @@ import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { handoverApi, type HandoverAssignmentDto } from '../api/handoverApi';
 import HandoverAssignmentDialog from '../components/HandoverAssignmentDialog';
+import type { EmployeeSearchResult } from '@/domains/common/components/search';
 import { getDepartmentNameSync, useDepartments } from '@/shared/utils/codeUtils';
+import apiClient from '@/app/common/api/client';
 
 interface IHandoverAssignmentListPageProps {
   className?: string;
@@ -63,8 +65,8 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        const assignorName = params.row.assignorName || '';
-        const assigneeName = params.row.assigneeName || '';
+        const assignorName = params.row.handoverFromEmpName || '';
+        const assigneeName = params.row.handoverToEmpName || '';
         return (
           <Box
             onClick={(e) => {
@@ -108,8 +110,18 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
       renderCell: params => getStatusChip(params.value),
     },
     {
-      field: 'targetDate',
-      headerName: '목표일자',
+      field: 'plannedStartDate',
+      headerName: '목표시작일자',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+      },
+    },
+    {
+      field: 'plannedEndDate',
+      headerName: '목표완료일자',
       width: 120,
       align: 'center',
       headerAlign: 'center',
@@ -159,7 +171,61 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
         searchParams,
         { page: 0, size: 100 }
       );
-      setRows(response.data || []);
+      const enrichedData = await Promise.all(
+        (response.data || []).map(async (item) => {
+          try {
+            const [assignorResponse, assigneeResponse] = await Promise.all([
+              apiClient.get(`/users/num/${item.handoverFromEmpNo}`) as Promise<EmployeeSearchResult>,
+              apiClient.get(`/users/num/${item.handoverToEmpNo}`) as Promise<EmployeeSearchResult>
+            ]);
+                return {
+                ...item,
+                // 사원명 (백엔드에서 이미 오는 필드 + API로 보강)
+                handoverFromEmpName: assignorResponse?.username || item.handoverFromEmpNo || '',
+                handoverToEmpName: assigneeResponse?.username || item.handoverToEmpNo || '',
+                // 부서 정보
+                assignorDeptCd: assignorResponse?.deptCd || '',
+                assignorDeptName: assignorResponse?.deptName || '',
+                assigneeDeptCd: assigneeResponse?.deptCd || '',
+                assigneeDeptName: assigneeResponse?.deptName || '',
+                // 직위 정보
+                assignorPositionCd: assignorResponse?.jobTitleCd || '',
+                assigneePositionCd: assigneeResponse?.jobTitleCd || '',
+                // 기타 매핑 (백엔드 camelCase 필드 사용)
+                assignmentType: item.handoverType,
+                handoverType: item.handoverType,  // Dialog에서 사용할 필드
+                plannedStartDate: item.plannedStartDate,
+                plannedEndDate: item.plannedEndDate,
+                targetDate: item.plannedEndDate,  // Dialog 호환성을 위해 유지
+                description: item.notes,
+                status: item.status,
+              };
+          } catch (error) {
+            console.error('사원 정보 조회 실패:', error);
+            // 실패 시 기본값 사용
+            return {
+              ...item,
+              handoverFromEmpName: item.handoverFromName || item.handoverFromEmpNo || '',
+              handoverToEmpName: item.handoverToName || item.handoverToEmpNo || '',
+              assignorDeptCd: '',
+              assignorDeptName: '',
+              assigneeDeptCd: '',
+              assigneeDeptName: '',
+              assignorPositionCd: '',
+              assigneePositionCd: '',
+              assignmentType: item.handoverType,
+              handoverType: item.handoverType,  // Dialog에서 사용할 필드
+              plannedStartDate: item.plannedStartDate,
+              plannedEndDate: item.plannedEndDate,
+              targetDate: item.plannedEndDate,  // Dialog 호환성을 위해 유지
+              description: item.notes,
+              status: item.status,
+            };
+          }
+        })
+      );
+      
+      setRows(enrichedData);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');

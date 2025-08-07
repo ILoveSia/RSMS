@@ -65,11 +65,6 @@ public interface HandoverService {
      */
     void cancelHandover(Long assignmentId, String actorEmpNo, String reason);
 
-    /**
-     * 진행률 업데이트
-     */
-    void updateProgress(Long assignmentId, Integer progressRate, String actorEmpNo);
-
     // 조회 기능
 
     /**
@@ -128,7 +123,6 @@ public interface HandoverService {
         LocalDate getPlannedStartDate();
         LocalDate getPlannedEndDate();
         HandoverAssignment.HandoverStatus getStatus();
-        Integer getProgressRate();
         String getNotes();
     }
 

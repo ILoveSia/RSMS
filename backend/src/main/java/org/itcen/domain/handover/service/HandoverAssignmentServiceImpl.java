@@ -88,6 +88,9 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
         log.info("인수인계 지정 생성 - 인계자: {}, 인수자: {}, 생성자: {}",
                 dto.getHandoverFromEmpNo(), dto.getHandoverToEmpNo(), actorId);
 
+        // 중복 검증
+        validateDuplicateHandoverRelation(dto.getHandoverFromEmpNo(), dto.getHandoverToEmpNo());
+
         // String을 enum으로 변환
         HandoverAssignment.HandoverType typeEnum = null;
         if (dto.getHandoverType() != null) {
@@ -106,7 +109,6 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
                 .plannedStartDate(dto.getPlannedStartDate())
                 .plannedEndDate(dto.getPlannedEndDate())
                 .status(HandoverAssignment.HandoverStatus.PLANNED)
-                .progressRate(0)
                 .notes(dto.getNotes())
                 .build();
 
@@ -125,7 +127,30 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
         HandoverAssignment assignment = handoverAssignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new RuntimeException("인수인계 지정을 찾을 수 없습니다: " + assignmentId));
 
+        // 중복 검증 (자기 자신 제외)
+        validateDuplicateHandoverRelationForUpdate(assignmentId, dto.getHandoverFromEmpNo(), dto.getHandoverToEmpNo());
+
         // 수정 가능한 필드만 업데이트
+        // handoverType 변환 및 설정
+        if (dto.getHandoverType() != null) {
+            try {
+                HandoverAssignment.HandoverType typeEnum = HandoverAssignment.HandoverType.valueOf(dto.getHandoverType());
+                assignment.setHandoverType(typeEnum);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid handoverType value: {}", dto.getHandoverType());
+            }
+        }
+        
+        // status 변환 및 설정
+        if (dto.getStatus() != null) {
+            try {
+                HandoverAssignment.HandoverStatus statusEnum = HandoverAssignment.HandoverStatus.valueOf(dto.getStatus());
+                assignment.setStatus(statusEnum);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status value: {}", dto.getStatus());
+            }
+        }
+        
         assignment.setHandoverFromEmpNo(dto.getHandoverFromEmpNo());
         assignment.setHandoverToEmpNo(dto.getHandoverToEmpNo());
         assignment.setPlannedStartDate(dto.getPlannedStartDate());
@@ -167,7 +192,6 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
 
         assignment.setStatus(HandoverAssignment.HandoverStatus.IN_PROGRESS);
         assignment.setActualStartDate(LocalDateTime.now());
-        assignment.setProgressRate(10); // 시작 시 10%로 설정
         assignment.setUpdatedId(actorId);
 
         HandoverAssignment updatedAssignment = handoverAssignmentRepository.save(assignment);
@@ -188,7 +212,6 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
 
         assignment.setStatus(HandoverAssignment.HandoverStatus.COMPLETED);
         assignment.setActualEndDate(LocalDateTime.now());
-        assignment.setProgressRate(100);
         assignment.setUpdatedId(actorId);
 
         HandoverAssignment updatedAssignment = handoverAssignmentRepository.save(assignment);
@@ -211,36 +234,6 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
         String currentNotes = assignment.getNotes() != null ? assignment.getNotes() : "";
         assignment.setNotes(currentNotes + "\n[취소 사유] " + reason);
         assignment.setUpdatedId(actorId);
-
-        HandoverAssignment updatedAssignment = handoverAssignmentRepository.save(assignment);
-        return convertToDto(updatedAssignment);
-    }
-
-    @Override
-    @Transactional
-    public HandoverAssignmentDto updateProgress(Long assignmentId, Integer progressRate, String actorId) {
-        log.info("인수인계 진행률 업데이트 - ID: {}, 진행률: {}%, 업데이트자: {}",
-                assignmentId, progressRate, actorId);
-
-        HandoverAssignment assignment = handoverAssignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("인수인계 지정을 찾을 수 없습니다: " + assignmentId));
-
-        if (!HandoverAssignment.HandoverStatus.IN_PROGRESS.equals(assignment.getStatus())) {
-            throw new RuntimeException("진행 중인 인수인계만 진행률을 업데이트할 수 있습니다.");
-        }
-
-        if (progressRate < 0 || progressRate > 100) {
-            throw new RuntimeException("진행률은 0-100 사이의 값이어야 합니다.");
-        }
-
-        assignment.setProgressRate(progressRate);
-        assignment.setUpdatedId(actorId);
-
-        // 100% 달성 시 자동 완료
-        if (progressRate == 100) {
-            assignment.setStatus(HandoverAssignment.HandoverStatus.COMPLETED);
-            assignment.setActualEndDate(LocalDateTime.now());
-        }
 
         HandoverAssignment updatedAssignment = handoverAssignmentRepository.save(assignment);
         return convertToDto(updatedAssignment);
@@ -291,6 +284,34 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
     }
 
     /**
+     * 인수인계 관계 중복 검증 (생성 시)
+     */
+    private void validateDuplicateHandoverRelation(String fromEmpNo, String toEmpNo) {
+        if (fromEmpNo == null || toEmpNo == null) {
+            return;
+        }
+
+        boolean exists = handoverAssignmentRepository.existsByHandoverFromEmpNoAndHandoverToEmpNo(fromEmpNo, toEmpNo);
+        if (exists) {
+            throw new RuntimeException(String.format("이미 동일한 인계자(%s)와 인수자(%s) 관계의 인수인계 지정이 존재합니다.", fromEmpNo, toEmpNo));
+        }
+    }
+
+    /**
+     * 인수인계 관계 중복 검증 (수정 시 - 자기 자신 제외)
+     */
+    private void validateDuplicateHandoverRelationForUpdate(Long assignmentId, String fromEmpNo, String toEmpNo) {
+        if (fromEmpNo == null || toEmpNo == null) {
+            return;
+        }
+
+        boolean exists = handoverAssignmentRepository.existsByHandoverFromEmpNoAndHandoverToEmpNoExcludingId(assignmentId, fromEmpNo, toEmpNo);
+        if (exists) {
+            throw new RuntimeException(String.format("이미 동일한 인계자(%s)와 인수자(%s) 관계의 인수인계 지정이 존재합니다.", fromEmpNo, toEmpNo));
+        }
+    }
+
+    /**
      * 엔티티를 DTO로 변환
      */
     private HandoverAssignmentDto convertToDto(HandoverAssignment assignment) {
@@ -306,7 +327,6 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
                 .actualStartDate(assignment.getActualStartDate())
                 .actualEndDate(assignment.getActualEndDate())
                 .status(assignment.getStatus() != null ? assignment.getStatus().name() : null)
-                .progressRate(assignment.getProgressRate())
                 .notes(assignment.getNotes())
                 .createdAt(assignment.getCreatedAt())
                 .updatedAt(assignment.getUpdatedAt())

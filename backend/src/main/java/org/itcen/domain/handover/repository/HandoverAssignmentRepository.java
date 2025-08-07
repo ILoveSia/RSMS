@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+
 
 /**
  * 인수인계 지정 레포지토리
@@ -145,4 +145,24 @@ public interface HandoverAssignmentRepository extends JpaRepository<HandoverAssi
             @Param("fromEmpNo") String fromEmpNo,
             @Param("toEmpNo") String toEmpNo,
             Pageable pageable);
+
+    /**
+     * 같은 인계자-인수자 관계가 존재하는지 확인 (생성 시 중복 검증용)
+     */
+    @Query("SELECT COUNT(h) > 0 FROM HandoverAssignment h WHERE " +
+           "h.handoverFromEmpNo = :fromEmpNo AND h.handoverToEmpNo = :toEmpNo")
+    boolean existsByHandoverFromEmpNoAndHandoverToEmpNo(
+            @Param("fromEmpNo") String fromEmpNo,
+            @Param("toEmpNo") String toEmpNo);
+
+    /**
+     * 자기 자신을 제외하고 같은 인계자-인수자 관계가 존재하는지 확인 (수정 시 중복 검증용)
+     */
+    @Query("SELECT COUNT(h) > 0 FROM HandoverAssignment h WHERE " +
+           "h.assignmentId != :assignmentId AND " +
+           "h.handoverFromEmpNo = :fromEmpNo AND h.handoverToEmpNo = :toEmpNo")
+    boolean existsByHandoverFromEmpNoAndHandoverToEmpNoExcludingId(
+            @Param("assignmentId") Long assignmentId,
+            @Param("fromEmpNo") String fromEmpNo,
+            @Param("toEmpNo") String toEmpNo);
 }

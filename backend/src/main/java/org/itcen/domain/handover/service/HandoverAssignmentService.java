@@ -65,11 +65,6 @@ public interface HandoverAssignmentService {
     HandoverAssignmentDto cancelHandover(Long assignmentId, String reason, String actorId);
 
     /**
-     * 진행률 업데이트
-     */
-    HandoverAssignmentDto updateProgress(Long assignmentId, Integer progressRate, String actorId);
-
-    /**
      * 사용자별 인수인계 목록 조회
      */
     List<HandoverAssignmentDto> getAssignmentsByEmployee(String empNo);

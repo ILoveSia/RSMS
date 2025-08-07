@@ -51,13 +51,40 @@ export interface HandoverAssignment {
   handover_type: string,
   handover_from_emp_no: string,
   handover_to_emp_no: string,
-  notes: string,
+  notes?: string,
 }
 
 export interface HandoverAssignmentDto extends HandoverAssignment {
-  // 기존 필드들
+  // 백엔드 응답 필드들 (camelCase)
+  assignmentId?: number;
+  handoverType: string;
+  handoverFromEmpNo: string;
+  handoverToEmpNo: string;
+  handoverFromName?: string;
+  handoverToName?: string;
+  plannedStartDate?: string;
+  plannedEndDate?: string;
+  status: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  createdId?: string;
+  updatedId?: string;
 
-  // 프론트엔드 호환을 위한 추가 필드들
+  // 프론트엔드에서 추가로 보강하는 필드들
+  assignorName?: string;
+  assigneeName?: string;
+  assignorDeptCd?: string;
+  assignorDeptName?: string;
+  assigneeDeptCd?: string;
+  assigneeDeptName?: string;
+  assignorPositionCd?: string;
+  assigneePositionCd?: string;
+  assignmentType?: string;
+  targetDate?: string;
+  description?: string;
+  handoverFromEmpName?: string;
+  handoverToEmpName?: string;
 }
 
 export interface HandoverSearchParams {
@@ -70,8 +97,6 @@ export interface HandoverSearchParams {
   endDate?: string;
   deptCd?: string;
   keyword?: string;
-  minProgressRate?: number;
-  maxProgressRate?: number;
   isDelayed?: boolean;
   createdBy?: string;
   updatedBy?: string;
@@ -116,9 +141,9 @@ export class HandoverApi {
    */
   static async updateHandoverAssignment(
     assignmentId: number,
-    data: HandoverAssignment
-  ): Promise<HandoverAssignment> {
-    return apiClient.put<HandoverAssignment>(`${this.BASE_PATH}/${assignmentId}`, data);
+    data: HandoverAssignmentDto
+  ): Promise<HandoverAssignmentDto> {
+    return apiClient.put<HandoverAssignmentDto>(`${this.BASE_PATH}/${assignmentId}`, data);
   }
 
   /**
@@ -176,19 +201,6 @@ export class HandoverApi {
     }
     return apiClient.post(`${this.BASE_PATH}/${assignmentId}/cancel`, null, {
       params
-    });
-  }
-
-  /**
-   * 진행률 업데이트
-   */
-  static async updateProgress(
-    assignmentId: number,
-    progressRate: number,
-    actorEmpNo: string
-  ): Promise<void> {
-    return apiClient.post(`${this.BASE_PATH}/${assignmentId}/progress`, null, {
-      params: { progressRate, actorEmpNo }
     });
   }
 

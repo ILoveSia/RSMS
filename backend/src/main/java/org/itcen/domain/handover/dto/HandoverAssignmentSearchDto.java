@@ -36,8 +36,6 @@ public class HandoverAssignmentSearchDto {
     // 추가 검색 조건들
     private String deptCd;
     private String keyword; // 제목이나 내용 검색용
-    private Integer minProgressRate;
-    private Integer maxProgressRate;
     private Boolean isDelayed;
     private String createdBy;
     private String updatedBy;

@@ -9,14 +9,12 @@
  * - Interface Segregation: 다이얼로그 관련 기능만 제공
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
-
+import DatePicker from '@/shared/components/ui/form/DatePicker';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import { getDepartmentNameSync, useDepartments, getEmployeeNameSync } from '@/shared/utils/codeUtils';
 import {
-  DepartmentSearchPopup,
   EmployeeSearchPopup,
-  type Department,
   type EmployeeSearchResult,
 } from '@/domains/common/components/search';
 import type { SelectOption } from '@/shared/types/common';
@@ -35,7 +33,15 @@ import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
 import { handoverApi, type HandoverAssignmentDto } from '../api/handoverApi';
-import apiClient from '@/app/common/api/client';
+
+// Date를 YYYY-MM-DD 형식의 문자열로 변환하는 유틸리티 함수
+const formatDateToString = (date: Date | null): string => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 interface HandoverAssignmentDialogProps {
   open: boolean;
@@ -48,7 +54,7 @@ interface HandoverAssignmentDialogProps {
 
 interface FormData {
   // assignmentTitle: string;
-  assignmentType: string;
+  handoverType: string;  // 인수인계 유형 (POSITION, RESPONSIBILITY)
   handoverFromEmpNo: string;
   assignorName: string;
   handoverToEmpNo: string;
@@ -59,13 +65,15 @@ interface FormData {
   assigneeDeptName: string;
   assignorPositionCd: string;
   assigneePositionCd: string;
-  targetDate: string;
+  plannedStartDate: Date | null;
+  plannedEndDate: Date | null;
   description: string;
+  status: string;  // 진행 상태 (PLANNED, IN_PROGRESS 등)
 }
 
 const initialFormData: FormData = {
   // assignmentTitle: '',
-  assignmentType: '',
+  handoverType: '',
   handoverFromEmpNo: '',
   assignorName: '',
   handoverToEmpNo: '',
@@ -76,8 +84,10 @@ const initialFormData: FormData = {
   assigneeDeptName: '',
   assignorPositionCd: '',
   assigneePositionCd: '',
-  targetDate: '',
+  plannedStartDate: null,
+  plannedEndDate: null,
   description: '',
+  status: 'PLANNED',  // 기본값: 계획됨
 };
 
 const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
@@ -97,7 +107,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   // 팝업 상태들
   const [assignorSearchOpen, setAssignorSearchOpen] = useState(false);
   const [assigneeSearchOpen, setAssigneeSearchOpen] = useState(false);
-  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -150,55 +159,29 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
     setMode(initialMode);
     if (open) {
       if ((initialMode === 'edit' || initialMode === 'view') && assignmentData) {
-        console.log(assignmentData)
-        setLoading(true);
-        
-        // 사원 정보 비동기 조회
-        const loadEmployeeInfo = async () => {
-          try {
-            const [assignorResponse, assigneeResponse] = await Promise.all([
-              apiClient.get(`/users/num/${assignmentData.handoverFromEmpNo}`),
-              apiClient.get(`/users/num/${assignmentData.handoverToEmpNo}`)
-            ]);
-            console.log(assignorResponse)
-            console.log(assigneeResponse)
-            setFormData({
-              assignmentType: assignmentData.assignmentType,
-              handoverFromEmpNo: assignmentData.handoverFromEmpNo,
-              assignorName:assignmentData.assignorName || '',
-              handoverToEmpNo: assignmentData.handoverToEmpNo,
-              assigneeName:assignmentData.assigneeName || '',
-              assignorDeptCd: assignorResponse?.deptCd || assignmentData.deptCode || '',
-              assignorDeptName: '',
-              assigneeDeptCd: assigneeResponse?.deptCd || assignmentData.deptCode || '',
-              assigneeDeptName: '',
-              assignorPositionCd: assignorResponse?.jobTitleCd || assignmentData.positionCd || '',
-              assigneePositionCd: assigneeResponse?.jobTitleCd || assignmentData.positionCd || '',
-              targetDate: assignmentData.targetDate || '',
-              description: assignmentData.description || '',
-            });
-          } catch (error) {
-            console.error('사원명 조회 실패:', error);
-            // 사원명 조회 실패 시 기본값 사용
-            setFormData({
-              assignmentType: assignmentData.assignmentType,
-              handoverFromEmpNo: assignmentData.handoverFromEmpNo,
-              assignorName: assignmentData.assignorName || '',
-              handoverToEmpNo: assignmentData.handoverToEmpNo,
-              assigneeName: assignmentData.assigneeName || '',
-              deptCd: assignmentData.deptCode || '',
-              deptName: assignmentData.deptName || '',
-              positionCd: assignmentData.positionCd || '',
-              positionName: assignmentData.positionName || '',
-              targetDate: assignmentData.targetDate || '',
-              description: assignmentData.description || '',
-            });
-          } finally {
-            setLoading(false);
-          }
-        };
 
-        loadEmployeeInfo();
+        // ListPage에서 이미 사원 정보가 조회되어 전달됨
+        const startDateStr = assignmentData.plannedStartDate || '';
+        const endDateStr = assignmentData.targetDate || assignmentData.plannedEndDate || '';
+        const plannedStartDate = startDateStr ? new Date(startDateStr) : null;
+        const plannedEndDate = endDateStr ? new Date(endDateStr) : null;
+        setFormData({
+          handoverType: assignmentData.handoverType || '',  // 인수인계 유형
+          handoverFromEmpNo: assignmentData.handoverFromEmpNo || '',
+          assignorName: assignmentData.handoverFromEmpName || assignmentData.handoverFromName || '',
+          handoverToEmpNo: assignmentData.handoverToEmpNo || '',
+          assigneeName: assignmentData.handoverToEmpName || assignmentData.handoverToName || '',
+          assignorDeptCd: assignmentData.assignorDeptCd || '',
+          assignorDeptName: assignmentData.assignorDeptName || '',
+          assigneeDeptCd: assignmentData.assigneeDeptCd || '',
+          assigneeDeptName: assignmentData.assigneeDeptName || '',
+          assignorPositionCd: assignmentData.assignorPositionCd || '',
+          assigneePositionCd: assignmentData.assigneePositionCd || '',
+          plannedStartDate: plannedStartDate,
+          plannedEndDate: plannedEndDate,
+          description: assignmentData.description || assignmentData.notes || '',
+          status: assignmentData.status || 'PLANNED',  // 진행 상태
+        });
         setError(null);
       } else if (initialMode === 'create') {
         setFormData(initialFormData);
@@ -207,7 +190,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
     }
   }, [open, initialMode, assignmentData]);
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string | Date | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -215,11 +198,10 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
   };
 
   const validateForm = (): boolean => {
-    console.log(formData)
-    if (!formData.assignmentType) {
-      setError('인수인계 유형을 선택해주세요.');
-      return false;
-    }
+    // if (!formData.handoverType) {
+    //   setError('인수인계 유형을 선택해주세요.');
+    //   return false;
+    // }
     if (!formData.handoverFromEmpNo.trim()) {
       setError('인계자를 선택해주세요.');
       return false;
@@ -228,8 +210,12 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       setError('인수자를 선택해주세요.');
       return false;
     }
-    if (!formData.targetDate.trim()) {
-      setError('목표일자를 선택해주세요.');
+    if (!formData.plannedStartDate) {
+      setError('목표 시작일자를 선택해주세요.');
+      return false;
+    }
+    if (!formData.plannedEndDate) {
+      setError('목표 완료일자를 선택해주세요.');
       return false;
     }
     return true;
@@ -243,28 +229,49 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
 
     try {
       const requestData = {
-        handoverType: formData.assignmentType,
+        handoverType: formData.handoverType,
         handoverFromEmpNo: formData.handoverFromEmpNo,
         handoverToEmpNo: formData.handoverToEmpNo,
+        plannedStartDate: formatDateToString(formData.plannedStartDate),
+        plannedEndDate: formatDateToString(formData.plannedEndDate),
         notes: formData.description,
-        plannedStartDate: formData.targetDate,
-        plannedEndDate: formData.targetDate,
+        status: formData.status,
       };
-      console.log("requestData", requestData)
 
       if (isCreateMode) {
-        // TODO: 실제 API 호출로 대체
         await handoverApi.createHandoverAssignment(requestData);
       } else if (isEditMode && assignmentId) {
-        // TODO: 실제 API 호출로 대체
-        // await handoverApi.updateAssignment(assignmentId, requestData);
+        await handoverApi.updateHandoverAssignment(assignmentId, requestData);
       }
 
       onSuccess?.();
       onClose();
-    } catch (err) {
-      console.error('Failed to save assignment:', err);
-      setError('저장 중 오류가 발생했습니다.');
+    } catch (err: any) {
+      // 에러 메시지 추출 및 사용자 친화적 메시지로 변환
+      let errorMessage = '저장 중 오류가 발생했습니다.';
+
+      // API 클라이언트에서 오는 에러 구조에 맞게 메시지 추출
+      let backendMessage = '';
+
+      // API 클라이언트의 ApiError 구조 확인
+      if (err?.details && typeof err.details === 'string') {
+        backendMessage = err.details;
+      } else if (err?.details && typeof err.details === 'object' && err.details?.message) {
+        backendMessage = err.details.message;
+      } else if (err?.message && err.message !== 'API 요청이 실패했습니다.') {
+        backendMessage = err.message;
+      }
+
+      if (backendMessage && typeof backendMessage === 'string') {
+        // 중복 관련 에러인지 확인
+        if (backendMessage.includes('이미') && (backendMessage.includes('존재') || backendMessage.includes('중복'))) {
+          errorMessage = '⚠️ 중복 등록 오류\n\n선택하신 인계자와 인수자 조합으로 이미 등록된 인수인계가 있습니다.\n다른 인계자 또는 인수자를 선택해주세요.';
+        } else {
+          errorMessage = backendMessage;
+        }
+      }
+
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -280,7 +287,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       assignorDeptName: employee.deptName || '',
       assignorPositionCd: employee.jobTitleCd || '',
     }));
-    
+
     setAssignorSearchOpen(false);
   };
 
@@ -294,20 +301,11 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       assigneeDeptName: employee.deptName || '',
       assigneePositionCd: employee.jobTitleCd || '',
     }));
-    
+
     setAssigneeSearchOpen(false);
   };
 
-  // 부서 선택 핸들러
-  const handleDepartmentSelect = (department: Department | Department[]) => {
-    const dept = Array.isArray(department) ? department[0] : department;
-    setFormData(prev => ({
-      ...prev,
-      deptCd: dept.deptCode,
-      deptName: dept.deptName,
-    }));
-    setDepartmentSearchOpen(false);
-  };
+
 
   const handleClose = () => {
     if (saving) return;
@@ -398,7 +396,17 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
           ) : (
             <>
               {error && (
-                <Alert severity='error' sx={{ mb: 2 }}>
+                <Alert
+                  severity='error'
+                  sx={{
+                    mb: 2,
+                    '& .MuiAlert-message': {
+                      whiteSpace: 'pre-line',
+                      fontSize: '14px',
+                      fontWeight: 500
+                    }
+                  }}
+                >
                   {error}
                 </Alert>
               )}
@@ -407,35 +415,55 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
 
 
                 {/* 인수인계 유형 */}
+                {/* <Grid item xs={12} sm={6}>
+                  <CommonCodeSelect
+                    minWidth='100%'
+                    label='인수인계 유형 *'
+                    groupCode='HANDOVER_TYPE'
+                    value={formData.handoverType}
+                    onChange={value => handleInputChange('handoverType', value)}
+                    disabled={isViewMode}
+                  />
+                </Grid> */}
+
+                {/* 진행 상태 */}
                 <Grid item xs={12} sm={6}>
                   <CommonCodeSelect
                     minWidth='100%'
                     groupCode='HANDOVER_STATUS'
-                    value={formData.assignmentType}
-                    onChange={value => handleInputChange('assignmentType', value)}
+                    value={formData.status}
+                    onChange={value => handleInputChange('status', value)}
                     disabled={isViewMode}
-                    
                   />
                 </Grid>
 
                 {/* 목표일자 */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    mode={mode === 'view' ? 'readonly' : 'editable'}
-                    fullWidth
-                    label='목표일자 *'
-                    type='date'
-                    value={formData.targetDate}
-                    onChange={e => handleInputChange('targetDate', e.target.value)}
-                    disabled={isViewMode}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                  />
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <DatePicker
+                      mode={mode === 'view' ? 'readonly' : 'editable'}
+                      fullWidth
+                      label='목표 시작일자 *'
+                      value={formData.plannedStartDate}
+                      onChange={(date: Date) => handleInputChange('plannedStartDate', date)}
+                      disabled={isViewMode}
+                    />
+                    <DatePicker
+                      mode={mode === 'view' ? 'readonly' : 'editable'}
+                      fullWidth
+                      label='목표 완료일자 *'
+                      value={formData.plannedEndDate}
+                      onChange={(date: Date) => handleInputChange('plannedEndDate', date)}
+                      disabled={isViewMode}
+                    />
+                  </Box>
                 </Grid>
 
+                {/* 빈 공간 */}
+                <Grid item xs={12} sm={6}></Grid>
+
                 {/* 인계자 */}
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       fullWidth
@@ -458,12 +486,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                         조회
                       </Button>
                     )}
-                  </Box>
-                </Grid>
-
-                {/* 인수자 */}
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       mode='readonly'
                       fullWidth
@@ -497,8 +519,8 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                       label='인계자 부서'
                       value={formData.assignorDeptCd ? getDepartmentNameSync(departments, formData.assignorDeptCd) : formData.assignorDeptName}
                     />
-                {/* <Box sx={{ fontWeight: 'bold', fontSize: '2rem', minWidth: '60px', textAlign: 'center'}}>→</Box> */}
-                    
+                    {/* <Box sx={{ fontWeight: 'bold', fontSize: '2rem', minWidth: '60px', textAlign: 'center'}}>→</Box> */}
+
                     <TextField
                       fullWidth
                       mode='readonly'
@@ -524,7 +546,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                       disabled={isViewMode}
                       mode='readonly'
                     />
-                    </Box>
+                  </Box>
                 </Grid>
 
                 <Grid item xs={12}>
@@ -568,14 +590,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
         title='인수자 조회'
       />
 
-      {/* 부서 조회 팝업 */}
-      <DepartmentSearchPopup
-        open={departmentSearchOpen}
-        onClose={() => setDepartmentSearchOpen(false)}
-        onSelect={handleDepartmentSelect}
-        title='부서 조회'
-        multiSelect={false}
-      />
+
     </>
   );
 };

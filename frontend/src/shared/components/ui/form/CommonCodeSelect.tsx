@@ -194,6 +194,7 @@ const CommonCodeSelect: React.FC<CommonCodeSelectProps> = ({
     <Select
       value={value}
       onChange={handleChange}
+      // label='123'
       size={size}
       options={getSelectOptions()}
       disabled={disabled} // loading 제거 - 로딩 중에도 "전체" 옵션 선택 가능
