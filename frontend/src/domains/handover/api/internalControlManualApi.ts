@@ -42,30 +42,19 @@ export interface Page<T> {
 export interface InternalControlManualDto {
   manualId?: number;
   deptCd: string;
-  hodIcItemId?: number;
   manualTitle: string;
   manualVersion?: string;
-  manualDescription?: string;
   manualContent?: string;
-  manualCategory?: string;
-  icTaskCategory?: string;
   status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED';
-  approvalId?: number;
   effectiveDate?: string;
   expiryDate?: string;
-  reviewCycleMonths?: number;
-  nextReviewDate?: string;
   authorEmpNo?: string;
-  hodEmpNo?: string;
   createdAt?: string;
   updatedAt?: string;
-  createdId?: string;
-  updatedId?: string;
   
   // 조인된 데이터 (백엔드에서 제공하는 경우)
   deptName?: string;
   authorName?: string;
-  hodName?: string;
 }
 
 // 검색 파라미터

@@ -44,6 +44,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedManualId, setSelectedManualId] = useState<number | undefined>();
+  const [selectedManualData, setSelectedManualData] = useState<InternalControlManualDto | undefined>();
 
   // 상태 표시 함수
   const getStatusChip = (status: string) => {
@@ -209,12 +210,14 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   const handleRowDoubleClick = useCallback((row: InternalControlManualDto) => {
     setDialogMode('view');
     setSelectedManualId(row.manualId);
+    setSelectedManualData(row);
     setDialogOpen(true);
   }, []);
 
   const handleRowClick = useCallback((row: InternalControlManualDto) => {
     setDialogMode('view');
     setSelectedManualId(row.manualId);
+    setSelectedManualData(row);
     setDialogOpen(true);
   }, []);
 
@@ -249,6 +252,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
     setSelectedManualId(undefined);
+    setSelectedManualData(undefined);
   }, []);
 
   const handleDialogSuccess = useCallback(async () => {
@@ -381,6 +385,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         onClose={handleDialogClose}
         mode={dialogMode}
         manualId={selectedManualId}
+        manualData={selectedManualData}
         onSuccess={handleDialogSuccess}
       />
     </PageContainer>

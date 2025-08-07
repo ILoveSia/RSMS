@@ -16,10 +16,10 @@ import {
   DepartmentSearchPopup,
   EmployeeSearchPopup,
   type Department,
-  type Employee,
 } from '@/domains/common/components/search';
 import type { SelectOption } from '@/shared/types/common';
 import { Search as SearchIcon } from '@mui/icons-material';
+import { useGetDepartmentName } from '@/shared/utils/codeUtils';
 import {
   Alert,
   Box,
@@ -27,15 +27,14 @@ import {
   DialogContent,
   DialogActions,
   Grid,
-  Tab,
-  Tabs,
-  Typography,
   Chip,
+  Typography,
 } from '@mui/material';
 import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
+import { DatePicker } from '@/shared/components/ui/form';
 import React, { useCallback, useEffect, useState } from 'react';
 import { internalControlManualApi, type InternalControlManualDto } from '../api/internalControlManualApi';
 
@@ -44,11 +43,11 @@ interface InternalControlManualDialogProps {
   onClose: () => void;
   mode: 'create' | 'edit' | 'view';
   manualId?: number;
+  manualData?: InternalControlManualDto;
   onSuccess?: () => void;
 }
 
 interface FormData {
-  assignmentId: number | '';
   manualTitle: string;
   manualContent: string;
   manualVersion: string;
@@ -61,12 +60,11 @@ interface FormData {
   reviewerName: string;
   approverEmpNo: string;
   approverName: string;
-  effectiveDate: string;
-  expiryDate: string;
+  effectiveDate: Date | null;
+  expiryDate: Date | null;
 }
 
 const initialFormData: FormData = {
-  assignmentId: '',
   manualTitle: '',
   manualContent: '',
   manualVersion: 'v1.0',
@@ -79,8 +77,8 @@ const initialFormData: FormData = {
   reviewerName: '',
   approverEmpNo: '',
   approverName: '',
-  effectiveDate: '',
-  expiryDate: '',
+  effectiveDate: null,
+  expiryDate: null,
 };
 
 const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = ({
@@ -88,6 +86,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   onClose,
   mode: initialMode,
   manualId,
+  manualData,
   onSuccess,
 }) => {
   const [mode, setMode] = useState<'create' | 'edit' | 'view'>(initialMode);
@@ -95,7 +94,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
 
   // 팝업 상태들
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
@@ -107,6 +105,9 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
     'codeStore/allCodes'
   );
+
+  // 부서명 변환 함수
+  const getDepartmentName = useGetDepartmentName();
 
   const isViewMode = mode === 'view';
   const isCreateMode = mode === 'create';
@@ -128,15 +129,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   const getCommonCodeOptions = useCallback(
     (groupCode: string): SelectOption[] => {
       const codes = getCodesArray();
-
-      // 인수인계 지정 처리
-      if (groupCode === 'ASSIGNMENT') {
-        return [
-          { value: '1', label: '정보기술부 부서장 인수인계' },
-          { value: '2', label: '경영관리부 팀장 인수인계' },
-          { value: '3', label: '리스크관리부 선임 인수인계' },
-        ];
-      }
 
       // 상태 코드 처리
       if (groupCode === 'MANUAL_STATUS') {
@@ -177,6 +169,19 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
+  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수
+  const parseDate = (dateString: string | null | undefined): Date | null => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수
+  const formatDate = (date: Date | null): string => {
+    if (!date) return '';
+    return date.toISOString().split('T')[0];
+  };
+
   // 데이터 로드 함수
   const loadManualData = useCallback(async () => {
     if (!manualId) return;
@@ -184,97 +189,35 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     setLoading(true);
     setError(null);
     try {
-      // TODO: 실제 API 호출로 대체
-      // const data = await internalControlManualApi.getManual(manualId);
-      
-      // Mock 데이터
-      const mockData: InternalControlManualDto = {
-        manualId,
-        assignmentId: 1,
-        manualTitle: '정보기술부 내부통제 업무메뉴얼',
-        manualContent: `# 정보기술부 내부통제 업무메뉴얼
-
-## 1. 개요
-정보기술부의 내부통제 업무에 대한 상세 메뉴얼입니다.
-
-## 2. 주요 업무
-- IT 거버넌스
-- 정보보안 관리
-- 시스템 운영 관리
-- 데이터 품질 관리
-
-## 3. 업무 절차
-### 3.1 IT 거버넌스
-1. IT 전략 수립
-2. IT 투자 계획 및 예산 관리
-3. IT 성과 측정 및 평가
-
-### 3.2 정보보안 관리
-1. 보안 정책 수립 및 운영
-2. 접근권한 관리
-3. 보안 감사 및 모니터링
-
-### 3.3 시스템 운영 관리
-1. 시스템 가용성 관리
-2. 성능 모니터링
-3. 변경관리 프로세스
-
-## 4. 점검 항목
-- IT 거버넌스 체계 운영 현황
-- 정보보안 정책 준수 현황
-- 시스템 운영 효율성
-- 데이터 품질 관리 현황
-
-## 5. 관련 문서
-- IT 거버넌스 정책서
-- 정보보안 운영절차서
-- 시스템 운영 매뉴얼`,
-        manualVersion: 'v1.0',
-        status: 'PUBLISHED',
-        deptCd: 'IT001',
-        deptName: '정보기술부',
-        authorEmpNo: 'E001',
-        authorName: '김작성',
-        reviewerEmpNo: 'E002',
-        reviewerName: '이검토',
-        approverEmpNo: 'E003',
-        approverName: '박승인',
-        effectiveDate: '2024-01-01',
-        expiryDate: '2024-12-31',
-        isValid: true,
-        isExpiring: false,
-        daysUntilExpiry: 300,
-        workflowStatus: '발행됨',
-        attachmentCount: 3,
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-15',
-      };
-
-      setFormData({
-        assignmentId: mockData.assignmentId || '',
-        manualTitle: mockData.manualTitle,
-        manualContent: mockData.manualContent,
-        manualVersion: mockData.manualVersion,
-        status: mockData.status,
-        deptCd: mockData.deptCd,
-        deptName: mockData.deptName || '',
-        authorEmpNo: mockData.authorEmpNo || '',
-        authorName: mockData.authorName || '',
-        reviewerEmpNo: mockData.reviewerEmpNo || '',
-        reviewerName: mockData.reviewerName || '',
-        approverEmpNo: mockData.approverEmpNo || '',
-        approverName: mockData.approverName || '',
-        effectiveDate: mockData.effectiveDate || '',
-        expiryDate: mockData.expiryDate || '',
-      });
-
+      // manualData prop이 있으면 사용, 없으면 API 호출
+      if (manualData) {
+        setFormData({
+          manualTitle: manualData.manualTitle,
+          manualContent: manualData.manualContent || '',
+          manualVersion: manualData.manualVersion || '',
+          status: manualData.status,
+          deptCd: manualData.deptCd,
+          deptName: getDepartmentName(manualData.deptCd) || manualData.deptName || '',
+          authorEmpNo: manualData.authorEmpNo || '',
+          authorName: manualData.authorName || '',
+                     reviewerEmpNo: '',
+           reviewerName: '',
+           approverEmpNo: '',
+           approverName: '',
+          effectiveDate: parseDate(manualData.effectiveDate),
+          expiryDate: parseDate(manualData.expiryDate),
+        });
+      } else {
+        // API 호출 로직 (향후 구현)
+        setError('데이터를 불러올 수 없습니다.');
+      }
     } catch (err) {
       console.error('Failed to load manual data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [manualId]);
+  }, [manualId, manualData, getDepartmentName]);
 
   // initialMode이 변경될 때 내부 mode 상태 업데이트
   useEffect(() => {
@@ -299,7 +242,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     loadManualData,
   ]);
 
-  const handleInputChange = (field: keyof FormData, value: string | number) => {
+  const handleInputChange = (field: keyof FormData, value: string | number | Date | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -307,10 +250,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   };
 
   const validateForm = (): boolean => {
-    if (!formData.assignmentId) {
-      setError('인수인계 지정을 선택해주세요.');
-      return false;
-    }
     if (!formData.manualTitle.trim()) {
       setError('메뉴얼 제목을 입력해주세요.');
       return false;
@@ -334,17 +273,16 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
 
     try {
       const requestData = {
-        assignmentId: formData.assignmentId as number,
         manualTitle: formData.manualTitle,
         manualContent: formData.manualContent,
         manualVersion: formData.manualVersion,
-        status: formData.status,
+        status: formData.status as 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED',
         deptCd: formData.deptCd,
         authorEmpNo: formData.authorEmpNo,
         reviewerEmpNo: formData.reviewerEmpNo,
         approverEmpNo: formData.approverEmpNo,
-        effectiveDate: formData.effectiveDate,
-        expiryDate: formData.expiryDate,
+        effectiveDate: formatDate(formData.effectiveDate),
+        expiryDate: formatDate(formData.expiryDate),
       };
 
       if (isCreateMode) {
@@ -377,7 +315,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   };
 
   // 직원 선택 핸들러들
-  const handleAuthorSelect = (employee: Employee) => {
+  const handleAuthorSelect = (employee: any) => {
     setFormData(prev => ({
       ...prev,
       authorEmpNo: employee.empNo,
@@ -386,7 +324,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     setAuthorSearchOpen(false);
   };
 
-  const handleReviewerSelect = (employee: Employee) => {
+  const handleReviewerSelect = (employee: any) => {
     setFormData(prev => ({
       ...prev,
       reviewerEmpNo: employee.empNo,
@@ -395,7 +333,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     setReviewerSearchOpen(false);
   };
 
-  const handleApproverSelect = (employee: Employee) => {
+  const handleApproverSelect = (employee: any) => {
     setFormData(prev => ({
       ...prev,
       approverEmpNo: employee.empNo,
@@ -409,12 +347,12 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     onClose();
   };
 
-  const handleModeChange = (newMode: 'create' | 'edit' | 'view') => {
-    setMode(newMode);
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  const handleModeChange = (newMode: 'create' | 'edit' | 'view' | 'onlyRead') => {
+    if (newMode === 'onlyRead') {
+      setMode('view');
+    } else {
+      setMode(newMode);
+    }
   };
 
   return (
@@ -424,11 +362,11 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
         onClose={handleClose}
         onSave={handleSave}
         onModeChange={handleModeChange}
-        maxWidth='xl'
+        maxWidth='lg'
         mode={mode}
         title={mode === 'create' ? '내부통제 업무메뉴얼 등록' : mode === 'edit' ? '내부통제 업무메뉴얼 수정' : '내부통제 업무메뉴얼 조회'}
       >
-        <DialogContent sx={{ 
+        <DialogContent sx={{
           p: 3,
           // view 모드에서 텍스트 스타일 진하게 통일
           ...(isViewMode && {
@@ -502,251 +440,188 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
                 </Alert>
               )}
 
-              <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>
-                <Tab label="기본 정보" />
-                <Tab label="메뉴얼 내용" />
-                <Tab label="승인 정보" />
-              </Tabs>
+              <Grid container spacing={2}>
+                {/* 메뉴얼 제목 */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label='메뉴얼 제목 *'
+                    value={formData.manualTitle}
+                    onChange={e => handleInputChange('manualTitle', e.target.value)}
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
+                  />
+                </Grid>
+{/* 부서 */}
+<Grid item xs={12}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <TextField
+                      fullWidth
+                      label='부서 *'
+                      value={formData.deptName}
+                      disabled
+                      placeholder='부서를 선택하세요'
+                      helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
+                      mode="readonly"
+                    />
+                    {!isViewMode && (
+                      <Button
+                        variant='outlined'
+                        onClick={() => setDepartmentSearchOpen(true)}
+                        sx={{ minWidth: 100 }}
+                        startIcon={<SearchIcon />}
+                      >
+                        조회
+                      </Button>
+                    )}
+                  </Box>
+                </Grid>
+                {/* 메뉴얼 버전 */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label='메뉴얼 버전'
+                    value={formData.manualVersion}
+                    onChange={e => handleInputChange('manualVersion', e.target.value)}
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
+                  />
+                </Grid>
 
-              {/* 기본 정보 탭 */}
-              {tabValue === 0 && (
-                <Grid container spacing={2}>
-                  {/* 인수인계 지정 */}
-                  <Grid item xs={12} sm={6}>
+                {/* 상태 */}
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Select
-                      value={formData.assignmentId}
-                      label='인수인계 지정 *'
+                      value={formData.status}
+                      label='상태'
                       options={[
                         { value: '', label: '선택하세요' },
-                        ...getCommonCodeOptions('ASSIGNMENT')
+                        ...getCommonCodeOptions('MANUAL_STATUS')
                       ]}
-                      onChange={(value) => handleInputChange('assignmentId', Number(value))}
+                      onChange={(value) => handleInputChange('status', value as string)}
                       disabled={isViewMode}
+                      sx={{ flex: 1 }}
                     />
-                  </Grid>
-
-                  {/* 상태 */}
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Select
-                        value={formData.status}
-                        label='상태'
-                        options={[
-                          { value: '', label: '선택하세요' },
-                          ...getCommonCodeOptions('MANUAL_STATUS')
-                        ]}
-                        onChange={(value) => handleInputChange('status', value as string)}
-                        disabled={isViewMode}
-                        sx={{ flex: 1 }}
-                      />
-                      {isViewMode && getStatusChip(formData.status)}
-                    </Box>
-                  </Grid>
-
-                  {/* 메뉴얼 제목 */}
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='메뉴얼 제목 *'
-                      value={formData.manualTitle}
-                      onChange={e => handleInputChange('manualTitle', e.target.value)}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-
-                  {/* 메뉴얼 버전 */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label='메뉴얼 버전'
-                      value={formData.manualVersion}
-                      onChange={e => handleInputChange('manualVersion', e.target.value)}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
-
-                  {/* 부서 */}
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        label='부서 *'
-                        value={formData.deptName}
-                        disabled
-                        placeholder='부서를 선택하세요'
-                        helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
-                      />
-                      {!isViewMode && (
-                        <Button
-                          variant='outlined'
-                          onClick={() => setDepartmentSearchOpen(true)}
-                          sx={{ minWidth: 100 }}
-                          startIcon={<SearchIcon />}
-                        >
-                          조회
-                        </Button>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* 시행일 */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label='시행일'
-                      type='date'
-                      value={formData.effectiveDate}
-                      onChange={e => handleInputChange('effectiveDate', e.target.value)}
-                      disabled={isViewMode}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                  </Grid>
-
-                  {/* 만료일 */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label='만료일'
-                      type='date'
-                      value={formData.expiryDate}
-                      onChange={e => handleInputChange('expiryDate', e.target.value)}
-                      disabled={isViewMode}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                  </Grid>
+                    {isViewMode && getStatusChip(formData.status)}
+                  </Box>
                 </Grid>
-              )}
 
-              {/* 메뉴얼 내용 탭 */}
-              {tabValue === 1 && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                
+
+                {/* 시행일 */}
+                <Grid item xs={12} sm={6}>
+                  <DatePicker
+                    label='시행일'
+                    fullWidth
+                    value={formData.effectiveDate}
+                    onChange={(date) => handleInputChange('effectiveDate', date)}
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
+                  />
+                </Grid>
+
+                {/* 만료일 */}
+                <Grid item xs={12} sm={6}>
+                  <DatePicker
+                    label='만료일'
+                    fullWidth
+                    value={formData.expiryDate}
+                    onChange={(date) => handleInputChange('expiryDate', date)}
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
+                  />
+                </Grid>
+
+                {/* 메뉴얼 내용 */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label='메뉴얼 내용 *'
+                    value={formData.manualContent}
+                    onChange={e => handleInputChange('manualContent', e.target.value)}
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
+                    multiline
+                    rows={12}
+                    placeholder='내부통제 업무메뉴얼의 상세 내용을 마크다운 형식으로 작성하세요.'
+                  />
+                </Grid>
+
+                {/* 작성자 */}
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       fullWidth
-                      label='메뉴얼 내용 *'
-                      value={formData.manualContent}
-                      onChange={e => handleInputChange('manualContent', e.target.value)}
-                      disabled={isViewMode}
-                      multiline
-                      rows={20}
-                      placeholder='내부통제 업무메뉴얼의 상세 내용을 마크다운 형식으로 작성하세요.'
-                      sx={{
-                        '& .MuiInputBase-input': {
-                          fontFamily: 'monospace',
-                          fontSize: '0.875rem',
-                        },
-                      }}
+                      label='작성자'
+                      value={formData.authorName || `${formData.authorEmpNo}`}
+                      disabled
+                      placeholder='작성자를 선택하세요'
+                      helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
+                      mode="readonly"
                     />
-                  </Grid>
+                    {!isViewMode && (
+                      <Button
+                        variant='outlined'
+                        onClick={() => setAuthorSearchOpen(true)}
+                        sx={{ minWidth: 100 }}
+                        startIcon={<SearchIcon />}
+                      >
+                        조회
+                      </Button>
+                    )}
+                  </Box>
                 </Grid>
-              )}
 
-              {/* 승인 정보 탭 */}
-              {tabValue === 2 && (
-                <Grid container spacing={2}>
-                  {/* 작성자 */}
-                  <Grid item xs={12} sm={4}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        label='작성자'
-                        value={formData.authorName || `${formData.authorEmpNo}`}
-                        disabled
-                        placeholder='작성자를 선택하세요'
-                        helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
-                      />
-                      {!isViewMode && (
-                        <Button
-                          variant='outlined'
-                          onClick={() => setAuthorSearchOpen(true)}
-                          sx={{ minWidth: 100 }}
-                          startIcon={<SearchIcon />}
-                        >
-                          조회
-                        </Button>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* 검토자 */}
-                  <Grid item xs={12} sm={4}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        label='검토자'
-                        value={formData.reviewerName || `${formData.reviewerEmpNo}`}
-                        disabled
-                        placeholder='검토자를 선택하세요'
-                        helperText={formData.reviewerEmpNo ? `사번: ${formData.reviewerEmpNo}` : ''}
-                      />
-                      {!isViewMode && (
-                        <Button
-                          variant='outlined'
-                          onClick={() => setReviewerSearchOpen(true)}
-                          sx={{ minWidth: 100 }}
-                          startIcon={<SearchIcon />}
-                        >
-                          조회
-                        </Button>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* 승인자 */}
-                  <Grid item xs={12} sm={4}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        label='승인자'
-                        value={formData.approverName || `${formData.approverEmpNo}`}
-                        disabled
-                        placeholder='승인자를 선택하세요'
-                        helperText={formData.approverEmpNo ? `사번: ${formData.approverEmpNo}` : ''}
-                      />
-                      {!isViewMode && (
-                        <Button
-                          variant='outlined'
-                          onClick={() => setApproverSearchOpen(true)}
-                          sx={{ minWidth: 100 }}
-                          startIcon={<SearchIcon />}
-                        >
-                          조회
-                        </Button>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* 추가 정보 표시 (조회 모드에서만) */}
-                  {isViewMode && manualId && (
-                    <>
-                      <Grid item xs={12}>
-                        <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
-                          추가 정보
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <Typography variant="body2" color="textSecondary">
-                          첨부파일: 3개
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <Typography variant="body2" color="textSecondary">
-                          등록일: 2024.01.01
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <Typography variant="body2" color="textSecondary">
-                          최종수정일: 2024.01.15
-                        </Typography>
-                      </Grid>
-                    </>
-                  )}
+                {/* 검토자 */}
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <TextField
+                      fullWidth
+                      label='검토자'
+                      value={formData.reviewerName || `${formData.reviewerEmpNo}`}
+                      disabled
+                      placeholder='검토자를 선택하세요'
+                      helperText={formData.reviewerEmpNo ? `사번: ${formData.reviewerEmpNo}` : ''}
+                      mode="readonly"
+                    />
+                    {!isViewMode && (
+                      <Button
+                        variant='outlined'
+                        onClick={() => setReviewerSearchOpen(true)}
+                        sx={{ minWidth: 100 }}
+                        startIcon={<SearchIcon />}
+                      >
+                        조회
+                      </Button>
+                    )}
+                  </Box>
                 </Grid>
-              )}
+
+                {/* 승인자 */}
+                <Grid item xs={12} sm={4}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <TextField
+                      fullWidth
+                      label='승인자'
+                      value={formData.approverName || `${formData.approverEmpNo}`}
+                      disabled
+                      placeholder='승인자를 선택하세요'
+                      helperText={formData.approverEmpNo ? `사번: ${formData.approverEmpNo}` : ''}
+                      mode="readonly"
+                    />
+                    {!isViewMode && (
+                      <Button
+                        variant='outlined'
+                        onClick={() => setApproverSearchOpen(true)}
+                        sx={{ minWidth: 100 }}
+                        startIcon={<SearchIcon />}
+                      >
+                        조회
+                      </Button>
+                    )}
+                  </Box>
+                </Grid>
+              </Grid>
             </>
           )}
         </DialogContent>
