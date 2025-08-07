@@ -12,7 +12,7 @@
 
 import apiClient from '@/app/common/api/client';
 import { Utils } from '@/app/utils';
-import { getCodeNameSync, getDepartmentName, extractCommonCodes, getEmployeeNameSync } from '@/shared/utils/codeUtils';
+import { getCodeNameSync, getDepartmentNameSync, extractCommonCodes, getEmployeeNameSync } from '@/shared/utils/codeUtils';
 // 페이지네이션 파라미터 타입
 export interface PaginationParams {
   page: number;
@@ -224,7 +224,7 @@ export class BusinessPlanInspectionApi {
             planYear: item.inspectionYear,
             planQuarter: item.inspectionQuarter,
             targetDept: item.deptCd,
-            targetDeptName: getDepartmentName(departments, item.deptCd),
+            targetDeptName: getDepartmentNameSync(departments, item.deptCd),
             inspectionScope: item.inspectionScope,
             inspectionCriteria: item.inspectionCriteria,
             inspectionItems: item.inspectionScope || '', // 임시로 scope를 items로 사용

@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.itcen.domain.positions.entity.Position;
+import org.itcen.domain.employee.entity.Employee;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +39,13 @@ public class ResponsibilityDocument {
      */
     @Column(name = "position_id", nullable = false)
     private Long positionId;
+
+    /**
+     * 직책 정보 (JOIN)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "position_id", insertable = false, updatable = false)
+    private Position position;
 
     /**
      * 책무 ID (responsibility 테이블 FK, 선택)
@@ -97,16 +106,37 @@ public class ResponsibilityDocument {
     private String authorEmpNo;
 
     /**
+     * 작성자 정보 (JOIN)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_emp_no", insertable = false, updatable = false)
+    private Employee author;
+
+    /**
      * 검토자 사번
      */
     @Column(name = "reviewer_emp_no", length = 20)
     private String reviewerEmpNo;
 
     /**
+     * 검토자 정보 (JOIN)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewer_emp_no", insertable = false, updatable = false)
+    private Employee reviewer;
+
+    /**
      * 승인자 사번
      */
     @Column(name = "approver_emp_no", length = 20)
     private String approverEmpNo;
+
+    /**
+     * 승인자 정보 (JOIN)
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approver_emp_no", insertable = false, updatable = false)
+    private Employee approver;
 
     /**
      * 생성일시

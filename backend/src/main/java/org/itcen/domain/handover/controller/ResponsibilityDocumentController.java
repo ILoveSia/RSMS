@@ -2,6 +2,7 @@ package org.itcen.domain.handover.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.itcen.domain.handover.dto.DocumentSearchDto;
 import org.itcen.domain.handover.entity.ResponsibilityDocument;
 import org.itcen.domain.handover.service.ResponsibilityDocumentService;
 import org.springframework.data.domain.Page;
@@ -254,7 +255,7 @@ public class ResponsibilityDocumentController {
      */
     @PostMapping("/search")
     public ResponseEntity<Page<ResponsibilityDocumentService.ResponsibilityDocumentDto>> searchDocuments(
-            @RequestBody ResponsibilityDocumentService.DocumentSearchDto searchDto,
+            @RequestBody DocumentSearchDto searchDto,
             @PageableDefault Pageable pageable) {
         log.debug("복합 조건 검색 요청 - searchDto: {}", searchDto);
         

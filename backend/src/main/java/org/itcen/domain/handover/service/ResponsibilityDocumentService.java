@@ -161,6 +161,7 @@ public interface ResponsibilityDocumentService {
         ResponsibilityDocument.DocumentStatus getStatus();
         String getAuthorEmpNo();
         String getDocumentTitle();
+        String getPositionName();
         LocalDate getStartDate();
         LocalDate getEndDate();
     }

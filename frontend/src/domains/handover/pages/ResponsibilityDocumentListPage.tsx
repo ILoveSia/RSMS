@@ -10,7 +10,7 @@
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -23,6 +23,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { responsibilityDocumentApi, type ResponsibilityDocumentDto } from '../api/responsibilityDocumentApi';
 import ResponsibilityDocumentDialog from '../components/ResponsibilityDocumentDialog';
 
+
 interface IResponsibilityDocumentListPageProps {
   className?: string;
 }
@@ -34,11 +35,14 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<ResponsibilityDocumentDto[]>([]);
+  const [apiResponseData, setApiResponseData] = useState<any>(null);
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | undefined>();
+
+
 
   // 상태 표시 함수
   const getStatusChip = (status: string) => {
@@ -52,75 +56,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
-  // Mock 데이터 (기존과 동일하지만 간소화)
-  const mockDocuments: ResponsibilityDocumentDto[] = [
-    {
-      documentId: 1,
-      positionId: 1,
-      positionName: '부서장',
-      responsibilityId: 1,
-      documentTitle: '정보기술부 부서장 책무기술서',
-      documentVersion: 'v1.0',
-      documentContent: '부서장의 주요 책무와 권한에 대한 상세 기술서입니다.',
-      status: 'PUBLISHED',
-      effectiveDate: '2024-01-01',
-      expiryDate: '2024-12-31',
-      authorEmpNo: 'E001',
-      authorName: '김작성',
-      reviewerEmpNo: 'E002',
-      reviewerName: '이검토',
-      approverEmpNo: 'E003',
-      approverName: '박승인',
-      isValid: true,
-      isExpiring: false,
-      daysUntilExpiry: 300,
-      workflowStatus: '발행됨',
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-15',
-      attachmentCount: 2,
-    },
-    {
-      documentId: 2,
-      positionId: 2,
-      positionName: '팀장',
-      responsibilityId: 2,
-      documentTitle: '개발팀 팀장 책무기술서',
-      documentVersion: 'v2.1',
-      documentContent: '개발팀 팀장의 책무와 업무 범위를 정의합니다.',
-      status: 'REVIEW', 
-      effectiveDate: '2024-02-01',
-      expiryDate: '2024-12-31',
-      authorEmpNo: 'E004',
-      authorName: '최팀장',
-      reviewerEmpNo: 'E002',
-      reviewerName: '이검토',
-      isValid: true,
-      isExpiring: false,
-      daysUntilExpiry: 270,
-      workflowStatus: '검토 중',
-      createdAt: '2024-01-15',
-      updatedAt: '2024-01-20',
-      attachmentCount: 1,
-    },
-    {
-      documentId: 3,
-      positionId: 3,
-      positionName: '선임',
-      responsibilityId: 3,
-      documentTitle: '선임 개발자 책무기술서',
-      documentVersion: 'v1.2',
-      documentContent: '선임 개발자의 기술적 책임과 멘토링 역할을 정의합니다.',
-      status: 'DRAFT',
-      authorEmpNo: 'E005',
-      authorName: '정선임',
-      isValid: false,
-      isExpiring: false,
-      workflowStatus: '초안 작성 중',
-      createdAt: '2024-01-20',
-      updatedAt: '2024-01-22',
-      attachmentCount: 0,
-    },
-  ];
+
 
   // 컬럼 정의
   const columns: DataGridColumn<ResponsibilityDocumentDto>[] = [
@@ -151,7 +87,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
             }}
             onClick={() => handleRowClick(params.row)}
           >
-            {params.value}
+            {params.value as string}
           </Box>
         );
       },
@@ -185,7 +121,9 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
     {
@@ -195,7 +133,9 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
     {
@@ -205,7 +145,9 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
     {
@@ -215,7 +157,9 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
   ];
@@ -230,19 +174,18 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
     setError(null);
 
     try {
-      // TODO: 실제 API 호출로 대체
-      // const data = await responsibilityDocumentApi.searchDocuments(searchParams, { page: 0, size: 100 });
-      
-      // Mock 데이터 필터링
-      let filteredData = mockDocuments;
-      if (selectedStatus !== 'ALL') {
-        filteredData = filteredData.filter(item => item.status === selectedStatus);
-      }
-      if (selectedPosition !== 'ALL') {
-        filteredData = filteredData.filter(item => item.positionName === selectedPosition);
-      }
+      const searchParams = {
+        status: selectedStatus !== 'ALL' ? selectedStatus : undefined,
+        positionName: selectedPosition !== 'ALL' ? selectedPosition : undefined,
+      };
 
-      setRows(filteredData);
+      const data = await responsibilityDocumentApi.searchDocuments(
+        searchParams,
+        { page: 0, size: 100 }
+      );
+
+      setRows(data.content);
+      setApiResponseData(data);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -353,13 +296,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
             onChange={setSelectedStatus}
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
-            options={[
-              { value: 'ALL', label: '전체' },
-              { value: 'DRAFT', label: '초안' },
-              { value: 'REVIEW', label: '검토중' },
-              { value: 'APPROVED', label: '승인됨' },
-              { value: 'PUBLISHED', label: '발행됨' },
-            ]}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
           <CommonCodeSelect
@@ -368,12 +304,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
             onChange={setSelectedPosition}
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
-            options={[
-              { value: 'ALL', label: '전체' },
-              { value: '부서장', label: '부서장' },
-              { value: '팀장', label: '팀장' },
-              { value: '선임', label: '선임' },
-            ]}
           />
           <SearchButton
             onClick={handleSearch}
@@ -382,10 +312,10 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
           />
         </Box>
 
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          mb: 0.5, 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          mb: 0.5,
           gap: 1,
           alignItems: 'center',
           height: '32px',
@@ -405,7 +335,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
             showRefresh={false}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
-            registerLabel="신규 작성"
+
             align="right"
             sx={{
               mb: 0,
@@ -419,7 +349,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
             data={rows}
             columns={columns}
             loading={loading}
-            height={600} 
+            height={600}
             selectable={true}
             multiSelect={true}
             selectedRows={selectedIds}
@@ -451,6 +381,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
         mode={dialogMode}
         documentId={selectedDocumentId}
         onSuccess={handleDialogSuccess}
+        apiResponseData={apiResponseData}
       />
     </PageContainer>
   );

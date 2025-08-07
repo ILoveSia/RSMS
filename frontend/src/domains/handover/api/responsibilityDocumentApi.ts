@@ -87,6 +87,7 @@ export interface DocumentSearchParams {
   status?: string;
   authorEmpNo?: string;
   documentTitle?: string;
+  positionName?: string;
   startDate?: string;
   endDate?: string;
   keyword?: string;

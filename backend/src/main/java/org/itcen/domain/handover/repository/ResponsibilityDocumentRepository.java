@@ -24,6 +24,17 @@ import java.util.Optional;
 public interface ResponsibilityDocumentRepository extends JpaRepository<ResponsibilityDocument, Long> {
 
     /**
+     * 직책 ID로 책무기술서 조회 (JOIN 포함)
+     */
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
+           "LEFT JOIN FETCH rd.position " +
+           "LEFT JOIN FETCH rd.author " +
+           "LEFT JOIN FETCH rd.reviewer " +
+           "LEFT JOIN FETCH rd.approver " +
+           "WHERE rd.positionId = :positionId")
+    List<ResponsibilityDocument> findByPositionIdWithJoin(@Param("positionId") Long positionId);
+
+    /**
      * 직책 ID로 책무기술서 조회
      */
     List<ResponsibilityDocument> findByPositionId(Long positionId);
@@ -34,9 +45,31 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     List<ResponsibilityDocument> findByResponsibilityId(Long responsibilityId);
 
     /**
+     * 상태별 책무기술서 조회 (JOIN 포함)
+     */
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
+           "LEFT JOIN FETCH rd.position " +
+           "LEFT JOIN FETCH rd.author " +
+           "LEFT JOIN FETCH rd.reviewer " +
+           "LEFT JOIN FETCH rd.approver " +
+           "WHERE rd.status = :status")
+    List<ResponsibilityDocument> findByStatusWithJoin(@Param("status") ResponsibilityDocument.DocumentStatus status);
+
+    /**
      * 상태별 책무기술서 조회
      */
     List<ResponsibilityDocument> findByStatus(ResponsibilityDocument.DocumentStatus status);
+
+    /**
+     * 작성자별 책무기술서 조회 (JOIN 포함)
+     */
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
+           "LEFT JOIN FETCH rd.position " +
+           "LEFT JOIN FETCH rd.author " +
+           "LEFT JOIN FETCH rd.reviewer " +
+           "LEFT JOIN FETCH rd.approver " +
+           "WHERE rd.authorEmpNo = :authorEmpNo")
+    List<ResponsibilityDocument> findByAuthorEmpNoWithJoin(@Param("authorEmpNo") String authorEmpNo);
 
     /**
      * 작성자별 책무기술서 조회
@@ -87,7 +120,27 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     List<ResponsibilityDocument> findPendingApprovalDocuments();
 
     /**
-     * 복합 조건 검색
+     * 복합 조건 검색 (JOIN 포함)
+     */
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
+           "LEFT JOIN FETCH rd.position p " +
+           "LEFT JOIN FETCH rd.author a " +
+           "LEFT JOIN FETCH rd.reviewer r " +
+           "LEFT JOIN FETCH rd.approver ap " +
+           "WHERE (:positionId IS NULL OR rd.positionId = :positionId) AND " +
+           "(:status IS NULL OR rd.status = :status) AND " +
+           "(:authorEmpNo IS NULL OR rd.authorEmpNo LIKE %:authorEmpNo%) AND " +
+           "(:documentTitle IS NULL OR rd.documentTitle LIKE %:documentTitle%) AND " +
+           "(:positionName IS NULL OR p.positionsNm LIKE %:positionName%)")
+    Page<ResponsibilityDocument> findBySearchCriteriaWithJoin(@Param("positionId") Long positionId,
+                                                              @Param("status") ResponsibilityDocument.DocumentStatus status,
+                                                              @Param("authorEmpNo") String authorEmpNo,
+                                                              @Param("documentTitle") String documentTitle,
+                                                              @Param("positionName") String positionName,
+                                                              Pageable pageable);
+
+    /**
+     * 복합 조건 검색 (기존 버전 유지)
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd WHERE " +
            "(:positionId IS NULL OR rd.positionId = :positionId) AND " +

@@ -13,9 +13,7 @@
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import {
-  DepartmentSearchPopup,
   ResponsibilitySearchPopup,
-  type Department,
   type ResponsibilitySearchResult,
 } from '@/domains/common/components/search';
 import type { SelectOption } from '@/shared/types/common';
@@ -33,7 +31,7 @@ import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
-import { responsibilityDocumentApi, type ResponsibilityDocumentDto } from '../api/responsibilityDocumentApi';
+import { type ResponsibilityDocumentDto } from '../api/responsibilityDocumentApi';
 
 interface ResponsibilityDocumentDialogProps {
   open: boolean;
@@ -41,6 +39,7 @@ interface ResponsibilityDocumentDialogProps {
   mode: 'create' | 'edit' | 'view';
   documentId?: number;
   onSuccess?: () => void;
+  apiResponseData?: any;
 }
 
 interface FormData {
@@ -87,6 +86,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   mode: initialMode,
   documentId,
   onSuccess,
+  apiResponseData,
 }) => {
   const [mode, setMode] = useState<'create' | 'edit' | 'view'>(initialMode);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -96,7 +96,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
 
   // 팝업 상태들
   const [responsibilitySearchOpen, setResponsibilitySearchOpen] = useState(false);
-  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -124,28 +123,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     (groupCode: string): SelectOption[] => {
       const codes = getCodesArray();
 
-      // 직위 코드 처리
-      if (groupCode === 'POSITION') {
-        return [
-          { value: '1', label: '부서장' },
-          { value: '2', label: '팀장' },
-          { value: '3', label: '선임' },
-          { value: '4', label: '대리' },
-          { value: '5', label: '사원' },
-        ];
-      }
-
-      // 상태 코드 처리
-      if (groupCode === 'DOCUMENT_STATUS') {
-        return [
-          { value: 'DRAFT', label: '초안' },
-          { value: 'REVIEW', label: '검토중' },
-          { value: 'APPROVED', label: '승인됨' },
-          { value: 'PUBLISHED', label: '발행됨' },
-        ];
-      }
-
-      // 기타 공통코드 처리
+      // 공통코드 처리
       const filteredCodes = codes.filter(
         code => code.groupCode === groupCode && code.useYn === 'Y'
       );
@@ -169,66 +147,36 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     setLoading(true);
     setError(null);
     try {
-      // TODO: 실제 API 호출로 대체
-      // const data = await responsibilityDocumentApi.getDocument(documentId);
-      
-      // Mock 데이터
-      const mockData: ResponsibilityDocumentDto = {
-        documentId,
-        positionId: 1,
-        positionName: '부서장',
-        responsibilityId: 1,
-        documentTitle: '정보기술부 부서장 책무기술서',
-        documentVersion: 'v1.0',
-        documentContent: `## 1. 개요
-이 문서는 정보기술부 부서장의 주요 책무와 권한을 정의합니다.
+      let documentData: ResponsibilityDocumentDto | null = null;
 
-## 2. 주요 책무
-- IT 전략 수립 및 실행
-- 팀 관리 및 인력 운영
-- 예산 관리 및 승인
-- 외부 업체 관리
+      // API 응답 데이터에서 해당 문서 찾기
+      if (apiResponseData?.content && Array.isArray(apiResponseData.content)) {
+        documentData = apiResponseData.content.find(
+          (doc: ResponsibilityDocumentDto) => doc.documentId === documentId
+        );
+      }
 
-## 3. 권한
-- 부서 예산 승인권 (1억원 이하)
-- 팀원 평가 및 승진 추천
-- 프로젝트 승인 및 중단 권한`,
-        status: 'PUBLISHED',
-        effectiveDate: '2024-01-01',
-        expiryDate: '2024-12-31',
-        authorEmpNo: 'E001',
-        authorName: '김작성',
-        reviewerEmpNo: 'E002',
-        reviewerName: '이검토',
-        approverEmpNo: 'E003',
-        approverName: '박승인',
-        isValid: true,
-        isExpiring: false,
-        daysUntilExpiry: 300,
-        workflowStatus: '발행됨',
-        createdAt: '2024-01-01',
-        updatedAt: '2024-01-15',
-        attachmentCount: 2,
-      };
-
-      setFormData({
-        positionId: mockData.positionId || '',
-        positionName: mockData.positionName || '',
-        responsibilityId: mockData.responsibilityId || '',
-        responsibilityContent: '정보기술 관리 책무',
-        documentTitle: mockData.documentTitle,
-        documentVersion: mockData.documentVersion,
-        documentContent: mockData.documentContent,
-        status: mockData.status,
-        effectiveDate: mockData.effectiveDate || '',
-        expiryDate: mockData.expiryDate || '',
-        authorEmpNo: mockData.authorEmpNo || '',
-        authorName: mockData.authorName || '',
-        reviewerEmpNo: mockData.reviewerEmpNo || '',
-        reviewerName: mockData.reviewerName || '',
-        approverEmpNo: mockData.approverEmpNo || '',
-        approverName: mockData.approverName || '',
-      });
+      // 문서 데이터를 폼에 매핑
+      if (documentData) {
+        setFormData({
+          positionId: documentData.positionId || '',
+          positionName: documentData.positionName || '',
+          responsibilityId: documentData.responsibilityId || '',
+          responsibilityContent: '',
+          documentTitle: documentData.documentTitle || '',
+          documentVersion: documentData.documentVersion || 'v1.0',
+          documentContent: documentData.documentContent || '',
+          status: documentData.status || 'DRAFT',
+          effectiveDate: documentData.effectiveDate || '',
+          expiryDate: documentData.expiryDate || '',
+          authorEmpNo: documentData.authorEmpNo || '',
+          authorName: documentData.authorName || '',
+          reviewerEmpNo: documentData.reviewerEmpNo || '',
+          reviewerName: documentData.reviewerName || '',
+          approverEmpNo: documentData.approverEmpNo || '',
+          approverName: documentData.approverName || '',
+        });
+      }
 
     } catch (err) {
       console.error('Failed to load document data:', err);
@@ -236,7 +184,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     } finally {
       setLoading(false);
     }
-  }, [documentId]);
+  }, [documentId, apiResponseData]);
 
   // initialMode이 변경될 때 내부 mode 상태 업데이트
   useEffect(() => {
@@ -259,6 +207,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     isViewMode,
     isCreateMode,
     loadDocumentData,
+    apiResponseData,
   ]);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
@@ -295,26 +244,10 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     setError(null);
 
     try {
-      const requestData = {
-        positionId: formData.positionId as number,
-        responsibilityId: formData.responsibilityId as number,
-        documentTitle: formData.documentTitle,
-        documentVersion: formData.documentVersion,
-        documentContent: formData.documentContent,
-        status: formData.status,
-        effectiveDate: formData.effectiveDate,
-        expiryDate: formData.expiryDate,
-        authorEmpNo: formData.authorEmpNo,
-        reviewerEmpNo: formData.reviewerEmpNo,
-        approverEmpNo: formData.approverEmpNo,
-      };
-
       if (isCreateMode) {
         // TODO: 실제 API 호출로 대체
-        // await responsibilityDocumentApi.createDocument(requestData);
       } else if (isEditMode && documentId) {
         // TODO: 실제 API 호출로 대체
-        // await responsibilityDocumentApi.updateDocument(documentId, requestData);
       }
 
       onSuccess?.();
@@ -342,8 +275,12 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     onClose();
   };
 
-  const handleModeChange = (newMode: 'create' | 'edit' | 'view') => {
-    setMode(newMode);
+  const handleModeChange = (newMode: 'create' | 'edit' | 'view' | 'onlyRead') => {
+    if (newMode === 'onlyRead') {
+      setMode('view');
+    } else {
+      setMode(newMode);
+    }
   };
 
   return (
@@ -357,7 +294,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         mode={mode}
         title={mode === 'create' ? '책무기술서 등록' : mode === 'edit' ? '책무기술서 수정' : '책무기술서 조회'}
       >
-        <DialogContent sx={{ 
+        <DialogContent sx={{
           p: 3,
           // view 모드에서 텍스트 스타일 진하게 통일
           ...(isViewMode && {
@@ -439,11 +376,11 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='직위 *'
                     options={[
                       { value: '', label: '선택하세요' },
-                      ...getCommonCodeOptions('POSITION')
+                      ...getCommonCodeOptions('POSITION_TYPE')
                     ]}
                     onChange={(value) => {
                       const positionId = value as string;
-                      const positionName = getCommonCodeOptions('POSITION').find(opt => opt.value === positionId)?.label || '';
+                      const positionName = getCommonCodeOptions('POSITION_TYPE').find(opt => opt.value === positionId)?.label || '';
                       handleInputChange('positionId', Number(positionId));
                       handleInputChange('positionName', positionName);
                     }}
@@ -463,6 +400,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                       helperText={
                         formData.responsibilityId ? `책무ID: ${formData.responsibilityId}` : ''
                       }
+                      mode="view"
                     />
                     {!isViewMode && (
                       <Button
@@ -485,6 +423,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.documentTitle}
                     onChange={e => handleInputChange('documentTitle', e.target.value)}
                     disabled={isViewMode}
+                    mode={isViewMode ? "view" : "edit"}
                   />
                 </Grid>
 
@@ -496,6 +435,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.documentVersion}
                     onChange={e => handleInputChange('documentVersion', e.target.value)}
                     disabled={isViewMode}
+                    mode={isViewMode ? "view" : "edit"}
                   />
                 </Grid>
 
@@ -506,7 +446,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='상태'
                     options={[
                       { value: '', label: '선택하세요' },
-                      ...getCommonCodeOptions('DOCUMENT_STATUS')
+                      ...getCommonCodeOptions('RESPONSIBILITY_STATUS')
                     ]}
                     onChange={(value) => handleInputChange('status', value as string)}
                     disabled={isViewMode}
@@ -522,6 +462,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.effectiveDate}
                     onChange={e => handleInputChange('effectiveDate', e.target.value)}
                     disabled={isViewMode}
+                    mode={isViewMode ? "view" : "edit"}
                     InputLabelProps={{
                       shrink: true,
                     }}
@@ -537,6 +478,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.expiryDate}
                     onChange={e => handleInputChange('expiryDate', e.target.value)}
                     disabled={isViewMode}
+                    mode={isViewMode ? "view" : "edit"}
                     InputLabelProps={{
                       shrink: true,
                     }}
@@ -551,6 +493,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.documentContent}
                     onChange={e => handleInputChange('documentContent', e.target.value)}
                     disabled={isViewMode}
+                    mode={isViewMode ? "view" : "edit"}
                     multiline
                     rows={12}
                     placeholder='문서의 상세 내용을 마크다운 형식으로 작성하세요.'
@@ -564,6 +507,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='작성자'
                     value={formData.authorName}
                     disabled
+                    mode="view"
                     helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
                   />
                 </Grid>
@@ -575,6 +519,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='검토자'
                     value={formData.reviewerName}
                     disabled
+                    mode="view"
                     helperText={formData.reviewerEmpNo ? `사번: ${formData.reviewerEmpNo}` : ''}
                   />
                 </Grid>
@@ -586,6 +531,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='승인자'
                     value={formData.approverName}
                     disabled
+                    mode="view"
                     helperText={formData.approverEmpNo ? `사번: ${formData.approverEmpNo}` : ''}
                   />
                 </Grid>

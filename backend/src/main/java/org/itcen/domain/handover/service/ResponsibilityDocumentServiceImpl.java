@@ -291,21 +291,21 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     @Override
     public List<ResponsibilityDocumentDto> getDocumentsByPosition(Long positionId) {
         log.debug("직책별 책무기술서 조회 - positionId: {}", positionId);
-        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByPositionId(positionId);
+        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByPositionIdWithJoin(positionId);
         return convertToDto(documents);
     }
 
     @Override
     public List<ResponsibilityDocumentDto> getDocumentsByStatus(ResponsibilityDocument.DocumentStatus status) {
         log.debug("상태별 책무기술서 조회 - status: {}", status);
-        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByStatus(status);
+        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByStatusWithJoin(status);
         return convertToDto(documents);
     }
 
     @Override
     public List<ResponsibilityDocumentDto> getDocumentsByAuthor(String authorEmpNo) {
         log.debug("작성자별 책무기술서 조회 - authorEmpNo: {}", authorEmpNo);
-        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByAuthorEmpNo(authorEmpNo);
+        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByAuthorEmpNoWithJoin(authorEmpNo);
         return convertToDto(documents);
     }
 
@@ -343,15 +343,16 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     public Page<ResponsibilityDocumentDto> searchDocuments(DocumentSearchDto searchDto, Pageable pageable) {
         log.debug("복합 조건 검색 - searchDto: {}", searchDto);
         
-        Page<ResponsibilityDocument> documents = responsibilityDocumentRepository.findBySearchCriteria(
+        Page<ResponsibilityDocument> results = responsibilityDocumentRepository.findBySearchCriteriaWithJoin(
                 searchDto.getPositionId(),
                 searchDto.getStatus(),
                 searchDto.getAuthorEmpNo(),
                 searchDto.getDocumentTitle(),
+                searchDto.getPositionName(),
                 pageable
         );
         
-        return documents.map(this::convertToDto);
+        return results.map(this::convertToDtoWithJoin);
     }
 
     // 통계 기능들은 추후 구현 예정
@@ -382,6 +383,12 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     }
 
     private ResponsibilityDocumentDto convertToDto(ResponsibilityDocument document) {
+        return convertToDtoWithJoin(document);
+    }
+
+
+
+    private ResponsibilityDocumentDto convertToDtoWithJoin(ResponsibilityDocument document) {
         return new ResponsibilityDocumentDto() {
             @Override
             public Long getDocumentId() { return document.getDocumentId(); }
@@ -390,7 +397,9 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
             public Long getPositionId() { return document.getPositionId(); }
             
             @Override
-            public String getPositionName() { return null; } // TODO: Position 조인 후 구현
+            public String getPositionName() { 
+                return document.getPosition() != null ? document.getPosition().getPositionsNm() : null; 
+            }
             
             @Override
             public Long getResponsibilityId() { return document.getResponsibilityId(); }
@@ -420,19 +429,25 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
             public String getAuthorEmpNo() { return document.getAuthorEmpNo(); }
             
             @Override
-            public String getAuthorName() { return null; } // TODO: User 조인 후 구현
+            public String getAuthorName() { 
+                return document.getAuthor() != null ? document.getAuthor().getEmpName() : null; 
+            }
             
             @Override
             public String getReviewerEmpNo() { return document.getReviewerEmpNo(); }
             
             @Override
-            public String getReviewerName() { return null; } // TODO: User 조인 후 구현
+            public String getReviewerName() { 
+                return document.getReviewer() != null ? document.getReviewer().getEmpName() : null; 
+            }
             
             @Override
             public String getApproverEmpNo() { return document.getApproverEmpNo(); }
             
             @Override
-            public String getApproverName() { return null; } // TODO: User 조인 후 구현
+            public String getApproverName() { 
+                return document.getApprover() != null ? document.getApprover().getEmpName() : null; 
+            }
         };
     }
 }

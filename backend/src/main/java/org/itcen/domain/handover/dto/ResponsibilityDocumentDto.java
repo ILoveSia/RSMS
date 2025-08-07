@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.itcen.domain.handover.entity.ResponsibilityDocument;
+import org.itcen.domain.handover.service.ResponsibilityDocumentService;
 
 import java.time.LocalDate;
 
@@ -61,3 +62,4 @@ public class ResponsibilityDocumentDto {
     private Long attachmentCount;
     private String attachmentFileNames;
 }
+
