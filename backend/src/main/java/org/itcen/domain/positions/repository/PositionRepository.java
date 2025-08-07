@@ -108,11 +108,13 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
                     departments d_write ON p.write_dept_cd = d_write.department_id AND d_write.use_yn = 'Y'
                 LEFT JOIN
                     ledger_orders lo ON p.ledger_order = lo.ledger_orders_id
+                WHERE
+                    (:ledgerOrdersId IS NULL OR lo.ledger_orders_id = :ledgerOrdersId)
                 ORDER BY
                     p.created_at DESC
             """,
             nativeQuery = true)
-    List<PositionStatusProjection> findPositionStatusList();
+    List<PositionStatusProjection> findPositionStatusList(@Param("ledgerOrdersId") Long ledgerOrdersId);
 
     /**
      * 직책 검색 (검색팝업용)

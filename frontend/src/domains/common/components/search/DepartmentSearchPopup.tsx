@@ -80,12 +80,12 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
-  // 컬럼 정의
+  // 컬럼 정의 (컴팩트 버전)
   const columns: GridColDef[] = [
     {
       field: 'deptCode',
       headerName: '부서코드',
-      width: 150,
+      width: 120,
       renderCell: params => (
         <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
           {params.value}
@@ -95,8 +95,8 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
     {
       field: 'deptName',
       headerName: '부서명',
-      width: 250,
       flex: 1,
+      minWidth: 200,
       renderCell: params => (
         <Typography variant='body2' sx={{ fontWeight: 'bold' }}>
           {params.value}
@@ -105,8 +105,8 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
     },
     {
       field: 'useYn',
-      headerName: '사용여부',
-      width: 100,
+      headerName: '상태',
+      width: 70,
       renderCell: params => (
         <Typography
           variant='body2'
@@ -116,32 +116,6 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
           }}
         >
           {params.value === 'Y' ? '사용' : '미사용'}
-        </Typography>
-      ),
-    },
-    {
-      field: 'isActive',
-      headerName: '상태',
-      width: 80,
-      renderCell: params => (
-        <Typography
-          variant='body2'
-          sx={{
-            color: params.value ? 'success.main' : 'error.main',
-            fontWeight: '500',
-          }}
-        >
-          {params.value ? '활성' : '비활성'}
-        </Typography>
-      ),
-    },
-    {
-      field: 'createdAt',
-      headerName: '생성일시',
-      width: 150,
-      renderCell: params => (
-        <Typography variant='body2' color='text.secondary'>
-          {params.value ? new Date(params.value).toLocaleDateString() : '-'}
         </Typography>
       ),
     },
@@ -238,7 +212,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth='lg'
+      maxWidth='md'
       fullWidth
       aria-labelledby='department-search-dialog-title'
     >
@@ -260,7 +234,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
         </IconButton>
       </DialogTitle>
       <DialogContent>
-        <Box sx={{ width: '100%', height: 600 }}>
+        <Box sx={{ width: '100%', height: 500 }}>
           {/* 검색 영역 */}
           <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
             <TextField
@@ -308,7 +282,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
             </Box>
           ) : (
             /* 부서 목록 DataGrid */
-            <Box sx={{ height: 450 }}>
+            <Box sx={{ height: 350 }}>
               <DataGrid
                 rows={filteredDepartments}
                 columns={columns}

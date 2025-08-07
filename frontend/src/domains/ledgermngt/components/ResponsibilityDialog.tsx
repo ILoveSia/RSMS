@@ -10,6 +10,7 @@ import TextField from '@/shared/components/ui/data-display/TextField';
 import { Box, Grid, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import responsibilityApi from '../api/responsibilityApi';
+import { positionApi } from '../api/positionApi';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
 interface ApiSuccessResponse<T> {
@@ -24,6 +25,7 @@ export interface ResponsibilityData {
   responsibilityId?: string;
   responsibilityContent: string;
   details: ResponsibilityDetail[];
+  ledgerOrder?: number; // 원장차수 ID (신규 등록시 사용)
 }
 
 // 책무 상세 데이터 타입
@@ -38,6 +40,7 @@ export interface ResponsibilityDetail {
 interface FormData {
   responsibilityContent: string;
   details: ResponsibilityDetail[];
+  ledgerOrder?: number; // 원장차수 ID (신규 등록시 사용)
 }
 
 interface IResponsibilityDialogProps {
@@ -46,6 +49,7 @@ interface IResponsibilityDialogProps {
   responsibilityId: number | null;
   positionName: string;
   rowData?: any; // row 데이터를 받을 props 추가
+  selectedLedgerOrder?: string; // 원장차수 값 (신규 등록시만 사용)
   onClose: () => void;
   onSave: () => void;
   onChangeMode: (mode: DialogMode) => void;
@@ -57,6 +61,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   responsibilityId,
   positionName,
   rowData,
+  selectedLedgerOrder,
   onClose,
   onSave,
   onChangeMode,
@@ -245,24 +250,46 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       return;
     }
 
-    // 백엔드 DTO 구조에 맞게 데이터 변환
-    const responsibilityRequestData = {
-      responsibilityContent: formData.responsibilityContent,
-      details: formData.details.map(detail => ({
-        responsibilityDetailContent: detail.responsibilityDetailContent,
-        keyManagementTasks: detail.keyManagementTasks,
-        relatedBasis: detail.relatedBasis
-      }))
-    };
     try {
       setLoading(true);
-      // 백엔드 API 호출
-      if(responsibilityId){
-        await responsibilityApi.update(responsibilityId, responsibilityRequestData);
-      }else{
-        await responsibilityApi.create(responsibilityRequestData);
+      
+      // 백엔드 DTO 구조에 맞게 데이터 변환
+      let responsibilityRequestData: any = {
+        responsibilityContent: formData.responsibilityContent,
+        details: formData.details.map(detail => ({
+          responsibilityDetailContent: detail.responsibilityDetailContent,
+          keyManagementTasks: detail.keyManagementTasks,
+          relatedBasis: detail.relatedBasis
+        }))
+      };
+
+      // 신규 등록시에만 원장차수 값 처리
+      if (mode === 'create' && selectedLedgerOrder && selectedLedgerOrder !== 'ALL') {
+        console.log('🔄 신규 등록: 원장차수 ID 조회 중...', selectedLedgerOrder);
+        
+        try {
+          // 원장차수 제목으로 ledger_orders_id 조회
+          const ledgerOrdersId = await positionApi.getLedgerOrdersIdByTitle(selectedLedgerOrder);
+          console.log('✅ 원장차수 ID 조회 성공:', selectedLedgerOrder, '->', ledgerOrdersId);
+          
+          // 백엔드 요청 데이터에 ledgerOrder 추가
+          responsibilityRequestData.ledgerOrder = ledgerOrdersId;
+          
+        } catch (error) {
+          console.error('❌ 원장차수 ID 조회 실패:', selectedLedgerOrder, error);
+          setError('원장차수 정보를 조회할 수 없습니다.');
+          return;
+        }
       }
 
+      console.log('📤 책무 저장 요청 데이터:', responsibilityRequestData);
+
+      // 백엔드 API 호출
+      if (responsibilityId) {
+        await responsibilityApi.update(responsibilityId, responsibilityRequestData);
+      } else {
+        await responsibilityApi.create(responsibilityRequestData);
+      }
 
       onSave();
       setShowSuccessAlert(true);

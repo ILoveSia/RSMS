@@ -6,6 +6,10 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import java.time.LocalDateTime;
 
@@ -110,19 +114,35 @@ public abstract class BaseTimeEntity {
 
     /**
      * 현재 인증된 사용자의 ID를 가져옵니다.
-     * 인증되지 않은 경우 "system"을 반환합니다.
+     * 세션에서 userId를 먼저 확인하고, 없으면 Security Context를 확인합니다.
      * 
      * @return 현재 사용자 ID 또는 "system"
      */
     private String getCurrentUserId() {
         try {
+            // 1. 세션에서 userId 가져오기 (우선순위)
+            ServletRequestAttributes requestAttributes = 
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (requestAttributes != null) {
+                HttpServletRequest request = requestAttributes.getRequest();
+                HttpSession session = request.getSession(false);
+                if (session != null) {
+                    String userId = (String) session.getAttribute("userId");
+                    if (userId != null && !userId.trim().isEmpty()) {
+                        return userId;
+                    }
+                }
+            }
+            
+            // 2. SecurityContext에서 인증 정보 가져오기 (fallback)
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated() && 
                 !"anonymousUser".equals(authentication.getPrincipal())) {
                 return authentication.getName();
             }
         } catch (Exception e) {
-            // SecurityContext에서 인증 정보를 가져올 수 없는 경우
+            // 세션이나 SecurityContext에서 정보를 가져올 수 없는 경우
+            // 로그를 남기고 system으로 처리
         }
         return "system";
     }

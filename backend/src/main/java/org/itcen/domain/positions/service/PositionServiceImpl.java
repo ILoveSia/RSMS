@@ -70,17 +70,18 @@ public class PositionServiceImpl implements PositionService {
     @Transactional(readOnly = true)
     public List<LedgerOrderSelectDto> getLedgerOrderSelectList() {
         // 원장차수+진행상태 목록 조회 (ledger_orders 테이블 사용)
-        List<Object[]> rows = em.createNativeQuery("SELECT lo.ledger_orders_title, cc.code_name "
+        List<Object[]> rows = em.createNativeQuery("SELECT lo.ledger_orders_id, lo.ledger_orders_title, cc.code_name "
                 + "FROM ledger_orders lo "
                 + "LEFT JOIN common_code cc ON cc.group_code = 'ORDER_STATUS' AND cc.code = lo.ledger_orders_status_cd "
                 + "ORDER BY lo.ledger_orders_title DESC").getResultList();
 
         List<LedgerOrderSelectDto> result = new ArrayList<>();
         for (Object[] row : rows) {
-            String title = (String) row[0];
-            String statusName = (String) row[1];
+            Long ledgerOrdersId = ((Number) row[0]).longValue();
+            String title = (String) row[1];
+            String statusName = (String) row[2];
             String label = title + (statusName != null ? " (" + statusName + ")" : "");
-            result.add(new LedgerOrderSelectDto(title, label));
+            result.add(new LedgerOrderSelectDto(title, label, ledgerOrdersId));
         }
         return result;
     }
@@ -249,8 +250,9 @@ public class PositionServiceImpl implements PositionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PositionStatusDto> getPositionStatusList() {
-        List<PositionStatusProjection> projections = positionRepository.findPositionStatusList();
+    public List<PositionStatusDto> getPositionStatusList(Long ledgerOrdersId) {
+        List<PositionStatusProjection> projections = positionRepository.findPositionStatusList(ledgerOrdersId);
+        
         return projections.stream()
                 .map(p -> PositionStatusDto.builder()
                         .positionsId(p.getPositionsId())

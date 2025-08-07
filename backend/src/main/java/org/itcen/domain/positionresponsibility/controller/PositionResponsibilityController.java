@@ -25,8 +25,10 @@ public class PositionResponsibilityController {
     private final PositionResponsibilityService positionResponsibilityService;
 
     @GetMapping
-    public List<PositionResponsibilityDto> getAll() {
-        List<PositionResponsibilityDto> result = positionResponsibilityService.getAll();
+    public List<PositionResponsibilityDto> getAll(
+            @org.springframework.web.bind.annotation.RequestParam(name = "positionsId", required = false) Long positionsId,
+            @org.springframework.web.bind.annotation.RequestParam(name = "ledgerOrdersId", required = false) Long ledgerOrdersId) {
+        List<PositionResponsibilityDto> result = positionResponsibilityService.getAll(positionsId, ledgerOrdersId);
         return result;
     }
 

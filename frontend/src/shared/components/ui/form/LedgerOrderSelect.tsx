@@ -14,8 +14,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 export interface LedgerOrderSelectProps {
   /** 선택된 값 */
   value: string;
-  /** 값 변경 핸들러 */
-  onChange: (value: string) => void;
+  /** 값 변경 핸들러 - value와 ledgerOrdersId를 함께 전달 */
+  onChange: (value: string, ledgerOrdersId?: number) => void;
   /** 컴포넌트 크기 */
   size?: 'small' | 'medium';
   /** 커스텀 스타일 */
@@ -42,11 +42,14 @@ export interface LedgerOrderSelectProps {
   onLoadComplete?: (options: LedgerOrderOption[]) => void;
   /** 에러 발생 콜백 */
   onError?: (error: string) => void;
+  /** 외부에서 새로고침 트리거 */
+  refreshTrigger?: number;
 }
 
 export interface LedgerOrderOption {
   value: string;
   label: string;
+  ledgerOrdersId: number;
 }
 
 const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
@@ -65,6 +68,7 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
   maxWidth = 200,
   onLoadComplete,
   onError,
+  refreshTrigger,
 }) => {
   // 원장차수 옵션 상태
   const [ledgerOrderOptions, setLedgerOrderOptions] = useState<LedgerOrderOption[]>([]);
@@ -102,6 +106,13 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
   useEffect(() => {
     fetchLedgerOrders();
   }, [fetchLedgerOrders]);
+
+  // refreshTrigger 변경 시 새로고침
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchLedgerOrders();
+    }
+  }, [refreshTrigger, fetchLedgerOrders]);
 
   // SelectBox 옵션 생성
   const getSelectOptions = useCallback((): SelectOption[] => {
@@ -145,6 +156,8 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
         options.push({
           value: option.value,
           label: option.label,
+          // SelectOption에는 ledgerOrdersId 필드가 없으므로 추가 정보로 저장
+          data: { ledgerOrdersId: option.ledgerOrdersId }
         });
       });
     } else {
@@ -164,15 +177,31 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
   // 값 변경 핸들러 - Select 컴포넌트의 onChange 타입에 맞춤
   const handleChange = useCallback(
     (newValue: string | number | string[] | number[]) => {
+      let valueString: string;
+      
       if (typeof newValue === 'string') {
-        onChange(newValue);
+        valueString = newValue;
       } else if (typeof newValue === 'number') {
-        onChange(String(newValue));
+        valueString = String(newValue);
       } else if (Array.isArray(newValue) && newValue.length > 0) {
-        onChange(String(newValue[0]));
+        valueString = String(newValue[0]);
+      } else {
+        return;
       }
+
+      // "전체" 또는 allValue인 경우 ledgerOrdersId 없이 호출
+      if (valueString === allValue) {
+        onChange(valueString);
+        return;
+      }
+
+      // 선택된 값에 해당하는 ledgerOrdersId 찾기
+      const selectedOption = ledgerOrderOptions.find(option => option.value === valueString);
+      const ledgerOrdersId = selectedOption?.ledgerOrdersId;
+      
+      onChange(valueString, ledgerOrdersId);
     },
-    [onChange]
+    [onChange, allValue, ledgerOrderOptions]
   );
 
   return (

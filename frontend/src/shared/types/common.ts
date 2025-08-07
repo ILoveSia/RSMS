@@ -28,6 +28,7 @@ export interface SelectOption {
   label: string;
   disabled?: boolean;
   group?: string;
+  data?: any; // 추가 데이터를 위한 필드
 }
 
 // 데이터 그리드 컬럼 타입

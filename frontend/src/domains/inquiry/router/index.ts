@@ -18,7 +18,7 @@ const inquiryRoutes: DomainRoute[] = [
     meta: {
       title: '점검계획관리 현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['적부구조도 이력 점검', '점검계획관리 현황'],
       icon: 'Assignment',
       description: '점검계획관리 현황 페이지',
@@ -30,7 +30,7 @@ const inquiryRoutes: DomainRoute[] = [
     meta: {
       title: '점검현황(항목별)',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['적부구조도 이력 점검', '점검현황(항목별)'],
       icon: 'Assessment',
       description: '항목별 점검 현황 페이지',
@@ -42,7 +42,7 @@ const inquiryRoutes: DomainRoute[] = [
     meta: {
       title: '점검 현황(부서별)',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['적부구조도 이력 점검', '점검 현황(부서별)'],
       icon: 'Business',
       description: '부서별 점검 현황 페이지',
@@ -54,7 +54,7 @@ const inquiryRoutes: DomainRoute[] = [
     meta: {
       title: '미비점 현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['적부구조도 이력 점검', '미비점 현황'],
       icon: 'Warning',
       description: '미비점 현황 페이지',

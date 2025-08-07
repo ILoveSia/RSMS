@@ -106,4 +106,10 @@ public interface MenuPermissionRepository extends JpaRepository<MenuPermission, 
      * 역할명으로 권한 삭제 (역할 삭제 시)
      */
     void deleteByRoleName(String roleName);
+
+    /**
+     * 메뉴 ID와 다중 역할명으로 권한 조회 (사용자별 메뉴 권한 조회용)
+     */
+    @Query("SELECT mp FROM MenuPermission mp WHERE mp.menu.id = :menuId AND mp.roleName IN :roleNames")
+    List<MenuPermission> findByMenuIdAndRoleNameIn(@Param("menuId") Long menuId, @Param("roleNames") java.util.Set<String> roleNames);
 }

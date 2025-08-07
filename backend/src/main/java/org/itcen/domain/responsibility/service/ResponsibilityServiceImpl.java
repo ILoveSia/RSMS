@@ -41,7 +41,9 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
     public Responsibility createResponsibility(ResponsibilityCreateRequestDto requestDto) {
 
         Responsibility responsibility = Responsibility.builder()
-                .responsibilityContent(requestDto.getResponsibilityContent()).build();
+                .responsibilityContent(requestDto.getResponsibilityContent())
+                .ledgerOrder(requestDto.getLedgerOrder()) // 원장차수 ID 설정
+                .build();
         Responsibility savedResponsibility = responsibilityRepository.save(responsibility);
 
         for (ResponsibilityDetailDto detailDto : requestDto.getDetails()) {
@@ -58,10 +60,13 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ResponsibilityStatusDto> getResponsibilityStatusList(Long responsibilityId) {
+    public List<ResponsibilityStatusDto> getResponsibilityStatusList(Long responsibilityId, Long ledgerOrdersId) {
         if (responsibilityId != null) {
             return responsibilityDetailRepository
                     .findResponsibilityStatusListById(responsibilityId);
+        } else if (ledgerOrdersId != null) {
+            return responsibilityDetailRepository
+                    .findResponsibilityStatusListByLedgerOrdersId(ledgerOrdersId);
         }
         return responsibilityDetailRepository.findResponsibilityStatusList();
     }

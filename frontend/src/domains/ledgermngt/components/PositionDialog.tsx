@@ -2,7 +2,7 @@
  * 직책 등록/수정/조회 다이얼로그 컴포넌트
  */
 import apiClient from '@/app/common/api/client';
-import { useCommonCodes, getCodeName, type CommonCode } from '@/shared/utils/codeUtils';
+import { useCommonCodes, getCodeNameSync, type CommonCode } from '@/shared/utils/codeUtils';
 import DepartmentApi, {
   type Department as ApiDepartment,
 } from '@/domains/common/api/departmentApi';
@@ -45,7 +45,7 @@ interface ApiSuccessResponse<T> {
 
 export interface PositionData {
   positionsId: string;
-  ledgerOrders: number;
+  ledgerOrder: number; // 백엔드 엔티티에 맞춰 단수형으로 변경
   positionName: string;
   writeDeptCd: string;
   confirmGubunCd: string;
@@ -64,6 +64,7 @@ export interface PositionDialogProps {
   open: boolean;
   mode: 'create' | 'edit' | 'view';
   positionId?: number | null;
+  selectedLedgerOrder?: string; // 선택된 원장차수 전달
   onClose: () => void;
   onSave?: (position: PositionData) => void;
   onChangeMode?: (newMode: 'create' | 'edit' | 'view') => void;
@@ -107,6 +108,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   open,
   mode,
   positionId,
+  selectedLedgerOrder,
   onClose,
   onSave,
   onChangeMode,
@@ -119,8 +121,14 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   const [departmentsLoading, setDepartmentsLoading] = useState<boolean>(false);
   const [departmentsError, setDepartmentsError] = useState<string | null>(null);
 
-  // 공통코드 헬퍼 함수
-  const getDeptCodes = () => {
+  // Hook 결과를 컴포넌트 최상위에서 미리 계산 (조건부 Hook 호출 방지)
+  const mebGubunCodes = React.useMemo(() => {
+    return allCodes
+      .filter(code => code.groupCode === 'MEB_GUBUN' && code.useYn === 'Y')
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  }, [allCodes]);
+
+  const deptCodes = React.useMemo(() => {
     // 부서 API에서 데이터를 가져온 경우 해당 데이터 사용
     if (departments.length > 0) {
       return departments.map(dept => ({
@@ -136,13 +144,15 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     return allCodes
       .filter(code => code.groupCode === 'DEPT' && code.useYn === 'Y')
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  };
+  }, [allCodes, departments]);
 
-  const getMebGubunCodes = () => {
-    return allCodes
-      .filter(code => code.groupCode === 'MEB_GUBUN' && code.useYn === 'Y')
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  };
+  // 코드명 조회 함수를 useMemo로 안정화
+  const getCodeNameStable = React.useCallback((groupCode: string, codeValue: string) => {
+    return getCodeNameSync(allCodes, groupCode, codeValue);
+  }, [allCodes]);
+
+  // 공통코드 헬퍼 함수 (더 이상 Hook 호출하지 않음)
+  const getMebGubunCodes = () => mebGubunCodes;
 
   // 부서 데이터 가져오기
   const fetchDepartments = async () => {
@@ -308,7 +318,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
               } catch (deptErr) {
                 console.warn('부서명 조회 실패:', deptErr);
                 // 부서명 조회 실패 시 공통코드에서 찾기
-                writeDeptName = getCodeName('DEPT', positionData.writeDeptCd);
+                writeDeptName = getCodeNameStable('DEPT', positionData.writeDeptCd);
               }
             }
           }
@@ -604,10 +614,10 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   };
 
   // 직급 코드를 직급명으로 변환하는 함수
-  const getJobRankName = (jobRankCd: string): string => {
+  const getJobRankName = React.useCallback((jobRankCd: string): string => {
     if (!jobRankCd) return '';
-    return getCodeName('JOB_RANK', jobRankCd);
-  };
+    return getCodeNameStable('JOB_RANK', jobRankCd);
+  }, [getCodeNameStable]);
 
   // memberGubun 코드 변환 함수
   const convertMemberGubun = (memberGubun: string): string => {
@@ -685,15 +695,31 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     setLoading(true);
     setError(null);
 
-    const positionRequestData = {
-      positionName: formData.positionName,
-      writeDeptCd: formData.writeDeptCd,
-      ownerDeptCds: ownerDepts.map(d => d.deptCode).filter(Boolean),
-      meetingBodyIds: meetings.map(m => m.meetingBodyId).filter(Boolean),
-      adminIds: managers.map(m => m.empNo).filter(Boolean),
-    };
-
     try {
+      let positionRequestData: any = {
+        positionName: formData.positionName,
+        writeDeptCd: formData.writeDeptCd,
+        ownerDeptCds: ownerDepts.map(d => d.deptCode).filter(Boolean),
+        meetingBodyIds: meetings.map(m => m.meetingBodyId).filter(Boolean),
+        adminIds: managers.map(m => m.empNo).filter(Boolean),
+      };
+
+      // 신규 등록 시에만 selectedLedgerOrder로 ledger_orders_id 조회하여 추가
+      if (mode === 'create' && selectedLedgerOrder && selectedLedgerOrder !== 'ALL') {
+        console.log('📋 신규 등록 - 선택된 원장차수로 ledger_orders_id 조회:', selectedLedgerOrder);
+        try {
+          // positionApi import 필요
+          const { positionApi } = await import('../api/positionApi');
+          const ledgerOrdersId = await positionApi.getLedgerOrdersIdByTitle(selectedLedgerOrder);
+          positionRequestData.ledgerOrder = ledgerOrdersId; // 백엔드 DTO에 맞춰 ledgerOrder로 변경
+          console.log('✅ ledger_orders_id 조회 성공, positions 테이블에 저장할 값:', ledgerOrdersId);
+        } catch (ledgerOrderError) {
+          console.error('❌ ledger_orders_id 조회 실패:', ledgerOrderError);
+          setError(`원장차수 정보 조회에 실패했습니다: ${selectedLedgerOrder}`);
+          return;
+        }
+      }
+
       let response: PositionData;
       if (mode === 'create') {
         response = await apiClient.post('/positions', positionRequestData);
@@ -762,7 +788,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     <Dialog
       open={open}
       title={getDialogTitle()}
-      maxWidth='lg'
+      maxWidth='md'
       onClose={onClose}
       disableBackdropClick={loading}
       actions={renderActions()}
@@ -809,7 +835,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                     </MenuItem>
                   ))
                 ) : (
-                  getDeptCodes().map(code => (
+                  deptCodes.map(code => (
                     <MenuItem key={code.code} value={code.code}>
                       {code.codeName}
                     </MenuItem>
@@ -969,7 +995,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                         <FormControl fullWidth size='small'>
                           <Select
                             value={(() => {
-                              const mebGubunCodes = getMebGubunCodes();
                               const hasValue = mebGubunCodes.some(code => code.code === meeting.memberGubun);
                               return hasValue ? meeting.memberGubun : '';
                             })()}
@@ -980,7 +1005,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                             displayEmpty
                           >
                             <MenuItem value=''>선택하세요</MenuItem>
-                            {getMebGubunCodes().map(code => (
+                            {mebGubunCodes.map(code => (
                               <MenuItem key={code.code} value={code.code}>
                                 {code.codeName}
                               </MenuItem>
@@ -991,7 +1016,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell sx={{ width: 120 }}>
                         <TextField
                           size='small'
-                          value={getCodeName('PERIOD', meeting.meetingPeriod)}
+                          value={getCodeNameStable('PERIOD', meeting.meetingPeriod)}
                           mode="readonly"
                           readonlyPlaceholder="자동 입력"
                           sx={{ width: 100 }}

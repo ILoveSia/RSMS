@@ -90,14 +90,13 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
     List<Object[]> findMenuHierarchy();
     
     /**
-     * 특정 역할의 메뉴 권한과 함께 조회
+     * 모든 활성 메뉴와 권한 정보 조회 (서비스에서 권한 필터링)
      */
     @Query("""
         SELECT m FROM Menu m 
         LEFT JOIN FETCH m.permissions p 
         WHERE m.isActive = true 
         AND m.isVisible = true 
-        AND (p.roleName = :roleName OR p.roleName IS NULL)
         ORDER BY m.menuLevel ASC, m.sortOrder ASC
         """)
     List<Menu> findMenusWithPermissionsByRole(@Param("roleName") String roleName);

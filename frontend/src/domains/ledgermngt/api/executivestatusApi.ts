@@ -45,8 +45,11 @@ export interface Manager {
 }
 
 const execOfficerApi = {
-  getAll: async (): Promise<ExecOfficer[]> => {
-    const response = await apiClient.get<ExecOfficer[]>('/execofficer');
+  getAll: async (ledgerOrdersId?: number): Promise<ExecOfficer[]> => {
+    const url = ledgerOrdersId 
+      ? `/execofficer?ledgerOrdersId=${ledgerOrdersId}`
+      : '/execofficer';
+    const response = await apiClient.get<ExecOfficer[]>(url);
     return response;
   },
   create: async (data: Omit<ExecOfficer, 'execofficerId'>): Promise<ExecOfficer> => {

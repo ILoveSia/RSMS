@@ -14,8 +14,8 @@ import apiClient from '@/app/common/api/client';
 export interface LedgerOrdersHodSelectProps {
   /** 선택된 값 */
   value: string;
-  /** 값 변경 핸들러 */
-  onChange: (value: string) => void;
+  /** 값 변경 핸들러 - value와 ledgerOrdersHodId를 함께 전달 */
+  onChange: (value: string, ledgerOrdersHodId?: number) => void;
   /** 라벨 텍스트 */
   label?: string;
   /** 컴포넌트 크기 */
@@ -49,6 +49,7 @@ export interface LedgerOrdersHodSelectProps {
 export interface LedgerOrdersHodOption {
   value: string;
   label: string;
+  ledgerOrdersHodId: number;
 }
 
 // 부서장 원장차수 API 함수
@@ -162,6 +163,8 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
         options.push({
           value: option.value,
           label: option.label,
+          // SelectOption에는 ledgerOrdersHodId 필드가 없으므로 추가 정보로 저장
+          data: { ledgerOrdersHodId: option.ledgerOrdersHodId }
         });
       });
     } else {
@@ -181,15 +184,31 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
   // 값 변경 핸들러 - Select 컴포넌트의 onChange 타입에 맞춤
   const handleChange = useCallback(
     (newValue: string | number | string[] | number[]) => {
+      let valueString: string;
+      
       if (typeof newValue === 'string') {
-        onChange(newValue);
+        valueString = newValue;
       } else if (typeof newValue === 'number') {
-        onChange(String(newValue));
+        valueString = String(newValue);
       } else if (Array.isArray(newValue) && newValue.length > 0) {
-        onChange(String(newValue[0]));
+        valueString = String(newValue[0]);
+      } else {
+        return;
       }
+
+      // "전체" 또는 allValue인 경우 ledgerOrdersHodId 없이 호출
+      if (valueString === allValue) {
+        onChange(valueString);
+        return;
+      }
+
+      // 선택된 값에 해당하는 ledgerOrdersHodId 찾기
+      const selectedOption = ledgerOrdersHodOptions.find(option => option.value === valueString);
+      const ledgerOrdersHodId = selectedOption?.ledgerOrdersHodId;
+      
+      onChange(valueString, ledgerOrdersHodId);
     },
-    [onChange]
+    [onChange, allValue, ledgerOrdersHodOptions]
   );
 
   return (

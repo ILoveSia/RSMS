@@ -116,4 +116,18 @@ public interface MeetingBodyService {
      * - 확장/폐쇄 원칙: 단건/다건 삭제 모두 지원하도록 확장
      */
     void deleteMeetingBodies(List<String> ids);
+    
+    /**
+     * 회의체 총 개수 조회 (디버깅용)
+     * 
+     * @return 회의체 총 개수
+     */
+    Long getTotalCount();
+    
+    /**
+     * 실제 회의체 데이터의 gubun 값들 조회 (디버깅용)
+     * 
+     * @return gubun 값 목록
+     */
+    List<String> getActualGubunValues();
 }

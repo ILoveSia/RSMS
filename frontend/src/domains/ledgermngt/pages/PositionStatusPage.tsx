@@ -9,21 +9,32 @@ import {
   type EmployeeSearchResult,
 } from '@/domains/common/components/search';
 import { Confirm } from '@/shared/components/modal';
-import { Button, DataGrid } from '@/shared/components/ui';
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui';
+import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton, PermissionButton } from '@/shared/components/ui/button';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import { usePermission } from '@/shared/hooks/usePermission';
+import Toast from '@/shared/components/ui/feedback/Toast';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box } from '@mui/material';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
+import { 
+  Box, 
+  Dialog, 
+  DialogTitle, 
+  DialogContent, 
+  DialogContentText, 
+  DialogActions 
+} from '@mui/material';
 import { type GridRowSelectionModel } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import '../../../assets/scss/style.css';
-import { positionApi, type PositionStatusRow } from '../api/positionApi';
+import { positionApi, type PositionStatusRow, type LedgerOrdersGenerateResponse, type LedgerOrdersStatusCheckResponse } from '../api/positionApi';
 import PositionDialog from '../components/PositionDialog';
 
 type DialogMode = 'create' | 'edit' | 'view';
@@ -33,6 +44,12 @@ interface IPositionStatusPageProps {
 }
 
 const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): React.JSX.Element => {
+  // Toast 알림을 위한 snackbar hook
+  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+  
+  // 권한 체크 훅
+  const { hasMenuPermission, permissions, loading: permissionLoading } = usePermission();
+
   // 기존 상태 관리 방식
   const [rows, setRows] = useState<PositionStatusRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,6 +64,9 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   const [positionDialogMode, setPositionDialogMode] = useState<DialogMode>('create');
   const [selectedPositionId, setSelectedPositionId] = useState<number | null>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
+  const [selectedLedgerOrderId, setSelectedLedgerOrderId] = useState<number | undefined>(undefined);
+  // LedgerOrder 옵션 목록을 저장할 state (상세 정보 조회용)
+  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<Array<{value: string, label: string, ledgerOrdersId: number}>>([]);
 
   // 부서 검색 팝업 상태
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
@@ -54,6 +74,22 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
 
   // 직원 검색 팝업 상태
   const [employeeSearchOpen, setEmployeeSearchOpen] = useState(false);
+
+  // LedgerOrderSelect 새로고침을 위한 트리거
+  const [ledgerOrderRefreshTrigger, setLedgerOrderRefreshTrigger] = useState(0);
+
+  // 상태 확인 Alert 상태
+  const [statusAlertOpen, setStatusAlertOpen] = useState(false);
+  const [statusAlertMessage, setStatusAlertMessage] = useState('');
+  
+  // 확정 confirm 상태
+  const [confirmConfirmOpen, setConfirmConfirmOpen] = useState(false);
+  
+  // 확정취소 confirm 상태
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+
+  // 공통코드 훅 사용
+  const getCodeNameFn = useGetCodeName();
 
   // 직원 선택 핸들러
   const handleEmployeeSelect = (employee: EmployeeSearchResult) => {
@@ -64,11 +100,13 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   };
 
   // 직책 현황 조회
-  const fetchPositionStatus = useCallback(async () => {
+  const fetchPositionStatus = useCallback(async (ledgerOrdersId?: number) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await positionApi.getStatusList();
+      const searchLedgerOrdersId = ledgerOrdersId || selectedLedgerOrderId;
+      console.log('📊 직책 현황 조회 - ledgerOrdersId:', searchLedgerOrdersId);
+      const data = await positionApi.getStatusList(searchLedgerOrdersId);
       setRows(data);
     } catch (err: unknown) {
       if (
@@ -84,12 +122,207 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedLedgerOrderId]);
 
   // 초기 데이터 로드
   useEffect(() => {
     fetchPositionStatus();
   }, [fetchPositionStatus]);
+
+  // 권한 디버깅
+  useEffect(() => {
+    if (!permissionLoading && permissions.length > 0) {
+      console.log('🔐 [PositionStatusPage] 현재 사용자 권한 정보:');
+      console.log('  - 전체 권한 목록:', permissions);
+      console.log('  - POSITION_MGMT 권한:', hasMenuPermission('POSITION_MGMT', 'write'));
+      console.log('  - LEDGER_MGMT_POSITION 권한:', hasMenuPermission('LEDGER_MGMT_POSITION', 'write'));
+      
+      // 직책 관련 메뉴 코드들 확인
+      const positionRelatedMenus = permissions.filter(p => 
+        p.menuCode.includes('POSITION') || 
+        p.menuName.includes('직책') ||
+        p.menuUrl?.includes('position')
+      );
+      console.log('  - 직책 관련 메뉴들:', positionRelatedMenus);
+    }
+  }, [permissions, permissionLoading, hasMenuPermission]);
+
+  // 책무번호 생성 핸들러
+  const handleGenerateLedgerOrder = useCallback(async () => {
+    setLoading(true);
+    try {
+      // 1. 먼저 상태 확인
+      const statusCheck: LedgerOrdersStatusCheckResponse = await positionApi.checkLedgerOrderStatus();
+      
+      // 2. P4 상태가 아니면 Alert 표시
+      if (!statusCheck.canGenerate) {
+        setStatusAlertMessage(statusCheck.message);
+        setStatusAlertOpen(true);
+        return;
+      }
+      
+      // 3. P4 상태이면 생성 진행
+      const response: LedgerOrdersGenerateResponse = await positionApi.generateLedgerOrder();
+      
+      showSuccess(`${response.message}`);
+      
+      // 생성 후 데이터 새로고침
+      await fetchPositionStatus();
+      
+      // LedgerOrderSelect 새로고침 트리거
+      setLedgerOrderRefreshTrigger(prev => prev + 1);
+      
+    } catch (err: unknown) {
+      let errorMessage = '책무번호 생성 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('책무번호 생성 실패:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [showSuccess, showError, fetchPositionStatus]);
+
+  // 확정 버튼 클릭 핸들러
+  const handleConfirmClick = useCallback(() => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "신규" 상태 검증
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "신규" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '신규') {
+      showError('신규 상태의 원장차수만 확정 가능합니다.');
+      return;
+    }
+
+    // 3. 확정 confirm 창 표시
+    setConfirmConfirmOpen(true);
+  }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
+
+  // 확정 처리 핸들러
+  const handleConfirmLedgerOrder = useCallback(async () => {
+    if (!selectedLedgerOrder) {
+      setConfirmConfirmOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await positionApi.confirmLedgerOrder(selectedLedgerOrder);
+      showSuccess(response.message || '확정되었습니다.');
+      
+      // 데이터 새로고침
+      await fetchPositionStatus();
+      
+      // LedgerOrderSelect 새로고침 트리거
+      setLedgerOrderRefreshTrigger(prev => prev + 1);
+      
+    } catch (err: unknown) {
+      let errorMessage = '확정 처리 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('확정 처리 실패:', err);
+    } finally {
+      setLoading(false);
+      setConfirmConfirmOpen(false);
+    }
+  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionStatus]);
+
+  // 확정취소 버튼 클릭 핸들러
+  const handleCancelConfirmClick = useCallback(() => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "직책확정" 상태 검증
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "직책확정" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '직책확정') {
+      showError('직책확정 상태의 원장차수만 확정취소 가능합니다.');
+      return;
+    }
+
+    // 3. 확정취소 confirm 창 표시
+    setCancelConfirmOpen(true);
+  }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
+
+  // 확정취소 처리 핸들러
+  const handleCancelConfirmLedgerOrder = useCallback(async () => {
+    if (!selectedLedgerOrder) {
+      setCancelConfirmOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await positionApi.cancelConfirmLedgerOrder(selectedLedgerOrder);
+      showSuccess(response.message || '확정취소되었습니다.');
+      
+      // 데이터 새로고침
+      await fetchPositionStatus();
+      
+      // LedgerOrderSelect 새로고침 트리거
+      setLedgerOrderRefreshTrigger(prev => prev + 1);
+      
+    } catch (err: unknown) {
+      let errorMessage = '확정취소 처리 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('확정취소 처리 실패:', err);
+    } finally {
+      setLoading(false);
+      setCancelConfirmOpen(false);
+    }
+  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionStatus]);
 
   // 부서 선택 핸들러
   const handleDepartmentSelect = (departments: Department | Department[]) => {
@@ -135,7 +368,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => params.value || '-',
+      renderCell: ({ value }) => getCodeNameFn('ORDER_STATUS', (value as string) || ''),
     },
     {
       field: 'ownerDeptNms',
@@ -188,10 +421,41 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   ];
 
   const handleSearch = () => {
-    fetchPositionStatus();
+    console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', selectedLedgerOrderId);
+    fetchPositionStatus(selectedLedgerOrderId);
   };
 
   const handleCreateClick = () => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "신규" 상태 검증
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "신규" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '신규') {
+      showError('신규 상태의 원장차수만 등록 가능합니다.');
+      return;
+    }
+
+    console.log('✅ 등록 버튼 검증 통과 - 선택된 원장차수:', selectedLedgerOrder, '상태:', statusInfo);
+
+    // 3. PositionDialog 열기
     setSelectedPositionId(null);
     setPositionDialogMode('create');
     setPositionDialogOpen(true);
@@ -359,22 +623,34 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <LedgerOrderSelect
             value={selectedLedgerOrder}
-            onChange={setSelectedLedgerOrder}
+            onChange={useCallback((value: string, ledgerOrdersId?: number) => {
+              setSelectedLedgerOrder(value);
+              setSelectedLedgerOrderId(ledgerOrdersId);
+              console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
+            }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
+            refreshTrigger={ledgerOrderRefreshTrigger}
+            onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
+              setLedgerOrderOptions(options);
+              console.log('LedgerOrder 옵션 로드 완료:', options);
+            }, [])}
           />
           <SearchButton
             onClick={handleSearch}
             loading={loading}
             disabled={loading}
           />
-          <Button
+          <PermissionButton
+            menuCode="LEDGER_MGMT_POSITION"
+            permission="write"
             variant='contained'
             size='small'
             color='success'
-            onClick={() => {
-              /* 차수생성 로직 미구현 */
-            }}
+            onClick={handleGenerateLedgerOrder}
+            disabled={loading}
+            hideWhenNoPermission={true}
+            noPermissionTooltip="책무번호 생성 권한이 없습니다"
             sx={{
               height: '32px',
               minWidth: '80px',
@@ -384,15 +660,18 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             }}
           >
             책무번호생성
-          </Button>
+          </PermissionButton>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-            <Button
+            <PermissionButton
+              menuCode="LEDGER_MGMT_POSITION"
+              permission="write"
               variant='contained'
               size='small'
               color='success'
-              onClick={() => {
-                /* 확정 로직 미구현 */
-              }}
+              onClick={handleConfirmClick}
+              disabled={loading}
+              hideWhenNoPermission={true}
+              noPermissionTooltip="확정 권한이 없습니다"
               sx={{
                 height: '32px',
                 minWidth: '80px',
@@ -402,14 +681,17 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               }}
             >
               확정
-            </Button>
-            <Button
+            </PermissionButton>
+            <PermissionButton
+              menuCode="LEDGER_MGMT_POSITION"
+              permission="write"
               variant='contained'
               size='small'
               color='error'
-              onClick={() => {
-                /* 확정취소 로직 미구현 */
-              }}
+              onClick={handleCancelConfirmClick}
+              disabled={loading}
+              hideWhenNoPermission={true}
+              noPermissionTooltip="확정취소 권한이 없습니다"
               sx={{
                 height: '32px',
                 minWidth: '80px',
@@ -419,7 +701,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               }}
             >
               확정취소
-            </Button>
+            </PermissionButton>
           </Box>
         </Box>
         <Box sx={{ 
@@ -492,6 +774,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
         open={positionDialogOpen}
         mode={positionDialogMode}
         positionId={selectedPositionId}
+        selectedLedgerOrder={positionDialogMode === 'create' ? selectedLedgerOrder : undefined}
         onClose={handlePositionDialogClose}
         onSave={handlePositionSave}
         onChangeMode={handlePositionModeChange}
@@ -520,6 +803,63 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           setConfirmOpen(false);
           setPendingDelete(null);
         }}
+      />
+      
+      <Confirm
+        open={confirmConfirmOpen}
+        title='확정 확인'
+        message={`${selectedLedgerOrder} 차수의 직책을 확정하시겠습니까?`}
+        confirmText='확정'
+        cancelText='취소'
+        onConfirm={handleConfirmLedgerOrder}
+        onCancel={() => {
+          setConfirmConfirmOpen(false);
+        }}
+      />
+      
+      <Confirm
+        open={cancelConfirmOpen}
+        title='확정취소 확인'
+        message={`${selectedLedgerOrder} 차수의 직책을 확정취소하시겠습니까?`}
+        confirmText='확정취소'
+        cancelText='취소'
+        onConfirm={handleCancelConfirmLedgerOrder}
+        onCancel={() => {
+          setCancelConfirmOpen(false);
+        }}
+      />
+
+      {/* 상태 확인 Alert 다이얼로그 */}
+      <Dialog
+        open={statusAlertOpen}
+        onClose={() => setStatusAlertOpen(false)}
+        aria-labelledby="status-alert-title"
+        aria-describedby="status-alert-description"
+      >
+        <DialogTitle id="status-alert-title">알림</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="status-alert-description">
+            {statusAlertMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ padding: '8px 16px', justifyContent: 'center' }}>
+          <Button
+            onClick={() => setStatusAlertOpen(false)}
+            variant="contained"
+            color="primary"
+            size="small"
+          >
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Toast 알림 */}
+      <Toast
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
       />
     </PageContainer>
   );

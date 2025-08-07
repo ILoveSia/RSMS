@@ -53,14 +53,32 @@ public class PositionResponsibilityService {
 
         return finalResult;
     }
-    public List<PositionResponsibilityDto> getAll() {
-        String sql =
-                "SELECT p.positions_id, p.positions_nm, r.role_summ,r.responsibility_id, r.created_at, r.updated_at, r2.responsibility_content, r3.responsibility_detail_content, r3.responsibility_mgt_sts, r3.responsibility_rel_evid "
-                        + "FROM positions p "
-                        + "LEFT JOIN role_resp_status r ON p.positions_id = r.positions_id "
-                        + "LEFT JOIN responsibility r2 ON r.responsibility_id = r2.responsibility_id "
-                        + "LEFT JOIN responsibility_detail r3 ON r.responsibility_id = r3.responsibility_id "
-                        + "ORDER BY p.positions_id";
+    public List<PositionResponsibilityDto> getAll(Long positionsId, Long ledgerOrdersId) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT p.positions_id, p.positions_nm, r.role_summ, r.responsibility_id, r.created_at, r.updated_at, r2.responsibility_content, r3.responsibility_detail_content, r3.responsibility_mgt_sts, r3.responsibility_rel_evid ")
+                .append("FROM positions p ")
+                .append("LEFT JOIN role_resp_status r ON p.positions_id = r.positions_id ")
+                .append("LEFT JOIN responsibility r2 ON r.responsibility_id = r2.responsibility_id ")
+                .append("LEFT JOIN responsibility_detail r3 ON r.responsibility_id = r3.responsibility_id ");
+        
+        // 조건 추가
+        boolean hasConditions = false;
+        if (positionsId != null) {
+            sqlBuilder.append("WHERE p.positions_id = ").append(positionsId);
+            hasConditions = true;
+        }
+        
+        if (ledgerOrdersId != null) {
+            if (hasConditions) {
+                sqlBuilder.append(" AND ");
+            } else {
+                sqlBuilder.append("WHERE ");
+            }
+            sqlBuilder.append("r2.ledger_order = ").append(ledgerOrdersId);
+        }
+        
+        sqlBuilder.append(" ORDER BY p.positions_id");
+        String sql = sqlBuilder.toString();
 
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
 

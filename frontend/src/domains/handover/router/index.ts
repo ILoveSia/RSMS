@@ -22,7 +22,7 @@ const handoverRoutes: DomainRoute[] = [
     meta: {
       title: '인계자 및 인수자 지정',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['인수인계 관리', '인계자 및 인수자 지정'],
       icon: 'Assignment',
       description: '인수인계 지정 목록 관리 (다이얼로그 통합)',
@@ -34,7 +34,7 @@ const handoverRoutes: DomainRoute[] = [
     meta: {
       title: '책무기술서 관리',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['인수인계 관리', '책무기술서 관리'],
       icon: 'Description',
       description: '직책별 책무기술서 관리 (다이얼로그 통합)',
@@ -46,7 +46,7 @@ const handoverRoutes: DomainRoute[] = [
     meta: {
       title: '내부통제 업무메뉴얼 관리',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['인수인계 관리', '내부통제 업무메뉴얼 관리'],
       icon: 'MenuBook',
       description: '내부통제 업무메뉴얼 관리 (다이얼로그 통합)',
@@ -58,7 +58,7 @@ const handoverRoutes: DomainRoute[] = [
     meta: {
       title: '사업계획 점검 관리',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['인수인계 관리', '사업계획 점검 관리'],
       icon: 'Assessment',
       description: '부서별 사업계획 점검 관리 (다이얼로그 통합)',

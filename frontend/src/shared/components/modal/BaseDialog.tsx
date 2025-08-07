@@ -71,6 +71,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
       }}
       PaperProps={{
         sx: {
+          height: '500px',
           maxHeight: '90vh',
         },
       }}

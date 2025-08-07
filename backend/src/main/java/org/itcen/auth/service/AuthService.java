@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.itcen.auth.domain.AuthRequestDto;
 import org.itcen.auth.domain.AuthResponseDto;
 import org.itcen.auth.repository.AuthUserRepository;
+import org.itcen.auth.repository.UserRoleRepository;
 import org.itcen.domain.menu.dto.MenuDto;
 import org.itcen.domain.menu.service.MenuService;
 import org.itcen.domain.user.entity.User;
@@ -43,13 +44,16 @@ import java.util.Optional;
 public class AuthService {
     
     private final AuthUserRepository authUserRepository;
+    private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final MenuService menuService;
     
-    public AuthService(AuthUserRepository authUserRepository, 
+    public AuthService(AuthUserRepository authUserRepository,
+                      UserRoleRepository userRoleRepository,
                       PasswordEncoder passwordEncoder,
                       MenuService menuService) {
         this.authUserRepository = authUserRepository;
+        this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
         this.menuService = menuService;
     }
@@ -128,9 +132,19 @@ public class AuthService {
                     .map(GrantedAuthority::getAuthority)
                     .toList();
             
-            // 첫 번째 권한을 역할로 사용 (ROLE_ 접두사 제거)
-            String userRole = authorities.isEmpty() ? "USER" : 
-                    authorities.get(0).replace("ROLE_", "");
+            // 가장 높은 권한을 역할로 사용 (우선순위: ADMIN > MANAGER > READONLY > USER)
+            String userRole = "USER"; // 기본값
+            if (authorities.contains("ROLE_ADMIN")) {
+                userRole = "ADMIN";
+            } else if (authorities.contains("ROLE_MANAGER")) {
+                userRole = "MANAGER";
+            } else if (authorities.contains("ROLE_READONLY")) {
+                userRole = "READONLY";
+            } else if (authorities.contains("ROLE_USER")) {
+                userRole = "USER";
+            }
+            
+            log.info("사용자 {} 최종 선택된 역할: {} (전체 권한: {})", user.getId(), userRole, authorities);
             
             List<MenuDto> accessibleMenus = menuService.getAccessibleMenusByRole(userRole);
             
@@ -296,13 +310,30 @@ public class AuthService {
     }
     
     /**
-     * UserDetails 생성
+     * UserDetails 생성 - user_roles 테이블에서 실제 역할 조회
      * 
      * @param user 사용자 엔티티
      * @return UserDetails 구현체
      */
     private UserDetails createUserDetails(User user) {
-        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        // user_roles 테이블에서 활성화된 역할 조회
+        List<String> roleIds = userRoleRepository.findActiveRolesByUserId(user.getId())
+                .stream()
+                .map(userRole -> userRole.getRoleId())
+                .toList();
+        
+        // 역할이 없으면 기본적으로 USER 역할 부여
+        if (roleIds.isEmpty()) {
+            log.warn("사용자 {}에게 할당된 역할이 없습니다. 기본 USER 역할을 부여합니다.", user.getId());
+            roleIds = List.of("USER");
+        }
+        
+        // GrantedAuthority 생성 (ROLE_ 접두사 추가)
+        Collection<GrantedAuthority> authorities = roleIds.stream()
+                .map(roleId -> new SimpleGrantedAuthority("ROLE_" + roleId))
+                .collect(java.util.stream.Collectors.toList());
+        
+        log.info("사용자 {} 역할 조회 완료: {}", user.getId(), roleIds);
         
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())

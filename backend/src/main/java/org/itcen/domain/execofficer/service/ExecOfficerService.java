@@ -27,16 +27,24 @@ public class ExecOfficerService {
     @PersistenceContext
     private EntityManager em;
 
-    public List<ExecOfficerDto> getAll() {
-        String sql = "SELECT  " +
-                "p.positions_id, p.positions_nm,  " +
-                "eo.execofficer_id, eo.emp_id,  eo.execofficer_dt, eo.dual_yn, eo.dual_details,  " +
-                "eo.approval_id, eo.ledger_order, eo.order_status,     em.emp_name ," +
-                "eo.created_id, eo.updated_id, eo.created_at, eo.updated_at  " +
-                "FROM positions p  " +
-                "LEFT JOIN execofficer eo ON p.positions_id = eo.positions_id " +
-                "left join employee em on eo.emp_id =em.emp_no " +
-                "ORDER BY p.positions_id";
+    public List<ExecOfficerDto> getAll(Long ledgerOrdersId) {
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT  ")
+                .append("p.positions_id, p.positions_nm,  ")
+                .append("eo.execofficer_id, eo.emp_id,  eo.execofficer_dt, eo.dual_yn, eo.dual_details,  ")
+                .append("eo.approval_id, eo.ledger_order, eo.order_status,     em.emp_name ,")
+                .append("eo.created_id, eo.updated_id, eo.created_at, eo.updated_at  ")
+                .append("FROM positions p  ")
+                .append("LEFT JOIN execofficer eo ON p.positions_id = eo.positions_id ")
+                .append("left join employee em on eo.emp_id =em.emp_no ");
+        
+        // ledgerOrdersId 조건 추가
+        if (ledgerOrdersId != null) {
+            sqlBuilder.append("WHERE eo.ledger_order = ").append(ledgerOrdersId).append(" ");
+        }
+        
+        sqlBuilder.append("ORDER BY p.positions_id");
+        String sql = sqlBuilder.toString();
 
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
 

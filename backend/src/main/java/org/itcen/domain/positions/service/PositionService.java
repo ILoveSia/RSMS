@@ -57,9 +57,10 @@ public interface PositionService {
     /**
      * 직책 현황 목록 조회
      * 
+     * @param ledgerOrdersId 원장차수 ID (선택적)
      * @return 직책 현황 목록
      */
-    List<PositionStatusDto> getPositionStatusList();
+    List<PositionStatusDto> getPositionStatusList(Long ledgerOrdersId);
 
     /**
      * 직책 상세 조회

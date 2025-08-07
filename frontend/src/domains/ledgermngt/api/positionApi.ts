@@ -15,6 +15,7 @@ export interface PositionStatusRow {
 export interface LedgerOrderSelect {
   value: string;
   label: string;
+  ledgerOrdersId: number;
 }
 
 // 직책 검색 결과 타입
@@ -47,6 +48,25 @@ export interface PositionSearchRequest {
   confirmGubunCd?: string;
 }
 
+// 책무번호 생성 응답 타입
+export interface LedgerOrdersGenerateResponse {
+  ledgerOrdersId: number;
+  ledgerOrdersTitle: string;
+  ledgerOrdersStatusCd: string;
+  previousTitle: string;
+  message: string;
+}
+
+// 책무번호 상태 확인 응답 타입
+export interface LedgerOrdersStatusCheckResponse {
+  currentLedgerOrdersId?: number;
+  currentTitle?: string;
+  currentStatusCd?: string;
+  canGenerate: boolean;
+  message: string;
+  hasData: boolean;
+}
+
 /**
  * Position 도메인 API 서비스 클래스
  */
@@ -54,8 +74,11 @@ export class PositionApiService {
   /**
    * 직책 현황 목록 조회
    */
-  static async getStatusList(): Promise<PositionStatusRow[]> {
-    const response = await apiClient.get<PositionStatusRow[]>('/positions/status-list');
+  static async getStatusList(ledgerOrdersId?: number): Promise<PositionStatusRow[]> {
+    const url = ledgerOrdersId 
+      ? `/positions/status-list?ledgerOrdersId=${ledgerOrdersId}`
+      : '/positions/status-list';
+    const response = await apiClient.get<PositionStatusRow[]>(url);
     return response || [];
   }
 
@@ -120,6 +143,75 @@ export class PositionApiService {
       throw error;
     }
   }
+
+  /**
+   * 현재 원장차수 상태 확인
+   */
+  static async checkLedgerOrderStatus(): Promise<LedgerOrdersStatusCheckResponse> {
+    try {
+      const response = await apiClient.get<LedgerOrdersStatusCheckResponse>('/ledger-orders/status');
+      return response;
+    } catch (error) {
+      console.error('책무번호 상태 확인 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 새로운 책무번호(원장차수) 생성
+   */
+  static async generateLedgerOrder(): Promise<LedgerOrdersGenerateResponse> {
+    try {
+      const response = await apiClient.post<LedgerOrdersGenerateResponse>('/ledger-orders/generate', {});
+      return response;
+    } catch (error) {
+      console.error('책무번호 생성 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 원장차수 제목으로 ledger_orders_id 조회
+   */
+  static async getLedgerOrdersIdByTitle(title: string): Promise<number> {
+    try {
+      const response = await apiClient.get<{ledgerOrdersId: number}>(`/ledger-orders/id-by-title?title=${encodeURIComponent(title)}`);
+      return response.ledgerOrdersId;
+    } catch (error) {
+      console.error('원장차수 ID 조회 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 원장차수 확정 처리 (상태를 P2로 변경)
+   */
+  static async confirmLedgerOrder(ledgerOrderValue: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/confirm`, {
+        ledgerOrderValue: ledgerOrderValue
+      });
+      return response;
+    } catch (error) {
+      console.error('원장차수 확정 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 원장차수 확정취소 처리 (상태를 P1로 변경)
+   */
+  static async cancelConfirmLedgerOrder(ledgerOrderValue: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/cancel-confirm`, {
+        ledgerOrderValue: ledgerOrderValue
+      });
+      return response;
+    } catch (error) {
+      console.error('원장차수 확정취소 실패:', error);
+      throw error;
+    }
+  }
 }
 
 // 하위 호환성을 위한 객체 스타일 export
@@ -130,6 +222,11 @@ export const positionApi = {
   getPositionList: PositionApiService.getPositionList,
   searchPositions: PositionApiService.searchPositions,
   getPositionDetail: PositionApiService.getPositionDetail,
+  checkLedgerOrderStatus: PositionApiService.checkLedgerOrderStatus,
+  generateLedgerOrder: PositionApiService.generateLedgerOrder,
+  getLedgerOrdersIdByTitle: PositionApiService.getLedgerOrdersIdByTitle,
+  confirmLedgerOrder: PositionApiService.confirmLedgerOrder,
+  cancelConfirmLedgerOrder: PositionApiService.cancelConfirmLedgerOrder,
 };
 
 export default positionApi;

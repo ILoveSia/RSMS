@@ -33,8 +33,9 @@ export const responsibilityApi = {
   /**
    * 책무 현황 목록 조회
    * @param responsibilityId 선택적 책무 ID 검색
+   * @param ledgerOrdersId 선택적 원장차수 ID 검색
    */
-  getStatusList: async (responsibilityId?: string): Promise<ResponsibilityRow[]> => {
+  getStatusList: async (responsibilityId?: string, ledgerOrdersId?: number): Promise<ResponsibilityRow[]> => {
     try {
       const params = new URLSearchParams();
 
@@ -42,11 +43,13 @@ export const responsibilityApi = {
         params.append('responsibilityId', responsibilityId);
       }
 
+      if (ledgerOrdersId) {
+        params.append('ledgerOrdersId', ledgerOrdersId.toString());
+      }
 
       const response = await apiClient.get<ResponsibilityRow[]>(
         `/responsibilities/status?${params.toString()}`
       );
-
 
       // apiClient가 이미 ApiResponse를 unwrap하므로 response 직접 사용
       const result = response || [];

@@ -22,7 +22,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '회의채 현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '회사별 현황'],
       icon: 'Business',
       description: '회사별 현황 관리 페이지',
@@ -34,7 +34,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '직책 현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '직책 현황'],
       icon: 'Person',
       description: '직책 현황 관리 페이지',
@@ -46,7 +46,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '책무 DB현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '책무 DB현황'],
       icon: 'Assignment',
       description: '책무 데이터베이스 현황 관리 페이지',
@@ -58,7 +58,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '직책별 책무 현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '직책별 책무 현황'],
       icon: 'list_alt',
       description: '직책별 책무 현황 관리 페이지',
@@ -70,7 +70,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '임원 현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '임원 현황'],
       icon: 'Work',
       description: '임원 현황 관리 페이지',
@@ -82,7 +82,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '임원별 책무 현황',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '임원별 책무 현황'],
       icon: 'Analytics',
       description: '임원별 책무 현황 관리 페이지',
@@ -94,7 +94,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '부서장 내부통제 항목',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '부서장 내부통제 항목'],
       icon: 'Security',
       description: '부서장 내부통제 항목 관리 페이지',
@@ -106,7 +106,7 @@ const routes: DomainRoute[] = [
     meta: {
       title: '적부구조도 제출 관리',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN'],
+      roles: ['USER', 'ADMIN', 'MANAGER'],
       breadcrumb: ['책무구조도 원장 관리', '적부구조도 제출 관리'],
       icon: 'Upload',
       description: '적부구조도 제출 관리 페이지',
