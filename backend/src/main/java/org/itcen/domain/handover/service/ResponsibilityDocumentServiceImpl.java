@@ -3,6 +3,7 @@ package org.itcen.domain.handover.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.common.exception.BusinessException;
+import org.itcen.domain.handover.dto.DocumentSearchDto;
 import org.itcen.domain.handover.entity.ResponsibilityDocument;
 import org.itcen.domain.handover.entity.HandoverHistory;
 import org.itcen.domain.handover.repository.ResponsibilityDocumentRepository;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 /**
  * 책무기술서 서비스 구현체
  * 책무기술서 관련 비즈니스 로직을 구현합니다.
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: 책무기술서 비즈니스 로직만 담당
  * - Open/Closed: 새로운 문서 관리 기능 추가 시 확장 가능
@@ -40,16 +41,8 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     @Override
     @Transactional
     public ResponsibilityDocument createDocument(ResponsibilityDocument document) {
-        log.debug("책무기술서 생성 시작 - positionId: {}, title: {}", 
-                  document.getPositionId(), document.getDocumentTitle());
-
-        // 같은 직책에 대한 초안 상태의 문서가 있는지 확인
-        List<ResponsibilityDocument> existingDrafts = responsibilityDocumentRepository
-                .findByPositionIdAndStatus(document.getPositionId(), ResponsibilityDocument.DocumentStatus.DRAFT);
-        
-        if (!existingDrafts.isEmpty()) {
-            throw new BusinessException("해당 직책에 이미 초안 상태의 책무기술서가 있습니다.");
-        }
+        log.debug("책무기술서 생성 시작 - title: {}",
+                  document.getDocumentTitle());
 
         ResponsibilityDocument savedDocument = responsibilityDocumentRepository.save(document);
 
@@ -288,12 +281,12 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
 
     // 조회 메서드들
 
-    @Override
-    public List<ResponsibilityDocumentDto> getDocumentsByPosition(Long positionId) {
-        log.debug("직책별 책무기술서 조회 - positionId: {}", positionId);
-        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByPositionIdWithJoin(positionId);
-        return convertToDto(documents);
-    }
+    // @Override
+    // public List<ResponsibilityDocumentDto> getDocumentsByPosition(Long positionId) {
+    //     log.debug("직책별 책무기술서 조회 - positionId: {}", positionId);
+    //     List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByResponsibilityId(positionId);
+    //     return convertToDto(documents);
+    // }
 
     @Override
     public List<ResponsibilityDocumentDto> getDocumentsByStatus(ResponsibilityDocument.DocumentStatus status) {
@@ -312,7 +305,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     @Override
     public Optional<ResponsibilityDocumentDto> getLatestPublishedDocument(Long positionId) {
         log.debug("최신 발행 문서 조회 - positionId: {}", positionId);
-        Optional<ResponsibilityDocument> document = responsibilityDocumentRepository.findLatestPublishedByPosition(positionId);
+        Optional<ResponsibilityDocument> document = responsibilityDocumentRepository.findLatestPublishedByPositionId();
         return document.map(this::convertToDto);
     }
 
@@ -342,16 +335,14 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     @Override
     public Page<ResponsibilityDocumentDto> searchDocuments(DocumentSearchDto searchDto, Pageable pageable) {
         log.debug("복합 조건 검색 - searchDto: {}", searchDto);
-        
+
         Page<ResponsibilityDocument> results = responsibilityDocumentRepository.findBySearchCriteriaWithJoin(
-                searchDto.getPositionId(),
                 searchDto.getStatus(),
                 searchDto.getAuthorEmpNo(),
                 searchDto.getDocumentTitle(),
-                searchDto.getPositionName(),
                 pageable
         );
-        
+
         return results.map(this::convertToDtoWithJoin);
     }
 
@@ -392,61 +383,59 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         return new ResponsibilityDocumentDto() {
             @Override
             public Long getDocumentId() { return document.getDocumentId(); }
-            
+
             @Override
-            public Long getPositionId() { return document.getPositionId(); }
-            
+            public Long getPositionId() { return null; }
+
             @Override
-            public String getPositionName() { 
-                return document.getPosition() != null ? document.getPosition().getPositionsNm() : null; 
-            }
-            
+            public String getPositionName() { return null; }
+
             @Override
-            public Long getResponsibilityId() { return document.getResponsibilityId(); }
-            
+            public Long getResponsibilityId() { return null; }
+
             @Override
             public String getDocumentTitle() { return document.getDocumentTitle(); }
-            
+
             @Override
             public String getDocumentVersion() { return document.getDocumentVersion(); }
-            
+
             @Override
             public String getDocumentContent() { return document.getDocumentContent(); }
-            
+
             @Override
             public ResponsibilityDocument.DocumentStatus getStatus() { return document.getStatus(); }
-            
+
             @Override
             public Long getApprovalId() { return document.getApprovalId(); }
-            
+
             @Override
             public LocalDate getEffectiveDate() { return document.getEffectiveDate(); }
-            
+
             @Override
             public LocalDate getExpiryDate() { return document.getExpiryDate(); }
-            
+
             @Override
             public String getAuthorEmpNo() { return document.getAuthorEmpNo(); }
-            
+
             @Override
-            public String getAuthorName() { 
-                return document.getAuthor() != null ? document.getAuthor().getEmpName() : null; 
+            public String getAuthorName() {
+                return document.getAuthor() != null ? document.getAuthor().getEmpName() : null;
             }
-            
+
             @Override
             public String getReviewerEmpNo() { return document.getReviewerEmpNo(); }
-            
+
             @Override
-            public String getReviewerName() { 
-                return document.getReviewer() != null ? document.getReviewer().getEmpName() : null; 
+            public String getReviewerName() {
+                return document.getReviewer() != null ? document.getReviewer().getEmpName() : null;
             }
-            
+
             @Override
             public String getApproverEmpNo() { return document.getApproverEmpNo(); }
-            
+
             @Override
-            public String getApproverName() { 
-                return document.getApprover() != null ? document.getApprover().getEmpName() : null; 
+            public String getApproverName() {
+                return document.getApprover() != null ? document.getApprover().getEmpName() : null;
             }
         };
     }

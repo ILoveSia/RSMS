@@ -12,12 +12,10 @@
 
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import {
-  ResponsibilitySearchPopup,
-  type ResponsibilitySearchResult,
-} from '@/domains/common/components/search';
+
 import type { SelectOption } from '@/shared/types/common';
 import { Search as SearchIcon } from '@mui/icons-material';
+import ResponsibilitySearchPopup from '@/domains/common/components/search/ResponsibilitySearchPopup';
 import {
   Alert,
   Box,
@@ -43,10 +41,6 @@ interface ResponsibilityDocumentDialogProps {
 }
 
 interface FormData {
-  positionId: number | '';
-  positionName: string;
-  responsibilityId: number | '';
-  responsibilityContent: string;
   documentTitle: string;
   documentVersion: string;
   documentContent: string;
@@ -62,10 +56,6 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  positionId: '',
-  positionName: '',
-  responsibilityId: '',
-  responsibilityContent: '',
   documentTitle: '',
   documentVersion: 'v1.0',
   documentContent: '',
@@ -159,10 +149,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
       // 문서 데이터를 폼에 매핑
       if (documentData) {
         setFormData({
-          positionId: documentData.positionId || '',
-          positionName: documentData.positionName || '',
-          responsibilityId: documentData.responsibilityId || '',
-          responsibilityContent: '',
           documentTitle: documentData.documentTitle || '',
           documentVersion: documentData.documentVersion || 'v1.0',
           documentContent: documentData.documentContent || '',
@@ -218,14 +204,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   };
 
   const validateForm = (): boolean => {
-    if (!formData.positionId) {
-      setError('직위를 선택해주세요.');
-      return false;
-    }
-    if (!formData.responsibilityId) {
-      setError('책무를 선택해주세요.');
-      return false;
-    }
     if (!formData.documentTitle.trim()) {
       setError('문서 제목을 입력해주세요.');
       return false;
@@ -369,51 +347,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
               )}
 
               <Grid container spacing={2}>
-                {/* 직위 */}
-                <Grid item xs={12} sm={6}>
-                  <Select
-                    value={formData.positionId}
-                    label='직위 *'
-                    options={[
-                      { value: '', label: '선택하세요' },
-                      ...getCommonCodeOptions('POSITION_TYPE')
-                    ]}
-                    onChange={(value) => {
-                      const positionId = value as string;
-                      const positionName = getCommonCodeOptions('POSITION_TYPE').find(opt => opt.value === positionId)?.label || '';
-                      handleInputChange('positionId', Number(positionId));
-                      handleInputChange('positionName', positionName);
-                    }}
-                    disabled={isViewMode}
-                  />
-                </Grid>
-
-                {/* 책무 */}
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField
-                      fullWidth
-                      label='책무 *'
-                      value={formData.responsibilityContent || `${formData.responsibilityId}`}
-                      disabled
-                      placeholder='책무를 선택하세요'
-                      helperText={
-                        formData.responsibilityId ? `책무ID: ${formData.responsibilityId}` : ''
-                      }
-                      mode="view"
-                    />
-                    {!isViewMode && (
-                      <Button
-                        variant='outlined'
-                        onClick={() => setResponsibilitySearchOpen(true)}
-                        sx={{ minWidth: 100 }}
-                        startIcon={<SearchIcon />}
-                      >
-                        조회
-                      </Button>
-                    )}
-                  </Box>
-                </Grid>
 
                 {/* 문서 제목 */}
                 <Grid item xs={12}>

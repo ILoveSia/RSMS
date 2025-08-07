@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.itcen.domain.positions.entity.Position;
+
 import org.itcen.domain.employee.entity.Employee;
 
 import java.time.LocalDate;
@@ -34,24 +34,7 @@ public class ResponsibilityDocument {
     @Column(name = "document_id")
     private Long documentId;
 
-    /**
-     * 직책 ID (positions 테이블 FK)
-     */
-    @Column(name = "position_id", nullable = false)
-    private Long positionId;
 
-    /**
-     * 직책 정보 (JOIN)
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "position_id", insertable = false, updatable = false)
-    private Position position;
-
-    /**
-     * 책무 ID (responsibility 테이블 FK, 선택)
-     */
-    @Column(name = "responsibility_id")
-    private Long responsibilityId;
 
     /**
      * 문서 제목

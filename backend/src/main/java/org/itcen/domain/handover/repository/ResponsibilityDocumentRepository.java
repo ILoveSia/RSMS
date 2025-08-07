@@ -15,7 +15,7 @@ import java.util.Optional;
 /**
  * 책무기술서 Repository
  * 책무기술서 데이터 접근을 담당
- * 
+ *
  * SOLID 원칙:
  * - Single Responsibility: 책무기술서 데이터 접근만 담당
  * - Interface Segregation: 필요한 메서드만 정의
@@ -23,32 +23,12 @@ import java.util.Optional;
 @Repository
 public interface ResponsibilityDocumentRepository extends JpaRepository<ResponsibilityDocument, Long> {
 
-    /**
-     * 직책 ID로 책무기술서 조회 (JOIN 포함)
-     */
-    @Query("SELECT rd FROM ResponsibilityDocument rd " +
-           "LEFT JOIN FETCH rd.position " +
-           "LEFT JOIN FETCH rd.author " +
-           "LEFT JOIN FETCH rd.reviewer " +
-           "LEFT JOIN FETCH rd.approver " +
-           "WHERE rd.positionId = :positionId")
-    List<ResponsibilityDocument> findByPositionIdWithJoin(@Param("positionId") Long positionId);
-
-    /**
-     * 직책 ID로 책무기술서 조회
-     */
-    List<ResponsibilityDocument> findByPositionId(Long positionId);
-
-    /**
-     * 책무 ID로 책무기술서 조회
-     */
-    List<ResponsibilityDocument> findByResponsibilityId(Long responsibilityId);
+    
 
     /**
      * 상태별 책무기술서 조회 (JOIN 포함)
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd " +
-           "LEFT JOIN FETCH rd.position " +
            "LEFT JOIN FETCH rd.author " +
            "LEFT JOIN FETCH rd.reviewer " +
            "LEFT JOIN FETCH rd.approver " +
@@ -64,7 +44,6 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
      * 작성자별 책무기술서 조회 (JOIN 포함)
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd " +
-           "LEFT JOIN FETCH rd.position " +
            "LEFT JOIN FETCH rd.author " +
            "LEFT JOIN FETCH rd.reviewer " +
            "LEFT JOIN FETCH rd.approver " +
@@ -79,17 +58,16 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     /**
      * 직책과 상태로 최신 문서 조회
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.positionId = :positionId AND rd.status = :status " +
+    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.status = :status " +
            "ORDER BY rd.createdAt DESC")
-    List<ResponsibilityDocument> findByPositionIdAndStatusOrderByCreatedAtDesc(@Param("positionId") Long positionId,
-                                                                               @Param("status") ResponsibilityDocument.DocumentStatus status);
+    List<ResponsibilityDocument> findByPositionIdAndStatusOrderByCreatedAtDesc(@Param("status") ResponsibilityDocument.DocumentStatus status);
 
     /**
      * 직책의 최신 발행 문서 조회
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.positionId = :positionId AND rd.status = 'PUBLISHED' " +
+    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.status = 'PUBLISHED' " +
            "ORDER BY rd.effectiveDate DESC")
-    Optional<ResponsibilityDocument> findLatestPublishedByPositionId(@Param("positionId") Long positionId);
+    Optional<ResponsibilityDocument> findLatestPublishedByPositionId();
 
     /**
      * 문서 제목과 버전으로 조회
@@ -123,32 +101,25 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
      * 복합 조건 검색 (JOIN 포함)
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd " +
-           "LEFT JOIN FETCH rd.position p " +
            "LEFT JOIN FETCH rd.author a " +
            "LEFT JOIN FETCH rd.reviewer r " +
            "LEFT JOIN FETCH rd.approver ap " +
-           "WHERE (:positionId IS NULL OR rd.positionId = :positionId) AND " +
-           "(:status IS NULL OR rd.status = :status) AND " +
+           "WHERE (:status IS NULL OR rd.status = :status) AND " +
            "(:authorEmpNo IS NULL OR rd.authorEmpNo LIKE %:authorEmpNo%) AND " +
-           "(:documentTitle IS NULL OR rd.documentTitle LIKE %:documentTitle%) AND " +
-           "(:positionName IS NULL OR p.positionsNm LIKE %:positionName%)")
-    Page<ResponsibilityDocument> findBySearchCriteriaWithJoin(@Param("positionId") Long positionId,
-                                                              @Param("status") ResponsibilityDocument.DocumentStatus status,
+           "(:documentTitle IS NULL OR rd.documentTitle LIKE %:documentTitle%)")
+    Page<ResponsibilityDocument> findBySearchCriteriaWithJoin(@Param("status") ResponsibilityDocument.DocumentStatus status,
                                                               @Param("authorEmpNo") String authorEmpNo,
                                                               @Param("documentTitle") String documentTitle,
-                                                              @Param("positionName") String positionName,
                                                               Pageable pageable);
 
     /**
      * 복합 조건 검색 (기존 버전 유지)
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd WHERE " +
-           "(:positionId IS NULL OR rd.positionId = :positionId) AND " +
            "(:status IS NULL OR rd.status = :status) AND " +
            "(:authorEmpNo IS NULL OR rd.authorEmpNo LIKE %:authorEmpNo%) AND " +
            "(:documentTitle IS NULL OR rd.documentTitle LIKE %:documentTitle%)")
-    Page<ResponsibilityDocument> findBySearchCriteria(@Param("positionId") Long positionId,
-                                                      @Param("status") ResponsibilityDocument.DocumentStatus status,
+    Page<ResponsibilityDocument> findBySearchCriteria(@Param("status") ResponsibilityDocument.DocumentStatus status,
                                                       @Param("authorEmpNo") String authorEmpNo,
                                                       @Param("documentTitle") String documentTitle,
                                                       Pageable pageable);
@@ -176,29 +147,11 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     List<Object[]> countByAuthor();
 
     /**
-     * 직책별 문서 수 조회
-     */
-    @Query("SELECT rd.positionId, COUNT(rd) FROM ResponsibilityDocument rd GROUP BY rd.positionId")
-    List<Object[]> countByPosition();
-
-    /**
      * 중복 문서 체크 (같은 직책, 같은 제목, 다른 ID)
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.positionId = :positionId " +
-           "AND rd.documentTitle = :documentTitle AND rd.documentId != :excludeId")
-    List<ResponsibilityDocument> findDuplicateDocuments(@Param("positionId") Long positionId,
-                                                        @Param("documentTitle") String documentTitle,
+    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE " +
+           "rd.documentTitle = :documentTitle AND rd.documentId != :excludeId")
+    List<ResponsibilityDocument> findDuplicateDocuments(@Param("documentTitle") String documentTitle,
                                                         @Param("excludeId") Long excludeId);
 
-    /**
-     * 직책 ID와 상태로 조회 (ServiceImpl에서 사용)
-     */
-    List<ResponsibilityDocument> findByPositionIdAndStatus(Long positionId, ResponsibilityDocument.DocumentStatus status);
-
-    /**
-     * 직책별 최신 발행 문서 조회 (ServiceImpl에서 사용)
-     */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.positionId = :positionId AND rd.status = 'PUBLISHED' " +
-           "ORDER BY rd.effectiveDate DESC")
-    Optional<ResponsibilityDocument> findLatestPublishedByPosition(@Param("positionId") Long positionId);
 }

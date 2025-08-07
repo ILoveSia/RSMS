@@ -61,13 +61,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
   // 컬럼 정의
   const columns: DataGridColumn<ResponsibilityDocumentDto>[] = [
     {
-      field: 'positionName',
-      headerName: '직책',
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
-    },
-    {
       field: 'documentTitle',
       headerName: '문서 제목',
       width: 300,
@@ -176,7 +169,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
     try {
       const searchParams = {
         status: selectedStatus !== 'ALL' ? selectedStatus : undefined,
-        positionName: selectedPosition !== 'ALL' ? selectedPosition : undefined,
       };
 
       const data = await responsibilityDocumentApi.searchDocuments(
@@ -192,7 +184,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
     } finally {
       setLoading(false);
     }
-  }, [selectedStatus, selectedPosition]);
+  }, [selectedStatus]);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직

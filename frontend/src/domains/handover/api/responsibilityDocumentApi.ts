@@ -49,8 +49,6 @@ export interface PageResponse<T> {
 // Types
 export interface ResponsibilityDocument {
   documentId?: number;
-  positionId: number;
-  responsibilityId?: number;
   documentTitle: string;
   documentVersion: string;
   documentContent: string;
@@ -64,7 +62,6 @@ export interface ResponsibilityDocument {
 }
 
 export interface ResponsibilityDocumentDto extends ResponsibilityDocument {
-  positionName?: string;
   authorName?: string;
   reviewerName?: string;
   approverName?: string;
@@ -83,11 +80,9 @@ export interface ResponsibilityDocumentDto extends ResponsibilityDocument {
 }
 
 export interface DocumentSearchParams {
-  positionId?: number;
   status?: string;
   authorEmpNo?: string;
   documentTitle?: string;
-  positionName?: string;
   startDate?: string;
   endDate?: string;
   keyword?: string;
@@ -226,12 +221,7 @@ export class ResponsibilityDocumentApi {
     );
   }
 
-  /**
-   * 직책별 책무기술서 조회
-   */
-  static async getDocumentsByPosition(positionId: number): Promise<ResponsibilityDocumentDto[]> {
-    return apiClient.get<ResponsibilityDocumentDto[]>(`${this.BASE_PATH}/position/${positionId}`);
-  }
+
 
   /**
    * 상태별 책무기술서 조회
@@ -247,21 +237,7 @@ export class ResponsibilityDocumentApi {
     return apiClient.get<ResponsibilityDocumentDto[]>(`${this.BASE_PATH}/author/${authorEmpNo}`);
   }
 
-  /**
-   * 직책의 최신 발행 문서 조회
-   */
-  static async getLatestPublishedDocument(
-    positionId: number
-  ): Promise<ResponsibilityDocumentDto | null> {
-    try {
-      return await apiClient.get<ResponsibilityDocumentDto>(
-        `${this.BASE_PATH}/position/${positionId}/latest`
-      );
-    } catch (error) {
-      // 404인 경우 null 반환
-      return null;
-    }
-  }
+
 
   /**
    * 유효한 문서 조회

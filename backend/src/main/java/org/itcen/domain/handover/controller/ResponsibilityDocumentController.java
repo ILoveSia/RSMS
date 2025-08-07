@@ -38,8 +38,8 @@ public class ResponsibilityDocumentController {
      */
     @PostMapping
     public ResponseEntity<ResponsibilityDocument> createDocument(@RequestBody ResponsibilityDocument document) {
-        log.debug("책무기술서 생성 요청 - positionId: {}, title: {}", 
-                  document.getPositionId(), document.getDocumentTitle());
+        // log.debug("책무기술서 생성 요청 - positionId: {}, title: {}", 
+        //           document.getPositionId(), document.getDocumentTitle());
         
         ResponsibilityDocument created = responsibilityDocumentService.createDocument(document);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -164,15 +164,15 @@ public class ResponsibilityDocumentController {
     /**
      * 직책별 책무기술서 조회
      */
-    @GetMapping("/position/{positionId}")
-    public ResponseEntity<List<ResponsibilityDocumentService.ResponsibilityDocumentDto>> getDocumentsByPosition(
-            @PathVariable Long positionId) {
-        log.debug("직책별 책무기술서 조회 요청 - positionId: {}", positionId);
-        
-        List<ResponsibilityDocumentService.ResponsibilityDocumentDto> documents = 
-                responsibilityDocumentService.getDocumentsByPosition(positionId);
-        return ResponseEntity.ok(documents);
-    }
+    // @GetMapping("/position/{positionId}")
+    // public ResponseEntity<List<ResponsibilityDocumentService.ResponsibilityDocumentDto>> getDocumentsByPosition(
+    //         @PathVariable Long positionId) {
+    //     log.debug("직책별 책무기술서 조회 요청 - positionId: {}", positionId);
+    //     
+    //     List<ResponsibilityDocumentService.ResponsibilityDocumentDto> documents = 
+    //             responsibilityDocumentService.getDocumentsByPosition(positionId);
+    //     return ResponseEntity.ok(documents);
+    // }
 
     /**
      * 상태별 책무기술서 조회

@@ -77,10 +77,7 @@ public interface ResponsibilityDocumentService {
 
     // 조회 기능
 
-    /**
-     * 직책별 책무기술서 조회
-     */
-    List<ResponsibilityDocumentDto> getDocumentsByPosition(Long positionId);
+    
 
     /**
      * 상태별 책무기술서 조회

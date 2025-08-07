@@ -27,9 +27,6 @@ import java.time.LocalDate;
 public class ResponsibilityDocumentDto {
     
     private Long documentId;
-    private Long positionId;
-    private String positionName;
-    private Long responsibilityId;
     private String documentTitle;
     private String documentVersion;
     private String documentContent;
