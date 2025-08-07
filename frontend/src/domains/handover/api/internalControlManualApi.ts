@@ -26,52 +26,50 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
+// 페이지 응답 타입
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+}
+
 // 내부통제 업무메뉴얼 DTO
 export interface InternalControlManualDto {
   manualId?: number;
-  assignmentId: number;
+  deptCd: string;
+  hodIcItemId?: number;
   manualTitle: string;
-  manualContent: string;
   manualVersion?: string;
+  manualDescription?: string;
+  manualContent?: string;
+  manualCategory?: string;
+  icTaskCategory?: string;
   status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED';
-  
-  // 부서 정보
-  deptCd?: string;
-  deptName?: string;
-  
-  // 작성자 정보
-  authorEmpNo?: string;
-  authorName?: string;
-  
-  // 검토자 정보
-  reviewerEmpNo?: string;
-  reviewerName?: string;
-  
-  // 승인자 정보
-  approverEmpNo?: string;
-  approverName?: string;
-  
-  // 일정 정보
+  approvalId?: number;
   effectiveDate?: string;
   expiryDate?: string;
-  
-  // 상태 정보
-  isValid?: boolean;
-  isExpiring?: boolean;
-  daysUntilExpiry?: number;
-  workflowStatus?: string;
-  
-  // 첨부파일
-  attachmentCount?: number;
-  
-  // 감사 필드
+  reviewCycleMonths?: number;
+  nextReviewDate?: string;
+  authorEmpNo?: string;
+  hodEmpNo?: string;
   createdAt?: string;
   updatedAt?: string;
+  createdId?: string;
+  updatedId?: string;
+  
+  // 조인된 데이터 (백엔드에서 제공하는 경우)
+  deptName?: string;
+  authorName?: string;
+  hodName?: string;
 }
 
 // 검색 파라미터
 export interface ManualSearchParams {
-  assignmentId?: number;
   deptCd?: string;
   status?: string;
   manualTitle?: string;
@@ -79,39 +77,65 @@ export interface ManualSearchParams {
   manualVersion?: string;
   effectiveDate?: string;
   expiryDate?: string;
+  manualCategory?: string;
+  icTaskCategory?: string;
 }
 
 /**
  * 내부통제 업무메뉴얼 API 클래스
  */
 export class InternalControlManualApi {
-  private static readonly BASE_URL = '/api/handover/manuals';
+  private static readonly BASE_URL = '/handover/manuals';
 
   /**
-   * 내부통제 업무메뉴얼 목록 조회
+   * 내부통제 업무메뉴얼 목록 조회 (페이징)
+   */
+  static async getAllManuals(pageable: PaginationParams): Promise<Page<InternalControlManualDto>> {
+    const params = new URLSearchParams();
+    params.append('page', pageable.page.toString());
+    params.append('size', pageable.size.toString());
+    if (pageable.sort) params.append('sort', pageable.sort);
+    
+    return apiClient.get(`${this.BASE_URL}?${params.toString()}`);
+  }
+
+  /**
+   * 내부통제 업무메뉴얼 복합 조건 검색
    */
   static async searchManuals(
     searchParams: ManualSearchParams,
     paginationParams: PaginationParams
-  ): Promise<ApiResponse<InternalControlManualDto[]>> {
+  ): Promise<Page<InternalControlManualDto>> {
+    const searchDto = {
+      deptCd: searchParams.deptCd,
+      status: searchParams.status,
+      manualTitle: searchParams.manualTitle,
+      authorEmpNo: searchParams.authorEmpNo,
+      manualVersion: searchParams.manualVersion,
+      effectiveDate: searchParams.effectiveDate,
+      expiryDate: searchParams.expiryDate,
+    };
+    
     const params = new URLSearchParams();
-    
-    // 검색 조건 추가
-    if (searchParams.assignmentId) params.append('assignmentId', searchParams.assignmentId.toString());
-    if (searchParams.deptCd) params.append('deptCd', searchParams.deptCd);
-    if (searchParams.status) params.append('status', searchParams.status);
-    if (searchParams.manualTitle) params.append('manualTitle', searchParams.manualTitle);
-    if (searchParams.authorEmpNo) params.append('authorEmpNo', searchParams.authorEmpNo);
-    if (searchParams.manualVersion) params.append('manualVersion', searchParams.manualVersion);
-    if (searchParams.effectiveDate) params.append('effectiveDate', searchParams.effectiveDate);
-    if (searchParams.expiryDate) params.append('expiryDate', searchParams.expiryDate);
-    
-    // 페이지네이션 파라미터 추가
     params.append('page', paginationParams.page.toString());
     params.append('size', paginationParams.size.toString());
     if (paginationParams.sort) params.append('sort', paginationParams.sort);
     
-    return apiClient.get(`${this.BASE_URL}?${params.toString()}`);
+    return apiClient.post(`${this.BASE_URL}/search?${params.toString()}`, searchDto);
+  }
+
+  /**
+   * 상태별 내부통제 업무메뉴얼 조회
+   */
+  static async getManualsByStatus(status: string): Promise<InternalControlManualDto[]> {
+    return apiClient.get(`${this.BASE_URL}/status/${status}`);
+  }
+
+  /**
+   * 부서별 내부통제 업무메뉴얼 조회
+   */
+  static async getManualsByDepartment(deptCd: string): Promise<InternalControlManualDto[]> {
+    return apiClient.get(`${this.BASE_URL}/department/${deptCd}`);
   }
 
   /**

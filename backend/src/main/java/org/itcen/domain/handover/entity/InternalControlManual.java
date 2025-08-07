@@ -172,9 +172,8 @@ public class InternalControlManual {
     /**
      * 검토 단계로 진행
      */
-    public void submitForReview(String hodEmpNo) {
+    public void submitForReview() {
         this.status = ManualStatus.REVIEW;
-        this.hodEmpNo = hodEmpNo;
     }
 
     /**

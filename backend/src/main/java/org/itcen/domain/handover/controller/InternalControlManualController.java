@@ -91,32 +91,9 @@ public class InternalControlManualController {
         return ResponseEntity.ok(manuals);
     }
 
-    /**
-     * 부서장 검토 단계로 제출
-     */
-    @PostMapping("/{manualId}/submit")
-    public ResponseEntity<Void> submitForReview(
-            @PathVariable Long manualId,
-            @RequestParam String hodEmpNo,
-            @RequestParam String actorEmpNo) {
-        log.debug("부서장 검토 제출 요청 - manualId: {}, hodEmpNo: {}", manualId, hodEmpNo);
-        
-        internalControlManualService.submitForReview(manualId, hodEmpNo, actorEmpNo);
-        return ResponseEntity.ok().build();
-    }
+    
 
-    /**
-     * 부서장 승인
-     */
-    @PostMapping("/{manualId}/approve")
-    public ResponseEntity<Void> approveByHod(
-            @PathVariable Long manualId,
-            @RequestParam String actorEmpNo) {
-        log.debug("부서장 승인 요청 - manualId: {}", manualId);
-        
-        internalControlManualService.approveByHod(manualId, actorEmpNo);
-        return ResponseEntity.ok().build();
-    }
+    
 
     /**
      * 메뉴얼 발행
@@ -212,18 +189,7 @@ public class InternalControlManualController {
         return ResponseEntity.ok(manuals);
     }
 
-    /**
-     * 부서장별 내부통제 메뉴얼 조회
-     */
-    @GetMapping("/hod/{hodEmpNo}")
-    public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getManualsByHod(
-            @PathVariable String hodEmpNo) {
-        log.debug("부서장별 내부통제 메뉴얼 조회 요청 - hodEmpNo: {}", hodEmpNo);
-        
-        List<InternalControlManualService.InternalControlManualDto> manuals = 
-                internalControlManualService.getManualsByHod(hodEmpNo);
-        return ResponseEntity.ok(manuals);
-    }
+    
 
     /**
      * 메뉴얼 분류별 조회
@@ -300,25 +266,14 @@ public class InternalControlManualController {
         return ResponseEntity.ok(manuals);
     }
 
-    /**
-     * 부서장 승인 대기중인 메뉴얼 조회
-     */
-    @GetMapping("/pending-approval/hod/{hodEmpNo}")
-    public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getPendingApprovalByHod(
-            @PathVariable String hodEmpNo) {
-        log.debug("부서장 승인 대기중인 메뉴얼 조회 요청 - hodEmpNo: {}", hodEmpNo);
-        
-        List<InternalControlManualService.InternalControlManualDto> manuals = 
-                internalControlManualService.getPendingApprovalByHod(hodEmpNo);
-        return ResponseEntity.ok(manuals);
-    }
+    
 
     /**
      * 복합 조건 검색
      */
     @PostMapping("/search")
     public ResponseEntity<Page<InternalControlManualService.InternalControlManualDto>> searchManuals(
-            @RequestBody InternalControlManualService.ManualSearchDto searchDto,
+            @RequestBody org.itcen.domain.handover.dto.ManualSearchDto searchDto,
             @PageableDefault Pageable pageable) {
         log.debug("복합 조건 검색 요청 - searchDto: {}", searchDto);
         

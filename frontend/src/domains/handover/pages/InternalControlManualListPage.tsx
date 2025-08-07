@@ -22,6 +22,7 @@ import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { internalControlManualApi, type InternalControlManualDto } from '../api/internalControlManualApi';
 import InternalControlManualDialog from '../components/InternalControlManualDialog';
+import { useGetDepartmentName, getEmployeeName } from '@/shared/utils/codeUtils';
 
 interface IInternalControlManualListPageProps {
   className?: string;
@@ -35,6 +36,9 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<InternalControlManualDto[]>([]);
+  
+  // 부서명 변환 함수
+  const getDepartmentName = useGetDepartmentName();
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -56,11 +60,12 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   // 컬럼 정의
   const columns: DataGridColumn<InternalControlManualDto>[] = [
     {
-      field: 'deptName',
+      field: 'deptCd',
       headerName: '부서',
       width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderCell: params => getDepartmentName(params.value as string),
     },
     {
       field: 'manualTitle',
@@ -100,14 +105,21 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => getStatusChip(params.value),
+      renderCell: params => getStatusChip(params.value as string),
     },
     {
-      field: 'authorName',
+      field: 'authorEmpNo',
       headerName: '작성자',
       width: 120,
       align: 'center',
       headerAlign: 'center',
+      renderCell: params => {
+        const EmployeeNameComponent = () => {
+          const empName = getEmployeeName(params.value as string);
+          return <span>{empName}</span>;
+        };
+        return <EmployeeNameComponent />;
+      },
     },
     {
       field: 'effectiveDate',
@@ -116,7 +128,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
       },
     },
     {
@@ -126,7 +138,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
       },
     },
     {
@@ -136,7 +148,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
       },
     },
     {
@@ -146,80 +158,12 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
       },
     },
   ];
 
-  // Mock 데이터
-  const mockManuals: InternalControlManualDto[] = [
-    {
-      manualId: 1,
-      assignmentId: 1,
-      manualTitle: '정보기술부 내부통제 업무메뉴얼',
-      manualContent: '# 정보기술부 내부통제 업무메뉴얼\n\n## 1. 개요\n정보기술부의 내부통제 업무에 대한 상세 메뉴얼입니다.\n\n## 2. 주요 업무\n- IT 거버넌스\n- 정보보안 관리\n- 시스템 운영 관리',
-      manualVersion: 'v1.0',
-      status: 'PUBLISHED',
-      deptCd: 'IT001',
-      deptName: '정보기술부',
-      authorEmpNo: 'E001',
-      authorName: '김작성',
-      reviewerEmpNo: 'E002',
-      reviewerName: '이검토',
-      approverEmpNo: 'E003',
-      approverName: '박승인',
-      effectiveDate: '2024-01-01',
-      expiryDate: '2024-12-31',
-      isValid: true,
-      isExpiring: false,
-      daysUntilExpiry: 300,
-      workflowStatus: '발행됨',
-      attachmentCount: 3,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-15',
-    },
-    {
-      manualId: 2,
-      assignmentId: 2,
-      manualTitle: '경영관리부 내부통제 업무메뉴얼',
-      manualContent: '# 경영관리부 내부통제 업무메뉴얼\n\n## 1. 개요\n경영관리부의 내부통제 업무에 대한 상세 메뉴얼입니다.',
-      manualVersion: 'v1.2',
-      status: 'REVIEW',
-      deptCd: 'MGMT001',
-      deptName: '경영관리부',
-      authorEmpNo: 'E004',
-      authorName: '최작성',
-      reviewerEmpNo: 'E002',
-      reviewerName: '이검토',
-      effectiveDate: '2024-02-01',
-      expiryDate: '2024-12-31',
-      isValid: true,
-      isExpiring: false,
-      daysUntilExpiry: 270,
-      workflowStatus: '검토 중',
-      attachmentCount: 1,
-      createdAt: '2024-01-15',
-      updatedAt: '2024-01-20',
-    },
-    {
-      manualId: 3,
-      assignmentId: 3,
-      manualTitle: '리스크관리부 내부통제 업무메뉴얼',
-      manualContent: '# 리스크관리부 내부통제 업무메뉴얼\n\n## 1. 개요\n리스크관리부의 내부통제 업무에 대한 상세 메뉴얼입니다.',
-      manualVersion: 'v1.0',
-      status: 'DRAFT',
-      deptCd: 'RISK001',
-      deptName: '리스크관리부',
-      authorEmpNo: 'E005',
-      authorName: '정작성',
-      isValid: false,
-      isExpiring: false,
-      workflowStatus: '초안 작성 중',
-      attachmentCount: 0,
-      createdAt: '2024-01-20',
-      updatedAt: '2024-01-22',
-    },
-  ];
+
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -231,19 +175,19 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
     setError(null);
 
     try {
-      // TODO: 실제 API 호출로 대체
-      // const data = await internalControlManualApi.searchManuals(searchParams, { page: 0, size: 100 });
-      
-      // Mock 데이터 필터링
-      let filteredData = mockManuals;
-      if (selectedStatus !== 'ALL') {
-        filteredData = filteredData.filter(item => item.status === selectedStatus);
-      }
-      if (selectedDept !== 'ALL') {
-        filteredData = filteredData.filter(item => item.deptName === selectedDept);
-      }
+      const searchParams = {
+        status: selectedStatus !== 'ALL' ? selectedStatus : undefined,
+        deptCd: selectedDept !== 'ALL' ? selectedDept : undefined,
+      };
 
-      setRows(filteredData);
+      const paginationParams = {
+        page: 0,
+        size: 100,
+      };
+
+      const response = await internalControlManualApi.searchManuals(searchParams, paginationParams);
+      console.log(response);
+      setRows(response.content);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -354,13 +298,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
             onChange={setSelectedStatus}
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
-            options={[
-              { value: 'ALL', label: '전체' },
-              { value: 'DRAFT', label: '초안' },
-              { value: 'REVIEW', label: '검토중' },
-              { value: 'APPROVED', label: '승인됨' },
-              { value: 'PUBLISHED', label: '발행됨' },
-            ]}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
           <CommonCodeSelect
@@ -369,12 +306,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
             onChange={setSelectedDept}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
-            options={[
-              { value: 'ALL', label: '전체' },
-              { value: '정보기술부', label: '정보기술부' },
-              { value: '경영관리부', label: '경영관리부' },
-              { value: '리스크관리부', label: '리스크관리부' },
-            ]}
           />
           <SearchButton
             onClick={handleSearch}
@@ -406,7 +337,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
             showRefresh={false}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
-            registerLabel="신규 작성"
             align="right"
             sx={{
               mb: 0,

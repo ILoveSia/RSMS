@@ -53,12 +53,7 @@ public interface InternalControlManualService {
     /**
      * 부서장 검토 단계로 제출
      */
-    void submitForReview(Long manualId, String hodEmpNo, String actorEmpNo);
-
-    /**
-     * 부서장 승인
-     */
-    void approveByHod(Long manualId, String actorEmpNo);
+    void submitForReview(Long manualId, String actorEmpNo);
 
     /**
      * 메뉴얼 발행
@@ -98,11 +93,6 @@ public interface InternalControlManualService {
     List<InternalControlManualDto> getManualsByAuthor(String authorEmpNo);
 
     /**
-     * 부서장별 내부통제 메뉴얼 조회
-     */
-    List<InternalControlManualDto> getManualsByHod(String hodEmpNo);
-
-    /**
      * 메뉴얼 분류별 조회
      */
     List<InternalControlManualDto> getManualsByCategory(String category);
@@ -133,14 +123,9 @@ public interface InternalControlManualService {
     List<InternalControlManualDto> getPendingApprovalManuals();
 
     /**
-     * 부서장 승인 대기중인 메뉴얼 조회
-     */
-    List<InternalControlManualDto> getPendingApprovalByHod(String hodEmpNo);
-
-    /**
      * 복합 조건 검색
      */
-    Page<InternalControlManualDto> searchManuals(ManualSearchDto searchDto, Pageable pageable);
+    Page<InternalControlManualDto> searchManuals(org.itcen.domain.handover.dto.ManualSearchDto searchDto, Pageable pageable);
 
     // 통계 기능
 
@@ -170,7 +155,6 @@ public interface InternalControlManualService {
         Long getManualId();
         String getDeptCd();
         String getDeptName(); 
-        Long getHodIcItemId();
         String getManualTitle();
         String getManualVersion();
         String getManualDescription();
@@ -185,19 +169,9 @@ public interface InternalControlManualService {
         LocalDate getNextReviewDate();
         String getAuthorEmpNo();
         String getAuthorName();
-        String getHodEmpNo();
-        String getHodName();
     }
 
-    interface ManualSearchDto {
-        String getDeptCd();
-        InternalControlManual.ManualStatus getStatus();
-        String getManualCategory();
-        String getAuthorEmpNo();
-        String getManualTitle();
-        LocalDate getStartDate();
-        LocalDate getEndDate();
-    }
+
 
     interface ManualStatisticsDto {
         Long getTotalManuals();

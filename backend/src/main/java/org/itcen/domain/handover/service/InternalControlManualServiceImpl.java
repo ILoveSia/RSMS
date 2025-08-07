@@ -43,15 +43,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         log.debug("내부통제 메뉴얼 생성 시작 - deptCd: {}, title: {}", 
                   manual.getDeptCd(), manual.getManualTitle());
 
-        // 같은 부서의 같은 내부통제 항목에 대한 초안 상태의 메뉴얼이 있는지 확인
-        List<InternalControlManual> existingDrafts = internalControlManualRepository
-                .findByDeptCdAndHodIcItemIdAndStatus(manual.getDeptCd(), 
-                                                    manual.getHodIcItemId(), 
-                                                    InternalControlManual.ManualStatus.DRAFT);
         
-        if (!existingDrafts.isEmpty()) {
-            throw new BusinessException("해당 부서의 내부통제 항목에 이미 초안 상태의 메뉴얼이 있습니다.");
-        }
 
         // 검토 주기가 설정된 경우 다음 검토일 계산
         if (manual.getReviewCycleMonths() != null && manual.getReviewCycleMonths() > 0) {
@@ -153,8 +145,8 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
 
     @Override
     @Transactional
-    public void submitForReview(Long manualId, String hodEmpNo, String actorEmpNo) {
-        log.debug("부서장 검토 제출 - manualId: {}, hodEmpNo: {}", manualId, hodEmpNo);
+    public void submitForReview(Long manualId, String actorEmpNo) {
+        log.debug("부서장 검토 제출 - manualId: {}", manualId);
 
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
@@ -164,7 +156,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
             throw new BusinessException("초안 상태의 메뉴얼만 검토에 제출할 수 있습니다.");
         }
 
-        manual.submitForReview(hodEmpNo);
+        manual.submitForReview();
         manual.setUpdatedId(actorEmpNo);
         internalControlManualRepository.save(manual);
 
@@ -180,37 +172,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         handoverHistoryRepository.save(history);
 
         log.debug("부서장 검토 제출 완료 - manualId: {}", manualId);
-    }
-
-    @Override
-    @Transactional
-    public void approveByHod(Long manualId, String actorEmpNo) {
-        log.debug("부서장 승인 - manualId: {}", manualId);
-
-        InternalControlManual manual = internalControlManualRepository.findById(manualId)
-                .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
-
-        // 승인 가능 여부 확인
-        if (manual.getStatus() != InternalControlManual.ManualStatus.REVIEW) {
-            throw new BusinessException("부서장 검토 중인 메뉴얼만 승인할 수 있습니다.");
-        }
-
-        manual.approveByHod();
-        manual.setUpdatedId(actorEmpNo);
-        internalControlManualRepository.save(manual);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createManualHistory(
-                1L, // assignmentId - 기본값 설정
-                HandoverHistory.ActivityType.DOCUMENT_APPROVED,
-                "내부통제 업무메뉴얼이 부서장에 의해 승인되었습니다.",
-                actorEmpNo,
-                null, // actorName
-                manualId
-        );
-        handoverHistoryRepository.save(history);
-
-        log.debug("부서장 승인 완료 - manualId: {}", manualId);
     }
 
     @Override
@@ -356,13 +317,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
     }
 
     @Override
-    public List<InternalControlManualDto> getManualsByHod(String hodEmpNo) {
-        log.debug("부서장별 내부통제 메뉴얼 조회 - hodEmpNo: {}", hodEmpNo);
-        List<InternalControlManual> manuals = internalControlManualRepository.findByHodEmpNo(hodEmpNo);
-        return convertToDto(manuals);
-    }
-
-    @Override
     public List<InternalControlManualDto> getManualsByCategory(String category) {
         log.debug("분류별 내부통제 메뉴얼 조회 - category: {}", category);
         List<InternalControlManual> manuals = internalControlManualRepository.findByManualCategory(category);
@@ -405,16 +359,8 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         List<InternalControlManual> manuals = internalControlManualRepository.findPendingApprovalManuals();
         return convertToDto(manuals);
     }
-
     @Override
-    public List<InternalControlManualDto> getPendingApprovalByHod(String hodEmpNo) {
-        log.debug("부서장 승인 대기중인 메뉴얼 조회 - hodEmpNo: {}", hodEmpNo);
-        List<InternalControlManual> manuals = internalControlManualRepository.findPendingApprovalByHod(hodEmpNo);
-        return convertToDto(manuals);
-    }
-
-    @Override
-    public Page<InternalControlManualDto> searchManuals(ManualSearchDto searchDto, Pageable pageable) {
+    public Page<InternalControlManualDto> searchManuals(org.itcen.domain.handover.dto.ManualSearchDto searchDto, Pageable pageable) {
         log.debug("복합 조건 검색 - searchDto: {}", searchDto);
         
         Page<InternalControlManual> manuals = internalControlManualRepository.findBySearchCriteria(
@@ -473,8 +419,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
             @Override
             public String getDeptName() { return null; } // TODO: Department 조인 후 구현
             
-            @Override
-            public Long getHodIcItemId() { return manual.getHodIcItemId(); }
             
             @Override
             public String getManualTitle() { return manual.getManualTitle(); }
@@ -518,11 +462,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
             @Override
             public String getAuthorName() { return null; } // TODO: User 조인 후 구현
             
-            @Override
-            public String getHodEmpNo() { return manual.getHodEmpNo(); }
-            
-            @Override
-            public String getHodName() { return null; } // TODO: User 조인 후 구현
         };
     }
 }

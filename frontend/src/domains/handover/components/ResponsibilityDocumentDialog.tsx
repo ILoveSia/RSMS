@@ -27,6 +27,7 @@ import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
+import { DatePicker } from '@/shared/components/ui/form';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ResponsibilityDocumentApi, type ResponsibilityDocumentDto, type ResponsibilityDocument } from '../api/responsibilityDocumentApi';
 
@@ -44,8 +45,8 @@ interface FormData {
   documentVersion: string;
   documentContent: string;
   status: string;
-  effectiveDate: string;
-  expiryDate: string;
+  effectiveDate: Date | null;
+  expiryDate: Date | null;
   authorEmpNo: string;
   authorName: string;
   reviewerEmpNo: string;
@@ -59,8 +60,8 @@ const initialFormData: FormData = {
   documentVersion: 'v1.0',
   documentContent: '',
   status: 'DRAFT',
-  effectiveDate: '',
-  expiryDate: '',
+  effectiveDate: null,
+  expiryDate: null,
   authorEmpNo: '',
   authorName: '',
   reviewerEmpNo: '',
@@ -144,23 +145,23 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         );
       }
 
-      // 문서 데이터를 폼에 매핑
-      if (documentData) {
-        setFormData({
-          documentTitle: documentData.documentTitle || '',
-          documentVersion: documentData.documentVersion || 'v1.0',
-          documentContent: documentData.documentContent || '',
-          status: documentData.status || 'DRAFT',
-          effectiveDate: documentData.effectiveDate || '',
-          expiryDate: documentData.expiryDate || '',
-          authorEmpNo: documentData.authorEmpNo || '',
-          authorName: documentData.authorName || '',
-          reviewerEmpNo: documentData.reviewerEmpNo || '',
-          reviewerName: documentData.reviewerName || '',
-          approverEmpNo: documentData.approverEmpNo || '',
-          approverName: documentData.approverName || '',
-        });
-      }
+             // 문서 데이터를 폼에 매핑
+       if (documentData) {
+         setFormData({
+           documentTitle: documentData.documentTitle || '',
+           documentVersion: documentData.documentVersion || 'v1.0',
+           documentContent: documentData.documentContent || '',
+           status: documentData.status || 'DRAFT',
+           effectiveDate: parseDate(documentData.effectiveDate),
+           expiryDate: parseDate(documentData.expiryDate),
+           authorEmpNo: documentData.authorEmpNo || '',
+           authorName: documentData.authorName || '',
+           reviewerEmpNo: documentData.reviewerEmpNo || '',
+           reviewerName: documentData.reviewerName || '',
+           approverEmpNo: documentData.approverEmpNo || '',
+           approverName: documentData.approverName || '',
+         });
+       }
 
     } catch (err) {
       console.error('Failed to load document data:', err);
@@ -194,11 +195,24 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     apiResponseData,
   ]);
 
-  const handleInputChange = (field: keyof FormData, value: string | number) => {
+  const handleInputChange = (field: keyof FormData, value: string | number | Date | null) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수
+  const parseDate = (dateString: string | null | undefined): Date | null => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수
+  const formatDate = (date: Date | null): string => {
+    if (!date) return '';
+    return date.toISOString().split('T')[0];
   };
 
   const validateForm = (): boolean => {
@@ -225,8 +239,8 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         documentVersion: formData.documentVersion,
         documentContent: formData.documentContent,
         status: formData.status as 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED',
-        effectiveDate: formData.effectiveDate,
-        expiryDate: formData.expiryDate,
+        effectiveDate: formatDate(formData.effectiveDate),
+        expiryDate: formatDate(formData.expiryDate),
         authorEmpNo: formData.authorEmpNo,
         reviewerEmpNo: formData.reviewerEmpNo,
         approverEmpNo: formData.approverEmpNo,
@@ -390,33 +404,25 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
 
                 {/* 시행일 */}
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
+                  <DatePicker
                     label='시행일'
-                    type='date'
+                    fullWidth
                     value={formData.effectiveDate}
-                    onChange={e => handleInputChange('effectiveDate', e.target.value)}
+                    onChange={(date) => handleInputChange('effectiveDate', date)}
                     disabled={isViewMode}
                     mode={isViewMode ? "readonly" : "editable"}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
                   />
                 </Grid>
 
                 {/* 만료일 */}
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
+                  <DatePicker
                     label='만료일'
-                    type='date'
+                    fullWidth
                     value={formData.expiryDate}
-                    onChange={e => handleInputChange('expiryDate', e.target.value)}
+                    onChange={(date) => handleInputChange('expiryDate', date)}
                     disabled={isViewMode}
                     mode={isViewMode ? "readonly" : "editable"}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
                   />
                 </Grid>
 
