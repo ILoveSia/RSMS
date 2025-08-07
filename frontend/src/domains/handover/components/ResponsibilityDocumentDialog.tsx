@@ -15,7 +15,6 @@ import type { CommonCode } from '@/app/types/common';
 
 import type { SelectOption } from '@/shared/types/common';
 import { Search as SearchIcon } from '@mui/icons-material';
-import ResponsibilitySearchPopup from '@/domains/common/components/search/ResponsibilitySearchPopup';
 import {
   Alert,
   Box,
@@ -29,7 +28,7 @@ import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
-import { type ResponsibilityDocumentDto } from '../api/responsibilityDocumentApi';
+import { ResponsibilityDocumentApi, type ResponsibilityDocumentDto, type ResponsibilityDocument } from '../api/responsibilityDocumentApi';
 
 interface ResponsibilityDocumentDialogProps {
   open: boolean;
@@ -84,8 +83,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 팝업 상태들
-  const [responsibilitySearchOpen, setResponsibilitySearchOpen] = useState(false);
+
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -222,10 +220,22 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     setError(null);
 
     try {
+      const requestData: ResponsibilityDocument = {
+        documentTitle: formData.documentTitle,
+        documentVersion: formData.documentVersion,
+        documentContent: formData.documentContent,
+        status: formData.status as 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED',
+        effectiveDate: formData.effectiveDate,
+        expiryDate: formData.expiryDate,
+        authorEmpNo: formData.authorEmpNo,
+        reviewerEmpNo: formData.reviewerEmpNo,
+        approverEmpNo: formData.approverEmpNo,
+      };
+
       if (isCreateMode) {
-        // TODO: 실제 API 호출로 대체
+        await ResponsibilityDocumentApi.createDocument(requestData);
       } else if (isEditMode && documentId) {
-        // TODO: 실제 API 호출로 대체
+        await ResponsibilityDocumentApi.updateDocument(documentId, requestData);
       }
 
       onSuccess?.();
@@ -238,15 +248,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     }
   };
 
-  // 책무 선택 핸들러
-  const handleResponsibilitySelect = (responsibility: ResponsibilitySearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      responsibilityId: responsibility.responsibilityId,
-      responsibilityContent: responsibility.responsibilityContent,
-    }));
-    setResponsibilitySearchOpen(false);
-  };
+
 
   const handleClose = () => {
     if (saving) return;
@@ -356,7 +358,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.documentTitle}
                     onChange={e => handleInputChange('documentTitle', e.target.value)}
                     disabled={isViewMode}
-                    mode={isViewMode ? "view" : "edit"}
+                    mode={isViewMode ? "readonly" : "editable"}
                   />
                 </Grid>
 
@@ -368,7 +370,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.documentVersion}
                     onChange={e => handleInputChange('documentVersion', e.target.value)}
                     disabled={isViewMode}
-                    mode={isViewMode ? "view" : "edit"}
+                    mode={isViewMode ? "readonly" : "editable"}
                   />
                 </Grid>
 
@@ -395,7 +397,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.effectiveDate}
                     onChange={e => handleInputChange('effectiveDate', e.target.value)}
                     disabled={isViewMode}
-                    mode={isViewMode ? "view" : "edit"}
+                    mode={isViewMode ? "readonly" : "editable"}
                     InputLabelProps={{
                       shrink: true,
                     }}
@@ -411,7 +413,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.expiryDate}
                     onChange={e => handleInputChange('expiryDate', e.target.value)}
                     disabled={isViewMode}
-                    mode={isViewMode ? "view" : "edit"}
+                    mode={isViewMode ? "readonly" : "editable"}
                     InputLabelProps={{
                       shrink: true,
                     }}
@@ -426,7 +428,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     value={formData.documentContent}
                     onChange={e => handleInputChange('documentContent', e.target.value)}
                     disabled={isViewMode}
-                    mode={isViewMode ? "view" : "edit"}
+                    mode={isViewMode ? "readonly" : "editable"}
                     multiline
                     rows={12}
                     placeholder='문서의 상세 내용을 마크다운 형식으로 작성하세요.'
@@ -440,7 +442,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='작성자'
                     value={formData.authorName}
                     disabled
-                    mode="view"
+                    mode="readonly"
                     helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
                   />
                 </Grid>
@@ -452,7 +454,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='검토자'
                     value={formData.reviewerName}
                     disabled
-                    mode="view"
+                    mode="readonly"
                     helperText={formData.reviewerEmpNo ? `사번: ${formData.reviewerEmpNo}` : ''}
                   />
                 </Grid>
@@ -464,7 +466,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     label='승인자'
                     value={formData.approverName}
                     disabled
-                    mode="view"
+                    mode="readonly"
                     helperText={formData.approverEmpNo ? `사번: ${formData.approverEmpNo}` : ''}
                   />
                 </Grid>
@@ -479,14 +481,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
           </Box>
         </DialogActions>
       </BaseDialog>
-
-      {/* 책무 조회 팝업 */}
-      <ResponsibilitySearchPopup
-        open={responsibilitySearchOpen}
-        onClose={() => setResponsibilitySearchOpen(false)}
-        onSelect={handleResponsibilitySelect}
-        title='책무 조회'
-      />
     </>
   );
 };

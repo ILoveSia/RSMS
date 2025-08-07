@@ -49,13 +49,13 @@ public class ResponsibilityDocumentController {
      * 책무기술서 수정
      */
     @PutMapping("/{documentId}")
-    public ResponseEntity<ResponsibilityDocument> updateDocument(
+    public ResponseEntity<Void> updateDocument(
             @PathVariable Long documentId,
             @RequestBody ResponsibilityDocument document) {
         log.debug("책무기술서 수정 요청 - documentId: {}", documentId);
         
-        ResponsibilityDocument updated = responsibilityDocumentService.updateDocument(documentId, document);
-        return ResponseEntity.ok(updated);
+        responsibilityDocumentService.updateDocument(documentId, document);
+        return ResponseEntity.ok().build();
     }
 
     /**

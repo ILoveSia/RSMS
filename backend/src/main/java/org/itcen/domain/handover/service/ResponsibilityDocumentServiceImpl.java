@@ -78,6 +78,9 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         existingDocument.setDocumentTitle(document.getDocumentTitle());
         existingDocument.setDocumentContent(document.getDocumentContent());
         existingDocument.setDocumentVersion(document.getDocumentVersion());
+        existingDocument.setEffectiveDate(document.getEffectiveDate());
+        existingDocument.setExpiryDate(document.getExpiryDate());
+        existingDocument.setStatus(document.getStatus());
         existingDocument.setUpdatedId(document.getUpdatedId());
 
         ResponsibilityDocument savedDocument = responsibilityDocumentRepository.save(existingDocument);

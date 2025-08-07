@@ -127,8 +127,8 @@ export class ResponsibilityDocumentApi {
   static async updateDocument(
     documentId: number, 
     data: ResponsibilityDocument
-  ): Promise<ResponsibilityDocument> {
-    return apiClient.put<ResponsibilityDocument>(`${this.BASE_PATH}/${documentId}`, data);
+  ): Promise<void> {
+    return apiClient.put<void>(`${this.BASE_PATH}/${documentId}`, data);
   }
 
   /**
