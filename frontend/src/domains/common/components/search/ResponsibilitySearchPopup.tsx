@@ -105,7 +105,6 @@ const ResponsibilitySearchPopup: React.FC<ResponsibilitySearchPopupProps> = ({
         convertedResponsibilities.find(item => item.responsibilityId === id)
       ).filter(Boolean);
       const answer = uniqueResponsibilities as ResponsibilitySearchResult[];
-      console.log('answer: ', answer);
       setResponsibilities(answer);
       setFilteredResponsibilities(answer);
     } catch (err) {

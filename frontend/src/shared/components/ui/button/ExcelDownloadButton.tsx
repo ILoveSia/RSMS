@@ -69,14 +69,7 @@ const ExcelDownloadButton: React.FC<ExcelDownloadButtonProps> = ({
         .replace('T', '_');
       
       const finalFilename = `${filename}_${timestamp}`;
-      
-      console.log(`엑셀 다운로드 시작: ${finalFilename}.xlsx`);
-      
-      // 부모 컴포넌트의 다운로드 핸들러 실행
       await onDownload();
-      
-      console.log('엑셀 다운로드 완료');
-      
     } catch (error) {
       console.error('엑셀 다운로드 오류:', error);
       // 에러는 부모 컴포넌트에서 처리하도록 위임

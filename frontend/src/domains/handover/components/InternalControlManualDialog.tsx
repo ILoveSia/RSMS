@@ -191,7 +191,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     setError(null);
     try {
       // manualData prop이 있으면 사용, 없으면 API 호출
-      console.log('manualData', manualData);
       if (manualData) {
         // 직원 사번을 이름으로 변환
         const [authorName, reviewerName, approverName] = await Promise.all([

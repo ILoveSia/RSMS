@@ -268,10 +268,6 @@ const ExecutiveStatusPageWithApproval: React.FC<IExecutiveStatusPageProps> = ():
 
   // 결재 상태 변경 핸들러
   const handleApprovalStateChange = () => {
-    // 결재 상태가 변경되었을 때 필요한 로직
-    // 예: 데이터 새로고침, 알림 표시 등
-    console.log('결재 상태가 변경되었습니다.');
-    // fetchExecutiveStatus(); // 필요시 데이터 새로고침
   };
 
   return (

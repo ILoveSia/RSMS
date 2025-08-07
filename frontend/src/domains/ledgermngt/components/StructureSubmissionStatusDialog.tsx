@@ -174,7 +174,6 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
 
     try {
       setUploadingFile(true);
-      console.log("selectedFile", selectedFile);
       await uploadAttachment(selectedFile, {
         entityType: 'audit_prog_mngt_detail',
         entityId: itemId,

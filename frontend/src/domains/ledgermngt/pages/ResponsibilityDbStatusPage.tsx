@@ -566,13 +566,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               onRowSelectionChange={selectedRows => {
                 setSelectedIds(selectedRows.map(id => Number(id)));
               }}
-            // onRowClick={(row: ResponsibilityRow) => {
-            //   console.log('DataGrid onRowClick:', row);
-            //   setSelectedResponsibilityId(row.responsibilityId);
-            //   setSelectedRowData(row);
-            //   setDialogMode('view');
-            //   setDialogOpen(true);
-            // }}
             />
           </Box>
         </PageContent>

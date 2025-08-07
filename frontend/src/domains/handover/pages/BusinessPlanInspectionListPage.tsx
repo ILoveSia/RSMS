@@ -211,7 +211,6 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
         searchParams,
         { page: 0, size: 100 }
       );
-      console.log(response.data);
       setRows(response.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);

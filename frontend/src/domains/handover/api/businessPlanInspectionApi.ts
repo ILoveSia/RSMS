@@ -203,8 +203,6 @@ export class BusinessPlanInspectionApi {
         this.getCommonCodes(),
         this.getDepartments()
       ]);
-      // console.log(commonCodes);
-      console.log(departments);
       // DTO 형태로 변환 (사원명 비동기 조회 포함)
       const convertedData: BusinessPlanInspectionDto[] = await Promise.all(
         inspectionData.map(async (item: any) => {

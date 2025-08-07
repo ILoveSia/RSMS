@@ -411,16 +411,8 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         auditorEmpNo,
         auditorName
       };
-
-      console.log('점검자 지정 요청:', assignmentRequest);
-      console.log('선택된 hod_ic_item_ids:', selectedItemIds);
-      console.log('실제 처리할 detail_ids:', allDetailIds);
-
       // 점검자 지정 API 호출
       const result = await assignAuditor(assignmentRequest);
-
-      console.log('점검자 지정 완료:', result);
-
       // 성공 메시지 표시
       alert(result.message || '점검자 지정이 완료되었습니다.');
 
@@ -450,53 +442,20 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     }
 
     try {
-      console.log('====== 점검결과 처리 시작 ======');
-      console.log('선택된 항목 IDs:', selectedItemIds);
 
       // 선택된 항목들의 모든 auditProgMngtDetailIds 추출 (그룹화된 데이터)
       const selectedRows = auditItemRows.filter(row => selectedItemIds.includes(row.id));
       const auditProgMngtDetailIds = selectedRows.flatMap(row => row.auditProgMngtDetailIds);
 
-      console.log('선택된 행들:', selectedRows);
-      console.log('추출된 auditProgMngtDetailId들:', auditProgMngtDetailIds);
-      console.log('그룹화된 데이터 - 총 detail 개수:', auditProgMngtDetailIds.length);
-
-      // 기존 점검결과 데이터 확인
-      console.log('API 호출 전 - auditProgMngtDetailIds:', auditProgMngtDetailIds);
-
       const existingResults = await getAuditResultDetail(auditProgMngtDetailIds);
-
-      // console.log('API 호출 후 - 기존 점검결과 데이터 조회 결과:', existingResults);
-      // console.log('응답 타입:', typeof existingResults);
-      // console.log('배열 여부:', Array.isArray(existingResults));
-      // console.log('길이:', existingResults?.length);
 
       // 🚨 단순화된 모드 결정 로직
       let hasExistingData = false;
 
-      console.log('📋 모드 결정 시작:', {
-        existingResultsExists: !!existingResults,
-        isArray: Array.isArray(existingResults),
-        length: existingResults?.length
-      });
-
       // 단순한 조건: API 응답에 데이터가 있으면 edit, 없으면 create
       if (existingResults && Array.isArray(existingResults) && existingResults.length > 0) {
-        console.log('✅ API 응답에 데이터 있음 - edit 모드로 결정');
         hasExistingData = true;
-
-        // 상세 데이터 확인 (디버깅용)
-        existingResults.forEach((result: any, index: number) => {
-          console.log(`📋 결과 ${index + 1}:`, {
-            auditProgMngtDetailId: result.auditProgMngtDetailId,
-            auditResultStatusCd: result.auditResultStatusCd,
-            hasStatus: !!result.auditResultStatusCd
-          });
-        });
-      } else {
-        console.log('❌ API 응답에 데이터 없음 - create 모드로 결정');
       }
-
 
       const selectedMode = hasExistingData ? 'edit' : 'create';
 
@@ -504,17 +463,12 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       setAuditResultDialogOpen(true);
 
     } catch (error) {
-      // console.error('🚨🚨🚨 점검결과 상태 확인 오류 발생 🚨🚨🚨');
-      // console.error('오류 내용:', error);
       console.error('오류 상세:', {
         message: error instanceof Error ? error.message : '알 수 없는 오류',
         stack: error instanceof Error ? error.stack : null,
         type: typeof error,
         errorObject: error
       });
-
-      // 오류 발생 시 기본적으로 생성 모드로 처리
-      // console.log('🚨 오류로 인해 create 모드로 강제 설정');
       setAuditResultDialogMode('create');
       setAuditResultDialogOpen(true);
     }

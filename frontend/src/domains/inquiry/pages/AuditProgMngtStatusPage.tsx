@@ -428,12 +428,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
       // 현재 표시된 데이터를 엑셀 형태로 변환
       const excelData = convertToExcelData(auditRows);
-
-      console.log('엑셀 다운로드 데이터:', excelData);
-
-      // TODO: 실제 엑셀 파일 생성 및 다운로드 로직 구현
-      // 예: XLSX 라이브러리 사용하여 파일 생성 후 다운로드
-
     } catch (error) {
       console.error('엑셀 다운로드 오류:', error);
       setErrorMessage('엑셀 다운로드 중 오류가 발생했습니다.');

@@ -196,7 +196,6 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
    * 책임: 모드 변경 시 적절한 초기 데이터 설정
    */
   useEffect(() => {
-    console.log("initialdata ", initialData)
     if (mode === 'create') {
       // 새로운 점검계획 코드를 생성하여 설정
       setFormData(createDefaultAuditProgramData());
@@ -293,7 +292,6 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
     }
 
     try {
-      console.log("formdata", formData);
       await onSave(formData);
     } catch (error) {
       console.error('점검 계획 저장 중 오류 발생:', error);

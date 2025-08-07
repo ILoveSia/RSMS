@@ -161,15 +161,11 @@ export const updateAuditResult = async (
   data: AuditResultSaveRequest
 ): Promise<AuditResultSaveResponse> => {
   try {
-    console.log('점검결과 수정 요청:', data);
-    
     const response = await apiClient.put<AuditResultSaveResponse>(
       '/inquiry/audit-result/update',
       data
     );
-    
-    console.log('점검결과 수정 응답:', response);
-    return response.data;
+    return response;
   } catch (error) {
     console.error('점검결과 수정 오류:', error);
     throw error;

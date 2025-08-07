@@ -242,7 +242,6 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
   const loadInspectionData = useCallback(async () => {
     // inspectionData가 있으면 API 호출 없이 바로 사용
     if (inspectionData) {
-      console.log('inspectionData:', inspectionData);
       setFormData({
         assignmentId: inspectionData.assignmentId || inspectionData.inspectionId || '',
         inspectionTitle: inspectionData.inspectionTitle || '',

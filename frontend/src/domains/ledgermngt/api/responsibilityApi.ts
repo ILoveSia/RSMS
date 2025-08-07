@@ -116,11 +116,7 @@ export const responsibilityApi = {
    */
   delete: async (responsibilityId: number): Promise<void> => {
     try {
-      console.log(`[responsibilityApi] delete 호출 - responsibilityId: ${responsibilityId}`);
-
       await apiClient.delete(`/responsibilities/${responsibilityId}`);
-
-      console.log('[responsibilityApi] delete 완료');
     } catch (error) {
       console.error('[responsibilityApi] delete 에러:', error);
       throw error;

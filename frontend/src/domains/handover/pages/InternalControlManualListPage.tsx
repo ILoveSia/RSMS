@@ -187,22 +187,17 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       };
 
       const response = await internalControlManualApi.searchManuals(searchParams, paginationParams);
-      console.log(response);
       
              // API 응답 데이터에 부서명과 직원명 추가
        const enrichedData = await Promise.all(response.content.map(async item => {
          const deptName = getDepartmentName(item.deptCd || '');
          const authorName = await getEmployeeName(item.authorEmpNo || '');
-         
-         console.log(`부서코드: ${item.deptCd}, 변환된 부서명: ${deptName}`);
-         
          return {
            ...item,
            deptName: deptName,
            authorName: authorName,
          };
        }));
-      console.log("enrichedData",enrichedData);
       setRows(enrichedData);
     } catch (err) {
       console.error('Failed to fetch data:', err);
