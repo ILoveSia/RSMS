@@ -110,4 +110,12 @@ public interface MeetingBodyRepository extends JpaRepository<MeetingBody, String
      * @return 존재 여부
      */
     boolean existsByMeetingNameAndMeetingBodyIdNot(String meetingName, String id);
+
+    /**
+     * 실제 데이터베이스에 존재하는 gubun 값들 조회 (디버깅용)
+     * 
+     * @return gubun 값 목록
+     */
+    @Query(value = "SELECT DISTINCT m.gubun FROM meeting_body m WHERE m.gubun IS NOT NULL ORDER BY m.gubun", nativeQuery = true)
+    List<String> findDistinctGubunValues();
 }

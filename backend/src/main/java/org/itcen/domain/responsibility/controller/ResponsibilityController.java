@@ -32,9 +32,10 @@ public class ResponsibilityController {
 
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<List<ResponsibilityStatusDto>>> getResponsibilityStatusList(
-            @RequestParam(name = "responsibilityId", required = false) Long responsibilityId) {
+            @RequestParam(name = "responsibilityId", required = false) Long responsibilityId,
+            @RequestParam(name = "ledgerOrdersId", required = false) Long ledgerOrdersId) {
         try {
-            List<ResponsibilityStatusDto> statusList = responsibilityService.getResponsibilityStatusList(responsibilityId);
+            List<ResponsibilityStatusDto> statusList = responsibilityService.getResponsibilityStatusList(responsibilityId, ledgerOrdersId);
             return ResponseEntity.ok(ApiResponse.success(statusList));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("책무 현황 조회에 실패했습니다: " + e.getMessage()));

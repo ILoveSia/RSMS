@@ -34,6 +34,9 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
+  const [ledgerOrdersId, setLedgerOrdersId] = useState<number | undefined>(undefined);
+  // LedgerOrder 옵션 목록을 저장할 state
+  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<Array<{value: string, label: string, ledgerOrdersId: number}>>([]);
 
   // 선택된 행
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -58,7 +61,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setLoading(true);
     setError(null);
     try {
-      const data = await execOfficerApi.getAll();
+      console.log('📊 임원 현황 조회 - ledgerOrdersId:', ledgerOrdersId);
+      const data = await execOfficerApi.getAll(ledgerOrdersId);
       setRows(data);
     } catch (err) {
       setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
@@ -67,7 +71,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [ledgerOrdersId]);
 
   useEffect(() => {
     fetchExecutiveStatus();
@@ -336,12 +340,23 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <LedgerOrderSelect
             value={selectedLedgerOrder}
-            onChange={setSelectedLedgerOrder}
+            onChange={useCallback((value: string, ledgerOrdersId?: number) => {
+              setSelectedLedgerOrder(value);
+              setLedgerOrdersId(ledgerOrdersId);
+              console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
+            }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
+            onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
+              setLedgerOrderOptions(options);
+              console.log('LedgerOrder 옵션 로드 완료:', options);
+            }, [])}
           />
           <SearchButton
-            onClick={fetchExecutiveStatus}
+            onClick={useCallback(() => {
+              console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', ledgerOrdersId);
+              fetchExecutiveStatus();
+            }, [fetchExecutiveStatus, ledgerOrdersId])}
             loading={loading}
             disabled={loading}
           />

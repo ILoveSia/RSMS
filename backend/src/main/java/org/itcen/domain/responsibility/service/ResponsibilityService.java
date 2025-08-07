@@ -11,7 +11,7 @@ import java.util.List;
 public interface ResponsibilityService {
     Responsibility createResponsibility(ResponsibilityCreateRequestDto requestDto);
 
-    List<ResponsibilityStatusDto> getResponsibilityStatusList(Long responsibilityId);
+    List<ResponsibilityStatusDto> getResponsibilityStatusList(Long responsibilityId, Long ledgerOrdersId);
 
     List<ResponsibilityResponseDto> getResponsibilityById(Long id);
 

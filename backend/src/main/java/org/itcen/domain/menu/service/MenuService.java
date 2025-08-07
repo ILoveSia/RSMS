@@ -40,13 +40,51 @@ public class MenuService {
      * 사용자 역할에 따른 접근 가능한 메뉴 조회
      */
     public List<MenuDto> getAccessibleMenusByRole(String role) {
+        logger.info("=== 메뉴 권한 조회 시작 ===");
+        logger.info("요청된 역할: {}", role);
+        
         // fetch join을 사용하여 N+1 쿼리 문제 해결
         List<Menu> menus = menuRepository.findMenusWithPermissionsByRole(role);
+        logger.info("조회된 전체 메뉴 개수: {}", menus.size());
+        
+        // 직책 현황 메뉴 확인
+        Menu positionMenu = menus.stream()
+                .filter(m -> "LEDGER_MGMT_POSITION".equals(m.getMenuCode()))
+                .findFirst()
+                .orElse(null);
+        
+        if (positionMenu != null) {
+            logger.info("직책 현황 메뉴 발견: id={}, permissions={}", 
+                positionMenu.getId(), 
+                positionMenu.getPermissions().size());
+            positionMenu.getPermissions().forEach(p -> 
+                logger.info("  - 권한: role={}, canRead={}, canWrite={}, canDelete={}", 
+                    p.getRoleName(), p.getCanRead(), p.getCanWrite(), p.getCanDelete()));
+        } else {
+            logger.warn("직책 현황 메뉴(LEDGER_MGMT_POSITION)를 찾을 수 없음");
+        }
         
         // 실제로 접근 가능한 메뉴만 필터링
         List<Menu> accessibleMenus = menus.stream()
-                .filter(menu -> menu.getPermissions().stream()
-                        .anyMatch(p -> role.equals(p.getRoleName()) && p.getCanRead()))
+                .filter(menu -> {
+                    // 권한 데이터가 있는 경우 권한 체크
+                    if (menu.getPermissions() != null && !menu.getPermissions().isEmpty()) {
+                        boolean hasAccess = menu.getPermissions().stream()
+                                .anyMatch(p -> role.equals(p.getRoleName()) && p.getCanRead());
+                        if ("LEDGER_MGMT_POSITION".equals(menu.getMenuCode())) {
+                            logger.info("직책 현황 메뉴 권한 체크: hasAccess={}", hasAccess);
+                        }
+                        return hasAccess;
+                    }
+                    // 권한 데이터가 없는 경우 임시로 모든 사용자에게 읽기 권한 부여
+                    else {
+                        boolean hasAccess = true; // 임시 수정: 모든 역할에 대해 기본 접근 허용
+                        if ("LEDGER_MGMT_POSITION".equals(menu.getMenuCode())) {
+                            logger.info("직책 현황 메뉴 기본 권한 체크: role={}, hasAccess={} (임시 허용)", role, hasAccess);
+                        }
+                        return hasAccess;
+                    }
+                })
                 .collect(Collectors.toList());
         
         // 메뉴가 없는 경우 디버깅 정보 출력
@@ -64,14 +102,7 @@ public class MenuService {
                     .count();
             logger.warn("역할 '{}'의 권한 데이터 개수: {}", role, permissionCount);
             
-            // 임시로 모든 활성 메뉴 반환 (디버깅용)
-            if ("USER".equals(role)) {
-                logger.warn("USER 역할에 대해 모든 활성 메뉴를 반환합니다 (임시 조치)");
-                List<Menu> activeMenus = menuRepository.findByIsActiveTrueAndIsVisibleTrueOrderByMenuLevelAscSortOrderAsc();
-                return activeMenus.stream()
-                        .map(menu -> MenuDto.fromWithPermissions(menu, true, false, false))
-                        .collect(Collectors.toList());
-            }
+            logger.info("역할 '{}'에 대한 접근 가능한 메뉴가 없습니다. 빈 목록을 반환합니다.", role);
         }
 
         // 평면적인 메뉴 목록 반환 (계층 구조 없이)
@@ -86,7 +117,10 @@ public class MenuService {
                         MenuPermission perm = permission.get();
                         return MenuDto.fromWithPermissions(menu, perm.getCanRead(), perm.getCanWrite(), perm.getCanDelete());
                     } else {
-                        return MenuDto.from(menu);
+                        // 권한 정보가 없는 경우 기본값 설정: ADMIN은 모든 권한, 다른 역할은 읽기만
+                        boolean defaultCanWrite = "ADMIN".equals(role);
+                        boolean defaultCanDelete = "ADMIN".equals(role);
+                        return MenuDto.fromWithPermissions(menu, true, defaultCanWrite, defaultCanDelete);
                     }
                 })
                 .collect(Collectors.toList());

@@ -91,8 +91,9 @@ public class PositionController {
      * 직책 현황 목록 조회
      */
     @GetMapping("/status-list")
-    public ResponseEntity<ApiResponse<List<PositionStatusDto>>> getPositionStatusList() {
-        List<PositionStatusDto> positionStatusList = positionService.getPositionStatusList();
+    public ResponseEntity<ApiResponse<List<PositionStatusDto>>> getPositionStatusList(
+            @RequestParam(required = false) Long ledgerOrdersId) {
+        List<PositionStatusDto> positionStatusList = positionService.getPositionStatusList(ledgerOrdersId);
         return ResponseEntity.ok(ApiResponse.success(positionStatusList));
     }
 

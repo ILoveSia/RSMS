@@ -40,7 +40,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
   const [meetingBodies, setMeetingBodies] = useState<MeetingBody[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [filterDivision, setFilterDivision] = useState<string>('전체');
+  const [filterDivision, setFilterDivision] = useState<string | { value: string; label: string }>('전체');
 
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
@@ -108,13 +108,29 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
       setLoading(true);
       setError(null);
 
+      // gubun 값 추출
+      let gubunValue: string | undefined;
+      
+      if (filterDivision === '전체') {
+        gubunValue = undefined;
+      } else if (typeof filterDivision === 'string') {
+        gubunValue = filterDivision;
+      } else if (filterDivision && typeof filterDivision === 'object' && filterDivision.value === '전체') {
+        gubunValue = undefined;
+      } else if (filterDivision && typeof filterDivision === 'object') {
+        gubunValue = filterDivision.value;
+      } else {
+        gubunValue = undefined;
+      }
+
       const searchParams = {
         page: pageInfo.page,
         size: pageInfo.size,
-        gubun: filterDivision === '전체' ? undefined : filterDivision,
+        gubun: gubunValue,
         sortBy: 'createdAt',
         sortDirection: 'desc',
       };
+
 
       const responseData = await meetingStatusApi.search(searchParams);
 
@@ -366,7 +382,15 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
                 label: code.codeName,
               })),
             ]}
-            onChange={value => setFilterDivision(value as string)}
+            onChange={value => {
+              if (typeof value === 'string') {
+                setFilterDivision(value);
+              } else if (value && typeof value === 'object' && 'value' in value) {
+                setFilterDivision(value as { value: string; label: string });
+              } else {
+                setFilterDivision('전체');
+              }
+            }}
             size='small'
             mode="editable"
             sx={{ width: 140 }}

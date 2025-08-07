@@ -8,7 +8,7 @@ import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { Button, SearchButton, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
@@ -90,6 +90,9 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [dialogMode, setDialogMode] = useState<DialogMode>('view');
   const [selectedDetailData, setSelectedDetailData] = useState<any>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
+  const [ledgerOrdersId, setLedgerOrdersId] = useState<number | undefined>(undefined);
+  // LedgerOrder 옵션 목록을 저장할 state
+  const [ledgerOrderOptions, setLedgerOrderOptions] = useState<Array<{value: string, label: string, ledgerOrdersId: number}>>([]);
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -175,7 +178,65 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     return position?.details || [];
   }, [getPositionData]);
 
-  // 모든 데이터 로드 (한 번만)
+  // 직책별 책무 현황 조회 (ledgerOrdersId와 positionsId 지원)
+  const fetchPositionResponsibilityData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // API URL 구성
+      const params = new URLSearchParams();
+      if (selectedPosition?.positionsId) {
+        params.append('positionsId', selectedPosition.positionsId.toString());
+      }
+      if (ledgerOrdersId) {
+        params.append('ledgerOrdersId', ledgerOrdersId.toString());
+      }
+
+      const url = `/api/position-responsibilities${params.toString() ? `?${params.toString()}` : ''}`;
+      console.log('📊 직책별 책무 현황 조회 - URL:', url, 'ledgerOrdersId:', ledgerOrdersId, 'positionsId:', selectedPosition?.positionsId);
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
+        responsibility_id: item.respontibility_id ?? item.id ?? 0,
+        classification: item.classification ?? '일반',
+        positionId: String(item.positions_id ?? ''),
+        positionName: item.positions_name ?? '',
+        responsibilityOverview: item.role_summ ?? '',
+        responsibilityStartDate: item.created_at ?? '',
+        responsibilityName: item.responsibility_name ?? '',
+        responsibility_detail_content: item.responsibility_detail_content ?? '',
+        lastModifiedDate: item.updated_at ?? '',
+        createdAt: item.created_at ?? '',
+        updatedAt: item.updated_at ?? '',
+        // 원본 API 데이터 보존 (다이얼로그에서 사용)
+        responsibility_conent: item.responsibility_conent ?? '', // 책무 내용
+        responsibility_mgt_sts: item.responsibility_mgt_sts ?? '', // 주요 관리업무
+        responsibility_rel_evid: item.responsibility_rel_evid ?? '', // 관련 근거
+      }));
+
+      setAllPositionData(mappedRows);
+      setFilteredPositionData(mappedRows);
+      setOriginalData(mappedRows);
+      
+      // 데이터 그룹핑
+      const grouped = groupDataByPositionId(mappedRows);
+      setGroupedData(grouped);
+      
+      // 그룹핑된 데이터를 DataGrid용으로 변환
+      const gridRows = convertToGridRows(grouped);
+      setRows(gridRows);
+    } catch (err) {
+      setErrorMessage('데이터를 불러오는 데 실패했습니다.');
+      setErrorDialogOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [ledgerOrdersId, selectedPosition, groupDataByPositionId, convertToGridRows]);
+
+  // 초기 데이터 로드 (한 번만)
   const loadAllData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -204,7 +265,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       }));
 
       setAllPositionData(mappedRows);
-      
     } catch (err) {
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
       setErrorDialogOpen(true);
@@ -213,34 +273,9 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     }
   }, []);
 
-  // 프론트엔드 필터링 함수
-  const applyFilters = useCallback(() => {
-    let filtered = allPositionData;
-    
-    // 직책 필터링
-    if (selectedPosition?.positionsId) {
-      filtered = filtered.filter(item => item.positionId === String(selectedPosition.positionsId));
-    }
-    
-    setFilteredPositionData(filtered);
-    setOriginalData(filtered); // originalData도 업데이트
-    
-    // 필터링된 데이터를 그룹핑
-    const grouped = groupDataByPositionId(filtered);
-    setGroupedData(grouped);
-    
-    // 그룹핑된 데이터를 DataGrid용으로 변환
-    const gridRows = convertToGridRows(grouped);
-    setRows(gridRows);
-  }, [allPositionData, selectedPosition, groupDataByPositionId, convertToGridRows]);
-
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
-
-  useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
 
   // 컬럼 정의
   const columns: DataGridColumn<GroupedPositionResponsibilityRow>[] = [
@@ -397,7 +432,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // TODO: API 호출로 데이터 저장
 
       // 목록 새로고침
-      await loadAllData(); // 모든 데이터를 다시 로드하여 필터링 및 그룹핑 적용
+      await fetchPositionResponsibilityData(); // 현재 필터 조건으로 데이터 다시 로드
     } catch (err) {
       setErrorMessage('데이터 저장에 실패했습니다.');
       setErrorDialogOpen(true);
@@ -501,9 +536,17 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <LedgerOrderSelect
             value={selectedLedgerOrder}
-            onChange={setSelectedLedgerOrder}
+            onChange={useCallback((value: string, ledgerOrdersId?: number) => {
+              setSelectedLedgerOrder(value);
+              setLedgerOrdersId(ledgerOrdersId);
+              console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
+            }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
+            onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
+              setLedgerOrderOptions(options);
+              console.log('LedgerOrder 옵션 로드 완료:', options);
+            }, [])}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
           {/* <ComboBox
@@ -519,7 +562,10 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             sx={{ minWidth: '200px' }}
           />
           <SearchButton
-            onClick={applyFilters}
+            onClick={useCallback(() => {
+              console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', ledgerOrdersId, 'positionsId:', selectedPosition?.positionsId);
+              fetchPositionResponsibilityData();
+            }, [fetchPositionResponsibilityData, ledgerOrdersId, selectedPosition?.positionsId])}
             loading={loading}
             disabled={loading}
           />

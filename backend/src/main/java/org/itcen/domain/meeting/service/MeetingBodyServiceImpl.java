@@ -142,6 +142,8 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
      */
     @Override
     public Page<MeetingBodyDto> searchMeetingBodies(MeetingBodySearchRequestDto searchRequestDto) {
+        log.info("🔍 [MeetingBodyService] 검색 요청 받음: {}", searchRequestDto);
+        
         // 네이티브 쿼리에서는 정렬을 수동으로 처리하므로 Sort 없이 Pageable 생성
         Pageable pageable = PageRequest.of(
                 searchRequestDto.getPage(),
@@ -158,9 +160,15 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
         String content = (searchRequestDto.getContent() != null && !searchRequestDto.getContent().trim().isEmpty())
                 ? searchRequestDto.getContent().trim() : null;
 
+        log.info("🔍 [MeetingBodyService] 정제된 검색 조건 - gubun: {}, meetingName: {}, meetingPeriod: {}, content: {}", 
+                gubun, meetingName, meetingPeriod, content);
+
         // 검색 실행
         Page<MeetingBody> meetingBodyPage = meetingBodyRepository.findBySearchConditions(
                 gubun, meetingName, meetingPeriod, content, pageable);
+
+        log.info("🔍 [MeetingBodyService] 검색 결과 - 총 {}개, 현재 페이지 {}개", 
+                meetingBodyPage.getTotalElements(), meetingBodyPage.getContent().size());
 
         // DTO 변환
         return meetingBodyPage.map(this::convertToDto);
@@ -226,6 +234,22 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
 
         meetingBodyRepository.deleteAllByIdInBatch(ids);
         
+    }
+
+    /**
+     * 회의체 총 개수 조회 (디버깅용)
+     */
+    @Override
+    public Long getTotalCount() {
+        return meetingBodyRepository.count();
+    }
+
+    /**
+     * 실제 회의체 데이터의 gubun 값들 조회 (디버깅용)
+     */
+    @Override
+    public List<String> getActualGubunValues() {
+        return meetingBodyRepository.findDistinctGubunValues();
     }
 
     /**

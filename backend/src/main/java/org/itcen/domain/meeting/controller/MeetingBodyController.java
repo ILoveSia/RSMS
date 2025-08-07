@@ -292,4 +292,36 @@ public class MeetingBodyController {
                 .build();
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 디버깅용 - 회의체 총 개수 조회
+     */
+    @GetMapping("/debug/total-count")
+    public ResponseEntity<ApiResponse<Long>> getTotalCount() {
+        long totalCount = meetingBodyService.getTotalCount();
+        
+        ApiResponse<Long> response = ApiResponse.<Long>builder()
+                .success(true)
+                .message("회의체 총 개수 조회 완료")
+                .data(totalCount)
+                .build();
+                
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 디버깅용 - 실제 회의체 데이터의 gubun 값들 조회
+     */
+    @GetMapping("/debug/gubun-values")
+    public ResponseEntity<ApiResponse<List<String>>> getActualGubunValues() {
+        List<String> gubunValues = meetingBodyService.getActualGubunValues();
+        
+        ApiResponse<List<String>> response = ApiResponse.<List<String>>builder()
+                .success(true)
+                .message("실제 gubun 값들 조회 완료")
+                .data(gubunValues)
+                .build();
+                
+        return ResponseEntity.ok(response);
+    }
 }

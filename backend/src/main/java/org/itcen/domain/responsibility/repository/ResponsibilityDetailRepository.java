@@ -35,5 +35,18 @@ public interface ResponsibilityDetailRepository extends JpaRepository<Responsibi
             "ORDER BY r.id, d.id")
     List<ResponsibilityStatusDto> findResponsibilityStatusListById(Long responsibilityId);
 
+    @Query("SELECT new org.itcen.domain.responsibility.dto.ResponsibilityStatusDto(" +
+            "d.responsibility.id, " +
+            "d.responsibility.responsibilityContent, " +
+            "d.id, " +
+            "d.responsibilityDetailContent, " +
+            "d.responsibilityMgtSts, " +
+            "d.responsibilityRelEvid, " +
+            "d.createdAt, " +
+            "d.updatedAt) " +
+            "FROM ResponsibilityDetail d JOIN d.responsibility r WHERE r.ledgerOrder = :ledgerOrdersId " +
+            "ORDER BY r.id, d.id")
+    List<ResponsibilityStatusDto> findResponsibilityStatusListByLedgerOrdersId(Long ledgerOrdersId);
+
     List<ResponsibilityDetail> findAllByResponsibilityId(Long responsibilityId);
 } 

@@ -42,7 +42,7 @@ public interface AuthUserRepository extends JpaRepository<User, String> {
      * @param usernameOrEmail 사용자명 또는 이메일
      * @return 사용자 정보
      */
-    @Query("SELECT u FROM User u WHERE u.username = :userid OR u.email = :userid")
+    @Query("SELECT u FROM User u WHERE u.id = :userid")
     Optional<User> findByUsernameOrEmail(@Param("userid") String userid);
     
     /**

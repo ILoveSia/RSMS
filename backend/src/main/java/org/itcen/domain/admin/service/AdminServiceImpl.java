@@ -443,4 +443,65 @@ public class AdminServiceImpl implements AdminService {
                         arr -> ((Number) arr[1]).longValue() + ((Number) arr[2]).longValue() + ((Number) arr[3]).longValue()
                 ));
     }
+
+    @Override
+    public List<UserMenuPermissionDto> getUserMenuPermissions(String userId) {
+        log.info("사용자별 메뉴 권한 조회 요청: userId={}", userId);
+        
+        // 1. 사용자 존재 확인
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("사용자를 찾을 수 없습니다: " + userId, "USER_NOT_FOUND"));
+        
+        // 2. 사용자의 역할 조회
+        List<UserRole> userRoles = userRoleRepository.findActiveRolesByUserId(userId);
+        Set<String> roleNames = userRoles.stream()
+                .map(UserRole::getRoleId)
+                .collect(Collectors.toSet());
+        
+        log.info("사용자 역할 조회 완료: userId={}, roles={}", userId, roleNames);
+        
+        if (roleNames.isEmpty()) {
+            log.warn("사용자에게 할당된 역할이 없습니다: userId={}", userId);
+            return Collections.emptyList();
+        }
+        
+        // 3. 모든 메뉴 조회
+        List<Menu> allMenus = menuRepository.findByIsActiveTrueOrderByMenuLevelAscSortOrderAsc();
+        
+        // 4. 각 메뉴별로 사용자의 권한 계산
+        List<UserMenuPermissionDto> result = allMenus.stream()
+                .map(menu -> {
+                    // 해당 메뉴에 대한 사용자 역할들의 권한 조회
+                    List<MenuPermission> menuPermissions = menuPermissionRepository.findByMenuIdAndRoleNameIn(menu.getId(), roleNames);
+                    
+                    // 권한 통합 (OR 연산 - 하나라도 true면 true)
+                    boolean canRead = menuPermissions.stream().anyMatch(mp -> mp.getCanRead());
+                    boolean canWrite = menuPermissions.stream().anyMatch(mp -> mp.getCanWrite());
+                    boolean canDelete = menuPermissions.stream().anyMatch(mp -> mp.getCanDelete());
+                    
+                    // 역할 목록 문자열 생성
+                    String rolesStr = String.join(", ", roleNames);
+                    
+                    return UserMenuPermissionDto.builder()
+                            .menuId(menu.getId())
+                            .menuCode(menu.getMenuCode())
+                            .menuName(menu.getMenuName())
+                            .menuUrl(menu.getMenuUrl())
+                            .canRead(canRead)
+                            .canWrite(canWrite)
+                            .canDelete(canDelete)
+                            .roles(rolesStr)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        log.info("사용자별 메뉴 권한 조회 완료: userId={}, menuCount={}", userId, result.size());
+        return result;
+    }
+    
+    @Override
+    public List<UserMenuPermissionDto> getCurrentUserMenuPermissions(String userId) {
+        log.info("현재 사용자 메뉴 권한 조회 요청: userId={}", userId);
+        return getUserMenuPermissions(userId);
+    }
 }

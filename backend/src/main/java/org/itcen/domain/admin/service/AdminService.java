@@ -90,4 +90,24 @@ public interface AdminService {
      * 역할별 권한 통계 조회
      */
     List<RolePermissionStatDto> getRolePermissionStatistics();
+
+    // 사용자별 메뉴 권한 조회 (UI 제어용)
+    
+    /**
+     * 특정 사용자의 메뉴별 권한 조회
+     * Frontend에서 권한 기반 UI 제어에 사용
+     * 
+     * @param userId 사용자 ID
+     * @return 사용자의 메뉴별 세부 권한 목록
+     */
+    List<UserMenuPermissionDto> getUserMenuPermissions(String userId);
+    
+    /**
+     * 현재 로그인 사용자의 메뉴별 권한 조회
+     * Frontend에서 권한 기반 UI 제어에 사용
+     * 
+     * @param userId 현재 로그인 사용자 ID
+     * @return 현재 사용자의 메뉴별 세부 권한 목록
+     */
+    List<UserMenuPermissionDto> getCurrentUserMenuPermissions(String userId);
 }

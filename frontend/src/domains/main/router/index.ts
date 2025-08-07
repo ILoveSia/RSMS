@@ -12,7 +12,7 @@ const mainRoutes: DomainRoute[] = [
     meta: {
       title: '메인',
       requiresAuth: true,
-      roles: ['USER', 'ADMIN', 'user', 'admin'],
+      roles: ['USER', 'ADMIN', 'user', 'admin', 'MANAGER'],
       breadcrumb: ['메인'],
       icon: 'Dashboard',
       description: '시스템 메인 대시보드',

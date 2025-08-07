@@ -17,8 +17,9 @@ public class ExecOfficerController {
     private final ExecOfficerService service;
 
     @GetMapping
-    public ApiResponse<List<ExecOfficerDto>> getAll() {
-        return ApiResponse.success(service.getAll());
+    public ApiResponse<List<ExecOfficerDto>> getAll(
+            @RequestParam(name = "ledgerOrdersId", required = false) Long ledgerOrdersId) {
+        return ApiResponse.success(service.getAll(ledgerOrdersId));
     }
 
     @PostMapping

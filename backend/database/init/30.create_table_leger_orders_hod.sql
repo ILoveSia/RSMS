@@ -9,7 +9,7 @@ CREATE TABLE public.ledger_orders_hod (
 	ledger_orders_hod_id 			bigserial 		NOT NULL, 					-- 부서장장원장차수ID
 	ledger_orders_hod_title 		varchar(300) 	NULL, 						-- 원장차수제목
     ledger_orders_hod_field_type_cd varchar(2) 		NULL, 						-- 원장차수필드타입코드
-	ledger_orders_hod_status_cd 	varchar(2) 		NULL, 						-- 원장차수상태코드
+	ledger_orders_hod_status_cd 	varchar(2) 		NULL, 						-- 원장차수진행상태코드
 	ledger_orders_hod_conf_cd 		varchar(2) 		NULL, 						-- 원장차수확정코드
 	created_at 						timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 생성일시
 	updated_at 						timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 수정일시

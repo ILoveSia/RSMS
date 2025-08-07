@@ -12,11 +12,13 @@ const TopHeader: React.FC<TopHeaderProps> = ({ style }) => {
 
   const handleLogout = () => {
     try {
+      console.log('🚪 [TopHeader] 로그아웃 버튼 클릭');
+      
       // AuthContext의 logout 함수 호출 (모든 데이터 정리 포함)
       logout();
 
-      // 로그인 페이지로 리다이렉트
-      navigate('/login');
+      // 완전한 상태 초기화를 위해 페이지 새로고침과 함께 로그인 페이지로 이동
+      window.location.href = '/login';
 
     } catch (error) {
       console.error('❌ [TopHeader] 로그아웃 처리 실패:', error);

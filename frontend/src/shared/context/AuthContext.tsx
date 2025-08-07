@@ -215,17 +215,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 로그아웃 함수
   const logout = () => {
+    console.log('🚪 [AuthContext] 로그아웃 시작');
 
     // localStorage에서 사용자 정보와 메뉴 정보 모두 제거
     localStorage.removeItem('user');
     localStorage.removeItem('accessibleMenus');
     localStorage.removeItem('commonCodes');
 
-    // Redux store도 초기화
+    // Redux store 초기화 - 메뉴 데이터 완전 초기화
     dispatchToStore({
-      type: 'MenuStore/accessibleMenus/reset',
-      payload: null,
+      type: 'menuStore/accessibleMenus/setData',
+      payload: { data: [] },
     });
+
+    // 로그인 데이터 초기화
+    dispatchToStore({
+      type: 'loginStore/login/setData',
+      payload: { data: null },
+    });
+
+    console.log('🧹 [AuthContext] 모든 데이터 초기화 완료');
 
     setAuthState({
       isAuthenticated: false,

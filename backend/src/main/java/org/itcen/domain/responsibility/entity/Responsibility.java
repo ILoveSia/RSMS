@@ -24,6 +24,9 @@ public class Responsibility extends BaseTimeEntity {
     @Column(name = "responsibility_content", columnDefinition = "TEXT")
     private String responsibilityContent;
 
+    @Column(name = "ledger_order")
+    private Long ledgerOrder; // 원장차수 ID (신규 등록시 사용)
+
     @OneToMany(mappedBy = "responsibility", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ResponsibilityDetail> details = new ArrayList<>();

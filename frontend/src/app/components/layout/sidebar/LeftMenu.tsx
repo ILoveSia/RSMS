@@ -55,7 +55,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   // loginStore에서 사용자 데이터 가져오기
   const { data: loginData } = useReduxState<User>('loginStore/login');
   // menuStore에서 메뉴 데이터 가져오기
-  const { data: menuData } = useReduxState<{ data: Menu[] }>('menuStore/accessibleMenus');
+  const { data: menuData } = useReduxState<Menu[]>('menuStore/accessibleMenus');
   const [menuItems, setMenuItems] = useState<MenuItemProps[]>([]);
   const [isMenuLoaded, setIsMenuLoaded] = useState<boolean>(false);
 
@@ -99,8 +99,9 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
             }
           });
 
-          // Menu 데이터를 MenuItemProps로 변환
+          // Menu 데이터를 MenuItemProps로 변환 (canRead=true인 메뉴만)
           const convertedMenus = rootMenus
+            .filter(menu => menu.canRead === true) // 읽기 권한이 있는 메뉴만 표시
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map(menu => {
               const converted = convertMenuToMenuItem(menu);
@@ -172,6 +173,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
       menuUrl: menu.menuUrl,
       onClick: menu.menuUrl ? handleMenuClick : undefined,
       children: menu.children
+        ?.filter(child => child.canRead === true) // 하위 메뉴도 읽기 권한 필터링
         ?.sort((a, b) => a.sortOrder - b.sortOrder)
         .map(child => convertMenuToMenuItem(child)),
     };
@@ -179,18 +181,27 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
   // menuStore의 accessibleMenus 데이터를 메뉴 아이템으로 변환
   useEffect(() => {
-    if (menuData?.data && menuData.data.length > 0) {
+    console.log('🔍 [LeftMenu] menuData 변경:', {
+      menuData,
+      isArray: Array.isArray(menuData),
+      length: Array.isArray(menuData) ? menuData.length : 'N/A',
+      type: typeof menuData,
+      hasData: !!menuData
+    });
+    if (menuData && Array.isArray(menuData) && menuData.length > 0) {
+      console.log('✅ [LeftMenu] 메뉴 데이터 처리 시작:', menuData.length, '개');
+      
       // 계층형 구조 구성: 부모-자식 관계 설정
       const menuMap = new Map<number, Menu>();
       const rootMenus: Menu[] = [];
 
       // 1단계: 모든 메뉴를 Map에 저장
-      menuData.data.forEach((menu: Menu) => {
+      menuData.forEach((menu: Menu) => {
         menuMap.set(menu.id, { ...menu, children: [] });
       });
 
       // 2단계: 부모-자식 관계 설정
-      menuData.data.forEach((menu: Menu) => {
+      menuData.forEach((menu: Menu) => {
         const menuItem = menuMap.get(menu.id)!;
 
         if (menu.parentId && menuMap.has(menu.parentId)) {
@@ -203,26 +214,27 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         }
       });
 
-      // Menu 데이터를 MenuItemProps로 변환
+      // Menu 데이터를 MenuItemProps로 변환 (canRead=true인 메뉴만)
       const convertedMenus = rootMenus
+        .filter(menu => menu.canRead === true) // 읽기 권한이 있는 메뉴만 표시
         .sort((a, b) => a.sortOrder - b.sortOrder) // 정렬 순서 적용
         .map(menu => convertMenuToMenuItem(menu));
 
+      console.log('📋 [LeftMenu] 변환된 메뉴 아이템:', convertedMenus);
       setMenuItems(convertedMenus);
       setIsMenuLoaded(true);
 
       // 첫 번째 메뉴를 기본으로 확장
       if (convertedMenus.length > 0) {
         setExpandedItems([convertedMenus[0].title]);
+        console.log('🔧 [LeftMenu] 첫 번째 메뉴 확장:', convertedMenus[0].title);
       }
     } else {
-      // localStorage에서 복원한 메뉴가 있다면 유지, 없다면 빈 배열로 설정
-      // isMenuLoaded가 true라면 이미 localStorage 복원이 완료된 상태
-      if (!isMenuLoaded) {
-      } else if (menuItems.length === 0) {
-        setMenuItems([]);
-      } else {
-      }
+      console.log('⚠️ [LeftMenu] 메뉴 데이터가 없음 또는 비어있음:', {
+        menuData,
+        isArray: Array.isArray(menuData),
+        length: Array.isArray(menuData) ? menuData.length : 'N/A'
+      });
     }
   }, [menuData]);
 

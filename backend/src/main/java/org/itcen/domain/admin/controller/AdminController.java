@@ -169,4 +169,35 @@ public class AdminController {
         List<RolePermissionStatDto> statistics = adminService.getRolePermissionStatistics();
         return ResponseEntity.ok(statistics);
     }
+
+    // 사용자별 메뉴 권한 조회 API (UI 제어용)
+
+    /**
+     * 특정 사용자의 메뉴별 권한 조회
+     * Frontend에서 권한 기반 UI 제어에 사용
+     */
+    @GetMapping("/users/{userId}/menu-permissions")
+    public ResponseEntity<List<UserMenuPermissionDto>> getUserMenuPermissions(@PathVariable String userId) {
+        log.info("사용자별 메뉴 권한 조회 요청 - userId: {}", userId);
+        List<UserMenuPermissionDto> permissions = adminService.getUserMenuPermissions(userId);
+        log.info("사용자별 메뉴 권한 조회 완료 - userId: {}, permissionCount: {}", userId, permissions.size());
+        return ResponseEntity.ok(permissions);
+    }
+
+    /**
+     * 현재 로그인 사용자의 메뉴별 권한 조회
+     * Frontend에서 권한 기반 UI 제어에 사용
+     */
+    @GetMapping("/current-user/menu-permissions")
+    public ResponseEntity<List<UserMenuPermissionDto>> getCurrentUserMenuPermissions(
+            @RequestParam(value = "userId", required = false) String userId) {
+        // TODO: 실제로는 SecurityContext에서 현재 사용자 ID를 가져와야 함
+        // 현재는 임시로 파라미터로 받음
+        String currentUserId = userId != null ? userId : "admin"; // 기본값
+        
+        log.info("현재 사용자 메뉴 권한 조회 요청 - userId: {}", currentUserId);
+        List<UserMenuPermissionDto> permissions = adminService.getCurrentUserMenuPermissions(currentUserId);
+        log.info("현재 사용자 메뉴 권한 조회 완료 - userId: {}, permissionCount: {}", currentUserId, permissions.size());
+        return ResponseEntity.ok(permissions);
+    }
 }

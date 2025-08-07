@@ -2,17 +2,17 @@
  * 책무 DB 현황 페이지 컴포넌트
  */
 import '@/assets/scss/style.css';
-import { Button, DataGrid } from '@/shared/components/ui';
+import { DataGrid } from '@/shared/components/ui';
 import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
-import TextField from '@/shared/components/ui/data-display/TextField';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import PageContainer from '@/shared/components/ui/layout/PageContainer';
 import ResponsibilitySelect from '@/shared/components/ui/form/ResponsibilitySelect';
 import PageContent from '@/shared/components/ui/layout/PageContent';
 import PageHeader from '@/shared/components/ui/layout/PageHeader';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import SearchIcon from '@mui/icons-material/Search';
-import { Box, InputAdornment } from '@mui/material';
+import { Box } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import dayjs from 'dayjs';
 import ExcelJS from 'exceljs';
@@ -54,6 +54,9 @@ interface IResponsibilityDbStatusPageProps {
 
 const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = React.memo(
   (): React.JSX.Element => {
+    // Toast 알림을 위한 snackbar hook
+    const { snackbar, showError, hideSnackbar } = useSnackbar();
+    
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [rows, setRows] = useState<GroupedResponsibilityRow[]>([]);
@@ -63,15 +66,18 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
+    const [ledgerOrdersId, setLedgerOrdersId] = useState<number | undefined>(undefined);
     const [searchText, setSearchText] = useState<string>('');
     const [selectedResponsibility, setSelectedResponsibility] = useState<any>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [data, setData] = useState<ResponsibilityRow[]>([]);
     const [groupedData, setGroupedData] = useState<GroupedResponsibility[]>([]);
+    
+    // LedgerOrder 옵션 목록을 저장할 state (상세 정보 조회용)
+    const [ledgerOrderOptions, setLedgerOrderOptions] = useState<Array<{value: string, label: string, ledgerOrdersId: number}>>([]);
 
     // 프론트엔드 필터링을 위한 상태
     const [allResponsibilityData, setAllResponsibilityData] = useState<ResponsibilityRow[]>([]);
-    const [filteredResponsibilityData, setFilteredResponsibilityData] = useState<ResponsibilityRow[]>([]);
 
     // 원장차수는 LedgerOrderSelect에서 자동 관리
 
@@ -152,39 +158,27 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       }
     }, []);
 
-    // 프론트엔드 필터링 함수
-    const applyFilters = useCallback(() => {
-      let filtered = allResponsibilityData;
-      
-      // 책무 필터링
-      if (selectedResponsibility?.responsibilityId) {
-        filtered = filtered.filter(item => item.responsibilityId === selectedResponsibility.responsibilityId);
-      }
-      
-      setFilteredResponsibilityData(filtered);
-      setData(filtered); // 기존 data 상태도 업데이트
-      
-      // 데이터 그룹핑
-      const grouped = groupDataByResponsibilityId(filtered);
-      setGroupedData(grouped);
-
-      // 그룹핑된 데이터를 DataGrid용으로 변환
-      const gridRows = convertToGridRows(grouped);
-      setRows(gridRows);
-    }, [allResponsibilityData, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows]);
-
-    // 책무 목록 조회 (성능 최적화)
-    const fetchResponsibilities = useCallback(async (searchId?: string) => {
+    // 책무 현황 조회 (ledgerOrdersId와 responsibilityId 모두 지원)
+    const fetchResponsibilityData = useCallback(async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const data = await responsibilityApi.getStatusList(searchId);
+        // responsibilityId 파라미터 처리
+        const responsibilityIdParam = selectedResponsibility?.responsibilityId 
+          ? selectedResponsibility.responsibilityId.toString()
+          : undefined;
+
+        console.log('📊 책무 현황 조회 - ledgerOrdersId:', ledgerOrdersId, 'responsibilityId:', responsibilityIdParam);
+        
+        // API 호출: responsibilityId와 ledgerOrdersId 모두 전달
+        const data = await responsibilityApi.getStatusList(responsibilityIdParam, ledgerOrdersId);
+
+        setAllResponsibilityData(data);
+        setData(data);
 
         // 데이터 그룹핑
         const grouped = groupDataByResponsibilityId(data);
-
-        setData(data);
         setGroupedData(grouped);
 
         // 그룹핑된 데이터를 DataGrid용으로 변환
@@ -196,26 +190,19 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         setError(errorMessage);
       } finally {
         setLoading(false);
-      }}, [groupDataByResponsibilityId, convertToGridRows]);
+      }
+    }, [ledgerOrdersId, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows]);
+
 
     useEffect(() => {
       loadAllData();
     }, [loadAllData]);
-
-    // 선택된 책무가 변경될 때 자동으로 데이터 다시 로드
-    useEffect(() => {
-      applyFilters();
-    }, [applyFilters]);
 
     // 그룹핑된 데이터 활용 유틸리티 함수들
     const getResponsibilityById = useCallback((responsibilityId: number): GroupedResponsibility | undefined => {
       return groupedData.find(item => item.responsibilityId === responsibilityId);
     }, [groupedData]);
 
-    const getDetailsByResponsibilityId = useCallback((responsibilityId: number) => {
-      const responsibility = getResponsibilityById(responsibilityId);
-      return responsibility?.details || [];
-    }, [getResponsibilityById]);
 
     // 엑셀 다운로드 핸들러
     const handleExcelDownload = useCallback(async () => {
@@ -376,15 +363,46 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // 조회 버튼 클릭 핸들러
     const handleSearch = useCallback(() => {
-      applyFilters();
-    }, [applyFilters]);
+      console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', ledgerOrdersId);
+      fetchResponsibilityData();
+    }, [fetchResponsibilityData]);
 
     // 등록 버튼 클릭 핸들러
     const handleCreateClick = useCallback(() => {
+      // 1. LedgerOrderSelect 선택 검증
+      if (!ledgerOrder || ledgerOrder === 'ALL') {
+        showError('원장차수를 선택해주세요.');
+        return;
+      }
+
+      // 2. "직책확정" 상태 검증
+      const selectedOption = ledgerOrderOptions.find(option => option.value === ledgerOrder);
+      if (!selectedOption) {
+        showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      // label에서 상태 정보 추출하여 "직책확정" 여부 확인
+      let statusInfo = '';
+      if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+        const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+        if (statusMatch) {
+          statusInfo = statusMatch[1];
+        }
+      }
+
+      if (statusInfo !== '직책확정') {
+        showError('직책확정 상태의 원장차수만 등록 가능합니다.');
+        return;
+      }
+
+      console.log('✅ 등록 버튼 검증 통과 - 선택된 원장차수:', ledgerOrder, '상태:', statusInfo);
+
+      // 3. ResponsibilityDialog 열기 (원장차수 값 전달)
       setSelectedResponsibilityId(null);
       setDialogMode('create');
       setDialogOpen(true);
-    }, []);
+    }, [ledgerOrder, ledgerOrderOptions, showError]);
 
 
 
@@ -397,20 +415,15 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // 다이얼로그 저장
     const handleDialogSave = useCallback(() => {
-
       handleDialogClose();
-      loadAllData(); // 모든 데이터를 다시 로드하여 필터링 및 그룹핑 적용
-    }, [handleDialogClose, loadAllData]);
+      fetchResponsibilityData(); // 데이터를 다시 로드하여 필터링 및 그룹핑 적용
+    }, [handleDialogClose, fetchResponsibilityData]);
 
     // 다이얼로그 모드 변경
     const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view') => {
       setDialogMode(newMode);
     }, []);
 
-    // 책무 선택 변경 핸들러
-    const handleResponsibilityChange = useCallback((responsibility: any) => {
-      setSelectedResponsibility(responsibility);
-    }, []);
 
     const handleDelete = useCallback(async () => {
       if (selectedIds.length > 0) {
@@ -420,7 +433,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           const selectedRow = rows.find((_, index) => selectedIds.includes(index));
           if (selectedRow) {
             await responsibilityApi.delete(selectedRow.responsibilityId);
-            await loadAllData(); // 삭제 완료 후 데이터 새로고침
+            await fetchResponsibilityData(); // 삭제 완료 후 데이터 새로고침
             setSelectedIds([]); // 선택 해제
           }
         } catch (error) {
@@ -430,7 +443,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           setLoading(false);
         }
       }
-    }, [selectedIds, rows, loadAllData]);
+    }, [selectedIds, rows, fetchResponsibilityData]);
 
     return (
       <PageContainer
@@ -474,9 +487,17 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
             <LedgerOrderSelect
               value={ledgerOrder}
-              onChange={setLedgerOrder}
+              onChange={useCallback((value: string, ledgerOrdersId?: number) => {
+                setLedgerOrder(value);
+                setLedgerOrdersId(ledgerOrdersId);
+                console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
+              }, [])}
               size='small'
               sx={{ minWidth: 150, maxWidth: 200 }}
+              onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
+                setLedgerOrderOptions(options);
+                console.log('LedgerOrder 옵션 로드 완료:', options);
+              }, [])}
             />
             <span
             style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
@@ -489,22 +510,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               size='small'
               sx={{ minWidth: 150, maxWidth: 200 }}
             />
-            {/* 
-            <TextField
-              size='small'
-              variant='outlined'
-              placeholder='텍스트 입력'
-              value={searchText}
-              onChange={handleSearchTextChange}
-              sx={{ backgroundColor: 'white' }}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position='end'>
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            /> */}
             <SearchButton
               onClick={handleSearch}
               loading={loading}
@@ -583,9 +588,18 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           responsibilityId={selectedResponsibilityId}
           positionName={selectedRowData?.responsibilityContent || "책무 관리"}
           rowData={selectedRowData}
+          selectedLedgerOrder={dialogMode === 'create' ? ledgerOrder : undefined}
           onClose={handleDialogClose}
           onSave={handleDialogSave}
           onChangeMode={handleModeChange as any}
+        />
+        
+        {/* Toast 알림 */}
+        <Toast
+          open={snackbar.open}
+          message={snackbar.message}
+          severity={snackbar.severity}
+          onClose={hideSnackbar}
         />
       </PageContainer>
     );
