@@ -51,7 +51,7 @@ public interface InternalControlManualService {
     // 비즈니스 로직
 
     /**
-     * 부서장 검토 단계로 제출
+     * 검토 단계로 제출
      */
     void submitForReview(Long manualId, String actorEmpNo);
 
@@ -69,11 +69,6 @@ public interface InternalControlManualService {
      * 메뉴얼 버전 업데이트
      */
     InternalControlManual updateVersion(Long manualId, String newVersion, String actorEmpNo);
-
-    /**
-     * 검토 주기 업데이트
-     */
-    void updateReviewCycle(Long manualId, Integer months, String actorEmpNo);
 
     // 조회 기능
 
@@ -93,11 +88,6 @@ public interface InternalControlManualService {
     List<InternalControlManualDto> getManualsByAuthor(String authorEmpNo);
 
     /**
-     * 메뉴얼 분류별 조회
-     */
-    List<InternalControlManualDto> getManualsByCategory(String category);
-
-    /**
      * 부서의 최신 발행 메뉴얼 조회
      */
     List<InternalControlManualDto> getLatestPublishedManuals(String deptCd);
@@ -111,11 +101,6 @@ public interface InternalControlManualService {
      * 만료 예정 메뉴얼 조회
      */
     List<InternalControlManualDto> getExpiringManuals(int daysFromNow);
-
-    /**
-     * 검토 필요 메뉴얼 조회
-     */
-    List<InternalControlManualDto> getManualsNeedingReview();
 
     /**
      * 승인 대기중인 메뉴얼 조회
@@ -157,28 +142,24 @@ public interface InternalControlManualService {
         String getDeptName(); 
         String getManualTitle();
         String getManualVersion();
-        String getManualDescription();
         String getManualContent();
-        String getManualCategory();
-        String getIcTaskCategory();
         InternalControlManual.ManualStatus getStatus();
         Long getApprovalId();
         LocalDate getEffectiveDate();
         LocalDate getExpiryDate();
-        Integer getReviewCycleMonths();
-        LocalDate getNextReviewDate();
         String getAuthorEmpNo();
         String getAuthorName();
+        String getReviewerEmpNo();
+        String getReviewerName();
+        String getApproverEmpNo();
+        String getApproverName();
     }
-
-
 
     interface ManualStatisticsDto {
         Long getTotalManuals();
         Long getDraftManuals();
         Long getPublishedManuals();
         Long getExpiringManuals();
-        Long getManualsNeedingReview();
         Double getApprovalRate();
     }
 

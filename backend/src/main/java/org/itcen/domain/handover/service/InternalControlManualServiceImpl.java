@@ -43,14 +43,23 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         log.debug("내부통제 메뉴얼 생성 시작 - deptCd: {}, title: {}", 
                   manual.getDeptCd(), manual.getManualTitle());
 
-        
+        // reviewer/approver 정보가 누락된 경우를 위해 명시적으로 set (이미 값이 있으면 그대로)
+        InternalControlManual entity = InternalControlManual.builder()
+            .manualTitle(manual.getManualTitle())
+            .manualContent(manual.getManualContent())
+            .manualVersion(manual.getManualVersion())
+            .status(manual.getStatus())
+            .deptCd(manual.getDeptCd())
+            .authorEmpNo(manual.getAuthorEmpNo())
+            .reviewerEmpNo(manual.getReviewerEmpNo())
+            .approverEmpNo(manual.getApproverEmpNo())
+            .createdId(manual.getCreatedId())
+            .updatedId(manual.getUpdatedId())
+            .effectiveDate(manual.getEffectiveDate())
+            .expiryDate(manual.getExpiryDate())
+            .build();
 
-        // 검토 주기가 설정된 경우 다음 검토일 계산
-        if (manual.getReviewCycleMonths() != null && manual.getReviewCycleMonths() > 0) {
-            manual.calculateNextReviewDate();
-        }
-
-        InternalControlManual savedManual = internalControlManualRepository.save(manual);
+        InternalControlManual savedManual = internalControlManualRepository.save(entity);
 
         // 이력 생성
         HandoverHistory history = HandoverHistory.createManualHistory(
@@ -82,19 +91,11 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
 
         // 필드 업데이트
         existingManual.setManualTitle(manual.getManualTitle());
-        existingManual.setManualDescription(manual.getManualDescription());
         existingManual.setManualContent(manual.getManualContent());
-        existingManual.setManualCategory(manual.getManualCategory());
-        existingManual.setIcTaskCategory(manual.getIcTaskCategory());
         existingManual.setManualVersion(manual.getManualVersion());
         existingManual.setUpdatedId(manual.getUpdatedId());
-
-        // 검토 주기가 변경된 경우 다음 검토일 재계산
-        if (manual.getReviewCycleMonths() != null && 
-            !manual.getReviewCycleMonths().equals(existingManual.getReviewCycleMonths())) {
-            existingManual.setReviewCycleMonths(manual.getReviewCycleMonths());
-            existingManual.calculateNextReviewDate();
-        }
+        existingManual.setReviewerEmpNo(manual.getReviewerEmpNo());
+        existingManual.setApproverEmpNo(manual.getApproverEmpNo());
 
         InternalControlManual savedManual = internalControlManualRepository.save(existingManual);
 
@@ -109,13 +110,12 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         );
         handoverHistoryRepository.save(history);
 
-        log.debug("내부통제 메뉴얼 수정 완료 - manualId: {}", manualId);
+        log.debug("내부통제 메뉴얼 수정 완료 - manualId: {}", savedManual.getManualId());
         return savedManual;
     }
 
     @Override
     public Optional<InternalControlManual> getManual(Long manualId) {
-        log.debug("내부통제 메뉴얼 조회 - manualId: {}", manualId);
         return internalControlManualRepository.findById(manualId);
     }
 
@@ -127,33 +127,32 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 삭제 가능 여부 확인 (승인되었거나 발행된 메뉴얼은 삭제 불가)
-        if (manual.getStatus() == InternalControlManual.ManualStatus.APPROVED ||
-            manual.getStatus() == InternalControlManual.ManualStatus.PUBLISHED) {
-            throw new BusinessException("승인되었거나 발행된 내부통제 업무메뉴얼은 삭제할 수 없습니다.");
+        // 발행된 메뉴얼은 삭제 불가
+        if (manual.getStatus() == InternalControlManual.ManualStatus.PUBLISHED) {
+            throw new BusinessException("발행된 내부통제 업무메뉴얼은 삭제할 수 없습니다.");
         }
 
         internalControlManualRepository.delete(manual);
+
         log.debug("내부통제 메뉴얼 삭제 완료 - manualId: {}", manualId);
     }
 
     @Override
     public Page<InternalControlManual> getAllManuals(Pageable pageable) {
-        log.debug("모든 내부통제 메뉴얼 조회 - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
         return internalControlManualRepository.findAll(pageable);
     }
 
     @Override
     @Transactional
     public void submitForReview(Long manualId, String actorEmpNo) {
-        log.debug("부서장 검토 제출 - manualId: {}", manualId);
+        log.debug("내부통제 메뉴얼 검토 제출 시작 - manualId: {}", manualId);
 
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 제출 가능 여부 확인
+        // 초안 상태에서만 검토 제출 가능
         if (manual.getStatus() != InternalControlManual.ManualStatus.DRAFT) {
-            throw new BusinessException("초안 상태의 메뉴얼만 검토에 제출할 수 있습니다.");
+            throw new BusinessException("초안 상태의 메뉴얼만 검토 제출할 수 있습니다.");
         }
 
         manual.submitForReview();
@@ -163,28 +162,28 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         // 이력 생성
         HandoverHistory history = HandoverHistory.createManualHistory(
                 1L, // assignmentId - 기본값 설정
-                HandoverHistory.ActivityType.DOCUMENT_UPDATED,
-                "내부통제 업무메뉴얼이 부서장 검토에 제출되었습니다.",
+                HandoverHistory.ActivityType.DOCUMENT_SUBMITTED,
+                "내부통제 업무메뉴얼이 검토 제출되었습니다.",
                 actorEmpNo,
                 null, // actorName
                 manualId
         );
         handoverHistoryRepository.save(history);
 
-        log.debug("부서장 검토 제출 완료 - manualId: {}", manualId);
+        log.debug("내부통제 메뉴얼 검토 제출 완료 - manualId: {}", manualId);
     }
 
     @Override
     @Transactional
     public void publishManual(Long manualId, String actorEmpNo) {
-        log.debug("메뉴얼 발행 - manualId: {}", manualId);
+        log.debug("내부통제 메뉴얼 발행 시작 - manualId: {}", manualId);
 
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 발행 가능 여부 확인
+        // 승인된 메뉴얼만 발행 가능
         if (manual.getStatus() != InternalControlManual.ManualStatus.APPROVED) {
-            throw new BusinessException("부서장 승인된 메뉴얼만 발행할 수 있습니다.");
+            throw new BusinessException("승인된 메뉴얼만 발행할 수 있습니다.");
         }
 
         manual.publish();
@@ -202,18 +201,18 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         );
         handoverHistoryRepository.save(history);
 
-        log.debug("메뉴얼 발행 완료 - manualId: {}", manualId);
+        log.debug("내부통제 메뉴얼 발행 완료 - manualId: {}", manualId);
     }
 
     @Override
     @Transactional
     public void revertToDraft(Long manualId, String actorEmpNo, String reason) {
-        log.debug("초안 되돌리기 - manualId: {}, reason: {}", manualId, reason);
+        log.debug("내부통제 메뉴얼 초안으로 되돌리기 시작 - manualId: {}", manualId);
 
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 되돌리기 가능 여부 확인
+        // 발행된 메뉴얼은 되돌릴 수 없음
         if (manual.getStatus() == InternalControlManual.ManualStatus.PUBLISHED) {
             throw new BusinessException("발행된 메뉴얼은 초안으로 되돌릴 수 없습니다.");
         }
@@ -225,243 +224,196 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         // 이력 생성
         HandoverHistory history = HandoverHistory.createManualHistory(
                 1L, // assignmentId - 기본값 설정
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                "내부통제 업무메뉴얼이 초안으로 되돌려졌습니다. 사유: " + (reason != null ? reason : "사유 없음"),
+                HandoverHistory.ActivityType.DOCUMENT_REVERTED,
+                "내부통제 업무메뉴얼이 초안으로 되돌아갔습니다. 사유: " + reason,
                 actorEmpNo,
                 null, // actorName
                 manualId
         );
         handoverHistoryRepository.save(history);
 
-        log.debug("초안 되돌리기 완료 - manualId: {}", manualId);
+        log.debug("내부통제 메뉴얼 초안으로 되돌리기 완료 - manualId: {}", manualId);
     }
 
     @Override
     @Transactional
     public InternalControlManual updateVersion(Long manualId, String newVersion, String actorEmpNo) {
-        log.debug("버전 업데이트 - manualId: {}, newVersion: {}", manualId, newVersion);
+        log.debug("내부통제 메뉴얼 버전 업데이트 시작 - manualId: {}, newVersion: {}", manualId, newVersion);
 
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        String oldVersion = manual.getManualVersion();
-        manual.setManualVersion(newVersion);
+        // 발행된 메뉴얼만 버전 업데이트 가능
+        if (manual.getStatus() != InternalControlManual.ManualStatus.PUBLISHED) {
+            throw new BusinessException("발행된 메뉴얼만 버전 업데이트할 수 있습니다.");
+        }
+
+        manual.updateVersion(newVersion);
         manual.setUpdatedId(actorEmpNo);
         InternalControlManual savedManual = internalControlManualRepository.save(manual);
 
         // 이력 생성
         HandoverHistory history = HandoverHistory.createManualHistory(
                 1L, // assignmentId - 기본값 설정
-                HandoverHistory.ActivityType.DOCUMENT_UPDATED,
-                String.format("메뉴얼 버전이 업데이트되었습니다. (%s → %s)", oldVersion, newVersion),
+                HandoverHistory.ActivityType.DOCUMENT_VERSION_UPDATED,
+                "내부통제 업무메뉴얼 버전이 업데이트되었습니다. 새 버전: " + newVersion,
                 actorEmpNo,
                 null, // actorName
                 manualId
         );
         handoverHistoryRepository.save(history);
 
-        log.debug("버전 업데이트 완료 - manualId: {}, newVersion: {}", manualId, newVersion);
+        log.debug("내부통제 메뉴얼 버전 업데이트 완료 - manualId: {}, newVersion: {}", manualId, newVersion);
         return savedManual;
     }
 
     @Override
-    @Transactional
-    public void updateReviewCycle(Long manualId, Integer months, String actorEmpNo) {
-        log.debug("검토 주기 업데이트 - manualId: {}, months: {}", manualId, months);
-
-        InternalControlManual manual = internalControlManualRepository.findById(manualId)
-                .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
-
-        Integer oldCycle = manual.getReviewCycleMonths();
-        manual.setReviewCycleMonths(months);
-        manual.calculateNextReviewDate();
-        manual.setUpdatedId(actorEmpNo);
-        internalControlManualRepository.save(manual);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createManualHistory(
-                1L, // assignmentId - 기본값 설정
-                HandoverHistory.ActivityType.DOCUMENT_UPDATED,
-                String.format("검토 주기가 업데이트되었습니다. (%d개월 → %d개월)", 
-                             oldCycle != null ? oldCycle : 0, months),
-                actorEmpNo,
-                null, // actorName
-                manualId
-        );
-        handoverHistoryRepository.save(history);
-
-        log.debug("검토 주기 업데이트 완료 - manualId: {}, months: {}", manualId, months);
-    }
-
-    // 조회 메서드들
-
-    @Override
     public List<InternalControlManualDto> getManualsByDepartment(String deptCd) {
-        log.debug("부서별 내부통제 메뉴얼 조회 - deptCd: {}", deptCd);
         List<InternalControlManual> manuals = internalControlManualRepository.findByDeptCd(deptCd);
         return convertToDto(manuals);
     }
 
     @Override
     public List<InternalControlManualDto> getManualsByStatus(InternalControlManual.ManualStatus status) {
-        log.debug("상태별 내부통제 메뉴얼 조회 - status: {}", status);
         List<InternalControlManual> manuals = internalControlManualRepository.findByStatus(status);
         return convertToDto(manuals);
     }
 
     @Override
     public List<InternalControlManualDto> getManualsByAuthor(String authorEmpNo) {
-        log.debug("작성자별 내부통제 메뉴얼 조회 - authorEmpNo: {}", authorEmpNo);
         List<InternalControlManual> manuals = internalControlManualRepository.findByAuthorEmpNo(authorEmpNo);
         return convertToDto(manuals);
     }
 
     @Override
-    public List<InternalControlManualDto> getManualsByCategory(String category) {
-        log.debug("분류별 내부통제 메뉴얼 조회 - category: {}", category);
-        List<InternalControlManual> manuals = internalControlManualRepository.findByManualCategory(category);
-        return convertToDto(manuals);
-    }
-
-    @Override
     public List<InternalControlManualDto> getLatestPublishedManuals(String deptCd) {
-        log.debug("부서의 최신 발행 메뉴얼 조회 - deptCd: {}", deptCd);
-        List<InternalControlManual> manuals = internalControlManualRepository.findLatestPublishedByDepartment(deptCd);
+        List<InternalControlManual> manuals = internalControlManualRepository.findLatestPublishedByDept(deptCd);
         return convertToDto(manuals);
     }
 
     @Override
     public List<InternalControlManualDto> getValidManuals() {
-        log.debug("유효한 메뉴얼 조회");
         List<InternalControlManual> manuals = internalControlManualRepository.findValidManuals(LocalDate.now());
         return convertToDto(manuals);
     }
 
     @Override
     public List<InternalControlManualDto> getExpiringManuals(int daysFromNow) {
-        log.debug("만료 예정 메뉴얼 조회 - daysFromNow: {}", daysFromNow);
-        LocalDate startDate = LocalDate.now();
-        LocalDate endDate = LocalDate.now().plusDays(daysFromNow);
-        List<InternalControlManual> manuals = internalControlManualRepository.findExpiringManuals(startDate, endDate);
-        return convertToDto(manuals);
-    }
-
-    @Override
-    public List<InternalControlManualDto> getManualsNeedingReview() {
-        log.debug("검토 필요 메뉴얼 조회");
-        List<InternalControlManual> manuals = internalControlManualRepository.findManualsNeedingReview(LocalDate.now());
+        LocalDate targetDate = LocalDate.now().plusDays(daysFromNow);
+        List<InternalControlManual> manuals = internalControlManualRepository.findExpiringManuals(targetDate);
         return convertToDto(manuals);
     }
 
     @Override
     public List<InternalControlManualDto> getPendingApprovalManuals() {
-        log.debug("승인 대기중인 메뉴얼 조회");
         List<InternalControlManual> manuals = internalControlManualRepository.findPendingApprovalManuals();
         return convertToDto(manuals);
     }
+
     @Override
     public Page<InternalControlManualDto> searchManuals(org.itcen.domain.handover.dto.ManualSearchDto searchDto, Pageable pageable) {
-        log.debug("복합 조건 검색 - searchDto: {}", searchDto);
-        
-        Page<InternalControlManual> manuals = internalControlManualRepository.findBySearchCriteria(
-                searchDto.getDeptCd(),
-                searchDto.getStatus(),
-                searchDto.getManualCategory(),
-                searchDto.getAuthorEmpNo(),
-                searchDto.getManualTitle(),
-                pageable
+        Page<InternalControlManual> manuals = internalControlManualRepository.searchManuals(
+            searchDto.getDeptCd(),
+            searchDto.getStatus(),
+            searchDto.getManualTitle(),
+            searchDto.getAuthorEmpNo(),
+            searchDto.getManualVersion(),
+            searchDto.getEffectiveDate(),
+            searchDto.getExpiryDate(),
+            pageable
         );
         
         return manuals.map(this::convertToDto);
     }
 
-    // 통계 기능들은 추후 구현 예정
     @Override
     public ManualStatisticsDto getManualStatistics() {
-        // TODO: 구현 예정
-        return null;
+        // TODO: 통계 로직 구현
+        return new ManualStatisticsDto() {
+            @Override
+            public Long getTotalManuals() { return 0L; }
+            @Override
+            public Long getDraftManuals() { return 0L; }
+            @Override
+            public Long getPublishedManuals() { return 0L; }
+            @Override
+            public Long getExpiringManuals() { return 0L; }
+            @Override
+            public Double getApprovalRate() { return 0.0; }
+        };
     }
 
     @Override
     public List<DepartmentStatisticsDto> getManualStatisticsByDepartment() {
-        // TODO: 구현 예정
-        return null;
+        // TODO: 부서별 통계 로직 구현
+        return List.of();
     }
 
     @Override
     public List<CategoryStatisticsDto> getManualStatisticsByCategory() {
-        // TODO: 구현 예정
-        return null;
+        // TODO: 카테고리별 통계 로직 구현
+        return List.of();
     }
 
     @Override
     public List<MonthlyStatisticsDto> getMonthlyCreationStatistics() {
-        // TODO: 구현 예정
-        return null;
+        // TODO: 월별 생성 통계 로직 구현
+        return List.of();
     }
 
-    // Private helper methods
-
     private List<InternalControlManualDto> convertToDto(List<InternalControlManual> manuals) {
-        return manuals.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+        return manuals.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
     private InternalControlManualDto convertToDto(InternalControlManual manual) {
         return new InternalControlManualDto() {
             @Override
             public Long getManualId() { return manual.getManualId(); }
-            
+
             @Override
             public String getDeptCd() { return manual.getDeptCd(); }
-            
+
             @Override
             public String getDeptName() { return null; } // TODO: Department 조인 후 구현
-            
-            
+
             @Override
             public String getManualTitle() { return manual.getManualTitle(); }
-            
+
             @Override
             public String getManualVersion() { return manual.getManualVersion(); }
-            
-            @Override
-            public String getManualDescription() { return manual.getManualDescription(); }
-            
+
             @Override
             public String getManualContent() { return manual.getManualContent(); }
-            
-            @Override
-            public String getManualCategory() { return manual.getManualCategory(); }
-            
-            @Override
-            public String getIcTaskCategory() { return manual.getIcTaskCategory(); }
-            
+
             @Override
             public InternalControlManual.ManualStatus getStatus() { return manual.getStatus(); }
-            
+
             @Override
             public Long getApprovalId() { return manual.getApprovalId(); }
-            
+
             @Override
             public LocalDate getEffectiveDate() { return manual.getEffectiveDate(); }
-            
+
             @Override
             public LocalDate getExpiryDate() { return manual.getExpiryDate(); }
-            
-            @Override
-            public Integer getReviewCycleMonths() { return manual.getReviewCycleMonths(); }
-            
-            @Override
-            public LocalDate getNextReviewDate() { return manual.getNextReviewDate(); }
-            
+
             @Override
             public String getAuthorEmpNo() { return manual.getAuthorEmpNo(); }
-            
+
             @Override
             public String getAuthorName() { return null; } // TODO: User 조인 후 구현
-            
+
+            @Override
+            public String getReviewerEmpNo() { return manual.getReviewerEmpNo(); }
+
+            @Override
+            public String getReviewerName() { return null; } // TODO: User 조인 후 구현
+
+            @Override
+            public String getApproverEmpNo() { return manual.getApproverEmpNo(); }
+
+            @Override
+            public String getApproverName() { return null; } // TODO: User 조인 후 구현
         };
     }
 }

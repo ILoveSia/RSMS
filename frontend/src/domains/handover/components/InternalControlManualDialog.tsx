@@ -16,10 +16,11 @@ import {
   DepartmentSearchPopup,
   EmployeeSearchPopup,
   type Department,
+  type EmployeeSearchResult,
 } from '@/domains/common/components/search';
 import type { SelectOption } from '@/shared/types/common';
 import { Search as SearchIcon } from '@mui/icons-material';
-import { useGetDepartmentName } from '@/shared/utils/codeUtils';
+import { useGetDepartmentName, getEmployeeNameSync } from '@/shared/utils/codeUtils';
 import {
   Alert,
   Box,
@@ -190,20 +191,28 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     setError(null);
     try {
       // manualData prop이 있으면 사용, 없으면 API 호출
+      console.log('manualData', manualData);
       if (manualData) {
+        // 직원 사번을 이름으로 변환
+        const [authorName, reviewerName, approverName] = await Promise.all([
+          manualData.authorEmpNo ? getEmployeeNameSync(manualData.authorEmpNo) : '',
+          manualData.reviewerEmpNo ? getEmployeeNameSync(manualData.reviewerEmpNo) : '',
+          manualData.approverEmpNo ? getEmployeeNameSync(manualData.approverEmpNo) : '',
+        ]);
+
         setFormData({
           manualTitle: manualData.manualTitle,
           manualContent: manualData.manualContent || '',
           manualVersion: manualData.manualVersion || '',
           status: manualData.status,
           deptCd: manualData.deptCd,
-          deptName: getDepartmentName(manualData.deptCd) || manualData.deptName || '',
+          deptName: manualData.deptName || getDepartmentName(manualData.deptCd) || '',
           authorEmpNo: manualData.authorEmpNo || '',
-          authorName: manualData.authorName || '',
-                     reviewerEmpNo: '',
-           reviewerName: '',
-           approverEmpNo: '',
-           approverName: '',
+          authorName: manualData.authorName || authorName,
+          reviewerEmpNo: manualData.reviewerEmpNo || '',
+          reviewerName: manualData.reviewerName || reviewerName,
+          approverEmpNo: manualData.approverEmpNo || '',
+          approverName: manualData.approverName || approverName,
           effectiveDate: parseDate(manualData.effectiveDate),
           expiryDate: parseDate(manualData.expiryDate),
         });
@@ -286,11 +295,9 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
       };
 
       if (isCreateMode) {
-        // TODO: 실제 API 호출로 대체
-        // await internalControlManualApi.createManual(requestData);
+        await internalControlManualApi.createManual(requestData);
       } else if (isEditMode && manualId) {
-        // TODO: 실제 API 호출로 대체
-        // await internalControlManualApi.updateManual(manualId, requestData);
+        await internalControlManualApi.updateManual(manualId, requestData);
       }
 
       onSuccess?.();
@@ -315,29 +322,29 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   };
 
   // 직원 선택 핸들러들
-  const handleAuthorSelect = (employee: any) => {
+  const handleAuthorSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
-      authorEmpNo: employee.empNo,
-      authorName: employee.empName,
+      authorEmpNo: employee.num,
+      authorName: employee.username,
     }));
     setAuthorSearchOpen(false);
   };
 
-  const handleReviewerSelect = (employee: any) => {
+  const handleReviewerSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
-      reviewerEmpNo: employee.empNo,
-      reviewerName: employee.empName,
+      reviewerEmpNo: employee.num,
+      reviewerName: employee.username,
     }));
     setReviewerSearchOpen(false);
   };
 
-  const handleApproverSelect = (employee: any) => {
+  const handleApproverSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
-      approverEmpNo: employee.empNo,
-      approverName: employee.empName,
+      approverEmpNo: employee.num,
+      approverName: employee.username,
     }));
     setApproverSearchOpen(false);
   };

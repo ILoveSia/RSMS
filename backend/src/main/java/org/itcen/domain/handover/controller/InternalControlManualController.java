@@ -136,19 +136,7 @@ public class InternalControlManualController {
         return ResponseEntity.ok(updated);
     }
 
-    /**
-     * 검토 주기 업데이트
-     */
-    @PostMapping("/{manualId}/review-cycle")
-    public ResponseEntity<Void> updateReviewCycle(
-            @PathVariable Long manualId,
-            @RequestParam Integer months,
-            @RequestParam String actorEmpNo) {
-        log.debug("검토 주기 업데이트 요청 - manualId: {}, months: {}", manualId, months);
-        
-        internalControlManualService.updateReviewCycle(manualId, months, actorEmpNo);
-        return ResponseEntity.ok().build();
-    }
+
 
     /**
      * 부서별 내부통제 메뉴얼 조회
@@ -191,18 +179,7 @@ public class InternalControlManualController {
 
     
 
-    /**
-     * 메뉴얼 분류별 조회
-     */
-    @GetMapping("/category/{category}")
-    public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getManualsByCategory(
-            @PathVariable String category) {
-        log.debug("분류별 내부통제 메뉴얼 조회 요청 - category: {}", category);
-        
-        List<InternalControlManualService.InternalControlManualDto> manuals = 
-                internalControlManualService.getManualsByCategory(category);
-        return ResponseEntity.ok(manuals);
-    }
+
 
     /**
      * 부서의 최신 발행 메뉴얼 조회
@@ -242,17 +219,7 @@ public class InternalControlManualController {
         return ResponseEntity.ok(manuals);
     }
 
-    /**
-     * 검토 필요 메뉴얼 조회
-     */
-    @GetMapping("/need-review")
-    public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getManualsNeedingReview() {
-        log.debug("검토 필요 메뉴얼 조회 요청");
-        
-        List<InternalControlManualService.InternalControlManualDto> manuals = 
-                internalControlManualService.getManualsNeedingReview();
-        return ResponseEntity.ok(manuals);
-    }
+
 
     /**
      * 승인 대기중인 메뉴얼 조회

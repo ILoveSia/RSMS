@@ -39,12 +39,6 @@ public class InternalControlManual {
     private String deptCd;
 
     /**
-     * 부서장 내부통제 항목 ID (hod_ic_item 테이블 FK, 선택)
-     */
-    @Column(name = "hod_ic_item_id")
-    private Long hodIcItemId;
-
-    /**
      * 메뉴얼 제목
      */
     @Column(name = "manual_title", length = 200, nullable = false)
@@ -58,28 +52,10 @@ public class InternalControlManual {
     private String manualVersion = "1.0";
 
     /**
-     * 메뉴얼 설명
-     */
-    @Column(name = "manual_description", columnDefinition = "TEXT")
-    private String manualDescription;
-
-    /**
      * 메뉴얼 내용
      */
     @Column(name = "manual_content", columnDefinition = "TEXT")
     private String manualContent;
-
-    /**
-     * 메뉴얼 분류
-     */
-    @Column(name = "manual_category", length = 50)
-    private String manualCategory;
-
-    /**
-     * 내부통제 업무 분류
-     */
-    @Column(name = "ic_task_category", length = 100)
-    private String icTaskCategory;
 
     /**
      * 상태 (DRAFT, REVIEW, APPROVED, PUBLISHED)
@@ -109,29 +85,22 @@ public class InternalControlManual {
     private LocalDate expiryDate = LocalDate.of(9999, 12, 31);
 
     /**
-     * 검토 주기 (월)
-     */
-    @Column(name = "review_cycle_months")
-    @Builder.Default
-    private Integer reviewCycleMonths = 12;
-
-    /**
-     * 차기 검토일
-     */
-    @Column(name = "next_review_date")
-    private LocalDate nextReviewDate;
-
-    /**
      * 작성자 사번
      */
     @Column(name = "author_emp_no", length = 20)
     private String authorEmpNo;
 
     /**
-     * 부서장 사번
+     * 검토자 사번
      */
-    @Column(name = "hod_emp_no", length = 20)
-    private String hodEmpNo;
+    @Column(name = "reviewer_emp_no", length = 20)
+    private String reviewerEmpNo;
+
+    /**
+     * 승인자 사번
+     */
+    @Column(name = "approver_emp_no", length = 20)
+    private String approverEmpNo;
 
     /**
      * 생성일시
@@ -192,10 +161,6 @@ public class InternalControlManual {
             if (this.effectiveDate == null) {
                 this.effectiveDate = LocalDate.now();
             }
-            // 차기 검토일 설정
-            if (this.reviewCycleMonths != null && this.reviewCycleMonths > 0) {
-                this.nextReviewDate = this.effectiveDate.plusMonths(this.reviewCycleMonths);
-            }
         }
     }
 
@@ -204,7 +169,6 @@ public class InternalControlManual {
      */
     public void revertToDraft() {
         this.status = ManualStatus.DRAFT;
-        this.hodEmpNo = null;
     }
 
     /**
@@ -217,39 +181,11 @@ public class InternalControlManual {
     }
 
     /**
-     * 검토 주기 업데이트 및 차기 검토일 재계산
-     */
-    public void updateReviewCycle(Integer months) {
-        if (months != null && months > 0 && months <= 60) {
-            this.reviewCycleMonths = months;
-            if (this.effectiveDate != null) {
-                this.nextReviewDate = this.effectiveDate.plusMonths(months);
-            }
-        }
-    }
-
-    /**
      * 메뉴얼이 유효한지 확인
      */
     public boolean isValid() {
         LocalDate now = LocalDate.now();
         return (effectiveDate == null || !now.isBefore(effectiveDate)) &&
                (expiryDate == null || !now.isAfter(expiryDate));
-    }
-
-    /**
-     * 검토가 필요한지 확인
-     */
-    public boolean needsReview() {
-        return nextReviewDate != null && !LocalDate.now().isBefore(nextReviewDate);
-    }
-
-    /**
-     * 차기 검토일 계산 (ServiceImpl에서 사용)
-     */
-    public void calculateNextReviewDate() {
-        if (this.effectiveDate != null && this.reviewCycleMonths != null && this.reviewCycleMonths > 0) {
-            this.nextReviewDate = this.effectiveDate.plusMonths(this.reviewCycleMonths);
-        }
     }
 }

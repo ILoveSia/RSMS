@@ -115,6 +115,9 @@ public class HandoverHistory {
         MANUAL_UPDATED,         // 메뉴얼 수정
         MANUAL_APPROVED,        // 메뉴얼 승인
         MANUAL_PUBLISHED,       // 메뉴얼 발행
+        DOCUMENT_SUBMITTED,     // 문서 제출
+        DOCUMENT_REVERTED,      // 문서 되돌리기
+        DOCUMENT_VERSION_UPDATED, // 문서 버전 업데이트
 
         // 점검 관련
         INSPECTION_PLANNED,     // 점검 계획

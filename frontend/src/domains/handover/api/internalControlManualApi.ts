@@ -49,12 +49,16 @@ export interface InternalControlManualDto {
   effectiveDate?: string;
   expiryDate?: string;
   authorEmpNo?: string;
+  reviewerEmpNo?: string;
+  approverEmpNo?: string;
   createdAt?: string;
   updatedAt?: string;
   
   // 조인된 데이터 (백엔드에서 제공하는 경우)
   deptName?: string;
   authorName?: string;
+  reviewerName?: string;
+  approverName?: string;
 }
 
 // 검색 파라미터
@@ -66,8 +70,6 @@ export interface ManualSearchParams {
   manualVersion?: string;
   effectiveDate?: string;
   expiryDate?: string;
-  manualCategory?: string;
-  icTaskCategory?: string;
 }
 
 /**

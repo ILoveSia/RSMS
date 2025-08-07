@@ -22,7 +22,7 @@ import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { internalControlManualApi, type InternalControlManualDto } from '../api/internalControlManualApi';
 import InternalControlManualDialog from '../components/InternalControlManualDialog';
-import { useGetDepartmentName, getEmployeeName } from '@/shared/utils/codeUtils';
+import { useGetDepartmentName, useGetEmployeeName } from '@/shared/utils/codeUtils';
 
 interface IInternalControlManualListPageProps {
   className?: string;
@@ -39,6 +39,8 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   
   // 부서명 변환 함수
   const getDepartmentName = useGetDepartmentName();
+  // 직원명 변환 함수
+  const getEmployeeName = useGetEmployeeName();
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -60,14 +62,16 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
 
   // 컬럼 정의
   const columns: DataGridColumn<InternalControlManualDto>[] = [
-    {
-      field: 'deptCd',
-      headerName: '부서',
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => getDepartmentName(params.value as string),
-    },
+         {
+       field: 'deptName',
+       headerName: '부서',
+       width: 120,
+       align: 'center',
+       headerAlign: 'center',
+       renderCell: params => {
+         return <span>{params.value || params.row.deptCd}</span>;
+       },
+     },
     {
       field: 'manualTitle',
       headerName: '메뉴얼 제목',
@@ -108,20 +112,16 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       headerAlign: 'center',
       renderCell: params => getStatusChip(params.value as string),
     },
-    {
-      field: 'authorEmpNo',
-      headerName: '작성자',
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => {
-        const EmployeeNameComponent = () => {
-          const empName = getEmployeeName(params.value as string);
-          return <span>{empName}</span>;
-        };
-        return <EmployeeNameComponent />;
-      },
-    },
+         {
+       field: 'authorName',
+       headerName: '작성자',
+       width: 120,
+       align: 'center',
+       headerAlign: 'center',
+       renderCell: params => {
+         return <span>{params.value || params.row.authorEmpNo}</span>;
+       },
+     },
     {
       field: 'effectiveDate',
       headerName: '시행일',
@@ -188,14 +188,29 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
 
       const response = await internalControlManualApi.searchManuals(searchParams, paginationParams);
       console.log(response);
-      setRows(response.content);
+      
+             // API 응답 데이터에 부서명과 직원명 추가
+       const enrichedData = await Promise.all(response.content.map(async item => {
+         const deptName = getDepartmentName(item.deptCd || '');
+         const authorName = await getEmployeeName(item.authorEmpNo || '');
+         
+         console.log(`부서코드: ${item.deptCd}, 변환된 부서명: ${deptName}`);
+         
+         return {
+           ...item,
+           deptName: deptName,
+           authorName: authorName,
+         };
+       }));
+      console.log("enrichedData",enrichedData);
+      setRows(enrichedData);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [selectedStatus, selectedDept]);
+     }, [selectedStatus, selectedDept, getDepartmentName, getEmployeeName]);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
