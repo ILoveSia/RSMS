@@ -246,7 +246,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       
       // 모든 hod_ic_item 데이터 조회 (필터 없이)
       const allItems = await hodICItemApi.getHodICItemStatusList(
-        selectedRound?.value as string,
+        selectedRound?.value ? Number(selectedRound.value) : undefined,
         undefined // 부서 필터 없이 모든 데이터
       );
       

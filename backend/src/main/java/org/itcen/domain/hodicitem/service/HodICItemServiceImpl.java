@@ -37,8 +37,8 @@ public class HodICItemServiceImpl implements HodICItemService {
     private final ResponsibilityRepository responsibilityRepository;
 
     @Override
-    public List<HodICItemStatusProjection> getHodICItemStatusList(String ledgerOrder, String fieldType) {
-        List<HodICItemStatusProjection> resultList = hodICItemRepository.findHodICItemStatusList(ledgerOrder, fieldType);
+    public List<HodICItemStatusProjection> getHodICItemStatusList(Long ledgerOrders, String fieldType) {
+        List<HodICItemStatusProjection> resultList = hodICItemRepository.findHodICItemStatusList(ledgerOrders, fieldType);
         return resultList;
     }
 
@@ -62,7 +62,7 @@ public class HodICItemServiceImpl implements HodICItemService {
         HodICItem hodICItem = HodICItem.builder()
                 .responsibilityId(createRequest.getResponsibilityId())
                 .responsibilityDetailId(createRequest.getResponsibilityDetailId())
-                .ledgerOrder(createRequest.getLedgerOrder())
+                .ledgerOrders(createRequest.getLedgerOrders())
                 .orderStatus(createRequest.getOrderStatus())
                 .dateExpired(createRequest.getDateExpired())
                 .fieldTypeCd(createRequest.getFieldTypeCd())
@@ -96,7 +96,7 @@ public class HodICItemServiceImpl implements HodICItemService {
         // 엔티티 업데이트
         hodICItem.setResponsibilityId(updateRequest.getResponsibilityId());
         hodICItem.setResponsibilityDetailId(updateRequest.getResponsibilityDetailId());
-        hodICItem.setLedgerOrder(updateRequest.getLedgerOrder());
+        hodICItem.setLedgerOrders(updateRequest.getLedgerOrders());
         hodICItem.setOrderStatus(updateRequest.getOrderStatus());
         hodICItem.setDateExpired(updateRequest.getDateExpired());
         hodICItem.setFieldTypeCd(updateRequest.getFieldTypeCd());

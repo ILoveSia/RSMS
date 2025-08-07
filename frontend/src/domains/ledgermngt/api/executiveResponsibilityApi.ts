@@ -14,7 +14,7 @@ export interface ExecutiveResponsibility {
 }
 
 export interface ExecutiveResponsibilitySearchParams {
-  ledgerOrder?: string;      // 책무번호
+  ledgerOrders?: number;      // 책무번호
   positionId?: string;       // 직책 ID
 }
 

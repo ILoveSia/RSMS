@@ -20,7 +20,7 @@ export interface SubmissionHistoryRow {
   // positions 테이블과 조인된 정보
   positionsId?: number;
   positionsNm?: string;  // positions 테이블의 직책명
-  ledgerOrder?: string;
+  ledgerOrders?: number;
   confirmGubunCd?: string;
   writeDeptCd?: string;
 }
@@ -38,18 +38,18 @@ export interface RegistrationData {
   // positions 테이블 정보
   positionsId?: number | null;
   positionsNm?: string;
-  ledgerOrder?: string;
+  ledgerOrders?: number;
 }
 
 export async function fetchSubmissionHistory(
   startDate?: Date | null,
   endDate?: Date | null,
-  ledgerOrder?: string
+  ledgerOrders?: number
 ): Promise<SubmissionHistoryRow[]> {
   const queryParams = new URLSearchParams();
   if (startDate) queryParams.append('startDate', startDate.toISOString().split('T')[0]);
   if (endDate) queryParams.append('endDate', endDate.toISOString().split('T')[0]);
-  if (ledgerOrder) queryParams.append('ledgerOrder', ledgerOrder);
+  if (ledgerOrders) queryParams.append('ledgerOrders', ledgerOrders.toString());
 
   const response = await apiClient.get(`/submissions/history?${queryParams.toString()}`);
   if (response.success !== false) {

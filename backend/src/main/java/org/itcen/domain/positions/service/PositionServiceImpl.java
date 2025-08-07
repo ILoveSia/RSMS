@@ -257,7 +257,9 @@ public class PositionServiceImpl implements PositionService {
                         .positionsNm(p.getPositionsNm())
                         .writeDeptNm(p.getWriteDeptNm())
                         .ownerDeptNms(p.getOwnerDeptNms())
-                        .adminCount(p.getAdminCount()).build())
+                        .adminCount(p.getAdminCount())
+                        .ledgerOrdersTitle(p.getLedgerOrdersTitle())
+                        .ledgerOrdersStatusCd(p.getLedgerOrdersStatusCd()).build())
                 .collect(Collectors.toList());
     }
 

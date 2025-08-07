@@ -45,7 +45,7 @@ interface ApiSuccessResponse<T> {
 
 export interface PositionData {
   positionsId: string;
-  ledgerOrder: string;
+  ledgerOrders: number;
   positionName: string;
   writeDeptCd: string;
   confirmGubunCd: string;

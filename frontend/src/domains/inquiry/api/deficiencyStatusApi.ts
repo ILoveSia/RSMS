@@ -42,7 +42,7 @@ export interface DeficiencyStatusResponse {
 
   // audit_prog_mngt 테이블 관련 필드
   auditProgMngtCd?: string;         // 점검계획코드
-  ledgerOrdersHod?: string;         // 책무번호
+  ledgerOrdersHod?: number;         // 책무번호
   auditTitle?: string;              // 점검회차명
   auditStartDt?: string;            // 점검시작일
   auditEndDt?: string;              // 점검종료일

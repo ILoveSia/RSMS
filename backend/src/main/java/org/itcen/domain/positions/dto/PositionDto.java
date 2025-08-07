@@ -32,7 +32,7 @@ public class PositionDto {
     /**
      * 원장차수
      */
-    private String ledgerOrder;
+    private Long ledgerOrder;
 
     /**
      * 직책명

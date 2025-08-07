@@ -30,7 +30,7 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
     /**
      * 원장차수로 직책 목록 조회
      */
-    List<Position> findByLedgerOrder(String ledgerOrder);
+    List<Position> findByLedgerOrder(Long ledgerOrder);
 
     /**
      * 직책명으로 직책 목록 조회 (부분 검색)
@@ -57,14 +57,14 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
             + "(:confirmGubunCd IS NULL OR p.confirmGubunCd = :confirmGubunCd) AND "
             + "(:writeDeptCd IS NULL OR p.writeDeptCd = :writeDeptCd)")
     Page<Position> findBySearchConditions(@Param("positionsId") Long positionsId,
-            @Param("ledgerOrder") String ledgerOrder, @Param("positionsNm") String positionsNm,
+            @Param("ledgerOrder") Long ledgerOrder, @Param("positionsNm") String positionsNm,
             @Param("confirmGubunCd") String confirmGubunCd,
             @Param("writeDeptCd") String writeDeptCd, Pageable pageable);
 
     /**
      * 원장차수별 직책 개수 조회
      */
-    Long countByLedgerOrder(String ledgerOrder);
+    Long countByLedgerOrder(Long ledgerOrder);
 
     /**
      * 확정구분코드별 직책 개수 조회
@@ -99,11 +99,15 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
                         SELECT COUNT(*)
                         FROM positions_admin pa
                         WHERE pa.positions_id = p.positions_id
-                    ) AS adminCount
+                    ) AS adminCount,
+                    lo.ledger_orders_title AS ledgerOrdersTitle,
+                    lo.ledger_orders_status_cd AS ledgerOrdersStatusCd
                 FROM
                     positions p
                 LEFT JOIN
                     departments d_write ON p.write_dept_cd = d_write.department_id AND d_write.use_yn = 'Y'
+                LEFT JOIN
+                    ledger_orders lo ON p.ledger_order = lo.ledger_orders_id
                 ORDER BY
                     p.created_at DESC
             """,
@@ -119,7 +123,7 @@ public interface PositionRepository extends JpaRepository<Position, Long> {
             + "(:writeDeptCd IS NULL OR p.writeDeptCd = :writeDeptCd) AND "
             + "(:confirmGubunCd IS NULL OR p.confirmGubunCd = :confirmGubunCd) "
             + "ORDER BY p.ledgerOrder DESC, p.positionsNm ASC")
-    List<Position> searchPositions(@Param("ledgerOrder") String ledgerOrder,
+    List<Position> searchPositions(@Param("ledgerOrder") Long ledgerOrder,
                                  @Param("positionsNm") String positionsNm,
                                  @Param("writeDeptCd") String writeDeptCd,
                                  @Param("confirmGubunCd") String confirmGubunCd);

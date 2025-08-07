@@ -7,6 +7,8 @@ export interface PositionStatusRow {
   writeDeptNm: string;
   ownerDeptNms: string;
   adminCount: number;
+  ledgerOrdersTitle: string; // 책무번호 제목
+  ledgerOrdersStatusCd: string; // 진행상태 코드
 }
 
 // 원장차수 SelectBox 옵션 타입
@@ -19,7 +21,7 @@ export interface LedgerOrderSelect {
 export interface PositionSearchResult {
   positionsId: number;
   positionsNm: string;
-  ledgerOrder: string;
+  ledgerOrders: number;
   confirmGubunCd?: string;
   writeDeptCd?: string;
 }
@@ -28,7 +30,7 @@ export interface PositionSearchResult {
 export interface PositionDetailDto {
   positionsId: number;
   positionsNm: string;
-  ledgerOrder: string;
+  ledgerOrders: number;
   confirmGubunCd?: string;
   writeDeptCd?: string;
   createdAt?: string;
@@ -39,7 +41,7 @@ export interface PositionDetailDto {
 
 // 직책 검색 요청 타입
 export interface PositionSearchRequest {
-  ledgerOrder?: string;
+  ledgerOrders?: number;
   positionsNm?: string;
   writeDeptCd?: string;
   confirmGubunCd?: string;
@@ -78,11 +80,11 @@ export class PositionApiService {
   /**
    * 직책 목록 조회 (검색용)
    */
-  static async getPositionList(ledgerOrder?: string): Promise<PositionSearchResult[]> {
+  static async getPositionList(ledgerOrders?: number): Promise<PositionSearchResult[]> {
     try {
       const params: Record<string, string> = {};
-      if (ledgerOrder) {
-        params.ledgerOrder = ledgerOrder;
+      if (ledgerOrders) {
+        params.ledgerOrders = ledgerOrders.toString();
       }
 
       const response = await apiClient.get<PositionSearchResult[]>('/positions/search', { params });

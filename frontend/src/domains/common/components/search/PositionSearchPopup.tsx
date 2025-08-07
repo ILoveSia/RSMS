@@ -27,7 +27,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 export interface PositionSearchResult {
   positionsId: number;
   positionsNm: string;
-  ledgerOrder: string;
+  ledgerOrders: number;
   confirmGubunCd?: string;
   writeDeptCd?: string;
 }
@@ -39,7 +39,7 @@ export interface PositionSearchPopupProps {
   onClose: () => void;
   onSelect: (position: PositionSearchResult) => void;
   multiSelect?: boolean;
-  ledgerOrder?: string; // 특정 원장차수로 필터링
+  ledgerOrders?: number; // 특정 원장차수로 필터링
 }
 
 const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
@@ -48,7 +48,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
   onClose,
   onSelect,
   multiSelect = false,
-  ledgerOrder,
+  ledgerOrders,
 }) => {
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [positions, setPositions] = useState<PositionSearchResult[]>([]);
@@ -73,7 +73,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
       flex: 1,
     },
     {
-      field: 'ledgerOrder',
+      field: 'ledgerOrders',
       headerName: '원장차수',
       width: 120,
       sortable: true,
@@ -97,7 +97,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const data = await positionApi.getPositionList(ledgerOrder);
+      const data = await positionApi.getPositionList(ledgerOrders);
       setPositions(data);
       setFilteredPositions(data);
     } catch (err) {
@@ -106,7 +106,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [ledgerOrder]);
+  }, [ledgerOrders]);
 
   // 검색 필터링
   const handleSearch = useCallback(() => {
@@ -118,7 +118,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
     const filtered = positions.filter(position =>
       position.positionsNm.toLowerCase().includes(searchKeyword.toLowerCase()) ||
       position.positionsId.toString().includes(searchKeyword) ||
-      position.ledgerOrder?.toLowerCase().includes(searchKeyword.toLowerCase())
+      position.ledgerOrders?.toString().toLowerCase().includes(searchKeyword.toLowerCase())
     );
     setFilteredPositions(filtered);
   }, [searchKeyword, positions]);

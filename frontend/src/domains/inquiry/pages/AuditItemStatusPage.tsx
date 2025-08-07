@@ -316,8 +316,8 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
 
       // 실제 API 호출
       const apiResponse = await getAuditItemStatusList({
-        ledgerOrdersHod: selectedLedgerOrder === 'ALL' ? '' : selectedLedgerOrder,
-        auditResultStatusCd: selectedImpPlStatus === 'ALL' ? '' : selectedImpPlStatus
+        ledgerOrdersHod: selectedLedgerOrder === 'ALL' ? undefined : Number(selectedLedgerOrder),
+        auditResultStatusCd: selectedImpPlStatus === 'ALL' ? undefined : selectedImpPlStatus
       });
 
       if (apiResponse && Array.isArray(apiResponse)) {

@@ -11,7 +11,7 @@ export const positionResponsibilityApi = {
   search: async (params: PositionResponsibilitySearchRequest): Promise<PageableResponse<PositionResponsibility>> => {
     const queryParams = new URLSearchParams();
 
-    if (params.ledgerOrder) queryParams.append('ledgerOrder', params.ledgerOrder);
+    if (params.ledgerOrders) queryParams.append('ledgerOrders', params.ledgerOrders.toString());
     if (params.positionName) queryParams.append('positionName', params.positionName);
     if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
     if (params.page !== undefined) queryParams.append('page', params.page.toString());
@@ -60,7 +60,7 @@ export const positionResponsibilityApi = {
   downloadExcel: async (params?: PositionResponsibilitySearchRequest): Promise<Blob> => {
     const queryParams = new URLSearchParams();
     if (params) {
-      if (params.ledgerOrder) queryParams.append('ledgerOrder', params.ledgerOrder);
+      if (params.ledgerOrders) queryParams.append('ledgerOrders', params.ledgerOrders.toString());
       if (params.positionName) queryParams.append('positionName', params.positionName);
       if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
     }

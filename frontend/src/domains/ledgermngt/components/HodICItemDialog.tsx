@@ -54,7 +54,7 @@ interface FormData {
   deptName: string; // 부서명 표시용
 
   // 책무번호
-  ledgerOrder: string; // 책무번호(원장차수)
+  ledgerOrders: number; // 책무번호(원장차수)
 
   // 공통코드 관련 필드들
   fieldTypeCd: string; // 항목구분
@@ -81,7 +81,7 @@ const initialFormData: FormData = {
   responsibilityDetailContent: '',
   deptCd: '',
   deptName: '',
-  ledgerOrder: '',
+  ledgerOrders: 0,
   fieldTypeCd: '',
   roleTypeCd: '',
   periodCd: '',
@@ -311,7 +311,7 @@ interface ResponsibilityDetail {
         responsibilityDetailContent: data.responsibilityDetailContent || '',
         deptCd: data.deptCd,
         deptName: data.deptName || '', // API에서 부서명 가져오기
-        ledgerOrder: data.ledgerOrder || '',
+        ledgerOrders: data.ledgerOrders || 0,
         fieldTypeCd: data.fieldTypeCd,
         roleTypeCd: data.roleTypeCd,
         periodCd: data.periodCd,
@@ -450,7 +450,7 @@ interface ResponsibilityDetail {
       const requestData: HodICItemCreateRequest = {
         responsibilityId: formData.responsibilityId as number,
         responsibilityDetailId: formData.responsibilityDetailId as number,
-        ledgerOrder: formData.ledgerOrder,
+        ledgerOrders: formData.ledgerOrders,
         deptCd: formData.deptCd,
         fieldTypeCd: formData.fieldTypeCd,
         roleTypeCd: formData.roleTypeCd,
@@ -747,8 +747,8 @@ interface ResponsibilityDetail {
                 {/* 책무번호 */}
                 <Grid item xs={12} sm={6}>
                   <LedgerOrdersHodSelect
-                    value={formData.ledgerOrder}
-                    onChange={(value) => handleInputChange('ledgerOrder', value)}
+                    value={formData.ledgerOrders.toString()}
+                    onChange={(value) => handleInputChange('ledgerOrders', Number(value))}
                     disabled={isViewMode}
                     includeAll={false}
                     placeholder="부서장 책무번호 선택 *"

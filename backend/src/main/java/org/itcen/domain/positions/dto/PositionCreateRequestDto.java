@@ -28,8 +28,7 @@ public class PositionCreateRequestDto {
     /**
      * 원장차수
      */
-    @Size(max = 100, message = "원장차수는 100자를 초과할 수 없습니다.")
-    private String ledgerOrder;
+    private Long ledgerOrder;
 
     /**
      * 직책명

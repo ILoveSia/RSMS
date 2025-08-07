@@ -171,7 +171,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             .remarks((String) row[7])  // rm_submit_remarks
             .positionsId(row[8] != null ? ((Number) row[8]).longValue() : null)  // positions_id
             .positionsNm((String) row[9])  // positions_nm
-            .ledgerOrder((String) row[10])  // ledger_order
+            .ledgerOrder(row[10] != null ? ((Number) row[10]).longValue() : null)  // ledger_order
             .confirmGubunCd((String) row[11])  // confirm_gubun_cd
             .writeDeptCd((String) row[12])  // write_dept_cd
             .hasAttachment(row[13] != null ? (Boolean) row[13] : false)  // 첨부파일 존재 여부

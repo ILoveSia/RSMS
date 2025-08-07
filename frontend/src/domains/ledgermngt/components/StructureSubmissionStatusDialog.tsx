@@ -27,7 +27,7 @@ interface RegistrationData {
   // positions 테이블 정보
   positionsId?: number | null;
   positionsNm?: string;
-  ledgerOrder?: string;
+  ledgerOrders?: number;
 }
 
 interface StructureSubmissionStatusDialogProps {
@@ -84,7 +84,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
     remarks: null,
     positionsId: null,
     positionsNm: '',
-    ledgerOrder: ''
+    ledgerOrders: 0
   });
 
   // 첨부파일 관련 상태
@@ -118,7 +118,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         remarks: initialData.remarks,
         positionsId: initialData.positionsId,
         positionsNm: initialData.positionsNm,
-        ledgerOrder: initialData.ledgerOrder,
+        ledgerOrders: initialData.ledgerOrders,
       });
     }
 
@@ -252,7 +252,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         position: { value: position.positionsNm, label: position.positionsNm },
         positionsId: position.positionsId,
         positionsNm: position.positionsNm,
-        ledgerOrder: position.ledgerOrder,
+        ledgerOrders: position.ledgerOrders,
         // 임원 정보 자동 설정
         execofficerId: executiveInfo?.execofficerId || null,
         executiveName: executiveInfo?.empName ?
@@ -266,7 +266,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         position: { value: position.positionsNm, label: position.positionsNm },
         positionsId: position.positionsId,
         positionsNm: position.positionsNm,
-        ledgerOrder: position.ledgerOrder,
+        ledgerOrders: position.ledgerOrders,
         execofficerId: null,
         executiveName: null
       }));

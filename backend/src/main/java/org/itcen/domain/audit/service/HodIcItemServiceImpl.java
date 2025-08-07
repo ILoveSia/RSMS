@@ -31,11 +31,11 @@ public class HodIcItemServiceImpl implements HodIcItemService {
      * @return 내부통제 항목 DTO 목록
      */
     @Override
-    public List<HodIcItemDto> getItemsByLedgerOrdersHod(String ledgerOrdersHod) {
+    public List<HodIcItemDto> getItemsByLedgerOrdersHod(Long ledgerOrdersHod) {
         log.debug("책무번호로 내부통제 항목 조회: {}", ledgerOrdersHod);
         
         // 유효한(만료되지 않은) 항목만 조회
-        return hodIcItemRepository.findActiveItemsByLedgerOrder(ledgerOrdersHod)
+        return hodIcItemRepository.findActiveItemsByLedgerOrders(ledgerOrdersHod)
                 .stream()
                 .map(HodIcItemDto::fromEntity)
                 .collect(Collectors.toList());

@@ -18,7 +18,7 @@ public class ExecOfficerDto {
     private String dualDetails;
     private Long positionsId;
     private Long approvalId;
-    private String ledgerOrder;
+    private Long ledgerOrder;
     private String orderStatus;
     private String createdId;
     private String updatedId;

@@ -9,7 +9,7 @@ export interface ExecOfficer {
   dualDetails: string;
   userName: string;
   approvalId: number;
-  ledgerOrder: number;
+  ledgerOrders: number;
   orderStatus: string;
   positionsId?: number;
   empName: string;

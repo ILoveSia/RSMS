@@ -35,7 +35,7 @@ public class ExecOfficer {
     private Long approvalId;
 
     @Column(name = "ledger_order")
-    private String ledgerOrder;
+    private Long ledgerOrder;
 
     @Column(name = "order_status")
     private String orderStatus;

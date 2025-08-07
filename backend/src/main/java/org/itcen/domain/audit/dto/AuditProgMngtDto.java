@@ -23,7 +23,7 @@ public class AuditProgMngtDto {
 
     private Long auditProgMngtId;
     private String auditProgMngtCd;      // 점검계획코드
-    private String ledgerOrdersHod;      // 책무번호
+    private Long ledgerOrdersHod;        // 책무번호
     private String auditTitle;           // 점검회차명
     private LocalDate auditStartDt;      // 점검시작일
     private LocalDate auditEndDt;        // 점검종료일

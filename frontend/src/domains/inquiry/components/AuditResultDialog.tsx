@@ -46,7 +46,7 @@ export interface HodIcItemDetail {
   responsibilityContent: string;
   responsibilityDetailId: number;
   responsibilityDetailContent: string;
-  ledgerOrder: string;
+  ledgerOrder: number;
   orderStatus: string;
   approvalId: number;
   dateExpired: string;
@@ -258,7 +258,7 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
             responsibilityContent: '',
             responsibilityDetailId: 0,
             responsibilityDetailContent: '',
-            ledgerOrder: '',
+            ledgerOrder: 0,
             orderStatus: '',
             approvalId: 0,
             dateExpired: '',

@@ -82,12 +82,12 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
             LEFT JOIN org.itcen.domain.audit.entity.RoleRespStatus rrs ON hi.responsibilityId = rrs.responsibilityId
             LEFT JOIN org.itcen.domain.positions.entity.Position p ON rrs.positionsId = p.positionsId
             LEFT JOIN org.itcen.domain.employee.entity.Employee emp ON apd.auditMenId = emp.empNo
-            WHERE (:ledgerOrdersHod IS NULL OR :ledgerOrdersHod = '' OR apm.ledgerOrdersHod = :ledgerOrdersHod)
+            WHERE (:ledgerOrdersHod IS NULL OR apm.ledgerOrdersHod = :ledgerOrdersHod)
             AND (:auditResultStatusCd IS NULL OR :auditResultStatusCd = '' OR apd.auditResultStatusCd = :auditResultStatusCd)
             ORDER BY apm.auditProgMngtCd, apd.auditProgMngtDetailId
             """)
     List<AuditItemStatusResponseDto> findAuditItemStatus(
-            @Param("ledgerOrdersHod") String ledgerOrdersHod,
+            @Param("ledgerOrdersHod") Long ledgerOrdersHod,
             @Param("auditResultStatusCd") String auditResultStatusCd);
 
     /**

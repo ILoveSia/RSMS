@@ -41,8 +41,8 @@ public class Position extends BaseTimeEntity {
     /**
      * 원장차수
      */
-    @Column(name = "ledger_order", length = 100)
-    private String ledgerOrder;
+    @Column(name = "ledger_order")
+    private Long ledgerOrder;
 
     /**
      * 직책명

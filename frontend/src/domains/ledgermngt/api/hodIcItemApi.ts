@@ -37,7 +37,7 @@ export interface HodICItemRow {
   createdAt: string;
   updatedAt: string;
   approvalStatus: string;
-  ledgerOrder: string;
+  ledgerOrders: number;
   auditResultStatusCd?: string; // 점검결과상태코드
 }
 
@@ -49,7 +49,7 @@ export interface HodICItemDetail {
   responsibilityDetailId?: number;
   responsibilityDetailContent?: string;
   responsibilityRelEvid?: string;
-  ledgerOrder: string;
+  ledgerOrders: number;
   orderStatus: string;
   approvalId?: number;
   approvalStatus?: string;
@@ -77,7 +77,7 @@ export interface HodICItemDetail {
 export interface HodICItemCreateRequest {
   responsibilityId: number;
   responsibilityDetailId?: number;
-  ledgerOrder?: string;
+  ledgerOrders?: number;
   orderStatus?: string;
   dateExpired?: string;
   fieldTypeCd?: string;
@@ -101,9 +101,9 @@ export const hodICItemApi = {
   /**
    * 부서장 내부통제 항목 현황 조회
    */
-  async getHodICItemStatusList(ledgerOrder?: string, fieldType?: string): Promise<HodICItemRow[]> {
+  async getHodICItemStatusList(ledgerOrders?: number, fieldType?: string): Promise<HodICItemRow[]> {
     const params: Record<string, string> = {};
-    if (ledgerOrder) params.ledgerOrder = ledgerOrder;
+    if (ledgerOrders) params.ledgerOrders = ledgerOrders.toString();
     if (fieldType) params.fieldType = fieldType;
     return apiClient.get('/hod-ic-items', { params });
   },

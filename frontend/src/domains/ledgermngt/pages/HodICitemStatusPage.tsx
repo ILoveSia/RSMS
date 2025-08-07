@@ -189,7 +189,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
 
     try {
       const data = await hodICItemApi.getHodICItemStatusList(
-        selectedLedgerOrder === 'ALL' ? undefined : selectedLedgerOrder,
+        selectedLedgerOrder === 'ALL' ? undefined : Number(selectedLedgerOrder),
         selectedFieldType === 'ALL' ? undefined : selectedFieldType
       );
       setRows(data);

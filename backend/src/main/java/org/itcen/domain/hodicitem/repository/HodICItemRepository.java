@@ -49,7 +49,7 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                     h.created_at as "createdAt",
                     h.updated_at as "updatedAt",
                     COALESCE(a.appr_stat_cd, 'NONE') as "approvalStatus",
-                    h.ledger_order as "ledgerOrder",
+                    h.ledger_orders as "ledgerOrders",
                     apd.audit_result_status_cd as "auditResultStatusCd"
                 FROM hod_ic_item h
                 INNER JOIN responsibility r ON h.responsibility_id = r.responsibility_id
@@ -61,19 +61,19 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                 LEFT JOIN common_code cc4 ON h.check_period = cc4.code AND cc4.group_code = 'MONTH' AND cc4.use_yn = 'Y'
                 LEFT JOIN approval a ON h.approval_id = a.approval_id
                 LEFT JOIN audit_prog_mngt_detail apd ON h.hod_ic_item_id = apd.hod_ic_item_id
-                WHERE (:ledgerOrder IS NULL OR h.ledger_order = :ledgerOrder)
+                WHERE (:ledgerOrders IS NULL OR h.ledger_orders = :ledgerOrders)
                   AND (:fieldType IS NULL OR h.field_type_cd = :fieldType)
                 ORDER BY h.hod_ic_item_id
             """, nativeQuery = true)
     List<HodICItemStatusProjection> findHodICItemStatusList(
-            @Param("ledgerOrder") String ledgerOrder,
+            @Param("ledgerOrders") Long ledgerOrders,
             @Param("fieldType") String fieldType);
 
     /**
      * 특정 책무번호로 부서장 내부통제 항목 조회
      */
-    @Query("SELECT h FROM HodICItem h WHERE h.ledgerOrder = :ledgerOrder")
-    List<HodICItem> findByLedgerOrder(@Param("ledgerOrder") String ledgerOrder);
+    @Query("SELECT h FROM HodICItem h WHERE h.ledgerOrders = :ledgerOrders")
+    List<HodICItem> findByLedgerOrders(@Param("ledgerOrders") Long ledgerOrders);
 
     /**
      * 특정 부서코드로 부서장 내부통제 항목 조회

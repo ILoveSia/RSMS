@@ -79,7 +79,7 @@ public class AuditItemStatusResponseDto {
     /**
      * 원장차수 (조회조건용)
      */
-    private String ledgerOrdersHod;
+    private Long ledgerOrdersHod;
 
     /**
      * 점검결과 (조회조건용)

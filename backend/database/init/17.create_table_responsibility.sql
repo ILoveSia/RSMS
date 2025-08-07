@@ -7,9 +7,9 @@
 CREATE TABLE public.responsibility (
 	responsibility_id bigserial NOT NULL, -- 책무ID
 	responsibility_content text NULL,    -- 책무내용
-  ledger_order varchar(100) NULL,      -- 원장차수
+    ledger_order int8 NULL,      -- 원장차수
 	approval_id int8 NULL,               -- 결재ID
-  date_expired date DEFAULT '9999-12-31'::date NULL, -- 만료일
+    date_expired date DEFAULT '9999-12-31'::date NULL, -- 만료일
 	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 생성일시
 	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 수정일시
 	created_id varchar(100) NULL, -- 생성자 ID

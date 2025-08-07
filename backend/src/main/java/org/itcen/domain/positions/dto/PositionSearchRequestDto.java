@@ -30,7 +30,7 @@ public class PositionSearchRequestDto {
     /**
      * 원장차수
      */
-    private String ledgerOrder;
+    private Long ledgerOrder;
 
     /**
      * 직책명 (부분검색)

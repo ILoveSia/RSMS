@@ -52,7 +52,7 @@ public class ExecutiveResponsibilityDto {
     @Data
     @Builder
     public static class SearchRequest {
-        private String ledgerOrder; // 책무번호
+        private Long ledgerOrder; // 책무번호
         private String positionId; // 직책 ID
     }
 }

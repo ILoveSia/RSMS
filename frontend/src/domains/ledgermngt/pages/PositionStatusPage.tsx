@@ -122,6 +122,22 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       headerAlign: 'center',
     },
     {
+      field: 'ledgerOrdersTitle',
+      headerName: '책무번호',
+      width: 200,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => params.value || '-',
+    },
+    {
+      field: 'ledgerOrdersStatusCd',
+      headerName: '진행상태',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => params.value || '-',
+    },
+    {
       field: 'ownerDeptNms',
       headerName: '소관부서',
       width: 300,
@@ -262,7 +278,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       const worksheet = workbook.addWorksheet('직책 현황');
 
       // 헤더 설정
-      const headers = ['직책ID', '직책명', '책무기술서 작성 부서', '소관부서', '관리자 수'];
+      const headers = ['직책ID', '직책명', '책무번호', '진행상태', '책무기술서 작성 부서', '소관부서', '관리자 수'];
       worksheet.addRow(headers);
 
       // 헤더 스타일 설정
@@ -278,6 +294,8 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
         worksheet.addRow([
           row.positionsId,
           row.positionsNm,
+          row.ledgerOrdersTitle,
+          row.ledgerOrdersStatusCd,
           row.writeDeptNm,
           row.ownerDeptNms,
           row.adminCount,

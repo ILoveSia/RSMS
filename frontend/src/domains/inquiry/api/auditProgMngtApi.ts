@@ -18,7 +18,7 @@ export interface AuditProgMngtStatusResponse {
   auditProgName: string;            // 점검계획명
   auditTypeCd: string;              // 점검유형코드
   auditTypeName: string;            // 점검유형명
-  ledgerOrdersHod: string;          // 책무번호
+  ledgerOrdersHod: number;          // 책무번호
   auditTarget: string;              // 점검대상
   auditStartDate: string;           // 점검기간 시작일
   auditEndDate: string;             // 점검기간 종료일
@@ -56,7 +56,7 @@ export interface TargetItemData {
 export interface AuditProgMngtDto {
   auditProgMngtId?: number;        // 점검계획 ID
   auditProgMngtCd: string;         // 점검계획코드
-  ledgerOrdersHod: string;         // 책무번호
+  ledgerOrdersHod: number;         // 책무번호
   auditTitle: string;              // 점검회차명
   auditStartDt: string;            // 점검시작일
   auditEndDt: string;              // 점검종료일
@@ -69,7 +69,7 @@ export interface AuditProgMngtDto {
 // 점검계획관리 등록/수정 요청 타입
 export interface AuditProgMngtRequest {
   auditProgMngtCd?: string;         // 점검계획코드 (수정시)
-  ledgerOrdersHod: string;          // 책무번호
+  ledgerOrdersHod: number;          // 책무번호
   auditTitle: string;               // 점검회차명
   auditStartDt: string;             // 점검시작일 (YYYY-MM-DD)
   auditEndDt: string;               // 점검종료일 (YYYY-MM-DD)
