@@ -22,12 +22,15 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
 import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import { DatePicker } from '@/shared/components/ui/form';
+import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ResponsibilityDocumentApi, type ResponsibilityDocumentDto, type ResponsibilityDocument } from '../api/responsibilityDocumentApi';
 
@@ -83,6 +86,11 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 사원 검색 팝업 상태
+  const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
+  const [reviewerSearchOpen, setReviewerSearchOpen] = useState(false);
+  const [approverSearchOpen, setApproverSearchOpen] = useState(false);
 
 
 
@@ -145,23 +153,23 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         );
       }
 
-             // 문서 데이터를 폼에 매핑
-       if (documentData) {
-         setFormData({
-           documentTitle: documentData.documentTitle || '',
-           documentVersion: documentData.documentVersion || 'v1.0',
-           documentContent: documentData.documentContent || '',
-           status: documentData.status || 'DRAFT',
-           effectiveDate: parseDate(documentData.effectiveDate),
-           expiryDate: parseDate(documentData.expiryDate),
-           authorEmpNo: documentData.authorEmpNo || '',
-           authorName: documentData.authorName || '',
-           reviewerEmpNo: documentData.reviewerEmpNo || '',
-           reviewerName: documentData.reviewerName || '',
-           approverEmpNo: documentData.approverEmpNo || '',
-           approverName: documentData.approverName || '',
-         });
-       }
+      // 문서 데이터를 폼에 매핑
+      if (documentData) {
+        setFormData({
+          documentTitle: documentData.documentTitle || '',
+          documentVersion: documentData.documentVersion || 'v1.0',
+          documentContent: documentData.documentContent || '',
+          status: documentData.status || 'DRAFT',
+          effectiveDate: parseDate(documentData.effectiveDate),
+          expiryDate: parseDate(documentData.expiryDate),
+          authorEmpNo: documentData.authorEmpNo || '',
+          authorName: documentData.authorName || '',
+          reviewerEmpNo: documentData.reviewerEmpNo || '',
+          reviewerName: documentData.reviewerName || '',
+          approverEmpNo: documentData.approverEmpNo || '',
+          approverName: documentData.approverName || '',
+        });
+      }
 
     } catch (err) {
       console.error('Failed to load document data:', err);
@@ -202,17 +210,22 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     }));
   };
 
-  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수
+  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수 (로컬 시간대 유지)
   const parseDate = (dateString: string | null | undefined): Date | null => {
     if (!dateString) return null;
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? null : date;
+    // YYYY-MM-DD 형식의 문자열을 로컬 시간대로 파싱
+    const [year, month, day] = dateString.split('-').map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day); // month는 0부터 시작하므로 -1
   };
 
-  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수
+  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수 (로컬 시간대 유지)
   const formatDate = (date: Date | null): string => {
     if (!date) return '';
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const validateForm = (): boolean => {
@@ -275,6 +288,34 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     } else {
       setMode(newMode);
     }
+  };
+
+  // 사원 선택 핸들러
+  const handleAuthorSelect = (employee: EmployeeSearchResult) => {
+    setFormData(prev => ({
+      ...prev,
+      authorEmpNo: employee.num,
+      authorName: employee.username,
+    }));
+    setAuthorSearchOpen(false);
+  };
+
+  const handleReviewerSelect = (employee: EmployeeSearchResult) => {
+    setFormData(prev => ({
+      ...prev,
+      reviewerEmpNo: employee.num,
+      reviewerName: employee.username,
+    }));
+    setReviewerSearchOpen(false);
+  };
+
+  const handleApproverSelect = (employee: EmployeeSearchResult) => {
+    setFormData(prev => ({
+      ...prev,
+      approverEmpNo: employee.num,
+      approverName: employee.username,
+    }));
+    setApproverSearchOpen(false);
   };
 
   return (
@@ -393,12 +434,13 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                   <Select
                     value={formData.status}
                     label='상태'
-                    options={[
-                      { value: '', label: '선택하세요' },
-                      ...getCommonCodeOptions('RESPONSIBILITY_STATUS')
-                    ]}
+                    options={
+                      isCreateMode
+                        ? [{ value: 'DRAFT', label: '초안' }]
+                        : getCommonCodeOptions('RESPONSIBILITY_STATUS')
+                    }
                     onChange={(value) => handleInputChange('status', value as string)}
-                    disabled={isViewMode}
+                    disabled={isViewMode || isCreateMode}
                   />
                 </Grid>
 
@@ -447,9 +489,22 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     fullWidth
                     label='작성자'
                     value={formData.authorName}
-                    disabled
-                    mode="readonly"
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
                     helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
+                    InputProps={{
+                      endAdornment: !isViewMode && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setAuthorSearchOpen(true)}
+                            size="small"
+                            edge="end"
+                          >
+                            <SearchIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 </Grid>
 
@@ -459,9 +514,22 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     fullWidth
                     label='검토자'
                     value={formData.reviewerName}
-                    disabled
-                    mode="readonly"
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
                     helperText={formData.reviewerEmpNo ? `사번: ${formData.reviewerEmpNo}` : ''}
+                    InputProps={{
+                      endAdornment: !isViewMode && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setReviewerSearchOpen(true)}
+                            size="small"
+                            edge="end"
+                          >
+                            <SearchIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 </Grid>
 
@@ -471,9 +539,22 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                     fullWidth
                     label='승인자'
                     value={formData.approverName}
-                    disabled
-                    mode="readonly"
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
                     helperText={formData.approverEmpNo ? `사번: ${formData.approverEmpNo}` : ''}
+                    InputProps={{
+                      endAdornment: !isViewMode && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setApproverSearchOpen(true)}
+                            size="small"
+                            edge="end"
+                          >
+                            <SearchIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 </Grid>
               </Grid>
@@ -487,6 +568,28 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
           </Box>
         </DialogActions>
       </BaseDialog>
+
+      {/* 사원 검색 팝업들 */}
+      <EmployeeSearchPopup
+        open={authorSearchOpen}
+        onClose={() => setAuthorSearchOpen(false)}
+        onSelect={handleAuthorSelect}
+        title="작성자 검색"
+      />
+
+      <EmployeeSearchPopup
+        open={reviewerSearchOpen}
+        onClose={() => setReviewerSearchOpen(false)}
+        onSelect={handleReviewerSelect}
+        title="검토자 검색"
+      />
+
+      <EmployeeSearchPopup
+        open={approverSearchOpen}
+        onClose={() => setApproverSearchOpen(false)}
+        onSelect={handleApproverSelect}
+        title="승인자 검색"
+      />
     </>
   );
 };

@@ -1,5 +1,6 @@
 package org.itcen.domain.handover.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -73,12 +74,14 @@ public class ResponsibilityDocument {
      * 시행일
      */
     @Column(name = "effective_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate effectiveDate;
 
     /**
      * 만료일
      */
     @Column(name = "expiry_date")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     @Builder.Default
     private LocalDate expiryDate = LocalDate.of(9999, 12, 31);
 

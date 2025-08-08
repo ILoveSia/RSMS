@@ -5,18 +5,12 @@ DROP TABLE IF EXISTS public.handover_assignments CASCADE;
 
 CREATE TABLE public.handover_assignments (
     assignment_id BIGSERIAL PRIMARY KEY,
-    position_id BIGINT NOT NULL,                    -- positions.positions_id FK
     handover_type VARCHAR(20) NOT NULL,             -- 인수인계 유형 (POSITION, RESPONSIBILITY)
     
     -- 인계자 정보
     handover_from_emp_no VARCHAR(20),               -- 인계자 사번
-    handover_from_name VARCHAR(50),                 -- 인계자 이름
-    handover_from_dept VARCHAR(100),                -- 인계자 부서
-    
     -- 인수자 정보  
     handover_to_emp_no VARCHAR(20) NOT NULL,        -- 인수자 사번
-    handover_to_name VARCHAR(50) NOT NULL,          -- 인수자 이름
-    handover_to_dept VARCHAR(100),                  -- 인수자 부서
     
     -- 일정 정보
     planned_start_date DATE,                        -- 인수인계 시작 예정일
@@ -26,7 +20,6 @@ CREATE TABLE public.handover_assignments (
     
     -- 상태 관리
     status VARCHAR(20) DEFAULT 'PLANNED' NOT NULL,  -- 상태 (PLANNED, IN_PROGRESS, COMPLETED, CANCELLED)
-    progress_rate INTEGER DEFAULT 0,                -- 진행률 (0-100)
     
     -- 비고
     notes TEXT,                                     -- 특이사항
@@ -39,13 +32,10 @@ CREATE TABLE public.handover_assignments (
     
     -- 제약 조건
     CONSTRAINT chk_handover_assignments_status CHECK (status IN ('PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')),
-    CONSTRAINT chk_handover_assignments_progress CHECK (progress_rate >= 0 AND progress_rate <= 100),
-    CONSTRAINT chk_handover_assignments_type CHECK (handover_type IN ('POSITION', 'RESPONSIBILITY')),
-    CONSTRAINT fk_handover_assignments_position FOREIGN KEY (position_id) REFERENCES positions(positions_id) ON DELETE CASCADE
+    CONSTRAINT chk_handover_assignments_type CHECK (handover_type IN ('POSITION', 'RESPONSIBILITY'))
 );
 
 -- 인덱스 생성
-CREATE INDEX idx_handover_assignments_position_id ON public.handover_assignments(position_id);
 CREATE INDEX idx_handover_assignments_status ON public.handover_assignments(status);
 CREATE INDEX idx_handover_assignments_from_emp ON public.handover_assignments(handover_from_emp_no);
 CREATE INDEX idx_handover_assignments_to_emp ON public.handover_assignments(handover_to_emp_no);

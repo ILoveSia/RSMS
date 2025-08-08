@@ -125,7 +125,7 @@ export class ResponsibilityDocumentApi {
    * 책무기술서 수정
    */
   static async updateDocument(
-    documentId: number, 
+    documentId: number,
     data: ResponsibilityDocument
   ): Promise<void> {
     return apiClient.put<void>(`${this.BASE_PATH}/${documentId}`, data);
@@ -158,8 +158,8 @@ export class ResponsibilityDocumentApi {
    * 검토 단계로 제출
    */
   static async submitForReview(
-    documentId: number, 
-    reviewerEmpNo: string, 
+    documentId: number,
+    reviewerEmpNo: string,
     actorEmpNo: string
   ): Promise<void> {
     return apiClient.post(`${this.BASE_PATH}/${documentId}/submit`, null, {
@@ -171,8 +171,8 @@ export class ResponsibilityDocumentApi {
    * 문서 승인
    */
   static async approveDocument(
-    documentId: number, 
-    approverEmpNo: string, 
+    documentId: number,
+    approverEmpNo: string,
     actorEmpNo: string
   ): Promise<void> {
     return apiClient.post(`${this.BASE_PATH}/${documentId}/approve`, null, {
@@ -193,8 +193,8 @@ export class ResponsibilityDocumentApi {
    * 초안으로 되돌리기
    */
   static async revertToDraft(
-    documentId: number, 
-    actorEmpNo: string, 
+    documentId: number,
+    actorEmpNo: string,
     reason?: string
   ): Promise<void> {
     const params: any = { actorEmpNo };
@@ -210,12 +210,12 @@ export class ResponsibilityDocumentApi {
    * 문서 버전 업데이트
    */
   static async updateVersion(
-    documentId: number, 
-    newVersion: string, 
+    documentId: number,
+    newVersion: string,
     actorEmpNo: string
   ): Promise<ResponsibilityDocument> {
     return apiClient.post<ResponsibilityDocument>(
-      `${this.BASE_PATH}/${documentId}/version`, 
+      `${this.BASE_PATH}/${documentId}/version`,
       null,
       { params: { newVersion, actorEmpNo } }
     );

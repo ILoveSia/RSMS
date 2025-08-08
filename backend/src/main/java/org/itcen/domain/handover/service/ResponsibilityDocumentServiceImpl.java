@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.itcen.common.exception.BusinessException;
 import org.itcen.domain.handover.dto.DocumentSearchDto;
 import org.itcen.domain.handover.entity.ResponsibilityDocument;
-import org.itcen.domain.handover.entity.HandoverHistory;
 import org.itcen.domain.handover.repository.ResponsibilityDocumentRepository;
-import org.itcen.domain.handover.repository.HandoverHistoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,7 +34,6 @@ import java.util.stream.Collectors;
 public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocumentService {
 
     private final ResponsibilityDocumentRepository responsibilityDocumentRepository;
-    private final HandoverHistoryRepository handoverHistoryRepository;
 
     @Override
     @Transactional
@@ -45,17 +42,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
                   document.getDocumentTitle());
 
         ResponsibilityDocument savedDocument = responsibilityDocumentRepository.save(document);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createDocumentHistory(
-                savedDocument.getDocumentId(),
-                HandoverHistory.ActivityType.DOCUMENT_CREATED,
-                "책무기술서가 생성되었습니다.",
-                savedDocument.getCreatedId(),
-                "작성자",
-                savedDocument.getDocumentId()
-        );
-        handoverHistoryRepository.save(history);
 
         log.debug("책무기술서 생성 완료 - documentId: {}", savedDocument.getDocumentId());
         return savedDocument;
@@ -84,17 +70,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         existingDocument.setUpdatedId(document.getUpdatedId());
 
         ResponsibilityDocument savedDocument = responsibilityDocumentRepository.save(existingDocument);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createDocumentHistory(
-                savedDocument.getDocumentId(),
-                HandoverHistory.ActivityType.DOCUMENT_UPDATED,
-                "책무기술서가 수정되었습니다.",
-                savedDocument.getUpdatedId(),
-                "수정자",
-                savedDocument.getDocumentId()
-        );
-        handoverHistoryRepository.save(history);
 
         log.debug("책무기술서 수정 완료 - documentId: {}", documentId);
         return savedDocument;
@@ -147,17 +122,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
 
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createDocumentHistory(
-                documentId,
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                "책무기술서가 검토에 제출되었습니다.",
-                actorEmpNo,
-                "제출자",
-                documentId
-        );
-        handoverHistoryRepository.save(history);
-
         log.debug("검토 제출 완료 - documentId: {}", documentId);
     }
 
@@ -177,17 +141,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         document.approve(approverEmpNo);
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createDocumentHistory(
-                documentId,
-                HandoverHistory.ActivityType.DOCUMENT_APPROVED,
-                "책무기술서가 승인되었습니다.",
-                actorEmpNo,
-                "승인자",
-                documentId
-        );
-        handoverHistoryRepository.save(history);
 
         log.debug("문서 승인 완료 - documentId: {}", documentId);
     }
@@ -209,17 +162,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
 
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createDocumentHistory(
-                documentId,
-                HandoverHistory.ActivityType.DOCUMENT_PUBLISHED,
-                "책무기술서가 발행되었습니다.",
-                actorEmpNo,
-                "발행자",
-                documentId
-        );
-        handoverHistoryRepository.save(history);
-
         log.debug("문서 발행 완료 - documentId: {}", documentId);
     }
 
@@ -240,17 +182,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
 
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createDocumentHistory(
-                documentId,
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                "책무기술서가 초안으로 되돌려졌습니다. 사유: " + (reason != null ? reason : "사유 없음"),
-                actorEmpNo,
-                "되돌린자",
-                documentId
-        );
-        handoverHistoryRepository.save(history);
-
         log.debug("초안 되돌리기 완료 - documentId: {}", documentId);
     }
 
@@ -266,17 +197,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         document.setDocumentVersion(newVersion);
         document.setUpdatedId(actorEmpNo);
         ResponsibilityDocument savedDocument = responsibilityDocumentRepository.save(document);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createDocumentHistory(
-                documentId,
-                HandoverHistory.ActivityType.DOCUMENT_UPDATED,
-                String.format("문서 버전이 업데이트되었습니다. (%s → %s)", oldVersion, newVersion),
-                actorEmpNo,
-                "버전관리자",
-                documentId
-        );
-        handoverHistoryRepository.save(history);
 
         log.debug("버전 업데이트 완료 - documentId: {}, newVersion: {}", documentId, newVersion);
         return savedDocument;
