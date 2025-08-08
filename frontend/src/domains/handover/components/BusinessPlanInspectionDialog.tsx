@@ -16,10 +16,10 @@ import {
   DepartmentSearchPopup,
   EmployeeSearchPopup,
   type Department,
-  type Employee,
+  type EmployeeSearchResult,
 } from '@/domains/common/components/search';
 import type { SelectOption } from '@/shared/types/common';
-import { Search as SearchIcon, TrendingUp as ProgressIcon } from '@mui/icons-material';
+import { Search as SearchIcon } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -27,18 +27,16 @@ import {
   DialogContent,
   DialogActions,
   Grid,
-  Tab,
-  Tabs,
   Typography,
-  Chip,
-  LinearProgress,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
 import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
-import { businessPlanInspectionApi, type BusinessPlanInspectionDto } from '../api/businessPlanInspectionApi';
+import { type BusinessPlanInspectionDto } from '../api/businessPlanInspectionApi';
 
 interface BusinessPlanInspectionDialogProps {
   open: boolean;
@@ -50,53 +48,40 @@ interface BusinessPlanInspectionDialogProps {
 }
 
 interface FormData {
-  assignmentId: number | '';
+  inspectionId?: number;
+  deptCd: string;
+  deptName: string; // 조회용 (DB에 없음)
+  inspectionYear: number;
+  inspectionQuarter?: number;
   inspectionTitle: string;
   inspectionType: string;
-  planYear: number;
-  planQuarter?: number;
-  targetDept: string;
-  targetDeptName: string;
-  inspectionScope: string;
-  inspectionCriteria: string;
-  inspectionItems: string;
   plannedStartDate: string;
   plannedEndDate: string;
+  inspectionScope: string;
+  inspectionCriteria: string;
   actualStartDate: string;
   actualEndDate: string;
-  inspectorEmpNo: string;
-  inspectorName: string;
-  managerEmpNo: string;
-  managerName: string;
   status: string;
-  progressRate?: number;
-  currentPhase: string;
-  phaseDescription: string;
+  inspectorEmpNo: string;
+  inspectorName: string; // 조회용 (DB에 없음)
 }
 
 const initialFormData: FormData = {
-  assignmentId: '',
+  deptCd: '',
+  deptName: '',
+  inspectionYear: new Date().getFullYear(),
+  inspectionQuarter: undefined,
   inspectionTitle: '',
   inspectionType: 'QUARTERLY',
-  planYear: new Date().getFullYear(),
-  planQuarter: undefined,
-  targetDept: '',
-  targetDeptName: '',
-  inspectionScope: '',
-  inspectionCriteria: '',
-  inspectionItems: '',
   plannedStartDate: '',
   plannedEndDate: '',
+  inspectionScope: '',
+  inspectionCriteria: '',
   actualStartDate: '',
   actualEndDate: '',
+  status: 'PLANNED',
   inspectorEmpNo: '',
   inspectorName: '',
-  managerEmpNo: '',
-  managerName: '',
-  status: 'PLANNED',
-  progressRate: 0,
-  currentPhase: '계획수립',
-  phaseDescription: '',
 };
 
 const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> = ({
@@ -112,12 +97,11 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tabValue, setTabValue] = useState(0);
+
 
   // 팝업 상태들
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
   const [inspectorSearchOpen, setInspectorSearchOpen] = useState(false);
-  const [managerSearchOpen, setManagerSearchOpen] = useState(false);
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -145,14 +129,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
     (groupCode: string): SelectOption[] => {
       const codes = getCodesArray();
 
-      // 인수인계 지정 처리
-      if (groupCode === 'ASSIGNMENT') {
-        return [
-          { value: '1', label: '정보기술부 부서장 인수인계' },
-          { value: '2', label: '경영관리부 팀장 인수인계' },
-          { value: '3', label: '리스크관리부 선임 인수인계' },
-        ];
-      }
+
 
       // 점검 유형 처리
       if (groupCode === 'INSPECTION_TYPE') {
@@ -211,60 +188,29 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
     [getCodesArray]
   );
 
-  // 상태 표시 함수
-  const getStatusChip = (status: string) => {
-    const statusConfig = {
-      PLANNED: { label: '계획됨', color: 'default' as const },
-      IN_PROGRESS: { label: '진행중', color: 'warning' as const },
-      COMPLETED: { label: '완료', color: 'success' as const },
-      CANCELLED: { label: '취소', color: 'error' as const },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, color: 'default' as const };
-    return <Chip label={config.label} color={config.color} size="small" />;
-  };
 
-  // 진행률 표시 컴포넌트
-  const getProgressBar = (value: number | undefined) => {
-    if (value === undefined) return '-';
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 200 }}>
-        <Box sx={{ width: 150 }}>
-          <LinearProgress variant="determinate" value={value} />
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          {value}%
-        </Typography>
-      </Box>
-    );
-  };
 
   // 데이터 로드 함수
   const loadInspectionData = useCallback(async () => {
     // inspectionData가 있으면 API 호출 없이 바로 사용
     if (inspectionData) {
       setFormData({
-        assignmentId: inspectionData.assignmentId || inspectionData.inspectionId || '',
+        inspectionId: inspectionData.inspectionId,
+        deptCd: inspectionData.deptCd || '',
+        deptName: inspectionData.deptName || '',
+        inspectionYear: inspectionData.inspectionYear ?? new Date().getFullYear(),
+        inspectionQuarter: inspectionData.inspectionQuarter ?? undefined,
         inspectionTitle: inspectionData.inspectionTitle || '',
         inspectionType: inspectionData.inspectionType || 'QUARTERLY',
-        planYear: inspectionData.planYear ?? new Date().getFullYear(),
-        planQuarter: inspectionData.planQuarter ?? undefined,
-        targetDept: inspectionData.targetDept || '',
-        targetDeptName: inspectionData.targetDeptName || '',
-        inspectionScope: inspectionData.inspectionScope || '',
-        inspectionCriteria: inspectionData.inspectionCriteria || '',
-        inspectionItems: inspectionData.inspectionItems || '',
         plannedStartDate: inspectionData.plannedStartDate || '',
         plannedEndDate: inspectionData.plannedEndDate || '',
+        inspectionScope: inspectionData.inspectionScope || '',
+        inspectionCriteria: inspectionData.inspectionCriteria || '',
         actualStartDate: inspectionData.actualStartDate || '',
         actualEndDate: inspectionData.actualEndDate || '',
+        status: inspectionData.status || 'PLANNED',
         inspectorEmpNo: inspectionData.inspectorEmpNo || '',
         inspectorName: inspectionData.inspectorName || '',
-        managerEmpNo: inspectionData.managerEmpNo || '',
-        managerName: inspectionData.managerName || '',
-        status: inspectionData.status || 'PLANNED',
-        progressRate: inspectionData.progressRate ?? 0,
-        currentPhase: inspectionData.currentPhase || '계획수립',
-        phaseDescription: inspectionData.phaseDescription || '',
       });
       return;
     }
@@ -307,10 +253,6 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
   };
 
   const validateForm = (): boolean => {
-    if (!formData.assignmentId) {
-      setError('인수인계 지정을 선택해주세요.');
-      return false;
-    }
     if (!formData.inspectionTitle.trim()) {
       setError('점검 제목을 입력해주세요.');
       return false;
@@ -323,7 +265,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
       setError('점검 기준을 입력해주세요.');
       return false;
     }
-    if (!formData.targetDept) {
+    if (!formData.deptCd) {
       setError('대상부서를 선택해주세요.');
       return false;
     }
@@ -341,30 +283,8 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
     setError(null);
 
     try {
-      const requestData = {
-        assignmentId: formData.assignmentId as number,
-        inspectionTitle: formData.inspectionTitle,
-        inspectionType: formData.inspectionType,
-        planYear: formData.planYear,
-        planQuarter: formData.planQuarter,
-        targetDept: formData.targetDept,
-        inspectionScope: formData.inspectionScope,
-        inspectionCriteria: formData.inspectionCriteria,
-        inspectionItems: formData.inspectionItems,
-        plannedStartDate: formData.plannedStartDate,
-        plannedEndDate: formData.plannedEndDate,
-        inspectorEmpNo: formData.inspectorEmpNo,
-        managerEmpNo: formData.managerEmpNo,
-        status: formData.status,
-      };
-
-      if (isCreateMode) {
-        // TODO: 실제 API 호출로 대체
-        // await businessPlanInspectionApi.createInspection(requestData);
-      } else if (isEditMode && inspectionId) {
-        // TODO: 실제 API 호출로 대체
-        // await businessPlanInspectionApi.updateInspection(inspectionId, requestData);
-      }
+      // TODO: 실제 API 호출 구현 예정
+      console.log('Save data:', formData);
 
       onSuccess?.();
       onClose();
@@ -381,29 +301,20 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
     const dept = Array.isArray(department) ? department[0] : department;
     setFormData(prev => ({
       ...prev,
-      targetDept: dept.deptCode,
-      targetDeptName: dept.deptName,
+      deptCd: dept.deptCode,
+      deptName: dept.deptName,
     }));
     setDepartmentSearchOpen(false);
   };
 
-  // 직원 선택 핸들러들
-  const handleInspectorSelect = (employee: Employee) => {
+  // 직원 선택 핸들러
+  const handleInspectorSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
-      inspectorEmpNo: employee.empNo,
-      inspectorName: employee.empName,
+      inspectorEmpNo: employee.num,
+      inspectorName: employee.username,
     }));
     setInspectorSearchOpen(false);
-  };
-
-  const handleManagerSelect = (employee: Employee) => {
-    setFormData(prev => ({
-      ...prev,
-      managerEmpNo: employee.empNo,
-      managerName: employee.empName,
-    }));
-    setManagerSearchOpen(false);
   };
 
   const handleClose = () => {
@@ -411,13 +322,15 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
     onClose();
   };
 
-  const handleModeChange = (newMode: 'create' | 'edit' | 'view') => {
-    setMode(newMode);
+  const handleModeChange = (newMode: 'create' | 'edit' | 'view' | 'onlyRead') => {
+    if (newMode === 'onlyRead') {
+      setMode('view');
+    } else {
+      setMode(newMode);
+    }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+
 
   return (
     <>
@@ -504,327 +417,248 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                 </Alert>
               )}
 
-              <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 3 }}>
-                <Tab label="기본 정보" />
-                <Tab label="점검 내용" />
-                <Tab label="담당자 정보" />
-                {isViewMode && <Tab label="진행 현황" />}
-              </Tabs>
+              <Grid container spacing={2}>
+                {/* 기본 정보 섹션 */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main' }}>
+                    기본 정보
+                  </Typography>
+                </Grid>
 
-              {/* 기본 정보 탭 */}
-              {tabValue === 0 && (
-                <Grid container spacing={2}>
-                  {/* 인수인계 지정 */}
-                  <Grid item xs={12} sm={6}>
-                    <Select
-                      value={formData.assignmentId ? formData.assignmentId.toString() : ''}
-                      label='인수인계 지정 *'
-                      options={[
-                        { value: '', label: '선택하세요' },
-                        ...getCommonCodeOptions('ASSIGNMENT')
-                      ]}
-                      onChange={(value) => handleInputChange('assignmentId', Number(value))}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
+                {/* 점검 제목 */}
+                <Grid item xs={12}>
+                  <TextField
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    fullWidth
+                    label='점검 제목 *'
+                    value={formData.inspectionTitle}
+                    onChange={e => handleInputChange('inspectionTitle', e.target.value)}
+                    disabled={isViewMode}
+                  />
+                </Grid>
 
-                  {/* 점검 유형 */}
-                  <Grid item xs={12} sm={6}>
-                    <Select
-                      value={formData.inspectionType}
-                      label='점검 유형 *'
-                      options={[
-                        { value: '', label: '선택하세요' },
-                        ...getCommonCodeOptions('INSPECTION_TYPE')
-                      ]}
-                      onChange={(value) => handleInputChange('inspectionType', value as string)}
-                      disabled={isViewMode}
-                    />
-                  </Grid>
+                {/* 점검 연도 */}
+                <Grid item xs={12} sm={4}>
+                  <Select
+                    value={formData.inspectionYear ? formData.inspectionYear.toString() : ''}
+                    label='점검 연도 *'
+                    options={getCommonCodeOptions('YEAR')}
+                    onChange={(value) => handleInputChange('inspectionYear', Number(value))}
+                    disabled={isViewMode}
+                  />
+                </Grid>
 
-                  {/* 점검 제목 */}
-                  <Grid item xs={12}>
-                    <TextField
-                      mode={mode === 'view' ? 'readonly' : 'editable'}
+                {/* 점검 유형 */}
+                <Grid item xs={12} sm={4}>
+                  <Select
+                    value={formData.inspectionType}
+                    label='점검 유형 *'
+                    options={getCommonCodeOptions('INSPECTION_TYPE')}
+                    onChange={(value) => handleInputChange('inspectionType', value as string)}
+                    disabled={isViewMode}
+                  />
+                </Grid>
 
-                      fullWidth
-                      label='점검 제목 *'
-                      value={formData.inspectionTitle}
-                      onChange={e => handleInputChange('inspectionTitle', e.target.value)}
-                    />
-                  </Grid>
-
-                  {/* 점검 연도 */}
+                {/* 분기 (분기별 점검일 때만) */}
+                {formData.inspectionType === 'QUARTERLY' && (
                   <Grid item xs={12} sm={4}>
                     <Select
-                      value={formData.planYear ? formData.planYear.toString() : ''}
-                      label='점검 연도 *'
-                      options={[
-                        { value: '', label: '선택하세요' },
-                        ...getCommonCodeOptions('YEAR')
-                      ]}
-                      onChange={(value) => handleInputChange('planYear', Number(value))}
+                      value={formData.inspectionQuarter ? formData.inspectionQuarter.toString() : ''}
+                      label='점검 분기 *'
+                      options={getCommonCodeOptions('QUARTER')}
+                      onChange={(value) => handleInputChange('inspectionQuarter', Number(value))}
                       disabled={isViewMode}
                     />
                   </Grid>
+                )}
 
-                  {/* 분기 (분기별 점검인 경우만) */}
-                  {formData.inspectionType === 'QUARTERLY' && (
-                    <Grid item xs={12} sm={4}>
-                      <Select
-                        value={formData.planQuarter ? formData.planQuarter.toString() : ''}
-                        label='분기'
-                        options={[
-                          { value: '', label: '선택하세요' },
-                          ...getCommonCodeOptions('QUARTER')
-                        ]}
-                        onChange={(value) => handleInputChange('planQuarter', Number(value))}
-                        disabled={isViewMode}
-                      />
-                    </Grid>
-                  )}
-
-                  {/* 대상부서 */}
-                  <Grid item xs={12} sm={formData.inspectionType === 'QUARTERLY' ? 4 : 8}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        mode='readonly'
-                        label='대상부서 *'
-                        value={formData.targetDeptName}
-                        disabled
-                        placeholder='부서를 선택하세요'
-                        helperText={formData.targetDept ? `부서코드: ${formData.targetDept}` : ''}
-                      />
-                      {!isViewMode && (
-                        <Button
-                          variant='outlined'
-                          onClick={() => setDepartmentSearchOpen(true)}
-                          sx={{ minWidth: 100 }}
-                          startIcon={<SearchIcon />}
-                        >
-                          조회
-                        </Button>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* 계획 시작일 */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      mode={mode === 'view' ? 'readonly' : 'editable'}
-                      label='계획 시작일'
-                      type='date'
-                      value={formData.plannedStartDate}
-                      onChange={e => handleInputChange('plannedStartDate', e.target.value)}
-                      disabled={isViewMode}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                  </Grid>
-
-                  {/* 계획 종료일 */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      mode={mode === 'view' ? 'readonly' : 'editable'}
-                      label='계획 종료일'
-                      type='date'
-                      value={formData.plannedEndDate}
-                      onChange={e => handleInputChange('plannedEndDate', e.target.value)}
-                      disabled={isViewMode}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                    />
-                  </Grid>
-
-                  {/* 상태 */}
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Select
-                        value={formData.status}
-                        label='상태'
-                        options={[
-                          { value: '', label: '선택하세요' },
-                          ...getCommonCodeOptions('INSPECTION_STATUS')
-                        ]}
-                        onChange={(value) => handleInputChange('status', value as string)}
-                        disabled={isViewMode}
-                        sx={{ flex: 1 }}
-                      />
-                    </Box>
-                  </Grid>
+                {/* 상태 */}
+                <Grid item xs={12} sm={4}>
+                  <Select
+                    value={formData.status}
+                    label='상태'
+                    options={
+                      isCreateMode
+                        ? [{ value: 'PLANNED', label: '계획됨' }]
+                        : getCommonCodeOptions('INSPECTION_STATUS')
+                    }
+                    onChange={(value) => handleInputChange('status', value as string)}
+                    disabled={isViewMode || isCreateMode}
+                  />
                 </Grid>
-              )}
+                {/* 대상부서 */}
+                <Grid item xs={12}>
 
-              {/* 점검 내용 탭 */}
-              {tabValue === 1 && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       fullWidth
-                      label='점검 범위 *'
-                      value={formData.inspectionScope}
-                      onChange={e => handleInputChange('inspectionScope', e.target.value)}
-                      disabled={isViewMode}
-                      multiline
-                      rows={8}
-                      placeholder='점검 대상, 점검 영역, 주요 점검 포인트 등을 상세히 작성해주세요.'
-                      sx={{
-                        '& .MuiInputBase-input': {
-                          fontFamily: 'monospace',
-                          fontSize: '0.875rem',
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='점검 기준 *'
-                      value={formData.inspectionCriteria}
-                      onChange={e => handleInputChange('inspectionCriteria', e.target.value)}
-                      disabled={isViewMode}
-                      multiline
-                      rows={8}
-                      placeholder='평가 기준, 배점 체계, 등급 기준 등을 작성해주세요.'
-                      sx={{
-                        '& .MuiInputBase-input': {
-                          fontFamily: 'monospace',
-                          fontSize: '0.875rem',
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='점검 항목'
-                      value={formData.inspectionItems}
-                      onChange={e => handleInputChange('inspectionItems', e.target.value)}
-                      disabled={isViewMode}
-                      placeholder='주요 점검 항목을 쉼표로 구분하여 입력하세요.'
-                    />
-                  </Grid>
-                </Grid>
-              )}
-
-              {/* 담당자 정보 탭 */}
-              {tabValue === 2 && (
-                <Grid container spacing={2}>
-                  {/* 점검자 */}
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        label='점검자 *'
-                        value={formData.inspectorName || `${formData.inspectorEmpNo}`}
-                        disabled
-                        placeholder='점검자를 선택하세요'
-                        helperText={formData.inspectorEmpNo ? `사번: ${formData.inspectorEmpNo}` : ''}
-                      />
-                      {!isViewMode && (
-                        <Button
-                          variant='outlined'
-                          onClick={() => setInspectorSearchOpen(true)}
-                          sx={{ minWidth: 100 }}
-                          startIcon={<SearchIcon />}
-                        >
-                          조회
-                        </Button>
-                      )}
-                    </Box>
-                  </Grid>
-
-                  {/* 관리자 */}
-                  <Grid item xs={12} sm={6}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        fullWidth
-                        label='관리자'
-                        value={formData.managerName || `${formData.managerEmpNo}`}
-                        disabled
-                        placeholder='관리자를 선택하세요'
-                        helperText={formData.managerEmpNo ? `사번: ${formData.managerEmpNo}` : ''}
-                      />
-                      {!isViewMode && (
-                        <Button
-                          variant='outlined'
-                          onClick={() => setManagerSearchOpen(true)}
-                          sx={{ minWidth: 100 }}
-                          startIcon={<SearchIcon />}
-                        >
-                          조회
-                        </Button>
-                      )}
-                    </Box>
-                  </Grid>
-                </Grid>
-              )}
-
-              {/* 진행 현황 탭 (조회 모드에서만) */}
-              {tabValue === 3 && isViewMode && (
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label='진행률'
-                      value={formData.progressRate ? `${formData.progressRate}%` : '0%'}
+                      mode='readonly'
+                      label='대상부서 *'
+                      value={formData.deptName}
                       disabled
-                      InputProps={{
-                        startAdornment: getProgressBar(formData.progressRate),
-                      }}
+                      placeholder='부서를 선택하세요'
+                      helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
                     />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label='현재 페이즈'
-                      value={formData.currentPhase}
-                      disabled
-                    />
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label='페이즈 설명'
-                      value={formData.phaseDescription}
-                      disabled
-                      multiline
-                      rows={3}
-                    />
-                  </Grid>
-
-                  {formData.actualStartDate && (
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label='실제 시작일'
-                        value={formData.actualStartDate}
-                        disabled
-                      />
-                    </Grid>
-                  )}
-
-                  {formData.actualEndDate && (
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label='실제 종료일'
-                        value={formData.actualEndDate}
-                        disabled
-                      />
-                    </Grid>
-                  )}
+                    {!isViewMode && (
+                      <Button
+                        variant='outlined'
+                        onClick={() => setDepartmentSearchOpen(true)}
+                        sx={{ minWidth: 100 }}
+                        startIcon={<SearchIcon />}
+                      >
+                        조회
+                      </Button>
+                    )}
+                  </Box>
                 </Grid>
-              )}
+
+                {/* 계획 시작일 */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    label='계획 시작일'
+                    type='date'
+                    value={formData.plannedStartDate}
+                    onChange={e => handleInputChange('plannedStartDate', e.target.value)}
+                    disabled={isViewMode}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                </Grid>
+
+                {/* 계획 종료일 */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    label='계획 종료일'
+                    type='date'
+                    value={formData.plannedEndDate}
+                    onChange={e => handleInputChange('plannedEndDate', e.target.value)}
+                    disabled={isViewMode}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                </Grid>
+
+                {/* 상태 */}
+                <Grid item xs={12} sm={6}>
+                </Grid>
+
+                {/* 점검 내용 섹션 */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mb: 2, mt: 3, fontWeight: 'bold', color: 'primary.main' }}>
+                    점검 내용
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    label='점검 범위 *'
+                    value={formData.inspectionScope}
+                    onChange={e => handleInputChange('inspectionScope', e.target.value)}
+                    disabled={isViewMode}
+                    multiline
+                    rows={6}
+                    placeholder='점검 대상, 점검 영역, 주요 점검 포인트 등을 상세히 작성해주세요.'
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    label='점검 기준 *'
+                    value={formData.inspectionCriteria}
+                    onChange={e => handleInputChange('inspectionCriteria', e.target.value)}
+                    disabled={isViewMode}
+                    multiline
+                    rows={6}
+                    placeholder='평가 기준, 배점 체계, 등급 기준 등을 작성해주세요.'
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    label='점검 항목'
+                    value={formData.inspectionItems}
+                    onChange={e => handleInputChange('inspectionItems', e.target.value)}
+                    disabled={isViewMode}
+                    placeholder='주요 점검 항목을 쉼표로 구분하여 입력하세요.'
+                  />
+                </Grid>
+
+                {/* 담당자 정보 섹션 */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" sx={{ mb: 2, mt: 3, fontWeight: 'bold', color: 'primary.main' }}>
+                    담당자 정보
+                  </Typography>
+                </Grid>
+
+                {/* 점검자 */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label='점검자 *'
+                    value={formData.inspectorName}
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
+                    helperText={formData.inspectorEmpNo ? `사번: ${formData.inspectorEmpNo}` : ''}
+                    InputProps={{
+                      endAdornment: !isViewMode && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setInspectorSearchOpen(true)}
+                            size="small"
+                            edge="end"
+                          >
+                            <SearchIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
+
+
+                {/* 진행 현황 섹션 (조회 모드에서만) */}
+                {/* {isViewMode && (
+                  <>
+
+                    {formData.actualStartDate && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          mode='readonly'
+                          label='실제 시작일'
+                          value={formData.actualStartDate}
+                          disabled
+                        />
+                      </Grid>
+                    )}
+
+                    {formData.actualEndDate && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          mode='readonly'
+                          label='실제 종료일'
+                          value={formData.actualEndDate}
+                          disabled
+                        />
+                      </Grid>
+                    )}
+                  </>
+                )} */}
+              </Grid>
             </>
           )}
         </DialogContent>
@@ -853,13 +687,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
         title='점검자 조회'
       />
 
-      {/* 관리자 조회 팝업 */}
-      <EmployeeSearchPopup
-        open={managerSearchOpen}
-        onClose={() => setManagerSearchOpen(false)}
-        onSelect={handleManagerSelect}
-        title='관리자 조회'
-      />
+
     </>
   );
 };

@@ -30,56 +30,33 @@ export interface ApiResponse<T> {
 // 사업계획 점검 DTO
 export interface BusinessPlanInspectionDto {
   inspectionId?: number;
-  assignmentId: number;
+  deptCd: string;
+  deptName?: string; // 조회용 (DB에 없음)
+  
+  // 점검 기본 정보
+  inspectionYear: number;
+  inspectionQuarter?: number;
   inspectionTitle: string;
   inspectionType: 'QUARTERLY' | 'SEMI_ANNUAL' | 'ANNUAL' | 'SPECIAL';
   inspectionTypeName?: string; // 점검 유형 이름
-  status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-  statusName?: string; // 상태 이름
-
-  // 계획 정보
-  planYear: number;
-  planQuarter?: number;
-  targetDept?: string;
-  targetDeptName?: string;
-
-  // 점검 내용
-  inspectionScope: string;
-  inspectionCriteria: string;
-  inspectionItems: string;
-
-  // 일정 정보
+  
+  // 점검 계획
   plannedStartDate?: string;
   plannedEndDate?: string;
+  inspectionScope: string;
+  inspectionCriteria: string;
+  
+  // 점검 실행
   actualStartDate?: string;
   actualEndDate?: string;
-
+  
+  // 점검 상태
+  status: 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  statusName?: string; // 상태 이름
+  
   // 담당자 정보
   inspectorEmpNo?: string;
   inspectorName?: string;
-  managerEmpNo?: string;
-  managerName?: string;
-
-  // 진행 정보
-  progressRate?: number;
-  currentPhase?: string;
-  phaseDescription?: string;
-
-  // 결과 정보
-  overallScore?: number;
-  overallGrade?: string;
-  totalIssueCount?: number;
-  criticalIssueCount?: number;
-  majorIssueCount?: number;
-  minorIssueCount?: number;
-
-  // 완료 정보
-  completionReport?: string;
-  recommendations?: string;
-  followUpActions?: string;
-
-  // 첨부파일
-  attachmentCount?: number;
 
   // 감사 필드
   createdAt?: string;
@@ -123,12 +100,11 @@ export interface InspectionItemDto {
 
 // 검색 파라미터
 export interface InspectionSearchParams {
-  assignmentId?: number;
   inspectionType?: string;
   status?: string;
-  planYear?: number;
-  planQuarter?: number;
-  targetDept?: string;
+  inspectionYear?: number;
+  inspectionQuarter?: number;
+  deptCd?: string;
   inspectorEmpNo?: string;
   inspectionTitle?: string;
   plannedStartDate?: string;
@@ -206,44 +182,27 @@ export class BusinessPlanInspectionApi {
       // DTO 형태로 변환 (사원명 비동기 조회 포함)
       const convertedData: BusinessPlanInspectionDto[] = await Promise.all(
         inspectionData.map(async (item: any) => {
-          const [inspectorName, managerName] = await Promise.all([
-            getEmployeeNameSync(item.inspectorEmpNo),
-            getEmployeeNameSync(item.inspecteeEmpNo)
-          ]);
+          const inspectorName = await getEmployeeNameSync(item.inspectorEmpNo);
 
           return {
             inspectionId: item.inspectionId,
-            assignmentId: item.inspectionId,
+            deptCd: item.deptCd,
+            deptName: getDepartmentNameSync(departments, item.deptCd),
+            inspectionYear: item.inspectionYear,
+            inspectionQuarter: item.inspectionQuarter,
             inspectionTitle: item.inspectionTitle,
             inspectionType: item.inspectionType,
-            inspectionTypeName: getCodeNameSync(commonCodes, 'BUSINESSPLAN_STATUS', item.inspectionType),
-            status: item.status,
-            statusName: getCodeNameSync(commonCodes, 'BUSINESSPLAN_STATUS', item.status),
-            planYear: item.inspectionYear,
-            planQuarter: item.inspectionQuarter,
-            targetDept: item.deptCd,
-            targetDeptName: getDepartmentNameSync(departments, item.deptCd),
-            inspectionScope: item.inspectionScope,
-            inspectionCriteria: item.inspectionCriteria,
-            inspectionItems: item.inspectionScope || '', // 임시로 scope를 items로 사용
+            inspectionTypeName: getCodeNameSync(commonCodes, 'INSPECTION_TYPE', item.inspectionType),
             plannedStartDate: item.plannedStartDate,
             plannedEndDate: item.plannedEndDate,
+            inspectionScope: item.inspectionScope,
+            inspectionCriteria: item.inspectionCriteria,
             actualStartDate: item.actualStartDate,
             actualEndDate: item.actualEndDate,
-            inspectorEmpNo: item.inspecteeEmpNo, // 인계자 (피점검자)
-            inspectorName: managerName, // 인계자명
-            managerEmpNo: item.inspectorEmpNo, // 인수자 (점검자)
-            managerName: inspectorName, // 인수자명
-            progressRate: 0,
-            currentPhase: '',
-            phaseDescription: '',
-            overallScore: 0,
-            overallGrade: item.overallGrade,
-            totalIssueCount: 0,
-            criticalIssueCount: 0,
-            majorIssueCount: 0,
-            minorIssueCount: 0,
-            attachmentCount: 0,
+            status: item.status,
+            statusName: getCodeNameSync(commonCodes, 'INSPECTION_STATUS', item.status),
+            inspectorEmpNo: item.inspectorEmpNo,
+            inspectorName: inspectorName,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
           };

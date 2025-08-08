@@ -18,7 +18,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Assessment as InspectionIcon } from '@mui/icons-material';
-import { Box, Chip, Typography, LinearProgress } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { businessPlanInspectionApi, type BusinessPlanInspectionDto } from '../api/businessPlanInspectionApi';
 import BusinessPlanInspectionDialog from '../components/BusinessPlanInspectionDialog';
@@ -67,20 +67,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
     return <Chip label={typeName} color={config.color} size="small" variant="outlined" />;
   };
 
-  // 진행률 표시 함수
-  const getProgressBar = (value: number | undefined) => {
-    if (value === undefined) return '-';
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 120 }}>
-        <Box sx={{ width: 80 }}>
-          <LinearProgress variant="determinate" value={value} />
-        </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 30 }}>
-          {value}%
-        </Typography>
-      </Box>
-    );
-  };
+
 
   // 컬럼 정의
   const columns: DataGridColumn<BusinessPlanInspectionDto>[] = [
@@ -118,7 +105,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
       },
     },
     {
-      field: 'targetDeptName',
+      field: 'deptName',
       headerName: '대상부서',
       width: 120,
       align: 'center',
@@ -133,12 +120,20 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
       renderCell: params => getStatusChip(params.value as string, params.row.statusName || params.value as string),
     },
     {
-      field: 'progressRate',
-      headerName: '진행률',
-      width: 140,
+      field: 'inspectionYear',
+      headerName: '점검연도',
+      width: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => getProgressBar(params.value as number),
+      renderCell: params => `${params.value}년`,
+    },
+    {
+      field: 'inspectionQuarter',
+      headerName: '분기',
+      width: 80,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => params.value ? `${params.value}분기` : '-',
     },
     {
       field: 'inspectorName',
@@ -330,7 +325,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>상태</span>
           <CommonCodeSelect
-            groupCode="BUSINESSPLAN_STATUS"
+            groupCode="INSPECTION_STATUS"
             value={selectedStatus}
             onChange={setSelectedStatus}
             size='small'
