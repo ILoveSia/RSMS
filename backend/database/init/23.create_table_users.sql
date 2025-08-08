@@ -15,7 +15,6 @@ CREATE TABLE public.users (
 	dept_cd varchar(100) NULL, -- 부서코드
 	num varchar(100) NULL, -- 사번
 	job_rank_cd varchar(100) NULL, -- 직급코드
-	job_title_cd varchar(100) NULL, -- 직책코드
 	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 생성일시
 	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NOT NULL, -- 수정일시
 	created_id varchar(100) NULL, -- 생성자ID
