@@ -89,21 +89,9 @@ public class SearchDto {
         private Integer inspectionQuarter;
         private BusinessPlanInspection.InspectionType inspectionType;
         private BusinessPlanInspection.InspectionStatus status;
-        private BusinessPlanInspection.InspectionGrade overallGrade;
         private String inspectorEmpNo;
         private LocalDate startDate;
         private LocalDate endDate;
-        
-        // 추가 검색 조건들
-        private String keyword;
-        private String inspecteeEmpNo;
-        private BusinessPlanInspection.ImprovementStatus improvementStatus;
-        private Boolean isDelayed;
-        private Boolean isOnSchedule;
-        private Boolean hasImprovements;
-        private Boolean isImprovementOverdue;
-        private String riskLevel;
-        private String complianceLevel;
     }
 
     /**

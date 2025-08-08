@@ -221,7 +221,6 @@ public class StatisticsDto {
         private Integer inspectionYear;
         private Integer inspectionQuarter;
         private BusinessPlanInspection.InspectionStatus status;
-        private BusinessPlanInspection.InspectionGrade overallGrade;
         private String statusName;
         private String gradeName;
     }

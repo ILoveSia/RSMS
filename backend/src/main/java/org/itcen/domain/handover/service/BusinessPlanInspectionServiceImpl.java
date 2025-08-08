@@ -3,10 +3,10 @@ package org.itcen.domain.handover.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.common.exception.BusinessException;
+import org.itcen.domain.handover.dto.SearchDto;
+import org.itcen.domain.handover.dto.StatisticsDto;
 import org.itcen.domain.handover.entity.BusinessPlanInspection;
-import org.itcen.domain.handover.entity.HandoverHistory;
 import org.itcen.domain.handover.repository.BusinessPlanInspectionRepository;
-import org.itcen.domain.handover.repository.HandoverHistoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspectionService {
 
     private final BusinessPlanInspectionRepository businessPlanInspectionRepository;
-    private final HandoverHistoryRepository handoverHistoryRepository;
 
     @Override
     @Transactional
@@ -56,16 +55,7 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
 
         BusinessPlanInspection savedInspection = businessPlanInspectionRepository.save(inspection);
 
-        // 이력 생성 (assignmentId가 없으므로 inspectionId를 사용)
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                savedInspection.getInspectionId(),  // assignmentId 대신 inspectionId 사용
-                HandoverHistory.ActivityType.INSPECTION_PLANNED,
-                "사업계획 점검이 생성되었습니다.",
-                savedInspection.getCreatedId(),
-                savedInspection.getCreatedId(),  // actorName parameter 추가
-                savedInspection.getInspectionId()
-        );
-        handoverHistoryRepository.save(history);
+
 
         log.debug("사업계획 점검 생성 완료 - inspectionId: {}", savedInspection.getInspectionId());
         return savedInspection;
@@ -85,26 +75,22 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
         }
 
         // 필드 업데이트
+        existingInspection.setDeptCd(inspection.getDeptCd());
+        existingInspection.setInspectionYear(inspection.getInspectionYear());
+        existingInspection.setInspectionQuarter(inspection.getInspectionQuarter());
         existingInspection.setInspectionTitle(inspection.getInspectionTitle());
         existingInspection.setInspectionType(inspection.getInspectionType());
         existingInspection.setPlannedStartDate(inspection.getPlannedStartDate());
         existingInspection.setPlannedEndDate(inspection.getPlannedEndDate());
         existingInspection.setInspectionScope(inspection.getInspectionScope());
         existingInspection.setInspectionCriteria(inspection.getInspectionCriteria());
+        existingInspection.setStatus(inspection.getStatus());
+        existingInspection.setInspectorEmpNo(inspection.getInspectorEmpNo());
         existingInspection.setUpdatedId(inspection.getUpdatedId());
 
         BusinessPlanInspection savedInspection = businessPlanInspectionRepository.save(existingInspection);
 
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                savedInspection.getInspectionId(),
-                HandoverHistory.ActivityType.INSPECTION_STARTED,
-                "사업계획 점검이 수정되었습니다.",
-                savedInspection.getUpdatedId(),
-                savedInspection.getUpdatedId(),  // actorName parameter 추가
-                savedInspection.getInspectionId()
-        );
-        handoverHistoryRepository.save(history);
+
 
         log.debug("사업계획 점검 수정 완료 - inspectionId: {}", inspectionId);
         return savedInspection;
@@ -157,24 +143,12 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
         inspection.setUpdatedId(actorEmpNo);
         businessPlanInspectionRepository.save(inspection);
 
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                inspectionId,
-                HandoverHistory.ActivityType.ASSIGNMENT_STARTED,
-                "사업계획 점검이 시작되었습니다.",
-                actorEmpNo,
-                actorEmpNo,  // actorName parameter 추가
-                inspectionId
-        );
-        handoverHistoryRepository.save(history);
-
         log.debug("점검 시작 완료 - inspectionId: {}", inspectionId);
     }
 
     @Override
     @Transactional
-    public void completeInspection(Long inspectionId, BusinessPlanInspection.InspectionGrade grade, 
-                                   String results, String actorEmpNo) {
+    public void completeInspection(Long inspectionId, BusinessPlanInspection.InspectionGrade grade, String actorEmpNo) {
         log.debug("점검 완료 - inspectionId: {}, grade: {}", inspectionId, grade);
 
         BusinessPlanInspection inspection = businessPlanInspectionRepository.findById(inspectionId)
@@ -185,20 +159,10 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
             throw new BusinessException("진행중인 점검만 완료할 수 있습니다.");
         }
 
-        inspection.completeInspection(grade, results);
+        inspection.completeInspection();
+        inspection.setOverallGrade(grade);
         inspection.setUpdatedId(actorEmpNo);
         businessPlanInspectionRepository.save(inspection);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                inspectionId,
-                HandoverHistory.ActivityType.ASSIGNMENT_COMPLETED,
-                String.format("사업계획 점검이 완료되었습니다. (등급: %s)", grade),
-                actorEmpNo,
-                actorEmpNo,  // actorName parameter 추가
-                inspectionId
-        );
-        handoverHistoryRepository.save(history);
 
         log.debug("점검 완료 - inspectionId: {}", inspectionId);
     }
@@ -220,114 +184,8 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
         inspection.setUpdatedId(actorEmpNo);
         businessPlanInspectionRepository.save(inspection);
 
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                inspectionId,
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                "사업계획 점검이 취소되었습니다. 사유: " + (reason != null ? reason : "사유 없음"),
-                actorEmpNo,
-                actorEmpNo,  // actorName parameter 추가
-                inspectionId
-        );
-        handoverHistoryRepository.save(history);
-
         log.debug("점검 취소 완료 - inspectionId: {}", inspectionId);
     }
-
-    @Override
-    @Transactional
-    public void addImprovementItems(Long inspectionId, String items, LocalDate dueDate, String actorEmpNo) {
-        log.debug("개선사항 등록 - inspectionId: {}, dueDate: {}", inspectionId, dueDate);
-
-        BusinessPlanInspection inspection = businessPlanInspectionRepository.findById(inspectionId)
-                .orElseThrow(() -> new BusinessException("사업계획 점검을 찾을 수 없습니다: " + inspectionId));
-
-        // 개선사항 등록 가능 여부 확인
-        if (inspection.getStatus() != BusinessPlanInspection.InspectionStatus.COMPLETED) {
-            throw new BusinessException("완료된 점검에만 개선사항을 등록할 수 있습니다.");
-        }
-
-        inspection.addImprovementItems(items, dueDate);
-        inspection.setUpdatedId(actorEmpNo);
-        businessPlanInspectionRepository.save(inspection);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                inspectionId,
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                "개선사항이 등록되었습니다.",
-                actorEmpNo,
-                actorEmpNo,  // actorName parameter 추가
-                inspectionId
-        );
-        handoverHistoryRepository.save(history);
-
-        log.debug("개선사항 등록 완료 - inspectionId: {}", inspectionId);
-    }
-
-    @Override
-    @Transactional
-    public void startImprovement(Long inspectionId, String actorEmpNo) {
-        log.debug("개선사항 진행 시작 - inspectionId: {}", inspectionId);
-
-        BusinessPlanInspection inspection = businessPlanInspectionRepository.findById(inspectionId)
-                .orElseThrow(() -> new BusinessException("사업계획 점검을 찾을 수 없습니다: " + inspectionId));
-
-        // 개선 시작 가능 여부 확인
-        if (inspection.getImprovementStatus() != BusinessPlanInspection.ImprovementStatus.PENDING) {
-            throw new BusinessException("대기중인 개선사항만 시작할 수 있습니다.");
-        }
-
-        inspection.startImprovement();
-        inspection.setUpdatedId(actorEmpNo);
-        businessPlanInspectionRepository.save(inspection);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                inspectionId,
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                "개선사항 진행이 시작되었습니다.",
-                actorEmpNo,
-                actorEmpNo,  // actorName parameter 추가
-                inspectionId
-        );
-        handoverHistoryRepository.save(history);
-
-        log.debug("개선사항 진행 시작 완료 - inspectionId: {}", inspectionId);
-    }
-
-    @Override
-    @Transactional
-    public void completeImprovement(Long inspectionId, String actorEmpNo) {
-        log.debug("개선사항 완료 - inspectionId: {}", inspectionId);
-
-        BusinessPlanInspection inspection = businessPlanInspectionRepository.findById(inspectionId)
-                .orElseThrow(() -> new BusinessException("사업계획 점검을 찾을 수 없습니다: " + inspectionId));
-
-        // 개선 완료 가능 여부 확인
-        if (inspection.getImprovementStatus() != BusinessPlanInspection.ImprovementStatus.IN_PROGRESS) {
-            throw new BusinessException("진행중인 개선사항만 완료할 수 있습니다.");
-        }
-
-        inspection.completeImprovement();
-        inspection.setUpdatedId(actorEmpNo);
-        businessPlanInspectionRepository.save(inspection);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createInspectionHistory(
-                inspectionId,
-                HandoverHistory.ActivityType.STATUS_CHANGED,
-                "개선사항이 완료되었습니다.",
-                actorEmpNo,
-                actorEmpNo,  // actorName parameter 추가
-                inspectionId
-        );
-        handoverHistoryRepository.save(history);
-
-        log.debug("개선사항 완료 - inspectionId: {}", inspectionId);
-    }
-
-    // 조회 메서드들
 
     @Override
     public List<BusinessPlanInspectionDto> getInspectionsByDepartment(String deptCd) {
@@ -373,16 +231,16 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
     }
 
     @Override
-    public List<BusinessPlanInspectionDto> getInspectionsByInspectee(String inspecteeEmpNo) {
-        log.debug("피점검자별 점검 조회 - inspecteeEmpNo: {}", inspecteeEmpNo);
-        List<BusinessPlanInspection> inspections = businessPlanInspectionRepository.findByInspecteeEmpNo(inspecteeEmpNo);
+    public List<BusinessPlanInspectionDto> getInspectionsByGrade(BusinessPlanInspection.InspectionGrade overallGrade) {
+        log.debug("등급별 점검 조회 - grade: {}", overallGrade);
+        List<BusinessPlanInspection> inspections = businessPlanInspectionRepository.findByOverallGrade(overallGrade);
         return convertToDto(inspections);
     }
 
     @Override
-    public List<BusinessPlanInspectionDto> getInspectionsByGrade(BusinessPlanInspection.InspectionGrade overallGrade) {
-        log.debug("등급별 점검 조회 - grade: {}", overallGrade);
-        List<BusinessPlanInspection> inspections = businessPlanInspectionRepository.findByOverallGrade(overallGrade);
+    public List<BusinessPlanInspectionDto> getInspectionsByImprovementStatus(BusinessPlanInspection.ImprovementStatus improvementStatus) {
+        log.debug("개선 상태별 점검 조회 - improvementStatus: {}", improvementStatus);
+        List<BusinessPlanInspection> inspections = businessPlanInspectionRepository.findByImprovementStatus(improvementStatus);
         return convertToDto(inspections);
     }
 
@@ -445,7 +303,7 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
     }
 
     @Override
-    public Page<BusinessPlanInspectionDto> searchInspections(InspectionSearchDto searchDto, Pageable pageable) {
+    public Page<BusinessPlanInspectionService.BusinessPlanInspectionDto> searchInspections(BusinessPlanInspectionService.InspectionSearchDto searchDto, Pageable pageable) {
         log.debug("복합 조건 검색 - searchDto: {}", searchDto);
         
         Page<BusinessPlanInspection> inspections = businessPlanInspectionRepository.findBySearchCriteria(
@@ -454,7 +312,6 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
                 searchDto.getInspectionQuarter(),
                 searchDto.getInspectionType(),
                 searchDto.getStatus(),
-                searchDto.getOverallGrade(),
                 searchDto.getInspectorEmpNo(),
                 pageable
         );
@@ -462,44 +319,40 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
         return inspections.map(this::convertToDto);
     }
 
-    // 통계 기능들은 추후 구현 예정
     @Override
-    public InspectionStatisticsDto getInspectionStatistics() {
+    public BusinessPlanInspectionService.InspectionStatisticsDto getInspectionStatistics() {
         // TODO: 구현 예정
         return null;
     }
 
     @Override
-    public List<DepartmentInspectionStatisticsDto> getInspectionStatisticsByDepartment() {
+    public List<BusinessPlanInspectionService.DepartmentInspectionStatisticsDto> getInspectionStatisticsByDepartment() {
+        // TODO: 구현 예정
+        return null;
+    }
+
+    public List<BusinessPlanInspectionService.GradeStatisticsDto> getInspectionStatisticsByGrade() {
         // TODO: 구현 예정
         return null;
     }
 
     @Override
-    public List<GradeStatisticsDto> getInspectionStatisticsByGrade() {
+    public List<BusinessPlanInspectionService.YearlyStatisticsDto> getInspectionStatisticsByYear() {
         // TODO: 구현 예정
         return null;
     }
 
     @Override
-    public List<YearlyStatisticsDto> getInspectionStatisticsByYear() {
+    public List<BusinessPlanInspectionService.MonthlyStatisticsDto> getMonthlyCompletionStatistics() {
         // TODO: 구현 예정
         return null;
     }
 
     @Override
-    public List<MonthlyStatisticsDto> getMonthlyCompletionStatistics() {
+    public List<BusinessPlanInspectionService.YearlyInspectionStatusDto> getYearlyInspectionStatus(Integer year) {
         // TODO: 구현 예정
         return null;
     }
-
-    @Override
-    public List<YearlyInspectionStatusDto> getYearlyInspectionStatus(Integer year) {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    // Private helper methods
 
     private List<BusinessPlanInspectionDto> convertToDto(List<BusinessPlanInspection> inspections) {
         return inspections.stream()
@@ -507,8 +360,8 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
                 .collect(Collectors.toList());
     }
 
-    private BusinessPlanInspectionDto convertToDto(BusinessPlanInspection inspection) {
-        return new BusinessPlanInspectionDto() {
+    private BusinessPlanInspectionService.BusinessPlanInspectionDto convertToDto(BusinessPlanInspection inspection) {
+        return new BusinessPlanInspectionService.BusinessPlanInspectionDto() {
             @Override
             public Long getInspectionId() { return inspection.getInspectionId(); }
             
@@ -541,15 +394,19 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
             
             @Override
             public String getInspectionCriteria() { return inspection.getInspectionCriteria(); }
-            
+
             @Override
-            public String getInspectionResults() { return inspection.getInspectionResults(); }
-            
+            public LocalDate getActualStartDate() {
+                return inspection.getActualStartDate();
+            }
+
+            @Override
+            public LocalDate getActualEndDate() {
+                return inspection.getActualEndDate();
+            }
+
             @Override
             public BusinessPlanInspection.InspectionStatus getStatus() { return inspection.getStatus(); }
-            
-            @Override
-            public BusinessPlanInspection.InspectionGrade getOverallGrade() { return inspection.getOverallGrade(); }
             
             @Override
             public String getInspectorEmpNo() { return inspection.getInspectorEmpNo(); }
@@ -558,27 +415,7 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
             public String getInspectorName() { return null; } // TODO: User 조인 후 구현
             
             @Override
-            public String getInspecteeEmpNo() { return inspection.getInspecteeEmpNo(); }
-            
-            @Override
-            public String getInspecteeName() { return null; } // TODO: User 조인 후 구현
-            
-            @Override
-            public String getImprovementItems() { return inspection.getImprovementItems(); }
-            
-            @Override
-            public LocalDate getImprovementDueDate() { return inspection.getImprovementDueDate(); }
-            
-            @Override
-            public BusinessPlanInspection.ImprovementStatus getImprovementStatus() { 
-                return inspection.getImprovementStatus(); 
-            }
-            
-            @Override
             public boolean isOnSchedule() { return inspection.isOnSchedule(); }
-            
-            @Override
-            public boolean isImprovementOnTime() { return inspection.isImprovementOnTime(); }
         };
     }
 }

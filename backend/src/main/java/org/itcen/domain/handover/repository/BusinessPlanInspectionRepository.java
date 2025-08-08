@@ -53,10 +53,7 @@ public interface BusinessPlanInspectionRepository extends JpaRepository<Business
      */
     List<BusinessPlanInspection> findByInspectorEmpNo(String inspectorEmpNo);
 
-    /**
-     * 피점검자별 점검 조회
-     */
-    List<BusinessPlanInspection> findByInspecteeEmpNo(String inspecteeEmpNo);
+    
 
     /**
      * 종합 등급별 점검 조회
@@ -80,13 +77,13 @@ public interface BusinessPlanInspectionRepository extends JpaRepository<Business
      */
     @Query("SELECT bpi FROM BusinessPlanInspection bpi WHERE bpi.deptCd = :deptCd " +
            "ORDER BY bpi.inspectionYear DESC, bpi.inspectionQuarter DESC, bpi.createdAt DESC")
-    List<BusinessPlanInspection> findLatestByDeptCd(@Param("deptCd") String deptCd, Pageable pageable);
+    List<BusinessPlanInspection> findLatestInspectionsByDepartment(@Param("deptCd") String deptCd, Pageable pageable);
 
     /**
      * 특정 기간 내 계획된 점검 조회
      */
     @Query("SELECT bpi FROM BusinessPlanInspection bpi WHERE bpi.plannedStartDate BETWEEN :startDate AND :endDate")
-    List<BusinessPlanInspection> findByPlannedDateRange(@Param("startDate") LocalDate startDate,
+    List<BusinessPlanInspection> findInspectionsByDateRange(@Param("startDate") LocalDate startDate,
                                                         @Param("endDate") LocalDate endDate);
 
     /**
@@ -126,14 +123,12 @@ public interface BusinessPlanInspectionRepository extends JpaRepository<Business
            "(:inspectionQuarter IS NULL OR bpi.inspectionQuarter = :inspectionQuarter) AND " +
            "(:inspectionType IS NULL OR bpi.inspectionType = :inspectionType) AND " +
            "(:status IS NULL OR bpi.status = :status) AND " +
-           "(:overallGrade IS NULL OR bpi.overallGrade = :overallGrade) AND " +
            "(:inspectorEmpNo IS NULL OR bpi.inspectorEmpNo LIKE %:inspectorEmpNo%)")
     Page<BusinessPlanInspection> findBySearchCriteria(@Param("deptCd") String deptCd,
                                                       @Param("inspectionYear") Integer inspectionYear,
                                                       @Param("inspectionQuarter") Integer inspectionQuarter,
                                                       @Param("inspectionType") BusinessPlanInspection.InspectionType inspectionType,
                                                       @Param("status") BusinessPlanInspection.InspectionStatus status,
-                                                      @Param("overallGrade") BusinessPlanInspection.InspectionGrade overallGrade,
                                                       @Param("inspectorEmpNo") String inspectorEmpNo,
                                                       Pageable pageable);
 
@@ -201,16 +196,5 @@ public interface BusinessPlanInspectionRepository extends JpaRepository<Business
      */
     List<BusinessPlanInspection> findByDeptCdAndInspectionYear(String deptCd, Integer inspectionYear);
 
-    /**
-     * 부서별 최신 점검들 조회 (ServiceImpl에서 사용)
-     */
-    @Query("SELECT bpi FROM BusinessPlanInspection bpi WHERE bpi.deptCd = :deptCd " +
-           "ORDER BY bpi.createdAt DESC")
-    List<BusinessPlanInspection> findLatestInspectionsByDepartment(@Param("deptCd") String deptCd, Pageable pageable);
-
-    /**
-     * 날짜 범위로 점검 조회 (ServiceImpl에서 사용)
-     */
-    @Query("SELECT bpi FROM BusinessPlanInspection bpi WHERE bpi.plannedStartDate >= :startDate AND bpi.plannedEndDate <= :endDate")
-    List<BusinessPlanInspection> findInspectionsByDateRange(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    
 }

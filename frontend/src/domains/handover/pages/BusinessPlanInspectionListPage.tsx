@@ -227,6 +227,21 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
     setDialogOpen(true);
   }, []);
 
+  const handleEditClick = useCallback(() => {
+    if (selectedIds.length !== 1) {
+      alert('수정할 항목을 하나만 선택해주세요.');
+      return;
+    }
+
+    const selectedRow = rows.find(row => row.inspectionId === selectedIds[0]);
+    if (selectedRow) {
+      setDialogMode('edit');
+      setSelectedInspectionId(selectedRow.inspectionId);
+      setSelectedInspectionData(selectedRow);
+      setDialogOpen(true);
+    }
+  }, [selectedIds, rows]);
+
   const handleRowDoubleClick = useCallback((row: BusinessPlanInspectionDto) => {
     setDialogMode('view');
     setSelectedInspectionId(row.inspectionId);
@@ -354,12 +369,14 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
           />
           <ManagementButtonGroup
             onRegister={handleCreateClick}
+            onEdit={handleEditClick}
             onDelete={handleDelete}
             showRegister={true}
+            showEdit={true}
             showDelete={true}
-            showEdit={false}
             showRefresh={false}
             registerDisabled={loading}
+            editDisabled={loading || selectedIds.length !== 1}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"
             sx={{
@@ -376,7 +393,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
             loading={loading}
             height={600}
             selectable={true}
-            multiSelect={false}
+            multiSelect={true}
             selectedRows={selectedIds}
             onRowSelectionChange={selectedRows => {
               setSelectedIds(selectedRows.map(id => Number(id)));

@@ -58,7 +58,7 @@ public interface BusinessPlanInspectionService {
     /**
      * 점검 완료
      */
-    void completeInspection(Long inspectionId, String actorEmpNo);
+    void completeInspection(Long inspectionId, BusinessPlanInspection.InspectionGrade grade, String actorEmpNo);
 
     /**
      * 점검 취소
@@ -91,6 +91,16 @@ public interface BusinessPlanInspectionService {
      * 상태별 점검 조회
      */
     List<BusinessPlanInspectionDto> getInspectionsByStatus(BusinessPlanInspection.InspectionStatus status);
+
+    /**
+     * 등급별 점검 조회
+     */
+    List<BusinessPlanInspectionDto> getInspectionsByGrade(BusinessPlanInspection.InspectionGrade grade);
+
+    /**
+     * 개선 상태별 점검 조회
+     */
+    List<BusinessPlanInspectionDto> getInspectionsByImprovementStatus(BusinessPlanInspection.ImprovementStatus improvementStatus);
 
     /**
      * 점검자별 점검 조회

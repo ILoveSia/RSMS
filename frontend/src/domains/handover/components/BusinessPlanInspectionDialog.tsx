@@ -9,7 +9,7 @@
  * - Interface Segregation: 다이얼로그 관련 기능만 제공
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
-
+import DatePicker from '@/shared/components/ui/form/DatePicker';
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
 import {
@@ -36,7 +36,7 @@ import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
-import { type BusinessPlanInspectionDto } from '../api/businessPlanInspectionApi';
+import { businessPlanInspectionApi, type BusinessPlanInspectionDto } from '../api/businessPlanInspectionApi';
 
 interface BusinessPlanInspectionDialogProps {
   open: boolean;
@@ -283,8 +283,25 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
     setError(null);
 
     try {
-      // TODO: 실제 API 호출 구현 예정
-      console.log('Save data:', formData);
+      const requestData: Partial<BusinessPlanInspectionDto> = {
+        deptCd: formData.deptCd,
+        inspectionYear: formData.inspectionYear,
+        inspectionQuarter: formData.inspectionQuarter || undefined,
+        inspectionTitle: formData.inspectionTitle,
+        inspectionType: formData.inspectionType as 'QUARTERLY' | 'SEMI_ANNUAL' | 'ANNUAL' | 'SPECIAL',
+        plannedStartDate: formData.plannedStartDate,
+        plannedEndDate: formData.plannedEndDate,
+        inspectionScope: formData.inspectionScope,
+        inspectionCriteria: formData.inspectionCriteria,
+        status: formData.status as 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED',
+        inspectorEmpNo: formData.inspectorEmpNo || undefined,
+      };
+
+      if (isCreateMode) {
+        await businessPlanInspectionApi.createInspection(requestData as Omit<BusinessPlanInspectionDto, 'inspectionId'>);
+      } else if (isEditMode && inspectionId) {
+        await businessPlanInspectionApi.updateInspection(inspectionId, requestData);
+      }
 
       onSuccess?.();
       onClose();
@@ -588,8 +605,8 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
                     fullWidth
                     mode={mode === 'view' ? 'readonly' : 'editable'}
                     label='점검 항목'
-                    value={formData.inspectionItems}
-                    onChange={e => handleInputChange('inspectionItems', e.target.value)}
+                    value={formData.inspectionTitle}
+                    onChange={e => handleInputChange('inspectionTitle', e.target.value)}
                     disabled={isViewMode}
                     placeholder='주요 점검 항목을 쉼표로 구분하여 입력하세요.'
                   />

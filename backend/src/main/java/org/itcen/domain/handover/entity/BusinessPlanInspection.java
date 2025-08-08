@@ -140,6 +140,26 @@ public class BusinessPlanInspection {
     private String updatedId;
 
     /**
+     * 종합 등급
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "overall_grade", length = 20)
+    private InspectionGrade overallGrade;
+
+    /**
+     * 개선 조치 상태
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "improvement_status", length = 20)
+    private ImprovementStatus improvementStatus;
+
+    /**
+     * 개선 조치 기한
+     */
+    @Column(name = "improvement_due_date")
+    private LocalDate improvementDueDate;
+
+    /**
      * 점검 유형 열거형
      */
     public enum InspectionType {
@@ -157,6 +177,26 @@ public class BusinessPlanInspection {
         IN_PROGRESS,    // 진행중
         COMPLETED,      // 완료
         CANCELLED       // 취소
+    }
+
+    /**
+     * 점검 등급 (우수, 양호, 보통, 미흡)
+     */
+    public enum InspectionGrade {
+        EXCELLENT,      // 우수
+        GOOD,           // 양호
+        FAIR,           // 보통
+        POOR            // 미흡
+    }
+
+    /**
+     * 개선 상태 (해당없음, 조치필요, 진행중, 완료)
+     */
+    public enum ImprovementStatus {
+        NOT_APPLICABLE, // 해당없음
+        ACTION_REQUIRED,// 조치필요
+        IN_PROGRESS,    // 진행중
+        COMPLETED       // 완료
     }
 
     /**
