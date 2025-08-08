@@ -11,7 +11,6 @@
  */
 
 import apiClient from '@/app/common/api/client';
-import { Utils } from '@/app/utils';
 import { getCodeNameSync, getDepartmentNameSync, extractCommonCodes, getEmployeeNameSync } from '@/shared/utils/codeUtils';
 // 페이지네이션 파라미터 타입
 export interface PaginationParams {
@@ -116,7 +115,6 @@ export interface InspectionSearchParams {
  */
 export class BusinessPlanInspectionApi {
   private static readonly BASE_URL = '/handover/inspections';
-  private static readonly utils = Utils.getInstance();
 
   // 공통코드 데이터를 가져오는 헬퍼 메서드
   private static async getCommonCodes() {
@@ -132,7 +130,7 @@ export class BusinessPlanInspectionApi {
   // 부서 데이터를 가져오는 헬퍼 메서드
   private static async getDepartments() {
     try {
-      const response = await apiClient.get('/departments');
+      const response: any = await apiClient.get('/departments');
       return Array.isArray(response) ? response : response?.data || [];
     } catch (error) {
       console.error('부서 조회 실패:', error);
@@ -226,7 +224,7 @@ export class BusinessPlanInspectionApi {
    */
   static async getInspection(inspectionId: number): Promise<BusinessPlanInspectionDto> {
     const response: any = await apiClient.get(`${this.BASE_URL}/${inspectionId}`);
-    return response.data;
+    return response;
   }
 
   /**
@@ -234,7 +232,7 @@ export class BusinessPlanInspectionApi {
    */
   static async createInspection(inspectionData: Omit<BusinessPlanInspectionDto, 'inspectionId'>): Promise<BusinessPlanInspectionDto> {
     const response: any = await apiClient.post(this.BASE_URL, inspectionData);
-    return response.data;
+    return response;
   }
 
   /**
@@ -242,7 +240,7 @@ export class BusinessPlanInspectionApi {
    */
   static async updateInspection(inspectionId: number, inspectionData: Partial<BusinessPlanInspectionDto>): Promise<BusinessPlanInspectionDto> {
     const response: any = await apiClient.put(`${this.BASE_URL}/${inspectionId}`, inspectionData);
-    return response.data;
+    return response;
   }
 
   /**

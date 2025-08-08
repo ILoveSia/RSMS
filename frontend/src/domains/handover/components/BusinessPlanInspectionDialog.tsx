@@ -276,6 +276,24 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
     return true;
   };
 
+  // 날짜 문자열(yyyy-MM-dd) <-> Date 변환 유틸리티
+  const toYmd = (date: Date | null): string => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const parseYmd = (value: string): Date | null => {
+    if (!value) return null;
+    const parts = value.split('-');
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts.map(Number);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+
   const handleSave = async () => {
     if (!validateForm()) return;
 
@@ -531,33 +549,23 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
 
                 {/* 계획 시작일 */}
                 <Grid item xs={12} sm={6}>
-                  <TextField
+                  <DatePicker
                     fullWidth
-                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    mode={isViewMode ? 'readonly' : 'editable'}
                     label='계획 시작일'
-                    type='date'
-                    value={formData.plannedStartDate}
-                    onChange={e => handleInputChange('plannedStartDate', e.target.value)}
-                    disabled={isViewMode}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
+                    value={parseYmd(formData.plannedStartDate)}
+                    onChange={date => handleInputChange('plannedStartDate', toYmd(date as Date))}
                   />
                 </Grid>
 
                 {/* 계획 종료일 */}
                 <Grid item xs={12} sm={6}>
-                  <TextField
+                  <DatePicker
                     fullWidth
-                    mode={mode === 'view' ? 'readonly' : 'editable'}
+                    mode={isViewMode ? 'readonly' : 'editable'}
                     label='계획 종료일'
-                    type='date'
-                    value={formData.plannedEndDate}
-                    onChange={e => handleInputChange('plannedEndDate', e.target.value)}
-                    disabled={isViewMode}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
+                    value={parseYmd(formData.plannedEndDate)}
+                    onChange={date => handleInputChange('plannedEndDate', toYmd(date as Date))}
                   />
                 </Grid>
 
