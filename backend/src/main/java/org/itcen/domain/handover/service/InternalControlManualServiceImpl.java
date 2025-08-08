@@ -93,9 +93,14 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         existingManual.setManualTitle(manual.getManualTitle());
         existingManual.setManualContent(manual.getManualContent());
         existingManual.setManualVersion(manual.getManualVersion());
-        existingManual.setUpdatedId(manual.getUpdatedId());
+        existingManual.setStatus(manual.getStatus());
+        existingManual.setDeptCd(manual.getDeptCd());
+        existingManual.setEffectiveDate(manual.getEffectiveDate());
+        existingManual.setExpiryDate(manual.getExpiryDate());
+        existingManual.setAuthorEmpNo(manual.getAuthorEmpNo());
         existingManual.setReviewerEmpNo(manual.getReviewerEmpNo());
         existingManual.setApproverEmpNo(manual.getApproverEmpNo());
+        existingManual.setUpdatedId(manual.getUpdatedId());
 
         InternalControlManual savedManual = internalControlManualRepository.save(existingManual);
 

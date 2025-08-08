@@ -170,17 +170,22 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     return <Chip label={config.label} color={config.color} size="small" />;
   };
 
-  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수
+  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수 (로컬 시간대 유지)
   const parseDate = (dateString: string | null | undefined): Date | null => {
     if (!dateString) return null;
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? null : date;
+    // YYYY-MM-DD 형식의 문자열을 로컬 시간대로 파싱
+    const [year, month, day] = dateString.split('-').map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day); // month는 0부터 시작하므로 -1
   };
 
-  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수
+  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수 (로컬 시간대 유지)
   const formatDate = (date: Date | null): string => {
     if (!date) return '';
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // 데이터 로드 함수
@@ -458,8 +463,8 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
                     mode={isViewMode ? "readonly" : "editable"}
                   />
                 </Grid>
-{/* 부서 */}
-<Grid item xs={12}>
+                {/* 부서 */}
+                <Grid item xs={12}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
                       fullWidth
@@ -512,7 +517,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
                   </Box>
                 </Grid>
 
-                
+
 
                 {/* 시행일 */}
                 <Grid item xs={12} sm={6}>
