@@ -26,6 +26,8 @@ import java.time.LocalDate;
 public class BusinessPlanInspectionDto {
     
     private Long inspectionId;
+    private String deptCd;
+    private String deptName; // 조회용
     private Integer inspectionYear;
     private Integer inspectionQuarter;
     private String inspectionTitle;
@@ -34,46 +36,15 @@ public class BusinessPlanInspectionDto {
     private LocalDate plannedEndDate;
     private String inspectionScope;
     private String inspectionCriteria;
-    private String inspectionResults;
+    private LocalDate actualStartDate;
+    private LocalDate actualEndDate;
     private BusinessPlanInspection.InspectionStatus status;
-    private BusinessPlanInspection.InspectionGrade overallGrade;
     private String inspectorEmpNo;
-    private String inspectorName;
-    private String inspecteeEmpNo;
-    private String inspecteeName;
-    private String improvementItems;
-    private LocalDate improvementDueDate;
-    private BusinessPlanInspection.ImprovementStatus improvementStatus;
+    private String inspectorName; // 조회용
     
     // 계산된 필드들
     private boolean isOnSchedule;
-    private boolean isImprovementOnTime;
     private boolean isDelayed;
     private int daysRemaining;
-    private int improvementDaysRemaining;
     private String statusDescription;
-    
-    // 추가 정보 필드들
-    private LocalDate actualStartDate;
-    private LocalDate actualEndDate;
-    private LocalDate improvementStartDate; 
-    private LocalDate improvementCompletedDate;
-    private LocalDate createdAt;
-    private LocalDate updatedAt;
-    private String createdByName;
-    private String updatedByName;
-    
-    // 점검 세부 정보
-    private String riskLevel;
-    private String complianceLevel;
-    private String recommendedActions;
-    private String followUpRequired;
-    
-    // 첨부파일 정보
-    private Long attachmentCount;
-    private String attachmentFileNames;
-    
-    // 관련 문서 정보
-    private Long relatedDocumentCount;
-    private String relatedDocumentTitles;
 }

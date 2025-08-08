@@ -58,28 +58,12 @@ public interface BusinessPlanInspectionService {
     /**
      * 점검 완료
      */
-    void completeInspection(Long inspectionId, BusinessPlanInspection.InspectionGrade grade, 
-                           String results, String actorEmpNo);
+    void completeInspection(Long inspectionId, String actorEmpNo);
 
     /**
      * 점검 취소
      */
     void cancelInspection(Long inspectionId, String actorEmpNo, String reason);
-
-    /**
-     * 개선사항 등록
-     */
-    void addImprovementItems(Long inspectionId, String items, LocalDate dueDate, String actorEmpNo);
-
-    /**
-     * 개선사항 진행 시작
-     */
-    void startImprovement(Long inspectionId, String actorEmpNo);
-
-    /**
-     * 개선사항 완료
-     */
-    void completeImprovement(Long inspectionId, String actorEmpNo);
 
     // 조회 기능
 
@@ -113,15 +97,7 @@ public interface BusinessPlanInspectionService {
      */
     List<BusinessPlanInspectionDto> getInspectionsByInspector(String inspectorEmpNo);
 
-    /**
-     * 피점검자별 점검 조회
-     */
-    List<BusinessPlanInspectionDto> getInspectionsByInspectee(String inspecteeEmpNo);
 
-    /**
-     * 종합 등급별 점검 조회
-     */
-    List<BusinessPlanInspectionDto> getInspectionsByGrade(BusinessPlanInspection.InspectionGrade overallGrade);
 
     /**
      * 부서와 연도별 점검 조회
@@ -176,11 +152,6 @@ public interface BusinessPlanInspectionService {
     List<DepartmentInspectionStatisticsDto> getInspectionStatisticsByDepartment();
 
     /**
-     * 등급별 점검 통계
-     */
-    List<GradeStatisticsDto> getInspectionStatisticsByGrade();
-
-    /**
      * 연도별 점검 통계
      */
     List<YearlyStatisticsDto> getInspectionStatisticsByYear();
@@ -209,18 +180,12 @@ public interface BusinessPlanInspectionService {
         LocalDate getPlannedEndDate();
         String getInspectionScope();
         String getInspectionCriteria();
-        String getInspectionResults();
+        LocalDate getActualStartDate();
+        LocalDate getActualEndDate();
         BusinessPlanInspection.InspectionStatus getStatus();
-        BusinessPlanInspection.InspectionGrade getOverallGrade();
         String getInspectorEmpNo();
         String getInspectorName();
-        String getInspecteeEmpNo();
-        String getInspecteeName();
-        String getImprovementItems();
-        LocalDate getImprovementDueDate();
-        BusinessPlanInspection.ImprovementStatus getImprovementStatus();
         boolean isOnSchedule();
-        boolean isImprovementOnTime();
     }
 
     interface InspectionSearchDto {
@@ -229,7 +194,6 @@ public interface BusinessPlanInspectionService {
         Integer getInspectionQuarter();
         BusinessPlanInspection.InspectionType getInspectionType();
         BusinessPlanInspection.InspectionStatus getStatus();
-        BusinessPlanInspection.InspectionGrade getOverallGrade();
         String getInspectorEmpNo();
         LocalDate getStartDate();
         LocalDate getEndDate();
@@ -240,7 +204,6 @@ public interface BusinessPlanInspectionService {
         Long getCompletedInspections();
         Long getInProgressInspections();
         Long getDelayedInspections();
-        Long getOverdueImprovements();
         Double getCompletionRate();
         Double getOnTimeRate();
     }
@@ -277,6 +240,5 @@ public interface BusinessPlanInspectionService {
         Integer getInspectionYear();
         Integer getInspectionQuarter();
         BusinessPlanInspection.InspectionStatus getStatus();
-        BusinessPlanInspection.InspectionGrade getOverallGrade();
     }
 }

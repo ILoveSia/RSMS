@@ -127,12 +127,10 @@ public class BusinessPlanInspectionController {
     @PostMapping("/{inspectionId}/complete")
     public ResponseEntity<Void> completeInspection(
             @PathVariable Long inspectionId,
-            @RequestParam BusinessPlanInspection.InspectionGrade grade,
-            @RequestParam String results,
             @RequestParam String actorEmpNo) {
-        log.debug("점검 완료 요청 - inspectionId: {}, grade: {}", inspectionId, grade);
+        log.debug("점검 완료 요청 - inspectionId: {}", inspectionId);
         
-        businessPlanInspectionService.completeInspection(inspectionId, grade, results, actorEmpNo);
+        businessPlanInspectionService.completeInspection(inspectionId, actorEmpNo);
         return ResponseEntity.ok().build();
     }
 
@@ -283,18 +281,7 @@ public class BusinessPlanInspectionController {
         return ResponseEntity.ok(inspections);
     }
 
-    /**
-     * 종합 등급별 점검 조회
-     */
-    @GetMapping("/grade/{overallGrade}")
-    public ResponseEntity<List<BusinessPlanInspectionService.BusinessPlanInspectionDto>> getInspectionsByGrade(
-            @PathVariable BusinessPlanInspection.InspectionGrade overallGrade) {
-        log.debug("등급별 점검 조회 요청 - grade: {}", overallGrade);
-        
-        List<BusinessPlanInspectionService.BusinessPlanInspectionDto> inspections = 
-                businessPlanInspectionService.getInspectionsByGrade(overallGrade);
-        return ResponseEntity.ok(inspections);
-    }
+
 
     /**
      * 부서와 연도별 점검 조회

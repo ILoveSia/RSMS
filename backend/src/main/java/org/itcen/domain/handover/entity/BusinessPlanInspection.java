@@ -57,7 +57,7 @@ public class BusinessPlanInspection {
     private String inspectionTitle;
 
     /**
-     * 점검 유형 (QUARTERLY, ANNUAL, SPECIAL)
+     * 점검 유형 (QUARTERLY, SEMI_ANNUAL, ANNUAL, SPECIAL)
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "inspection_type", length = 50, nullable = false)
@@ -88,22 +88,16 @@ public class BusinessPlanInspection {
     private String inspectionCriteria;
 
     /**
-     * 실제 점검 시작일시
+     * 실제 점검 시작일
      */
     @Column(name = "actual_start_date")
-    private LocalDateTime actualStartDate;
+    private LocalDate actualStartDate;
 
     /**
-     * 실제 점검 완료일시
+     * 실제 점검 완료일
      */
     @Column(name = "actual_end_date")
-    private LocalDateTime actualEndDate;
-
-    /**
-     * 점검 결과
-     */
-    @Column(name = "inspection_results", columnDefinition = "TEXT")
-    private String inspectionResults;
+    private LocalDate actualEndDate;
 
     /**
      * 상태 (PLANNED, IN_PROGRESS, COMPLETED, CANCELLED)
@@ -114,42 +108,10 @@ public class BusinessPlanInspection {
     private InspectionStatus status = InspectionStatus.PLANNED;
 
     /**
-     * 종합 등급 (A, B, C, D)
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "overall_grade", length = 10)
-    private InspectionGrade overallGrade;
-
-    /**
      * 점검자 사번
      */
     @Column(name = "inspector_emp_no", length = 20)
     private String inspectorEmpNo;
-
-    /**
-     * 피점검자 사번 (부서 담당자)
-     */
-    @Column(name = "inspectee_emp_no", length = 20)
-    private String inspecteeEmpNo;
-
-    /**
-     * 개선사항
-     */
-    @Column(name = "improvement_items", columnDefinition = "TEXT")
-    private String improvementItems;
-
-    /**
-     * 개선 완료 예정일
-     */
-    @Column(name = "improvement_due_date")
-    private LocalDate improvementDueDate;
-
-    /**
-     * 개선 상태 (PENDING, IN_PROGRESS, COMPLETED)
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "improvement_status", length = 20)
-    private ImprovementStatus improvementStatus;
 
     /**
      * 생성일시
@@ -181,9 +143,10 @@ public class BusinessPlanInspection {
      * 점검 유형 열거형
      */
     public enum InspectionType {
-        QUARTERLY,  // 분기별
-        ANNUAL,     // 연간
-        SPECIAL     // 특별점검
+        QUARTERLY,      // 분기별
+        SEMI_ANNUAL,    // 반기별
+        ANNUAL,         // 연간
+        SPECIAL         // 특별점검
     }
 
     /**
@@ -197,41 +160,20 @@ public class BusinessPlanInspection {
     }
 
     /**
-     * 점검 등급 열거형
-     */
-    public enum InspectionGrade {
-        A,  // 우수
-        B,  // 양호
-        C,  // 보통
-        D   // 미흡
-    }
-
-    /**
-     * 개선 상태 열거형
-     */
-    public enum ImprovementStatus {
-        PENDING,        // 대기
-        IN_PROGRESS,    // 진행중
-        COMPLETED       // 완료
-    }
-
-    /**
      * 점검 시작
      */
     public void startInspection(String inspectorEmpNo) {
         this.status = InspectionStatus.IN_PROGRESS;
-        this.actualStartDate = LocalDateTime.now();
+        this.actualStartDate = LocalDate.now();
         this.inspectorEmpNo = inspectorEmpNo;
     }
 
     /**
      * 점검 완료
      */
-    public void completeInspection(InspectionGrade grade, String results) {
+    public void completeInspection() {
         this.status = InspectionStatus.COMPLETED;
-        this.actualEndDate = LocalDateTime.now();
-        this.overallGrade = grade;
-        this.inspectionResults = results;
+        this.actualEndDate = LocalDate.now();
     }
 
     /**
@@ -239,29 +181,6 @@ public class BusinessPlanInspection {
      */
     public void cancelInspection() {
         this.status = InspectionStatus.CANCELLED;
-    }
-
-    /**
-     * 개선사항 등록
-     */
-    public void addImprovementItems(String items, LocalDate dueDate) {
-        this.improvementItems = items;
-        this.improvementDueDate = dueDate;
-        this.improvementStatus = ImprovementStatus.PENDING;
-    }
-
-    /**
-     * 개선사항 진행 시작
-     */
-    public void startImprovement() {
-        this.improvementStatus = ImprovementStatus.IN_PROGRESS;
-    }
-
-    /**
-     * 개선사항 완료
-     */
-    public void completeImprovement() {
-        this.improvementStatus = ImprovementStatus.COMPLETED;
     }
 
     /**
@@ -275,15 +194,5 @@ public class BusinessPlanInspection {
             return plannedEndDate == null || !now.isAfter(plannedEndDate);
         }
         return true;
-    }
-
-    /**
-     * 개선사항이 기한내 완료되었는지 확인
-     */
-    public boolean isImprovementOnTime() {
-        if (improvementStatus == ImprovementStatus.COMPLETED) {
-            return true;
-        }
-        return improvementDueDate == null || !LocalDate.now().isAfter(improvementDueDate);
     }
 }
