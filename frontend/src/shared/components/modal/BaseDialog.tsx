@@ -45,7 +45,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit';
   const isCreateMode = mode === 'create';
-  const isOnlyReadMode = mode === 'onlyRead';
 
   const handleEdit = () => {
     onModeChange?.('edit');
@@ -64,14 +63,14 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
       open={open}
       maxWidth={maxWidth}
       fullWidth
-      onClose={(event, reason) => {
+      onClose={(_, reason) => {
         if (reason !== 'backdropClick' && !loading) {
           onClose();
         }
       }}
       PaperProps={{
         sx: {
-          height: '500px',
+          height: 'auto',
           maxHeight: '90vh',
         },
       }}
@@ -105,7 +104,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
       </DialogTitle>
       <DialogContent
         dividers
-        component="div"
         sx={{
           p: 3,
           paddingX: 5,

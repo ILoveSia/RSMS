@@ -11,13 +11,11 @@ import {
   TableHead,
   TableRow,
   Button,
-  Alert,
   CircularProgress,
   Chip,
   IconButton,
   TextField,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   Avatar,
@@ -43,24 +41,70 @@ import {
   Close as CloseIcon,
   Clear as ClearIcon
 } from '@mui/icons-material';
+import { PersonAddAlt1 as PersonAddAlt1Icon } from '@mui/icons-material';
 
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ExcelDownloadButton, Button as SharedButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
+// no-op
+import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
 import { adminApi } from '../api/adminApi';
-import type { 
+import type {
   UserWithRoles, 
   Role, 
   UserFilter,
-  UserRoleInfo 
+  UserRoleInfo
 } from '../types';
+
+/**
+ * 사용자 권한 컬러 매핑 함수
+ * - SRP: 역할 ID → 칩 컬러 결정만 담당
+ * - OCP: 새로운 역할 추가 시 switch 확장으로 대응 (기존 분기 변경 최소화)
+ */
+const getRoleColor = (
+  roleId: string
+): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
+  switch (roleId) {
+    case 'ADMIN':
+      return 'error';
+    case 'MANAGER':
+      return 'primary';
+    case 'USER':
+      return 'secondary';
+    case 'AUDITOR':
+      return 'info';
+    default:
+      return 'default';
+  }
+};
+
+/**
+ * 사용자 권한 레벨 산출 함수
+ * - SRP: 활성 역할 리스트를 받아 가장 높은 권한 레벨 문자열만 반환
+ * - LSP/ISP: 데이터 구조에 의존하지 않고 필요한 정보만 이용
+ */
+const getPermissionLevel = (roles: UserRoleInfo[]): string => {
+  const activeRoles = roles.filter(r => r.isActive);
+  if (activeRoles.some(r => r.roleId === 'ADMIN')) return 'ADMIN';
+  if (activeRoles.some(r => r.roleId === 'MANAGER')) return 'MANAGER';
+  if (activeRoles.some(r => r.roleId === 'AUDITOR')) return 'AUDITOR';
+  if (activeRoles.some(r => r.roleId === 'USER')) return 'USER';
+  return 'NONE';
+};
 
 /**
  * 사용자 권한 관리 페이지
  * 사용자별 역할 할당 및 권한 관리를 제공합니다.
+ * 
+ * 설계 메모 (SOLID):
+ * - SRP: 본 컴포넌트는 사용자 권한 관리 화면의 상태/렌더링을 담당합니다.
+ * - OCP: 필터/표/다이얼로그 확장은 영역별 함수와 UI 블록을 분리하여 용이하게 합니다.
+ * - LSP: React 컴포넌트 규약을 준수하며 교체 가능성을 보장합니다.
+ * - ISP: 페이지 역할에 필요한 인터페이스(adminApi, 훅)만 의존합니다.
+ * - DIP: 데이터 요청은 `adminApi`(추상화)에 의존하여 구체 네트워크 구현에서 분리합니다.
  */
 const UserPermissionManagePage: React.FC = () => {
   // 상태 관리
@@ -72,6 +116,10 @@ const UserPermissionManagePage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingRoles, setEditingRoles] = useState<string[]>([]);
+
+  // 사용자 등록 다이얼로그 상태
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  // create dialog saving state handled inside dialog component
 
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
@@ -127,12 +175,20 @@ const UserPermissionManagePage: React.FC = () => {
     });
   }, [users, filter]);
 
+  // 통계 수치 메모이제이션: 렌더 비용과 불필요한 재계산을 줄임
+  const totalUsers = users.length;
+  const activeRoleUsersCount = useMemo(
+    () => users.filter(u => u.roles.some(r => r.isActive)).length,
+    [users]
+  );
+  const filteredUsersCount = filteredUsers.length;
+
   // 역할 편집 다이얼로그 열기
-  const handleEditUser = (user: UserWithRoles) => {
+  const handleEditUser = useCallback((user: UserWithRoles) => {
     setSelectedUser(user);
     setEditingRoles(user.roles.filter(r => r.isActive).map(r => r.roleId));
     setEditDialogOpen(true);
-  };
+  }, []);
 
   // 역할 토글
   const handleRoleToggle = (roleId: string) => {
@@ -181,26 +237,20 @@ const UserPermissionManagePage: React.FC = () => {
     }
   }, [selectedUser, editingRoles, roles, showSuccess, showError]);
 
-  // 역할 색상 매핑
-  const getRoleColor = (roleId: string): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-    switch (roleId) {
-      case 'ADMIN': return 'error';
-      case 'MANAGER': return 'primary';
-      case 'USER': return 'secondary';
-      case 'AUDITOR': return 'info';
-      default: return 'default';
-    }
-  };
+  // 등록 버튼 및 다이얼로그 핸들러
+  const openCreateDialog = useCallback(() => {
+    setCreateDialogOpen(true);
+  }, []);
 
-  // 권한 레벨 표시
-  const getPermissionLevel = (roles: UserRoleInfo[]): string => {
-    const activeRoles = roles.filter(r => r.isActive);
-    if (activeRoles.some(r => r.roleId === 'ADMIN')) return 'ADMIN';
-    if (activeRoles.some(r => r.roleId === 'MANAGER')) return 'MANAGER';
-    if (activeRoles.some(r => r.roleId === 'AUDITOR')) return 'AUDITOR';
-    if (activeRoles.some(r => r.roleId === 'USER')) return 'USER';
-    return 'NONE';
-  };
+  const closeCreateDialog = useCallback(() => {
+    setCreateDialogOpen(false);
+  }, []);
+
+  const handleCreated = useCallback(async () => {
+    showSuccess('사용자가 등록되었습니다.');
+    setCreateDialogOpen(false);
+    await loadData();
+  }, [loadData, showSuccess]);
 
   if (loading) {
     return (
@@ -333,15 +383,15 @@ const UserPermissionManagePage: React.FC = () => {
         }}>
           <Box sx={{ display: 'flex', gap: 4 }}>
             <Box textAlign="center">
-              <Typography variant="h5" color="primary" fontWeight="bold">{users.length}</Typography>
+              <Typography variant="h5" color="primary" fontWeight="bold">{totalUsers}</Typography>
               <Typography variant="caption" color="textSecondary">전체 사용자</Typography>
             </Box>
             <Box textAlign="center">
-              <Typography variant="h5" color="secondary" fontWeight="bold">{users.filter(u => u.roles.some(r => r.isActive)).length}</Typography>
+              <Typography variant="h5" color="secondary" fontWeight="bold">{activeRoleUsersCount}</Typography>
               <Typography variant="caption" color="textSecondary">역할 보유 사용자</Typography>
             </Box>
             <Box textAlign="center">
-              <Typography variant="h5" color="success.main" fontWeight="bold">{filteredUsers.length}</Typography>
+              <Typography variant="h5" color="success.main" fontWeight="bold">{filteredUsersCount}</Typography>
               <Typography variant="caption" color="textSecondary">필터된 사용자</Typography>
             </Box>
             <Box textAlign="center">
@@ -350,6 +400,16 @@ const UserPermissionManagePage: React.FC = () => {
             </Box>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
+            <SharedButton
+              onClick={openCreateDialog}
+              variant="contained"
+              color="primary"
+              size="medium"
+              startIcon={<PersonAddAlt1Icon />}
+              sx={{ fontWeight: 700 }}
+            >
+              사용자 등록
+            </SharedButton>
             <ExcelDownloadButton
               onDownload={() => {}}
               filename="user_permissions_list"
@@ -500,7 +560,7 @@ const UserPermissionManagePage: React.FC = () => {
           fullWidth
         >
           <DialogTitle>
-            <Box display="flex" alignItems="center" justifyContent="between">
+            <Box display="flex" alignItems="center" justifyContent="space-between">
               <Box display="flex" alignItems="center" gap={1}>
                 <GroupIcon />
                 사용자 역할 편집
@@ -591,6 +651,14 @@ const UserPermissionManagePage: React.FC = () => {
         </Dialog>
       </PageContent>
       
+      {/* 사용자 등록 다이얼로그 */}
+      <CreateUserDialog
+        open={createDialogOpen}
+        roles={roles}
+        onClose={closeCreateDialog}
+        onCreated={handleCreated}
+      />
+
       {/* Toast 컴포넌트 */}
       <Toast
         open={snackbar.open}

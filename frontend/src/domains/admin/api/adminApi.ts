@@ -9,7 +9,8 @@ import type {
   Role,
   PermissionStatistics,
   MenuPermissionStat,
-  RolePermissionStat
+  RolePermissionStat,
+  CreateUserRequest
 } from '../types';
 
 /**
@@ -23,7 +24,7 @@ export const adminApi = {
    * 메뉴 권한 매트릭스 조회
    */
   getMenuPermissionMatrix: async (): Promise<MenuPermissionMatrix> => {
-    const response = await apiClient.get('/admin/menu-permissions');
+    const response = await apiClient.get<MenuPermissionMatrix>('/admin/menu-permissions');
     return response;
   },
 
@@ -31,7 +32,7 @@ export const adminApi = {
    * 특정 메뉴의 권한 설정 조회
    */
   getMenuPermissions: async (menuId: number): Promise<MenuPermission[]> => {
-    const response = await apiClient.get(`/admin/menu-permissions/${menuId}`);
+    const response = await apiClient.get<MenuPermission[]>(`/admin/menu-permissions/${menuId}`);
     return response;
   },
 
@@ -46,7 +47,7 @@ export const adminApi = {
    * 특정 역할의 메뉴 권한 조회
    */
   getRoleMenuPermissions: async (roleName: string): Promise<MenuPermission[]> => {
-    const response = await apiClient.get(`/admin/menu-permissions/role/${roleName}`);
+    const response = await apiClient.get<MenuPermission[]>(`/admin/menu-permissions/role/${roleName}`);
     return response;
   },
 
@@ -56,7 +57,15 @@ export const adminApi = {
    * 사용자 목록 조회 (권한 정보 포함)
    */
   getUsers: async (): Promise<UserWithRoles[]> => {
-    const response = await apiClient.get('/admin/users');
+    const response = await apiClient.get<UserWithRoles[]>('/admin/users');
+    return response;
+  },
+
+  /**
+   * 사용자 생성
+   */
+  createUser: async (payload: CreateUserRequest): Promise<UserWithRoles> => {
+    const response = await apiClient.post<UserWithRoles>('/admin/users', payload);
     return response;
   },
 
@@ -64,7 +73,7 @@ export const adminApi = {
    * 특정 사용자의 역할 조회
    */
   getUserRoles: async (userId: string): Promise<UserRole[]> => {
-    const response = await apiClient.get(`/admin/users/${userId}/roles`);
+    const response = await apiClient.get<UserRole[]>(`/admin/users/${userId}/roles`);
     return response;
   },
 
@@ -95,7 +104,7 @@ export const adminApi = {
    * 역할 목록 조회
    */
   getRoles: async (): Promise<Role[]> => {
-    const response = await apiClient.get('/admin/roles');
+    const response = await apiClient.get<Role[]>('/admin/roles');
     return response;
   },
 
@@ -105,7 +114,7 @@ export const adminApi = {
    * 권한 통계 조회
    */
   getPermissionStatistics: async (): Promise<PermissionStatistics> => {
-    const response = await apiClient.get('/admin/statistics');
+    const response = await apiClient.get<PermissionStatistics>('/admin/statistics');
     return response;
   },
 
@@ -113,7 +122,7 @@ export const adminApi = {
    * 메뉴별 권한 통계 조회
    */
   getMenuPermissionStatistics: async (): Promise<MenuPermissionStat[]> => {
-    const response = await apiClient.get('/admin/statistics/menu-permissions');
+    const response = await apiClient.get<MenuPermissionStat[]>('/admin/statistics/menu-permissions');
     return response;
   },
 
@@ -121,7 +130,7 @@ export const adminApi = {
    * 역할별 권한 통계 조회
    */
   getRolePermissionStatistics: async (): Promise<RolePermissionStat[]> => {
-    const response = await apiClient.get('/admin/statistics/role-permissions');
+    const response = await apiClient.get<RolePermissionStat[]>('/admin/statistics/role-permissions');
     return response;
   }
 };
