@@ -3,6 +3,7 @@ package org.itcen.domain.positions.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.common.dto.ApiResponse;
+import org.itcen.domain.positions.dto.LedgerOrdersHodGenerateResponseDto;
 import org.itcen.domain.positions.dto.LedgerOrdersHodSelectDto;
 import org.itcen.domain.positions.entity.LedgerOrdersHod;
 import org.itcen.domain.positions.service.LedgerOrdersHodService;
@@ -110,5 +111,29 @@ public class LedgerOrdersHodController {
     public ResponseEntity<ApiResponse<Void>> deleteBulkLedgerOrdersHod(@RequestBody List<Long> ids) {
         ledgerOrdersHodService.deleteBulkLedgerOrdersHod(ids);
         return ResponseEntity.ok(ApiResponse.success("부서장 원장차수가 성공적으로 일괄 삭제되었습니다."));
+    }
+
+    /**
+     * 부서장차수 생성
+     * 
+     * POST /api/positions/ledger-orders-hod/generate
+     * 
+     * @return 생성된 부서장 원장차수 정보
+     */
+    @PostMapping("/generate")
+    public ResponseEntity<ApiResponse<LedgerOrdersHodGenerateResponseDto>> generateHodLedgerOrder() {
+        log.info("부서장차수 생성 API 요청");
+        
+        try {
+            LedgerOrdersHodGenerateResponseDto response = ledgerOrdersHodService.generateHodLedgerOrder();
+            log.info("부서장차수 생성 API 응답: {}", response.getLedgerOrdersHodTitle());
+            
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("부서장차수가 성공적으로 생성되었습니다.", response));
+        } catch (Exception e) {
+            log.error("부서장차수 생성 실패", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
     }
 }

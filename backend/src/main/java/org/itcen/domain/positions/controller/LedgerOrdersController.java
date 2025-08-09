@@ -374,4 +374,94 @@ public class LedgerOrdersController {
             }
         }
     }
+
+    /**
+     * 임원 확정 처리 (P3 → P4)
+     * 
+     * PUT /api/ledger-orders/executive-confirm
+     * 
+     * @param request 확정할 원장차수 정보
+     * @return 확정 처리 결과
+     */
+    @PutMapping("/executive-confirm")
+    public ResponseEntity<ApiResponse<LedgerOrdersConfirmResponseDto>> confirmExecutive(
+            @RequestBody LedgerOrdersConfirmRequestDto request) {
+        log.info("임원 확정 API 요청: ledgerOrderValue={}", request.getLedgerOrderValue());
+        
+        try {
+            String message = ledgerOrdersService.confirmExecutive(request.getLedgerOrderValue());
+            
+            LedgerOrdersConfirmResponseDto response = LedgerOrdersConfirmResponseDto.builder()
+                    .message(message)
+                    .build();
+            
+            log.info("임원 확정 API 응답: {}", message);
+            
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            log.error("임원 확정 실패: ledgerOrderValue={}", request.getLedgerOrderValue(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 임원 확정취소 처리 (P4 → P3)
+     * 
+     * PUT /api/ledger-orders/executive-cancel
+     * 
+     * @param request 확정취소할 원장차수 정보
+     * @return 확정취소 처리 결과
+     */
+    @PutMapping("/executive-cancel")
+    public ResponseEntity<ApiResponse<LedgerOrdersCancelConfirmResponseDto>> cancelExecutive(
+            @RequestBody LedgerOrdersCancelConfirmRequestDto request) {
+        log.info("임원 확정취소 API 요청: ledgerOrderValue={}", request.getLedgerOrderValue());
+        
+        try {
+            String message = ledgerOrdersService.cancelExecutive(request.getLedgerOrderValue());
+            
+            LedgerOrdersCancelConfirmResponseDto response = LedgerOrdersCancelConfirmResponseDto.builder()
+                    .message(message)
+                    .build();
+            
+            log.info("임원 확정취소 API 응답: {}", message);
+            
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            log.error("임원 확정취소 실패: ledgerOrderValue={}", request.getLedgerOrderValue(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 임원 최종확정 처리 (P4 → P5)
+     * 
+     * PUT /api/ledger-orders/executive-final-confirm
+     * 
+     * @param request 최종확정할 원장차수 정보
+     * @return 최종확정 처리 결과
+     */
+    @PutMapping("/executive-final-confirm")
+    public ResponseEntity<ApiResponse<LedgerOrdersConfirmResponseDto>> finalConfirmExecutive(
+            @RequestBody LedgerOrdersConfirmRequestDto request) {
+        log.info("임원 최종확정 API 요청: ledgerOrderValue={}", request.getLedgerOrderValue());
+        
+        try {
+            String message = ledgerOrdersService.finalConfirmExecutive(request.getLedgerOrderValue());
+            
+            LedgerOrdersConfirmResponseDto response = LedgerOrdersConfirmResponseDto.builder()
+                    .message(message)
+                    .build();
+            
+            log.info("임원 최종확정 API 응답: {}", message);
+            
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            log.error("임원 최종확정 실패: ledgerOrderValue={}", request.getLedgerOrderValue(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

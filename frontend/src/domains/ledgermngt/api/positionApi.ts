@@ -257,6 +257,51 @@ export class PositionApiService {
       throw error;
     }
   }
+
+  /**
+   * 임원 확정 처리 (P3 → P4)
+   */
+  static async confirmExecutive(ledgerOrderValue: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/executive-confirm`, {
+        ledgerOrderValue: ledgerOrderValue
+      });
+      return response;
+    } catch (error) {
+      console.error('임원 확정 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 임원 확정취소 처리 (P4 → P3)
+   */
+  static async cancelExecutive(ledgerOrderValue: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/executive-cancel`, {
+        ledgerOrderValue: ledgerOrderValue
+      });
+      return response;
+    } catch (error) {
+      console.error('임원 확정취소 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 임원 최종확정 처리 (P4 → P5)
+   */
+  static async finalConfirmExecutive(ledgerOrderValue: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/executive-final-confirm`, {
+        ledgerOrderValue: ledgerOrderValue
+      });
+      return response;
+    } catch (error) {
+      console.error('임원 최종확정 실패:', error);
+      throw error;
+    }
+  }
 }
 
 // 하위 호환성을 위한 객체 스타일 export
@@ -275,6 +320,9 @@ export const positionApi = {
   updateLedgerOrderStatus: PositionApiService.updateLedgerOrderStatus,
   confirmPositionResponsibility: PositionApiService.confirmPositionResponsibility,
   cancelPositionResponsibility: PositionApiService.cancelPositionResponsibility,
+  confirmExecutive: PositionApiService.confirmExecutive,
+  cancelExecutive: PositionApiService.cancelExecutive,
+  finalConfirmExecutive: PositionApiService.finalConfirmExecutive,
 };
 
 export default positionApi;

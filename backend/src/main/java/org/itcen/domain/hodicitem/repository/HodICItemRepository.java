@@ -59,7 +59,7 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
                 LEFT JOIN common_code cc2 ON h.role_type_cd = cc2.code AND (cc2.group_code = 'UNI_ROLE_TYPE' OR cc2.group_code = 'COM_ROLE_TYPE') AND cc2.use_yn = 'Y'
                 LEFT JOIN common_code cc3 ON h.period_cd = cc3.code AND cc3.group_code = 'PERIOD' AND cc3.use_yn = 'Y'
                 LEFT JOIN common_code cc4 ON h.check_period = cc4.code AND cc4.group_code = 'MONTH' AND cc4.use_yn = 'Y'
-                LEFT JOIN approval a ON h.approval_id = a.approval_id
+                LEFT JOIN approval a ON h.hod_ic_item_id = a.task_id AND a.task_type_cd = 'hod_ic_item'
                 LEFT JOIN audit_prog_mngt_detail apd ON h.hod_ic_item_id = apd.hod_ic_item_id
                 WHERE (:ledgerOrders IS NULL OR h.ledger_orders = :ledgerOrders)
                   AND (:fieldType IS NULL OR h.field_type_cd = :fieldType)
@@ -92,7 +92,7 @@ public interface HodICItemRepository extends JpaRepository<HodICItem, Long> {
      */
     @Query(value = """
                 SELECT h.* FROM hod_ic_item h
-                LEFT JOIN approval a ON h.approval_id = a.approval_id
+                LEFT JOIN approval a ON h.hod_ic_item_id = a.task_id AND a.task_type_cd = 'hod_ic_item'
                 WHERE (:approvalStatus IS NULL OR COALESCE(a.appr_stat_cd, 'NONE') = :approvalStatus)
             """,
             nativeQuery = true)

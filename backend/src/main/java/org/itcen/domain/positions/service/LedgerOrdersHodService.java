@@ -1,5 +1,6 @@
 package org.itcen.domain.positions.service;
 
+import org.itcen.domain.positions.dto.LedgerOrdersHodGenerateResponseDto;
 import org.itcen.domain.positions.dto.LedgerOrdersHodSelectDto;
 import org.itcen.domain.positions.entity.LedgerOrdersHod;
 
@@ -70,4 +71,20 @@ public interface LedgerOrdersHodService {
      * @param ids 삭제할 부서장 원장차수 ID 목록
      */
     void deleteBulkLedgerOrdersHod(List<Long> ids);
+
+    /**
+     * 부서장차수 생성
+     * 
+     * 로직:
+     * 1. ledger_orders 테이블에서 Max ID의 ledger_orders_status_cd/ledger_orders_title 조회
+     * 2. ledger_orders_status_cd = "P5" 조건 확인
+     * 3. ledger_orders_hod 테이블에 새로운 레코드 생성
+     *    - ledger_orders_id: Max ID 값
+     *    - ledger_orders_hod_title: ledger_orders_title + "-01" (차수 증가)
+     *    - ledger_orders_hod_status_cd: "P6"
+     * 
+     * @return 생성된 부서장 원장차수 응답 DTO
+     * @throws RuntimeException P5 상태가 아니거나 생성 실패 시
+     */
+    LedgerOrdersHodGenerateResponseDto generateHodLedgerOrder();
 }

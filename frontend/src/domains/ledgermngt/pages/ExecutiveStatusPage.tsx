@@ -16,11 +16,15 @@ import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import ErrorDialog from '../../../app/components/ErrorDialog';
 import '../../../assets/scss/style.css';
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '../../../shared/components/ui/button';
+import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton, PermissionButton } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
 import { ComboBox } from '../../../shared/components/ui/form';
 import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
 import execOfficerApi, { type ExecOfficer } from '../api/executivestatusApi';
+import { Confirm } from '@/shared/components/modal';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
+import positionApi from '@/domains/ledgermngt/api/positionApi';
 
 interface IExecutiveStatusPageProps {
   className?: string;
@@ -55,6 +59,17 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   const [successMessage, setSuccessMessage] = useState('');
   // 공통코드 가져오기
   const allCodes = useCommonCodes();
+
+  // 확정/확정취소/최종확정 관련 상태
+  const [confirmConfirmOpen, setConfirmConfirmOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [finalConfirmOpen, setFinalConfirmOpen] = useState(false);
+  
+  // LedgerOrderSelect 새로고침 트리거
+  const [ledgerOrderRefreshTrigger, setLedgerOrderRefreshTrigger] = useState<number>(0);
+
+  // Toast 알림을 위한 snackbar 훅
+  const { snackbar, showSuccess: showToastSuccess, showError, hideSnackbar } = useSnackbar();
 
 
   const fetchExecutiveStatus = useCallback(async () => {
@@ -293,6 +308,246 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setErrorMessage('');
   };
 
+  // LedgerOrderSelect 새로고침 함수
+  const refreshLedgerOrderSelect = useCallback(() => {
+    setLedgerOrderRefreshTrigger(prev => prev + 1);
+    console.log('📋 LedgerOrderSelect 새로고침 트리거:', ledgerOrderRefreshTrigger + 1);
+  }, [ledgerOrderRefreshTrigger]);
+
+  // 확정 버튼 클릭 핸들러
+  const handleConfirmClick = useCallback(() => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "직책별책무확정" 상태 검증 (P3 상태이어야 함)
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "직책별책무확정" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '직책별책무확정') {
+      showError('직책별책무확정 상태의 원장차수만 확정 가능합니다.');
+      return;
+    }
+
+    console.log('📋 임원 확정 조건 검증 통과:', {
+      selectedLedgerOrder,
+      statusInfo
+    });
+
+    // 3. 확정 confirm 창 표시
+    setConfirmConfirmOpen(true);
+  }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
+
+  // 확정 처리 핸들러
+  const handleConfirmLedgerOrder = useCallback(async () => {
+    if (!selectedLedgerOrder) {
+      setConfirmConfirmOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('📋 임원 확정 처리 시작:', {
+        selectedLedgerOrder
+      });
+
+      // 임원 확정 전용 API 사용 (P3 → P4)
+      const response = await positionApi.confirmExecutive(selectedLedgerOrder);
+      showToastSuccess(response.message || '임원이 확정되었습니다.');
+      
+      // 1. LedgerOrderSelect 새로고침
+      refreshLedgerOrderSelect();
+      
+      // 2. DataGrid 새로고침
+      await fetchExecutiveStatus();
+      
+    } catch (err: unknown) {
+      let errorMessage = '확정 처리 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('확정 처리 실패:', err);
+    } finally {
+      setLoading(false);
+      setConfirmConfirmOpen(false);
+    }
+  }, [selectedLedgerOrder, showToastSuccess, showError, fetchExecutiveStatus, refreshLedgerOrderSelect]);
+
+  // 확정취소 버튼 클릭 핸들러
+  const handleCancelConfirmClick = useCallback(() => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "임원확정" 상태 검증 (P4 상태이어야 함)
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "임원확정" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '임원확정') {
+      showError('임원확정 상태의 원장차수만 확정취소 가능합니다.');
+      return;
+    }
+
+    console.log('🔄 임원 확정취소 조건 검증 통과:', {
+      selectedLedgerOrder,
+      statusInfo
+    });
+
+    // 3. 확정취소 confirm 창 표시
+    setCancelConfirmOpen(true);
+  }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
+
+  // 확정취소 처리 핸들러
+  const handleCancelConfirmLedgerOrder = useCallback(async () => {
+    if (!selectedLedgerOrder) {
+      setCancelConfirmOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('🔄 임원 확정취소 처리 시작:', {
+        selectedLedgerOrder
+      });
+
+      // 임원 확정취소 전용 API 사용 (P4 → P3)
+      const response = await positionApi.cancelExecutive(selectedLedgerOrder);
+      showToastSuccess(response.message || '임원 확정이 취소되었습니다.');
+      
+      // 1. LedgerOrderSelect 새로고침
+      refreshLedgerOrderSelect();
+      
+      // 2. DataGrid 새로고침
+      await fetchExecutiveStatus();
+      
+    } catch (err: unknown) {
+      let errorMessage = '확정취소 처리 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('확정취소 처리 실패:', err);
+    } finally {
+      setLoading(false);
+      setCancelConfirmOpen(false);
+    }
+  }, [selectedLedgerOrder, showToastSuccess, showError, fetchExecutiveStatus, refreshLedgerOrderSelect]);
+
+  // 최종확정 버튼 클릭 핸들러
+  const handleFinalConfirmClick = useCallback(() => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "임원확정" 상태 검증 (P4 상태이어야 함)
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "임원확정" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '임원확정') {
+      showError('임원확정 상태의 원장차수만 최종확정 가능합니다.');
+      return;
+    }
+
+    console.log('🎯 임원 최종확정 조건 검증 통과:', {
+      selectedLedgerOrder,
+      statusInfo
+    });
+
+    // 최종확정 confirm 창 표시
+    setFinalConfirmOpen(true);
+  }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
+
+  // 최종확정 처리 핸들러
+  const handleFinalConfirmLedgerOrder = useCallback(async () => {
+    if (!selectedLedgerOrder) {
+      setFinalConfirmOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('🎯 임원 최종확정 처리 시작:', {
+        selectedLedgerOrder
+      });
+
+      // 임원 최종확정 전용 API 사용 (P4 → P5)
+      const response = await positionApi.finalConfirmExecutive(selectedLedgerOrder);
+      showToastSuccess(response.message || '임원이 최종확정되었습니다.');
+      
+      // 1. LedgerOrderSelect 새로고침
+      refreshLedgerOrderSelect();
+      
+      // 2. DataGrid 새로고침
+      await fetchExecutiveStatus();
+      
+    } catch (err: unknown) {
+      let errorMessage = '최종확정 처리 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('최종확정 처리 실패:', err);
+    } finally {
+      setLoading(false);
+      setFinalConfirmOpen(false);
+    }
+  }, [selectedLedgerOrder, showToastSuccess, showError, fetchExecutiveStatus, refreshLedgerOrderSelect]);
+
   return (
     <PageContainer
       sx={{
@@ -347,6 +602,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
+            refreshTrigger={ledgerOrderRefreshTrigger}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
               setLedgerOrderOptions(options);
               console.log('LedgerOrder 옵션 로드 완료:', options);
@@ -360,6 +616,68 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             loading={loading}
             disabled={loading}
           />
+          <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            <PermissionButton
+              menuCode="LEDGER_MGMT_EXECUTIVE"
+              permission="write"
+              variant="contained"
+              color="success"
+              size="small"
+              onClick={handleConfirmClick}
+              disabled={loading}
+              hideWhenNoPermission={true}
+              noPermissionTooltip="확정 권한이 없습니다"
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
+            >
+              확정
+            </PermissionButton>
+            <PermissionButton
+              menuCode="LEDGER_MGMT_EXECUTIVE"
+              permission="write"
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={handleCancelConfirmClick}
+              disabled={loading}
+              hideWhenNoPermission={true}
+              noPermissionTooltip="확정취소 권한이 없습니다"
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
+            >
+              확정취소
+            </PermissionButton>
+            <PermissionButton
+              menuCode="LEDGER_MGMT_EXECUTIVE"
+              permission="write"
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={handleFinalConfirmClick}
+              disabled={loading}
+              hideWhenNoPermission={true}
+              noPermissionTooltip="최종확정 권한이 없습니다"
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
+            >
+              최종확정
+            </PermissionButton>
+          </Box>
         </Box>
 
         {/* 버튼 영역 */}
@@ -371,7 +689,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           alignItems: 'center',
           height: '32px',
         }}>
-          <Button
+          {/* <Button
             variant="contained"
             color="success"
             size="small"
@@ -385,7 +703,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             }}
           >
             엑셀 업로드
-          </Button>
+          </Button> */}
           <ExcelDownloadButton
             onDownload={handleExcelDownload}
             filename="executive_status"
@@ -443,8 +761,54 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           onChangeMode={setDialogMode}
           onClose={handleCloseDialog}
           executive={selectedExecutive}
-
           onSave={handleSaveExecutive}
+        />
+
+        {/* 확정 확인 다이얼로그 */}
+        <Confirm
+          open={confirmConfirmOpen}
+          title="확정 확인"
+          message={`${selectedLedgerOrder} 차수의 임원을 확정하시겠습니까?`}
+          confirmText="확정"
+          cancelText="취소"
+          onConfirm={handleConfirmLedgerOrder}
+          onCancel={() => {
+            setConfirmConfirmOpen(false);
+          }}
+        />
+        
+        {/* 확정취소 확인 다이얼로그 */}
+        <Confirm
+          open={cancelConfirmOpen}
+          title="확정취소 확인"
+          message={`${selectedLedgerOrder} 차수의 임원을 확정취소하시겠습니까?`}
+          confirmText="확정취소"
+          cancelText="취소"
+          onConfirm={handleCancelConfirmLedgerOrder}
+          onCancel={() => {
+            setCancelConfirmOpen(false);
+          }}
+        />
+
+        {/* 최종확정 확인 다이얼로그 */}
+        <Confirm
+          open={finalConfirmOpen}
+          title="최종확정 확인"
+          message={`${selectedLedgerOrder} 차수의 임원을 최종확정하시겠습니까?`}
+          confirmText="최종확정"
+          cancelText="취소"
+          onConfirm={handleFinalConfirmLedgerOrder}
+          onCancel={() => {
+            setFinalConfirmOpen(false);
+          }}
+        />
+
+        {/* Toast 알림 */}
+        <Toast
+          open={snackbar.open}
+          message={snackbar.message}
+          severity={snackbar.severity}
+          onClose={hideSnackbar}
         />
       </PageContent>
     </PageContainer>

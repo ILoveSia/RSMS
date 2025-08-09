@@ -5,6 +5,8 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -28,10 +30,68 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedItemId, setSelectedItemId] = useState<number | undefined>();
 
-  // 부서장 원장차수 관련 상태는 LedgerOrdersHodSelect에서 자동 관리됨
+  // 부서장차수생성 상태
+  const [hodGenerating, setHodGenerating] = useState<boolean>(false);
+  
+  // 부서장 원장차수 새로고침 트리거
+  const [hodRefreshTrigger, setHodRefreshTrigger] = useState<number>(0);
+  
+  // 스낵바 상태
+  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
   // 컬럼 정의 - 요청하신 순서대로 변경
   const columns: DataGridColumn<HodICItemRow>[] = [
+    {
+      field: 'approvalStatus',
+      headerName: '결재상태',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        const status = params.row.approvalStatus;
+        let statusText = '';
+        let statusColor = '#666';
+
+        switch (status) {
+          case 'NONE':
+            statusText = '미결재';
+            statusColor = '#999';
+            break;
+          case 'SUBMITTED':
+              statusText = '상신';
+              statusColor = '#2196f3';
+              break;  
+          case 'IN_PROGRESS':
+            statusText = '진행중';
+            statusColor = '#ff9800';
+            break;
+          case 'APPROVED':
+            statusText = '승인';
+            statusColor = '#4caf50';
+            break;
+          case 'REJECTED':
+            statusText = '반려';
+            statusColor = '#f44336';
+            break;
+          default:
+            statusText = status || '미결재';
+            statusColor = '#999';
+        }
+
+        return (
+          <Box
+            component="span"
+            sx={{
+              color: statusColor,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
+          >
+            {statusText}
+          </Box>
+        );
+      },
+    },
     {
       field: 'responsibilityContent',
       headerName: '책무',
@@ -207,10 +267,65 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     // 엑셀 다운로드 로직
   }, [rows]);
 
-  const handleCreateHodOrder = useCallback(() => {
-    // 부서장차수생성 로직
-    alert('부서장차수생성 기능은 추후 구현될 예정입니다.');
-  }, []);
+  const handleCreateHodOrder = useCallback(async () => {
+    if (hodGenerating) return;
+    
+    try {
+      setHodGenerating(true);
+      
+      // 부서장차수 생성 API 호출
+      const response = await hodICItemApi.generateHodLedgerOrder();
+      
+      // 성공 메시지 표시
+      showSuccess(response.message || '부서장차수가 성공적으로 생성되었습니다.');
+      
+      // LedgerOrdersHodSelect 컴포넌트 새로고침 트리거
+      setHodRefreshTrigger(prev => prev + 1);
+      
+    } catch (error: any) {
+      console.error('부서장차수 생성 실패:', error);
+      console.log('Error object:', error);
+      console.log('Error response:', error?.response);
+      console.log('Error response data:', error?.response?.data);
+      
+      // P6 상태 에러 체크 및 커스텀 메시지 표시  
+      const responseData = error?.response?.data;
+      const errorDetails = error?.details; // API 클라이언트에서 details에 원본 데이터 저장
+      
+      // 다양한 경로에서 메시지 추출 시도
+      let originalMessage = '';
+      if (responseData?.message) {
+        originalMessage = responseData.message;
+      } else if (errorDetails?.message) {
+        originalMessage = errorDetails.message;
+      } else if (error?.details?.message) {
+        originalMessage = error.details.message;
+      } else if (error?.message) {
+        originalMessage = error.message;
+      }
+      
+      console.log('Original message:', originalMessage);
+      console.log('Error details:', errorDetails);
+      
+      let errorMessage = '부서장차수 생성 중 오류가 발생했습니다.';
+      
+      // P6 상태 관련 에러인지 체크
+      if (originalMessage.includes('P6') && originalMessage.includes('P8')) {
+        errorMessage = '부서장차수를 생성할 수 없습니다. 최신 부서장차수가 최종확정 상태여야 생성 가능합니다.';
+      } else if (originalMessage.includes('P5') && originalMessage.includes('최종확정')) {
+        errorMessage = '부서장차수를 생성할 수 없습니다. 원장차수가 최종확정(P5) 상태여야 생성 가능합니다.';
+      } else if (originalMessage.includes('이미 존재합니다')) {
+        errorMessage = originalMessage; // 중복 에러는 원본 메시지 사용
+      } else if (originalMessage) {
+        errorMessage = originalMessage; // 기타 에러는 원본 메시지 사용
+      }
+      
+      console.log('Final error message:', errorMessage);
+      showError(errorMessage);
+    } finally {
+      setHodGenerating(false);
+    }
+  }, [hodGenerating, showSuccess, showError]);
 
   const handleCreateClick = useCallback(() => {
     setDialogMode('create');
@@ -320,6 +435,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             onChange={setSelectedLedgerOrder}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
+            refreshTrigger={hodRefreshTrigger}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>항목</span>
           <CommonCodeSelect
@@ -338,17 +454,18 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             variant='contained' 
             size='small' 
             color='secondary' 
+            disabled={hodGenerating}
             sx={{ 
               marginLeft: '8px',
               height: '32px',
-              minWidth: '80px',
+              minWidth: '120px',
               fontSize: '0.875rem',
               fontWeight: 600,
               borderRadius: 1,
             }}
             onClick={handleCreateHodOrder}
           >
-            부서장차수생성
+            {hodGenerating ? '생성 중...' : '부서장차수생성'}
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <Button
@@ -454,6 +571,14 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
         mode={dialogMode}
         itemId={selectedItemId}
         onSuccess={handleDialogSuccess}
+      />
+
+      {/* Toast 알림 */}
+      <Toast
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
       />
     </PageContainer>
   );

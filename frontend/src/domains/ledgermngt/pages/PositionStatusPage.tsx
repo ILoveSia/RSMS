@@ -154,14 +154,14 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       // 1. 먼저 상태 확인
       const statusCheck: LedgerOrdersStatusCheckResponse = await positionApi.checkLedgerOrderStatus();
       
-      // 2. P4 상태가 아니면 Alert 표시
+      // 2. P5 상태가 아니면 Alert 표시
       if (!statusCheck.canGenerate) {
         setStatusAlertMessage(statusCheck.message);
         setStatusAlertOpen(true);
         return;
       }
       
-      // 3. P4 상태이면 생성 진행
+      // 3. P5 상태이면 생성 진행
       const response: LedgerOrdersGenerateResponse = await positionApi.generateLedgerOrder();
       
       showSuccess(`${response.message}`);

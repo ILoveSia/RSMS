@@ -163,18 +163,13 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
   const handleEmployeeSelect = useCallback(async (employee: EmployeeSearchResult) => {
     setLoading(true);
     try {
-      // 사용자 정보 설정
+      // 사용자 정보 설정 (기존 ownerDepts, meetings 데이터 보존)
       setFormData((prev: any) => ({
         ...prev,
         employee,
         empId: employee.num, // 사번으로 설정
         executiveName: employee.username, // 성명 자동 입력
-      }));
-
-      setFormData((prev: any) => ({
-        ...prev,
-        ownerDepts: [],
-        meetings: []
+        // ownerDepts와 meetings는 기존 값 보존 (제거하지 않음)
       }));
     } catch (error) {
       console.error('사용자 선택 처리 중 오류 발생:', error);

@@ -23,7 +23,7 @@ public interface LedgerOrdersService {
      * 로직:
      * 1. ledger_orders 테이블의 최대 ID 레코드 조회
      * 2. 해당 레코드의 status_cd 확인
-     * 3. 생성 가능 여부 반환 (P4 상태일 때만 가능)
+     * 3. 생성 가능 여부 반환 (P5 상태일 때만 가능)
      * 
      * @return 현재 상태 및 생성 가능 여부
      */
@@ -34,9 +34,9 @@ public interface LedgerOrdersService {
      * 
      * 로직:
      * 1. ledger_orders 테이블의 최대 ID 레코드 조회
-     * 2. 해당 레코드의 status_cd가 "P4"인지 확인
-     * 3. "P4"가 아니면 예외 발생
-     * 4. "P4"이면 새로운 차수 생성
+     * 2. 해당 레코드의 status_cd가 "P5"인지 확인
+     * 3. "P5"가 아니면 예외 발생
+     * 4. "P5"이면 새로운 차수 생성
      *    - 현재 연도와 비교하여 연도별 차수 결정
      *    - 같은 연도: 차수 증가 (001 → 002)
      *    - 다른 연도: 새 연도로 001부터 시작
@@ -120,4 +120,49 @@ public interface LedgerOrdersService {
      * @throws RuntimeException 확정취소 조건이 맞지 않을 때
      */
     String cancelPositionResponsibility(String ledgerOrderValue);
+
+    /**
+     * 임원 확정 처리 (P3 → P4)
+     * 
+     * 로직:
+     * 1. ledgerOrderValue로 해당 원장차수 조회
+     * 2. 해당 원장차수의 상태가 "직책별책무확정"(P3)인지 확인
+     * 3. 상태를 P4(임원확정)로 업데이트
+     * 4. 성공 메시지 반환
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 확정 처리 결과 메시지
+     * @throws RuntimeException 확정 조건이 맞지 않을 때
+     */
+    String confirmExecutive(String ledgerOrderValue);
+
+    /**
+     * 임원 확정취소 처리 (P4 → P3)
+     * 
+     * 로직:
+     * 1. ledgerOrderValue로 해당 원장차수 조회
+     * 2. 해당 원장차수의 상태가 "임원확정"(P4)인지 확인
+     * 3. 상태를 P3(직책별책무확정)로 업데이트
+     * 4. 성공 메시지 반환
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 확정취소 처리 결과 메시지
+     * @throws RuntimeException 확정취소 조건이 맞지 않을 때
+     */
+    String cancelExecutive(String ledgerOrderValue);
+
+    /**
+     * 임원 최종확정 처리 (P4 → P5)
+     * 
+     * 로직:
+     * 1. ledgerOrderValue로 해당 원장차수 조회
+     * 2. 해당 원장차수의 상태가 "임원확정"(P4)인지 확인
+     * 3. 상태를 P5(최종확정)로 업데이트
+     * 4. 성공 메시지 반환
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 최종확정 처리 결과 메시지
+     * @throws RuntimeException 최종확정 조건이 맞지 않을 때
+     */
+    String finalConfirmExecutive(String ledgerOrderValue);
 }
