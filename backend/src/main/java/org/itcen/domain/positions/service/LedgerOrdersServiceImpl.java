@@ -295,6 +295,102 @@ public class LedgerOrdersServiceImpl implements LedgerOrdersService {
         return String.format("원장차수 '%s'가 확정취소되었습니다.", ledgerOrderValue);
     }
 
+    @Override
+    @Transactional
+    public String confirmPositionResponsibility(String ledgerOrderValue) {
+        log.info("직책별 책무 확정 처리 요청: ledgerOrderValue={}", ledgerOrderValue);
+
+        if (ledgerOrderValue == null || ledgerOrderValue.trim().isEmpty()) {
+            throw new BusinessException("원장차수 값이 비어있습니다.", "EMPTY_LEDGER_ORDER_VALUE");
+        }
+
+        // 1. 해당 원장차수 조회
+        Optional<LedgerOrders> ledgerOrderOpt = ledgerOrdersRepository.findByLedgerOrdersTitle(ledgerOrderValue.trim());
+        
+        if (ledgerOrderOpt.isEmpty()) {
+            log.warn("해당 원장차수가 존재하지 않음: {}", ledgerOrderValue);
+            throw new BusinessException(
+                String.format("원장차수 '%s'가 존재하지 않습니다.", ledgerOrderValue), 
+                "LEDGER_ORDER_NOT_FOUND"
+            );
+        }
+
+        LedgerOrders ledgerOrder = ledgerOrderOpt.get();
+        log.info("원장차수 조회 완료: ID={}, Title={}, Status={}", 
+                ledgerOrder.getLedgerOrdersId(), 
+                ledgerOrder.getLedgerOrdersTitle(), 
+                ledgerOrder.getLedgerOrdersStatusCd());
+
+        // 2. 현재 상태가 P2(직책확정)인지 확인
+        if (!"P2".equals(ledgerOrder.getLedgerOrdersStatusCd())) {
+            throw new BusinessException(
+                String.format("직책확정 상태의 원장차수만 직책별책무확정 할 수 있습니다. 현재 상태: %s", 
+                    ledgerOrder.getLedgerOrdersStatusCd()), 
+                "INVALID_STATUS_FOR_POSITION_RESPONSIBILITY_CONFIRM"
+            );
+        }
+
+        // 3. 상태를 P3(직책별책무확정)로 업데이트
+        ledgerOrder.updateStatusCd("P3");
+        LedgerOrders updatedOrder = ledgerOrdersRepository.save(ledgerOrder);
+        
+        log.info("직책별 책무 확정 처리 완료: ID={}, Title={}, Status={} -> {}", 
+                updatedOrder.getLedgerOrdersId(), 
+                updatedOrder.getLedgerOrdersTitle(), 
+                "P2", 
+                updatedOrder.getLedgerOrdersStatusCd());
+
+        return String.format("원장차수 '%s'의 직책별 책무가 확정되었습니다.", ledgerOrderValue);
+    }
+
+    @Override
+    @Transactional
+    public String cancelPositionResponsibility(String ledgerOrderValue) {
+        log.info("직책별 책무 확정취소 처리 요청: ledgerOrderValue={}", ledgerOrderValue);
+
+        if (ledgerOrderValue == null || ledgerOrderValue.trim().isEmpty()) {
+            throw new BusinessException("원장차수 값이 비어있습니다.", "EMPTY_LEDGER_ORDER_VALUE");
+        }
+
+        // 1. 해당 원장차수 조회
+        Optional<LedgerOrders> ledgerOrderOpt = ledgerOrdersRepository.findByLedgerOrdersTitle(ledgerOrderValue.trim());
+        
+        if (ledgerOrderOpt.isEmpty()) {
+            log.warn("해당 원장차수가 존재하지 않음: {}", ledgerOrderValue);
+            throw new BusinessException(
+                String.format("원장차수 '%s'가 존재하지 않습니다.", ledgerOrderValue), 
+                "LEDGER_ORDER_NOT_FOUND"
+            );
+        }
+
+        LedgerOrders ledgerOrder = ledgerOrderOpt.get();
+        log.info("원장차수 조회 완료: ID={}, Title={}, Status={}", 
+                ledgerOrder.getLedgerOrdersId(), 
+                ledgerOrder.getLedgerOrdersTitle(), 
+                ledgerOrder.getLedgerOrdersStatusCd());
+
+        // 2. 현재 상태가 P3(직책별책무확정)인지 확인
+        if (!"P3".equals(ledgerOrder.getLedgerOrdersStatusCd())) {
+            throw new BusinessException(
+                String.format("직책별책무확정 상태의 원장차수만 확정취소할 수 있습니다. 현재 상태: %s", 
+                    ledgerOrder.getLedgerOrdersStatusCd()), 
+                "INVALID_STATUS_FOR_POSITION_RESPONSIBILITY_CANCEL"
+            );
+        }
+
+        // 3. 상태를 P2(직책확정)로 업데이트
+        ledgerOrder.updateStatusCd("P2");
+        LedgerOrders updatedOrder = ledgerOrdersRepository.save(ledgerOrder);
+        
+        log.info("직책별 책무 확정취소 처리 완료: ID={}, Title={}, Status={} -> {}", 
+                updatedOrder.getLedgerOrdersId(), 
+                updatedOrder.getLedgerOrdersTitle(), 
+                "P3", 
+                updatedOrder.getLedgerOrdersStatusCd());
+
+        return String.format("원장차수 '%s'의 직책별 책무 확정이 취소되었습니다.", ledgerOrderValue);
+    }
+
     /**
      * 다음 차수 제목 생성
      * 

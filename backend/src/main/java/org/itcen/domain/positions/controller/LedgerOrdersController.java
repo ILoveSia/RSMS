@@ -9,6 +9,7 @@ import org.itcen.domain.positions.service.LedgerOrdersService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -108,8 +109,11 @@ public class LedgerOrdersController {
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             log.error("원장차수 ID 조회 실패: title={}", title, e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error(e.getMessage()));
+            // 데이터가 없을 경우 null 값으로 응답 (404 대신)
+            LedgerOrdersIdResponseDto response = LedgerOrdersIdResponseDto.builder()
+                    .ledgerOrdersId(null)
+                    .build();
+            return ResponseEntity.ok(ApiResponse.success(response));
         }
     }
 
@@ -168,6 +172,66 @@ public class LedgerOrdersController {
             return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             log.error("원장차수 확정취소 실패: ledgerOrderValue={}", request.getLedgerOrderValue(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 직책별 책무 확정 처리 (P2 → P3)
+     * 
+     * PUT /api/ledger-orders/position-responsibility-confirm
+     * 
+     * @param request 확정할 원장차수 정보
+     * @return 확정 처리 결과
+     */
+    @PutMapping("/position-responsibility-confirm")
+    public ResponseEntity<ApiResponse<LedgerOrdersConfirmResponseDto>> confirmPositionResponsibility(
+            @RequestBody LedgerOrdersConfirmRequestDto request) {
+        log.info("직책별 책무 확정 API 요청: ledgerOrderValue={}", request.getLedgerOrderValue());
+        
+        try {
+            String message = ledgerOrdersService.confirmPositionResponsibility(request.getLedgerOrderValue());
+            
+            LedgerOrdersConfirmResponseDto response = LedgerOrdersConfirmResponseDto.builder()
+                    .message(message)
+                    .build();
+            
+            log.info("직책별 책무 확정 API 응답: {}", message);
+            
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            log.error("직책별 책무 확정 실패: ledgerOrderValue={}", request.getLedgerOrderValue(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
+     * 직책별 책무 확정취소 처리 (P3 → P2)
+     * 
+     * PUT /api/ledger-orders/position-responsibility-cancel
+     * 
+     * @param request 확정취소할 원장차수 정보
+     * @return 확정취소 처리 결과
+     */
+    @PutMapping("/position-responsibility-cancel")
+    public ResponseEntity<ApiResponse<LedgerOrdersCancelConfirmResponseDto>> cancelPositionResponsibility(
+            @RequestBody LedgerOrdersCancelConfirmRequestDto request) {
+        log.info("직책별 책무 확정취소 API 요청: ledgerOrderValue={}", request.getLedgerOrderValue());
+        
+        try {
+            String message = ledgerOrdersService.cancelPositionResponsibility(request.getLedgerOrderValue());
+            
+            LedgerOrdersCancelConfirmResponseDto response = LedgerOrdersCancelConfirmResponseDto.builder()
+                    .message(message)
+                    .build();
+            
+            log.info("직책별 책무 확정취소 API 응답: {}", message);
+            
+            return ResponseEntity.ok(ApiResponse.success(response));
+        } catch (Exception e) {
+            log.error("직책별 책무 확정취소 실패: ledgerOrderValue={}", request.getLedgerOrderValue(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(e.getMessage()));
         }

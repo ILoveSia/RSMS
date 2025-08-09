@@ -100,7 +100,7 @@ public class Approval extends BaseTimeEntity {
     /**
      * 결재 단계 목록 (양방향 관계)
      */
-    @OneToMany(mappedBy = "approval", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "approval", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
     @OrderBy("stepOrder ASC")
     @Builder.Default
     private List<ApprovalStep> steps = new ArrayList<>();

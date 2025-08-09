@@ -90,4 +90,34 @@ public interface LedgerOrdersService {
      * @throws RuntimeException 확정취소 조건이 맞지 않을 때
      */
     String cancelConfirmLedgerOrder(String ledgerOrderValue);
+
+    /**
+     * 직책별 책무 확정 처리 (P2 → P3)
+     * 
+     * 로직:
+     * 1. ledgerOrderValue로 해당 원장차수 조회
+     * 2. 해당 원장차수의 상태가 "직책확정"(P2)인지 확인
+     * 3. 상태를 P3(직책별책무확정)로 업데이트
+     * 4. 성공 메시지 반환
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 확정 처리 결과 메시지
+     * @throws RuntimeException 확정 조건이 맞지 않을 때
+     */
+    String confirmPositionResponsibility(String ledgerOrderValue);
+
+    /**
+     * 직책별 책무 확정취소 처리 (P3 → P2)
+     * 
+     * 로직:
+     * 1. ledgerOrderValue로 해당 원장차수 조회
+     * 2. 해당 원장차수의 상태가 "직책별책무확정"(P3)인지 확인
+     * 3. 상태를 P2(직책확정)로 업데이트
+     * 4. 성공 메시지 반환
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 확정취소 처리 결과 메시지
+     * @throws RuntimeException 확정취소 조건이 맞지 않을 때
+     */
+    String cancelPositionResponsibility(String ledgerOrderValue);
 }

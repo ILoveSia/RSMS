@@ -19,7 +19,7 @@ import {
   HourglassEmpty as HourglassEmptyIcon,
   Undo as UndoIcon,
 } from '@mui/icons-material';
-import approvalApi, { ApprovalStatusResponse } from '@/domains/approval/api/approvalApi';
+import approvalApi, { type ApprovalStatusResponse } from '@/domains/approval/api/approvalApi';
 import ApprovalSubmitPopup from './ApprovalSubmitPopup';
 import InlineApprovalDialog from './InlineApprovalDialog';
 import ApprovalStatusDialog from './ApprovalStatusDialog';
@@ -67,19 +67,25 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
   const checkApprovalStatus = async () => {
     try {
       setLoading(true);
+      console.log('🔍 ApprovalActionButton API 호출:', {
+        taskType,
+        taskId,
+        taskIdType: typeof taskId,
+        apiUrl: `/api/approval/status/${taskType}/${taskId}`
+      });
       const status = await approvalApi.getApprovalStatus(taskType, taskId);
       
-      if (!status) {
-        // 결재가 없는 경우 - 상신 가능
+      if (!status || status.status === 'NOT_SUBMITTED') {
+        // 결재가 없거나 상신 전 상태인 경우 - 상신 가능
         setButtonState('SUBMIT');
         setApprovalData(null);
       } else {
         setApprovalData(status);
         
-        // 내가 처리해야 할 단계인지 확인
-        const myPendingStep = status.steps.find(
-          step => step.approverId === currentUserId && step.status === 'PENDING'
-        );
+        // 내가 처리해야 할 단계인지 확인 (steps 배열 안전성 체크)
+        const myPendingStep = status.steps && Array.isArray(status.steps) 
+          ? status.steps.find(step => step.approverId === currentUserId && step.status === 'PENDING')
+          : null;
         
         if (myPendingStep) {
           setButtonState('APPROVE');

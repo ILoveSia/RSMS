@@ -125,7 +125,9 @@ public class SecurityConfig {
                     "/ledger-orders/select-list",
                     "/ledger-orders-hod/select-list",
                     // 책무구조도 제출 API (개발 편의를 위해 임시 허용)
-                    "/submissions/**"
+                    "/submissions/**",
+                    // 결재 API (개발 편의를 위해 임시 허용)
+                    "/approval-system/**"
             ).permitAll()
 
             // 모든 API 엔드포인트는 인증 필요 (일반화)

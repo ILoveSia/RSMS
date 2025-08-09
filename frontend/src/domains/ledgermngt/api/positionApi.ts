@@ -212,6 +212,51 @@ export class PositionApiService {
       throw error;
     }
   }
+
+  /**
+   * 원장차수 상태 업데이트 (ledger_orders_status_cd 변경)
+   */
+  static async updateLedgerOrderStatus(ledgerOrdersId: number, statusCd: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/${ledgerOrdersId}/status`, {
+        ledgerOrdersStatusCd: statusCd
+      });
+      return response;
+    } catch (error) {
+      console.error('원장차수 상태 업데이트 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 직책별 책무 확정 처리 (P2 → P3)
+   */
+  static async confirmPositionResponsibility(ledgerOrderValue: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/position-responsibility-confirm`, {
+        ledgerOrderValue: ledgerOrderValue
+      });
+      return response;
+    } catch (error) {
+      console.error('직책별 책무 확정 실패:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 직책별 책무 확정취소 처리 (P3 → P2)
+   */
+  static async cancelPositionResponsibility(ledgerOrderValue: string): Promise<{message: string}> {
+    try {
+      const response = await apiClient.put<{message: string}>(`/ledger-orders/position-responsibility-cancel`, {
+        ledgerOrderValue: ledgerOrderValue
+      });
+      return response;
+    } catch (error) {
+      console.error('직책별 책무 확정취소 실패:', error);
+      throw error;
+    }
+  }
 }
 
 // 하위 호환성을 위한 객체 스타일 export
@@ -227,6 +272,9 @@ export const positionApi = {
   getLedgerOrdersIdByTitle: PositionApiService.getLedgerOrdersIdByTitle,
   confirmLedgerOrder: PositionApiService.confirmLedgerOrder,
   cancelConfirmLedgerOrder: PositionApiService.cancelConfirmLedgerOrder,
+  updateLedgerOrderStatus: PositionApiService.updateLedgerOrderStatus,
+  confirmPositionResponsibility: PositionApiService.confirmPositionResponsibility,
+  cancelPositionResponsibility: PositionApiService.cancelPositionResponsibility,
 };
 
 export default positionApi;

@@ -8,6 +8,16 @@ import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialo
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { Box, Button, Grid, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
+import { useReduxState } from '@/app/store/use-store';
+
+// LoginUser 타입 (loginStore용)
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+}
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
 interface ApiSuccessResponse<T> {
@@ -44,6 +54,10 @@ interface IResponsibilityDialogProps {
   responsibilityId: number | null;
   positionName: string;
   rowData?: any; // row 데이터를 받을 props 추가
+  // 추가 필드들
+  ledgerOrdersId?: number | null;
+  apprStatCd?: string;
+  roleRespStatusId?: number | null;
   onClose: () => void;
   onSave: () => void;
   onChangeMode: (mode: DialogMode) => void;
@@ -54,10 +68,25 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   mode,
   responsibilityId,
   rowData,
+  // 추가 필드들
+  ledgerOrdersId,
+  apprStatCd,
+  roleRespStatusId,
   onClose,
   onSave,
   onChangeMode,
 }) => {
+  // 로그인 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+  const currentUserId = loginData?.userid || null;
+  
+  console.log('🔍 PositionResponsibilityDialog - 로그인 사용자 정보:', {
+    loginData,
+    currentUserId,
+    hasLoginData: !!loginData,
+    userid: loginData?.userid
+  });
+  
   // 원본 데이터 저장용 상태
   const [originalFormData, setOriginalFormData] = useState<FormData>({
     responsibilityContent: '',
@@ -107,8 +136,41 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     }
   };
 
+  // 결재 상신 버튼 표시 여부 판단
+  const shouldShowApprovalButton = () => {
+    // appr_stat_cd가 빈 값이고 role_resp_status_id가 있으면 결재상신 버튼 표시
+    const isApprStatEmpty = !apprStatCd || apprStatCd === '';
+    const hasRoleRespStatusId = roleRespStatusId !== null && roleRespStatusId !== undefined && roleRespStatusId !== '';
+    return isApprStatEmpty && hasRoleRespStatusId;
+  };
+
+  // 수정 버튼 표시 여부 판단
+  const shouldShowEditButton = () => {
+    // appr_stat_cd가 있으면 수정 버튼 숨김
+    const hasApprStat = apprStatCd && apprStatCd !== '';
+    return !hasApprStat;
+  };
+
+  // 결재현황 버튼 표시 여부 판단
+  const shouldShowApprovalStatusButton = () => {
+    // appr_stat_cd가 있고 role_resp_status_id가 있으면 결재현황 버튼 표시
+    const hasApprStat = apprStatCd && apprStatCd !== '';
+    const hasRoleRespStatusId = roleRespStatusId !== null && roleRespStatusId !== undefined && roleRespStatusId !== '';
+    return hasApprStat && hasRoleRespStatusId;
+  };
+
+
   // 데이터 초기화 및 로드
   useEffect(() => {
+    if (open) {
+      console.log('📋 PositionResponsibilityDialog - 받은 데이터:', {
+        ledgerOrdersId,
+        apprStatCd,
+        roleRespStatusId,
+        rowData
+      });
+    }
+    
     if ((mode === 'edit' || mode === 'view') && rowData && open) {
       // PositionResponsibilityStatusPage에서 넘어온 데이터 구조 처리
       // allDetails의 모든 항목을 처리
@@ -202,7 +264,19 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       responsibility_id: selectedResponsibilityData[0]?.id || rowData.allDetails[0].responsibility_id||'null',
       updated_id: 'admin', // TODO: 실제 사용자 ID로 변경 필요
       role_summ: responsibilityOverview, // 책무 내용을 role_summ에 포함
+      // 조건에 따라 ledger_order 값 설정: role_resp_status_id가 없으면 props의 ledgerOrdersId 사용
+      ledger_order: roleRespStatusId ? (rowData?.ledger_orders_id || null) : (ledgerOrdersId || null),
     };
+    
+    console.log('💾 저장 데이터:', {
+      responsibilityRequestData,
+      conditions: {
+        roleRespStatusId,
+        ledgerOrdersId,
+        apprStatCd,
+        usedLedgerOrder: roleRespStatusId ? (rowData?.ledger_orders_id || null) : (ledgerOrdersId || null)
+      }
+    });
     try {
       setLoading(true);
 
@@ -244,8 +318,10 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         throw new Error('올바르지 않은 응답 형식입니다.');
       }
 
-      // 첫 번째 항목에서 책무 내용 가져오기 (모든 항목이 같은 responsibilityContent를 가짐)
+      // 첫 번째 항목에서 책무 내용과 관련 근거 가져오기 (모든 항목이 같은 값을 가짐)
       const responsibilityContent = response[0].responsibilityContent || '';
+      const relatedBasisData = response[0].responsibilityRelEvid || '';
+      
       // 각 배열 항목을 details로 변환
       const details = response.map((item: ApiResponseItem, index: number) => ({
         id: `${item.id}-${index}`, // 고유 ID 생성
@@ -255,11 +331,14 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         relatedBasis: item.responsibilityRelEvid || '',       // 실제 필드명 매핑
       }));
 
-      // 검색으로 선택한 데이터는 formData에만 설정 (임시 데이터)
+      // 검색으로 선택한 데이터 설정
       setFormData({
         responsibilityContent,
         details,
       });
+      
+      // 관련 근거는 공통 항목이므로 별도 상태에 설정
+      setRelatedBasis(relatedBasisData);
     } catch (err) {
       console.error('책무 선택 중 오류 발생:', err);
       setError('책무 데이터를 불러오는 중 오류가 발생했습니다.');
@@ -278,11 +357,74 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
   // 세부내용 변경 함수 제거 - 검색을 통해서만 변경 가능
 
+  // 커스텀 액션 버튼들 생성
+  const renderCustomActions = () => {
+    const actions = [];
+    const taskIdNumber = typeof roleRespStatusId === 'string' 
+      ? parseInt(roleRespStatusId, 10) 
+      : Number(roleRespStatusId) || 0;
+
+    // 결재 상신 버튼 (appr_stat_cd가 없고 role_resp_status_id가 있을 때)
+    if (shouldShowApprovalButton()) {
+      console.log('🔵 결재 상신 버튼 표시:', {
+        taskType: 'role_resp_status',
+        originalRoleRespStatusId: roleRespStatusId,
+        convertedTaskId: taskIdNumber,
+        taskIdType: typeof taskIdNumber
+      });
+      
+      actions.push(
+        <ApprovalActionButton
+          key="approval-submit"
+          taskType="role_resp_status"
+          taskId={taskIdNumber}
+          taskTitle={`직책별 책무현황 - ${rowData?.positionName || '직책명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            console.log('🔄 결재 상태 변경됨');
+            onSave?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="small"
+          variant="contained"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    // 결재 현황 버튼 (appr_stat_cd가 있고 role_resp_status_id가 있을 때)
+    if (shouldShowApprovalStatusButton()) {
+      console.log('🔍 결재 현황 버튼 표시:', {
+        taskType: 'role_resp_status',
+        taskId: taskIdNumber,
+        apprStatCd: apprStatCd
+      });
+      
+      actions.push(
+        <ApprovalActionButton
+          key="approval-status"
+          taskType="role_resp_status"
+          taskId={taskIdNumber}
+          taskTitle={`직책별 책무현황 - ${rowData?.positionName || '직책명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            console.log('🔄 결재 상태 변경됨');
+            onSave?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="small"
+          variant="outlined"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    return actions.length > 0 ? <Box sx={{ mr: 1 }}>{actions}</Box> : null;
+  };
+
   return (
     <>
       <BaseDialog
         open={open}
-        mode={mode}
+        mode={shouldShowEditButton() ? mode : 'view'} // appr_stat_cd가 있으면 view 모드로 강제 변경
         title={`책무 ${mode === 'create' ? '등록' : mode === 'edit' ? '수정' : '상세 정보'}`}
         onClose={handleClose}
         onSave={handleSave}
@@ -291,16 +433,17 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         fullWidth
         disableSave={loading}
         loading={loading}
+        customActions={renderCustomActions()}
       >
 
 
         <Box sx={{ p: 2 }}>
           {/* 직책 정보 */}
           <TextField
-            sx={{ height: '100%', width: '100%', mb: 3 }}
+            sx={{ width: '100%', mb: 3 }}
             mode="readonly"
             multiline
-            rows={2}
+            rows={1}
             label="직책"
             value={rowData?.positionName || ''}
           />
@@ -514,6 +657,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         autoHideDuration={2000}
         onClose={() => setShowSuccessAlert(false)}
       />
+      
       <ResponsibilitySearchPopup
         open={searchPopupOpen}
         onClose={() => setSearchPopupOpen(false)}

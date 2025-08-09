@@ -8,6 +8,7 @@ export interface ApprovalSubmitRequest {
   taskTypeCd: string;
   taskId: number;
   taskTitle: string;
+  requesterId: string;
   approvers: string[];
   urgency?: 'NORMAL' | 'URGENT';
   comments?: string;
@@ -111,188 +112,106 @@ export interface ApproverInfo {
 
 // API 클라이언트 클래스
 class ApprovalApiClient {
-  private baseUrl = '/api/approval';
 
   /**
    * 결재 상신
    */
   async submitApproval(request: ApprovalSubmitRequest): Promise<ApprovalSubmitResponse> {
-    const response = await fetch(`${this.baseUrl}/submit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      throw new Error(`결재 상신 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.post('/approval-system/submit', request);
+    return response;
   }
 
   /**
    * 결재 처리 (승인/반려)
    */
   async processApproval(request: ApprovalProcessRequest): Promise<ApprovalProcessResponse> {
-    const response = await fetch(`${this.baseUrl}/process`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      throw new Error(`결재 처리 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.put('/approval-system/process', request);
+    return response;
   }
 
   /**
    * 결재 취소
    */
   async cancelApproval(approvalId: number, requesterId: string): Promise<ApprovalProcessResponse> {
-    const response = await fetch(`${this.baseUrl}/${approvalId}/cancel?requesterId=${requesterId}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      throw new Error(`결재 취소 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.delete(`/approval-system/${approvalId}/cancel/${requesterId}`);
+    return response;
   }
 
   /**
    * 결재 상태 조회 (업무별)
    */
   async getApprovalStatus(taskType: string, taskId: number): Promise<ApprovalStatusResponse | null> {
-    const response = await fetch(`${this.baseUrl}/status?taskType=${taskType}&taskId=${taskId}`);
-
-    if (response.status === 404) {
-      return null; // 결재가 없는 경우
+    try {
+      const response = await apiClient.get(`/approval-system/status/${taskType}/${taskId}`);
+      return response;
+    } catch (error: any) {
+      console.error('결재 상태 조회 오류:', error);
+      throw error;
     }
-
-    if (!response.ok) {
-      throw new Error(`결재 상태 조회 실패: ${response.statusText}`);
-    }
-
-    return response.json();
   }
 
   /**
    * 결재 상세 정보 조회
    */
   async getApprovalDetail(approvalId: number): Promise<ApprovalStatusResponse> {
-    const response = await fetch(`${this.baseUrl}/${approvalId}`);
-
-    if (!response.ok) {
-      throw new Error(`결재 상세 조회 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.get(`/approval-system/detail/${approvalId}`);
+    return response;
   }
 
   /**
    * 내 결재 대기 목록 조회
    */
   async getMyPendingApprovals(approverId: string): Promise<ApprovalListResponse[]> {
-    const response = await fetch(`${this.baseUrl}/my-pending?approverId=${approverId}`);
-
-    if (!response.ok) {
-      throw new Error(`내 결재 대기 목록 조회 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.get(`/approval-system/my-pending/${approverId}`);
+    return response;
   }
 
   /**
    * 내가 요청한 결재 목록 조회
    */
   async getMyRequestedApprovals(requesterId: string): Promise<ApprovalListResponse[]> {
-    const response = await fetch(`${this.baseUrl}/my-requests?requesterId=${requesterId}`);
-
-    if (!response.ok) {
-      throw new Error(`내 요청 결재 목록 조회 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.get(`/approval-system/my-requests/${requesterId}`);
+    return response;
   }
 
   /**
    * 전체 결재 목록 조회
    */
   async getAllApprovals(): Promise<ApprovalListResponse[]> {
-    const response = await fetch(`${this.baseUrl}/all`);
-
-    if (!response.ok) {
-      throw new Error(`전체 결재 목록 조회 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.get('/approval-system/all');
+    return response;
   }
 
   /**
    * 결재 요약 정보 조회
    */
   async getApprovalSummary(userId: string): Promise<ApprovalSummaryResponse> {
-    const response = await fetch(`${this.baseUrl}/summary?userId=${userId}`);
-
-    if (!response.ok) {
-      throw new Error(`결재 요약 정보 조회 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.get(`/approval-system/summary/${userId}`);
+    return response;
   }
 
   /**
    * 결재자 목록 조회
    */
   async getAvailableApprovers(): Promise<ApproverInfo[]> {
-    const response = await fetch(`${this.baseUrl}/approvers`);
-
-    if (!response.ok) {
-      throw new Error(`결재자 목록 조회 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.get('/approval-system/approvers');
+    return response;
   }
 
   /**
    * 결재 라인 미리보기
    */
   async previewApprovalLine(approvers: string[]): Promise<ApprovalStepInfo[]> {
-    const response = await fetch(`${this.baseUrl}/preview-line`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(approvers),
-    });
-
-    if (!response.ok) {
-      throw new Error(`결재 라인 미리보기 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.post('/approval-system/preview-line', approvers);
+    return response;
   }
 
   /**
    * 결재 권한 확인
    */
   async checkApprovalAuthority(approverId: string, taskType: string, taskId: number): Promise<boolean> {
-    const response = await fetch(
-      `${this.baseUrl}/check-authority?approverId=${approverId}&taskType=${taskType}&taskId=${taskId}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`결재 권한 확인 실패: ${response.statusText}`);
-    }
-
-    return response.json();
+    const response = await apiClient.get(`/approval-system/check-authority/${approverId}/${taskType}/${taskId}`);
+    return response;
   }
 }
 

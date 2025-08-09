@@ -55,7 +55,7 @@ interface IResponsibilityDbStatusPageProps {
 const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = React.memo(
   (): React.JSX.Element => {
     // Toast 알림을 위한 snackbar hook
-    const { snackbar, showError, hideSnackbar } = useSnackbar();
+    const { snackbar, showError, showSuccess, hideSnackbar } = useSnackbar();
     
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -148,15 +148,25 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         const data = await responsibilityApi.getStatusList();
 
         setAllResponsibilityData(data);
+        setData(data);
+
+        // 데이터 그룹핑
+        const grouped = groupDataByResponsibilityId(data);
+        setGroupedData(grouped);
+
+        // 그룹핑된 데이터를 DataGrid용으로 변환
+        const gridRows = convertToGridRows(grouped);
+        setRows(gridRows);
         
       } catch (err) {
         console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
         const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';
         setError(errorMessage);
+        showError(errorMessage);
       } finally {
         setLoading(false);
       }
-    }, []);
+    }, [groupDataByResponsibilityId, convertToGridRows, showError]);
 
     // 책무 현황 조회 (ledgerOrdersId와 responsibilityId 모두 지원)
     const fetchResponsibilityData = useCallback(async () => {
@@ -188,10 +198,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
         const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';
         setError(errorMessage);
+        showError(errorMessage);
       } finally {
         setLoading(false);
       }
-    }, [ledgerOrdersId, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows]);
+    }, [ledgerOrdersId, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows, showError]);
 
 
     useEffect(() => {
