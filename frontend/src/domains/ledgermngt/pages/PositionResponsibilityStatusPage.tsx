@@ -9,16 +9,21 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Button, SearchButton, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { PermissionButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
+import positionApi from '@/domains/ledgermngt/api/positionApi';
+import { Confirm } from '@/shared/components/modal';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import PositionResponsibilityDialog from '../components/PositionResponsibilityDialog';
-import { apiClient } from '@/app/common/api/client';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
 interface IPositionResponsibilityStatusPageProps {
   className?: string;
 }
@@ -33,6 +38,14 @@ interface PositionResponsibility {
   lastModifiedDate: string;
   createdAt: string;
   updatedAt: string;
+  // ledger_orders 관련 필드 추가
+  ledger_orders_id?: number | null;
+  ledger_orders_title?: string;
+  ledger_orders_status_cd?: string;
+  // approval 관련 필드 추가
+  appr_stat_cd?: string;
+  // role_resp_status 관련 필드 추가
+  role_resp_status_id?: number | null;
 }
 
 // 그룹핑된 직책별 책무 데이터 타입 정의
@@ -49,6 +62,14 @@ interface GroupedPositionResponsibility {
   responsibility_rel_evid: string; // 관련 근거
   responsibilityStartDate: string;
   lastModifiedDate: string;
+  // ledger_orders 관련 필드 추가
+  ledger_orders_id?: number | null;
+  ledger_orders_title?: string;
+  ledger_orders_status_cd?: string;
+  // approval 관련 필드 추가
+  appr_stat_cd?: string;
+  // role_resp_status 관련 필드 추가
+  role_resp_status_id?: number | null;
   // 개별 항목들만 details 배열에 (같은 직책 내에서도 다를 수 있는 값)
   details: Array<{
     responsibility_detail_content: string; // 세부내용
@@ -66,6 +87,14 @@ interface GroupedPositionResponsibilityRow {
   responsibilityStartDate: string;
   lastModifiedDate: string;
   detailCount: number; // 세부사항 개수
+  // ledger_orders 관련 필드 추가
+  ledger_orders_id?: number | null;
+  ledger_orders_title?: string;
+  ledger_orders_status_cd?: string;
+  // approval 관련 필드 추가
+  appr_stat_cd?: string;
+  // role_resp_status 관련 필드 추가
+  role_resp_status_id?: number | null;
 }
 
 const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPageProps> = (): React.JSX.Element => {
@@ -97,6 +126,18 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // 확정/확정취소 관련 상태
+  const [confirmConfirmOpen, setConfirmConfirmOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  
+  // LedgerOrderSelect 새로고침 트리거
+  const [ledgerOrderRefreshTrigger, setLedgerOrderRefreshTrigger] = useState<number>(0);
+
+  // Toast 알림을 위한 snackbar 훅
+  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+
+  const getCodeNameFn = useGetCodeName();
+
   // 페이징 상태
   const [pageInfo, setPageInfo] = useState({
     page: 1,
@@ -110,7 +151,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     const groupMap = new Map<string, GroupedPositionResponsibility>();
 
     data.forEach(item => {
-      const { id,positionId, positionName, createdAt, updatedAt, classification, responsibilityOverview, responsibilityStartDate, lastModifiedDate } = item;
+      const { id, positionId, positionName, createdAt, updatedAt, classification, responsibilityOverview, responsibilityStartDate, lastModifiedDate } = item;
 
       if (!groupMap.has(positionId)) {
         groupMap.set(positionId, {
@@ -126,6 +167,14 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           responsibility_rel_evid: (item as any).responsibility_rel_evid || '',
           responsibilityStartDate: (item as any).responsibilityStartDate || '',
           lastModifiedDate: (item as any).lastModifiedDate || '',
+          // ledger_orders 필드 추가
+          ledger_orders_id: item.ledger_orders_id,
+          ledger_orders_title: item.ledger_orders_title,
+          ledger_orders_status_cd: item.ledger_orders_status_cd,
+          // approval 관련 필드 추가
+          appr_stat_cd: (item as any).appr_stat_cd,
+          // role_resp_status 관련 필드 추가
+          role_resp_status_id: (item as any).role_resp_status_id,
           details: []
         });
       }
@@ -163,7 +212,15 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         responsibilityOverview: group.responsibilityOverview,
         responsibilityStartDate: group.responsibilityStartDate,
         lastModifiedDate: group.lastModifiedDate,
-        detailCount: group.details.length
+        detailCount: group.details.length,
+        // ledger_orders 관련 필드 추가
+        ledger_orders_id: group.ledger_orders_id,
+        ledger_orders_title: group.ledger_orders_title,
+        ledger_orders_status_cd: group.ledger_orders_status_cd,
+        // approval 관련 필드 추가
+        appr_stat_cd: group.appr_stat_cd,
+        // role_resp_status 관련 필드 추가
+        role_resp_status_id: group.role_resp_status_id,
       };
     });
   }, []);
@@ -200,6 +257,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       const data = await response.json();
       
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
+        id: item.id ?? 0,
         responsibility_id: item.respontibility_id ?? item.id ?? 0,
         classification: item.classification ?? '일반',
         positionId: String(item.positions_id ?? ''),
@@ -215,6 +273,14 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         responsibility_conent: item.responsibility_conent ?? '', // 책무 내용
         responsibility_mgt_sts: item.responsibility_mgt_sts ?? '', // 주요 관리업무
         responsibility_rel_evid: item.responsibility_rel_evid ?? '', // 관련 근거
+        // ledger_orders 관련 필드 추가
+        ledger_orders_id: item.ledger_orders_id ?? null,
+        ledger_orders_title: item.ledger_orders_title ?? '',
+        ledger_orders_status_cd: item.ledger_orders_status_cd ?? '',
+        // approval 관련 필드 추가
+        appr_stat_cd: item.appr_stat_cd ?? '',
+        // role_resp_status 관련 필드 추가
+        role_resp_status_id: item.role_resp_status_id ?? null,
       }));
 
       setAllPositionData(mappedRows);
@@ -245,8 +311,20 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // 모든 데이터를 한 번만 로드
       const response = await fetch('/api/position-responsibilities');
       const data = await response.json();
+
+      // API 응답 데이터 샘플 로깅 (첫 번째 항목만)
+      if (data.length > 0) {
+        console.log('🔍 API 응답 데이터 샘플:', {
+          id: data[0].id,
+          appr_stat_cd: data[0].appr_stat_cd,
+          role_resp_status_id: data[0].role_resp_status_id,
+          positions_id: data[0].positions_id,
+          positions_name: data[0].positions_name
+        });
+      }
       
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
+        id: item.id ?? 0,
         responsibility_id: item.respontibility_id ?? item.id ?? 0,
         classification: item.classification ?? '일반',
         positionId: String(item.positions_id ?? ''),
@@ -262,16 +340,34 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         responsibility_conent: item.responsibility_conent ?? '', // 책무 내용
         responsibility_mgt_sts: item.responsibility_mgt_sts ?? '', // 주요 관리업무
         responsibility_rel_evid: item.responsibility_rel_evid ?? '', // 관련 근거
+        // ledger_orders 관련 필드 추가
+        ledger_orders_id: item.ledger_orders_id ?? null,
+        ledger_orders_title: item.ledger_orders_title ?? '',
+        ledger_orders_status_cd: item.ledger_orders_status_cd ?? '',
+        // approval 관련 필드 추가
+        appr_stat_cd: item.appr_stat_cd ?? '',
+        // role_resp_status 관련 필드 추가
+        role_resp_status_id: item.role_resp_status_id ?? null,
       }));
 
       setAllPositionData(mappedRows);
+      setFilteredPositionData(mappedRows);
+      setOriginalData(mappedRows);
+      
+      // 데이터 그룹핑
+      const grouped = groupDataByPositionId(mappedRows);
+      setGroupedData(grouped);
+      
+      // 그룹핑된 데이터를 DataGrid용으로 변환
+      const gridRows = convertToGridRows(grouped);
+      setRows(gridRows);
     } catch (err) {
       setErrorMessage('데이터를 불러오는 데 실패했습니다.');
       setErrorDialogOpen(true);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [groupDataByPositionId, convertToGridRows]);
 
   useEffect(() => {
     loadAllData();
@@ -280,22 +376,34 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 컬럼 정의
   const columns: DataGridColumn<GroupedPositionResponsibilityRow>[] = [
     {
-      field: 'classification',
-      headerName: '구분',
-      width: 80,
+      field: 'appr_stat_cd',
+      headerName: '결재상태',
+      width: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value }) => (
-        <Chip
-          label={value}
-          size="small"
-          color={
-            value === '핵심' ? 'error' :
-              value === '중요' ? 'warning' :
-                value === '일반' ? 'default' : 'default'
-          }
-        />
-      )
+      renderCell: ({ value }) => getCodeNameFn('APPR_STAT_CD', (value as string) || ''),
+    },
+    {
+      field: 'role_resp_status_id',
+      headerName: '직책별책무현황ID',
+      width: 150,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'ledger_orders_title',
+      headerName: '책무번호',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+    },
+    {
+      field: 'ledger_orders_status_cd',
+      headerName: '진행상태',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => getCodeNameFn('ORDER_STATUS', (value as string) || ''),
     },
     {
       field: 'positionName',
@@ -332,7 +440,15 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
               // 개별 항목들은 details[0]에서 가져오기
               keyManagementTasks: groupedPosition.details[0]?.responsibility_mgt_sts || '', // 주요 관리업무
               // 모든 세부항목들을 포함
-              allDetails: groupedPosition.details
+              allDetails: groupedPosition.details,
+              // ledger_orders 관련 필드 추가
+              ledger_orders_id: row.ledger_orders_id,
+              ledger_orders_title: row.ledger_orders_title,
+              ledger_orders_status_cd: row.ledger_orders_status_cd,
+              // approval 관련 필드 추가
+              appr_stat_cd: row.appr_stat_cd,
+              // role_resp_status 관련 필드 추가
+              role_resp_status_id: row.role_resp_status_id
             } : null;
 
             setSelectedDetailData(dialogData);
@@ -418,7 +534,15 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // 개별 항목들은 details[0]에서 가져오기
       keyManagementTasks: groupedPosition.details[0]?.responsibility_mgt_sts || '', // 주요 관리업무
       // 모든 세부항목들을 포함
-      allDetails: groupedPosition.details
+      allDetails: groupedPosition.details,
+      // ledger_orders 관련 필드 추가
+      ledger_orders_id: row.ledger_orders_id,
+      ledger_orders_title: row.ledger_orders_title,
+      ledger_orders_status_cd: row.ledger_orders_status_cd,
+      // approval 관련 필드 추가
+      appr_stat_cd: row.appr_stat_cd,
+      // role_resp_status 관련 필드 추가
+      role_resp_status_id: row.role_resp_status_id
     } : null;
 
     setSelectedDetailData(dialogData);
@@ -482,6 +606,177 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     setSelectedIds(selectedRowIds.map(Number));
   };
 
+  // 확정 버튼 클릭 핸들러
+  const handleConfirmClick = useCallback(() => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "직책확정" 상태 검증 (신규가 아닌 직책확정이어야 함)
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "직책확정" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '직책확정') {
+      showError('직책확정 상태의 원장차수만 확정 가능합니다.');
+      return;
+    }
+
+    // 3. DataGrid의 모든 행의 결재상태가 APPROVED인지 검증
+    const unapprovedRows = rows.filter(row => row.appr_stat_cd !== 'APPROVED');
+    if (unapprovedRows.length > 0) {
+      showError(`결재가 완료되지 않은 항목이 ${unapprovedRows.length}개 있습니다. 모든 항목의 결재가 승인되어야 확정 가능합니다.`);
+      return;
+    }
+
+    console.log('📋 확정 조건 검증 통과:', {
+      selectedLedgerOrder,
+      statusInfo,
+      totalRows: rows.length,
+      approvedRows: rows.filter(row => row.appr_stat_cd === 'APPROVED').length
+    });
+
+    // 5. 확정 confirm 창 표시
+    setConfirmConfirmOpen(true);
+  }, [selectedLedgerOrder, ledgerOrderOptions, rows, showError]);
+
+  // LedgerOrderSelect 새로고침 함수
+  const refreshLedgerOrderSelect = useCallback(() => {
+    setLedgerOrderRefreshTrigger(prev => prev + 1);
+    console.log('📋 LedgerOrderSelect 새로고침 트리거:', ledgerOrderRefreshTrigger + 1);
+  }, [ledgerOrderRefreshTrigger]);
+
+  // 확정 처리 핸들러
+  const handleConfirmLedgerOrder = useCallback(async () => {
+    if (!selectedLedgerOrder) {
+      setConfirmConfirmOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('📋 확정 처리 시작:', {
+        selectedLedgerOrder
+      });
+
+      // 직책별 책무 확정 전용 API 사용 (P2 → P3)
+      const response = await positionApi.confirmPositionResponsibility(selectedLedgerOrder);
+      showSuccess(response.message || '직책별 책무가 확정되었습니다.');
+      
+      // 1. LedgerOrderSelect 새로고침
+      refreshLedgerOrderSelect();
+      
+      // 2. DataGrid 새로고침
+      await fetchPositionResponsibilityData();
+      
+    } catch (err: unknown) {
+      let errorMessage = '확정 처리 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('확정 처리 실패:', err);
+    } finally {
+      setLoading(false);
+      setConfirmConfirmOpen(false);
+    }
+  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionResponsibilityData, refreshLedgerOrderSelect]);
+
+  // 확정취소 버튼 클릭 핸들러
+  const handleCancelConfirmClick = useCallback(() => {
+    // 1. LedgerOrderSelect 선택 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('원장차수를 선택해주세요.');
+      return;
+    }
+
+    // 2. "직책별책무확정" 상태 검증 (직책확정이 아닌 직책별책무확정이어야 함)
+    const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
+    if (!selectedOption) {
+      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    // label에서 상태 정보 추출하여 "직책별책무확정" 여부 확인
+    let statusInfo = '';
+    if (selectedOption.label.includes('(') && selectedOption.label.includes(')')) {
+      const statusMatch = selectedOption.label.match(/\(([^)]+)\)/);
+      if (statusMatch) {
+        statusInfo = statusMatch[1];
+      }
+    }
+
+    if (statusInfo !== '직책별책무확정') {
+      showError('직책별책무확정 상태의 원장차수만 확정취소 가능합니다.');
+      return;
+    }
+
+    console.log('🔄 확정취소 조건 검증 통과:', {
+      selectedLedgerOrder,
+      statusInfo
+    });
+
+    // 3. 확정취소 confirm 창 표시
+    setCancelConfirmOpen(true);
+  }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
+
+  // 확정취소 처리 핸들러
+  const handleCancelConfirmLedgerOrder = useCallback(async () => {
+    if (!selectedLedgerOrder) {
+      setCancelConfirmOpen(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('🔄 확정취소 처리 시작:', {
+        selectedLedgerOrder
+      });
+
+      // 직책별 책무 확정취소 전용 API 사용 (P3 → P2)
+      const response = await positionApi.cancelPositionResponsibility(selectedLedgerOrder);
+      showSuccess(response.message || '직책별 책무 확정이 취소되었습니다.');
+      
+      // 1. LedgerOrderSelect 새로고침
+      refreshLedgerOrderSelect();
+      
+      // 2. DataGrid 새로고침
+      await fetchPositionResponsibilityData();
+      
+    } catch (err: unknown) {
+      let errorMessage = '확정취소 처리 중 오류가 발생했습니다.';
+      
+      if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message: string }).message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
+      showError(errorMessage);
+      console.error('확정취소 처리 실패:', err);
+    } finally {
+      setLoading(false);
+      setCancelConfirmOpen(false);
+    }
+  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionResponsibilityData, refreshLedgerOrderSelect]);
+
   // 오류 다이얼로그 닫기
   const handleCloseErrorDialog = () => {
     setErrorDialogOpen(false);
@@ -523,16 +818,18 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         }}
       >
         {/* 필터 영역 */}
-        <Box sx={{
-          display: 'flex',
-          gap: '8px',
-          padding: '8px 16px',
-          mb: 2,
-          bgcolor: 'var(--bank-bg-secondary)',
-          borderRadius: 1,
-          border: '1px solid var(--bank-border)',
-          alignItems: 'center'
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px',
+            alignItems: 'center',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
+            padding: '8px 16px',
+            borderRadius: '4px',
+          }}
+        >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <LedgerOrderSelect
             value={selectedLedgerOrder}
@@ -543,18 +840,13 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
+            refreshTrigger={ledgerOrderRefreshTrigger}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
               setLedgerOrderOptions(options);
               console.log('LedgerOrder 옵션 로드 완료:', options);
             }, [])}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
-          {/* <ComboBox
-            value={positionFilter}
-            onChange={(value) => setPositionFilter(value as string)}
-            size="small"
-            sx={{ minWidth: '200px' }}
-          /> */}
           <PositionSelect
             value={selectedPosition}
             onChange={setSelectedPosition}
@@ -569,6 +861,48 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             loading={loading}
             disabled={loading}
           />
+          <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            <PermissionButton
+              menuCode="LEDGER_MGMT_POSITION_RESPONSIBILITY"
+              permission="write"
+              variant="contained"
+              color="success"
+              size="small"
+              onClick={handleConfirmClick}
+              disabled={loading}
+              hideWhenNoPermission={true}
+              noPermissionTooltip="확정 권한이 없습니다"
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
+            >
+              확정
+            </PermissionButton>
+            <PermissionButton
+              menuCode="LEDGER_MGMT_POSITION_RESPONSIBILITY"
+              permission="write"
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={handleCancelConfirmClick}
+              disabled={loading}
+              hideWhenNoPermission={true}
+              noPermissionTooltip="확정취소 권한이 없습니다"
+              sx={{
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: 1,
+              }}
+            >
+              확정취소
+            </PermissionButton>
+          </Box>
         </Box>
 
         {/* 액션 버튼 영역 */}
@@ -649,7 +983,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             selectable
             multiSelect={false}
             selectedRows={selectedIds}
-            onRowSelectionChange={(selectedRows: (string | number)[], selectedData: GroupedPositionResponsibilityRow[]) => {
+            onRowSelectionChange={(selectedRows: (string | number)[]) => {
               setSelectedIds(selectedRows.map(Number));
             }}
             rowIdField="positionId"
@@ -665,6 +999,10 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         mode={dialogMode}
         responsibilityId={selectedDetailData?.id || null}
         rowData={selectedDetailData} // row 데이터 전달
+        // 추가 필드들 전달
+        ledgerOrdersId={selectedDetailData?.ledger_orders_id}
+        apprStatCd={selectedDetailData?.appr_stat_cd}
+        roleRespStatusId={selectedDetailData?.role_resp_status_id}
         onSave={handleSave}
         onChangeMode={setDialogMode}
       />
@@ -674,6 +1012,40 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         open={errorDialogOpen}
         onClose={handleCloseErrorDialog}
         errorMessage={errorMessage}
+      />
+
+      {/* 확정 확인 다이얼로그 */}
+      <Confirm
+        open={confirmConfirmOpen}
+        title="확정 확인"
+        message={`${selectedLedgerOrder} 차수의 직책별 책무를 확정하시겠습니까?`}
+        confirmText="확정"
+        cancelText="취소"
+        onConfirm={handleConfirmLedgerOrder}
+        onCancel={() => {
+          setConfirmConfirmOpen(false);
+        }}
+      />
+      
+      {/* 확정취소 확인 다이얼로그 */}
+      <Confirm
+        open={cancelConfirmOpen}
+        title="확정취소 확인"
+        message={`${selectedLedgerOrder} 차수의 직책별 책무를 확정취소하시겠습니까?`}
+        confirmText="확정취소"
+        cancelText="취소"
+        onConfirm={handleCancelConfirmLedgerOrder}
+        onCancel={() => {
+          setCancelConfirmOpen(false);
+        }}
+      />
+
+      {/* Toast 알림 */}
+      <Toast
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
       />
     </PageContainer>
   );

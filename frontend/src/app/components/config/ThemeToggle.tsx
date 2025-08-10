@@ -1,23 +1,19 @@
 /**
- * React 19 + MUI v7 테마 토글 컴포넌트
- * useColorScheme 훅을 활용한 다크/라이트 모드 전환
+ * 테마 토글 컴포넌트
+ * 커스텀 테마 컨텍스트를 활용한 다크/라이트 모드 전환
  */
 
 import { IconButton, Tooltip } from '@mui/material';
 import { Brightness4, Brightness7 } from '@mui/icons-material';
-import { useColorScheme } from '@mui/material/styles';
+import { useTheme } from '@/app/theme/ThemeContext';
 
 export default function ThemeToggle() {
-  const { mode, setMode } = useColorScheme();
-
-  const handleToggle = () => {
-    setMode(mode === 'light' ? 'dark' : 'light');
-  };
+  const { isDarkMode, toggleTheme } = useTheme();
 
   return (
-    <Tooltip title={`${mode === 'light' ? '다크' : '라이트'} 모드로 전환`}>
-      <IconButton onClick={handleToggle} color="inherit">
-        {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
+    <Tooltip title={`${isDarkMode ? '라이트' : '다크'} 모드로 전환`}>
+      <IconButton onClick={toggleTheme} color="inherit">
+        {isDarkMode ? <Brightness7 /> : <Brightness4 />}
       </IconButton>
     </Tooltip>
   );

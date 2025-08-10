@@ -62,8 +62,8 @@ public class LedgerOrdersServiceImpl implements LedgerOrdersService {
                 latestOrder.getLedgerOrdersTitle(), 
                 latestOrder.getLedgerOrdersStatusCd());
 
-        // P4 상태 확인
-        boolean canGenerate = "P4".equals(latestOrder.getLedgerOrdersStatusCd());
+        // P5 상태 확인
+        boolean canGenerate = "P5".equals(latestOrder.getLedgerOrdersStatusCd());
         String message = canGenerate 
             ? "새로운 책무번호를 생성할 수 있습니다."
             : "기존차수가 최종확정이어야 신규 생성이 가능합니다.";
@@ -100,10 +100,10 @@ public class LedgerOrdersServiceImpl implements LedgerOrdersService {
                 latestOrder.getLedgerOrdersTitle(), 
                 latestOrder.getLedgerOrdersStatusCd());
 
-        // 2. 진행상태 확인 (P4: 차수생성가능)
-        if (!"P4".equals(latestOrder.getLedgerOrdersStatusCd())) {
+        // 2. 진행상태 확인 (P5: 차수생성가능)
+        if (!"P5".equals(latestOrder.getLedgerOrdersStatusCd())) {
             throw new BusinessException(
-                String.format("새로운 차수를 생성할 수 없습니다. 현재 상태: %s (P4 상태여야 생성 가능)", 
+                String.format("새로운 차수를 생성할 수 없습니다. 현재 상태: %s (P5 상태여야 생성 가능)", 
                     latestOrder.getLedgerOrdersStatusCd()), 
                 "INVALID_STATUS_FOR_GENERATION"
             );
@@ -293,6 +293,213 @@ public class LedgerOrdersServiceImpl implements LedgerOrdersService {
                 updatedOrder.getLedgerOrdersStatusCd());
 
         return String.format("원장차수 '%s'가 확정취소되었습니다.", ledgerOrderValue);
+    }
+
+    @Override
+    @Transactional
+    public String confirmPositionResponsibility(String ledgerOrderValue) {
+        log.info("직책별 책무 확정 처리 요청: ledgerOrderValue={}", ledgerOrderValue);
+
+        if (ledgerOrderValue == null || ledgerOrderValue.trim().isEmpty()) {
+            throw new BusinessException("원장차수 값이 비어있습니다.", "EMPTY_LEDGER_ORDER_VALUE");
+        }
+
+        // 1. 해당 원장차수 조회
+        Optional<LedgerOrders> ledgerOrderOpt = ledgerOrdersRepository.findByLedgerOrdersTitle(ledgerOrderValue.trim());
+        
+        if (ledgerOrderOpt.isEmpty()) {
+            log.warn("해당 원장차수가 존재하지 않음: {}", ledgerOrderValue);
+            throw new BusinessException(
+                String.format("원장차수 '%s'가 존재하지 않습니다.", ledgerOrderValue), 
+                "LEDGER_ORDER_NOT_FOUND"
+            );
+        }
+
+        LedgerOrders ledgerOrder = ledgerOrderOpt.get();
+        log.info("원장차수 조회 완료: ID={}, Title={}, Status={}", 
+                ledgerOrder.getLedgerOrdersId(), 
+                ledgerOrder.getLedgerOrdersTitle(), 
+                ledgerOrder.getLedgerOrdersStatusCd());
+
+        // 2. 현재 상태가 P2(직책확정)인지 확인
+        if (!"P2".equals(ledgerOrder.getLedgerOrdersStatusCd())) {
+            throw new BusinessException(
+                String.format("직책확정 상태의 원장차수만 직책별책무확정 할 수 있습니다. 현재 상태: %s", 
+                    ledgerOrder.getLedgerOrdersStatusCd()), 
+                "INVALID_STATUS_FOR_POSITION_RESPONSIBILITY_CONFIRM"
+            );
+        }
+
+        // 3. 상태를 P3(직책별책무확정)로 업데이트
+        ledgerOrder.updateStatusCd("P3");
+        LedgerOrders updatedOrder = ledgerOrdersRepository.save(ledgerOrder);
+        
+        log.info("직책별 책무 확정 처리 완료: ID={}, Title={}, Status={} -> {}", 
+                updatedOrder.getLedgerOrdersId(), 
+                updatedOrder.getLedgerOrdersTitle(), 
+                "P2", 
+                updatedOrder.getLedgerOrdersStatusCd());
+
+        return String.format("원장차수 '%s'의 직책별 책무가 확정되었습니다.", ledgerOrderValue);
+    }
+
+    @Override
+    @Transactional
+    public String cancelPositionResponsibility(String ledgerOrderValue) {
+        log.info("직책별 책무 확정취소 처리 요청: ledgerOrderValue={}", ledgerOrderValue);
+
+        if (ledgerOrderValue == null || ledgerOrderValue.trim().isEmpty()) {
+            throw new BusinessException("원장차수 값이 비어있습니다.", "EMPTY_LEDGER_ORDER_VALUE");
+        }
+
+        // 1. 해당 원장차수 조회
+        Optional<LedgerOrders> ledgerOrderOpt = ledgerOrdersRepository.findByLedgerOrdersTitle(ledgerOrderValue.trim());
+        
+        if (ledgerOrderOpt.isEmpty()) {
+            log.warn("해당 원장차수가 존재하지 않음: {}", ledgerOrderValue);
+            throw new BusinessException(
+                String.format("원장차수 '%s'가 존재하지 않습니다.", ledgerOrderValue), 
+                "LEDGER_ORDER_NOT_FOUND"
+            );
+        }
+
+        LedgerOrders ledgerOrder = ledgerOrderOpt.get();
+        log.info("원장차수 조회 완료: ID={}, Title={}, Status={}", 
+                ledgerOrder.getLedgerOrdersId(), 
+                ledgerOrder.getLedgerOrdersTitle(), 
+                ledgerOrder.getLedgerOrdersStatusCd());
+
+        // 2. 현재 상태가 P3(직책별책무확정)인지 확인
+        if (!"P3".equals(ledgerOrder.getLedgerOrdersStatusCd())) {
+            throw new BusinessException(
+                String.format("직책별책무확정 상태의 원장차수만 확정취소할 수 있습니다. 현재 상태: %s", 
+                    ledgerOrder.getLedgerOrdersStatusCd()), 
+                "INVALID_STATUS_FOR_POSITION_RESPONSIBILITY_CANCEL"
+            );
+        }
+
+        // 3. 상태를 P2(직책확정)로 업데이트
+        ledgerOrder.updateStatusCd("P2");
+        LedgerOrders updatedOrder = ledgerOrdersRepository.save(ledgerOrder);
+        
+        log.info("직책별 책무 확정취소 처리 완료: ID={}, Title={}, Status={} -> {}", 
+                updatedOrder.getLedgerOrdersId(), 
+                updatedOrder.getLedgerOrdersTitle(), 
+                "P3", 
+                updatedOrder.getLedgerOrdersStatusCd());
+
+        return String.format("원장차수 '%s'의 직책별 책무 확정이 취소되었습니다.", ledgerOrderValue);
+    }
+
+    /**
+     * 임원 확정 처리 (P3 → P4)
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 확정 처리 결과 메시지
+     * @throws RuntimeException 확정 조건이 맞지 않을 때
+     */
+    @Override
+    @Transactional
+    public String confirmExecutive(String ledgerOrderValue) {
+        log.info("임원 확정 처리 시작: ledgerOrderValue={}", ledgerOrderValue);
+
+        // 1. ledgerOrderValue로 해당 원장차수 조회
+        LedgerOrders ledgerOrder = ledgerOrdersRepository.findByLedgerOrdersTitle(ledgerOrderValue)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("원장차수 '%s'를 찾을 수 없습니다.", ledgerOrderValue)));
+
+        // 2. 해당 원장차수의 상태가 "직책별책무확정"(P3)인지 확인
+        if (!"P3".equals(ledgerOrder.getLedgerOrdersStatusCd())) {
+            throw new RuntimeException(
+                    String.format("직책별책무확정 상태의 원장차수만 임원 확정할 수 있습니다. 현재 상태: %s", 
+                            ledgerOrder.getLedgerOrdersStatusCd()));
+        }
+
+        // 3. 상태를 P4(임원확정)로 업데이트
+        ledgerOrder.updateStatusCd("P4");
+        LedgerOrders updatedOrder = ledgerOrdersRepository.save(ledgerOrder);
+        
+        log.info("임원 확정 처리 완료: ID={}, Title={}, Status={} -> {}", 
+                updatedOrder.getLedgerOrdersId(), 
+                updatedOrder.getLedgerOrdersTitle(), 
+                "P3", 
+                updatedOrder.getLedgerOrdersStatusCd());
+
+        return String.format("원장차수 '%s'의 임원이 확정되었습니다.", ledgerOrderValue);
+    }
+
+    /**
+     * 임원 확정취소 처리 (P4 → P3)
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 확정취소 처리 결과 메시지
+     * @throws RuntimeException 확정취소 조건이 맞지 않을 때
+     */
+    @Override
+    @Transactional
+    public String cancelExecutive(String ledgerOrderValue) {
+        log.info("임원 확정취소 처리 시작: ledgerOrderValue={}", ledgerOrderValue);
+
+        // 1. ledgerOrderValue로 해당 원장차수 조회
+        LedgerOrders ledgerOrder = ledgerOrdersRepository.findByLedgerOrdersTitle(ledgerOrderValue)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("원장차수 '%s'를 찾을 수 없습니다.", ledgerOrderValue)));
+
+        // 2. 해당 원장차수의 상태가 "임원확정"(P4)인지 확인
+        if (!"P4".equals(ledgerOrder.getLedgerOrdersStatusCd())) {
+            throw new RuntimeException(
+                    String.format("임원확정 상태의 원장차수만 확정취소할 수 있습니다. 현재 상태: %s", 
+                            ledgerOrder.getLedgerOrdersStatusCd()));
+        }
+
+        // 3. 상태를 P3(직책별책무확정)로 업데이트
+        ledgerOrder.updateStatusCd("P3");
+        LedgerOrders updatedOrder = ledgerOrdersRepository.save(ledgerOrder);
+        
+        log.info("임원 확정취소 처리 완료: ID={}, Title={}, Status={} -> {}", 
+                updatedOrder.getLedgerOrdersId(), 
+                updatedOrder.getLedgerOrdersTitle(), 
+                "P4", 
+                updatedOrder.getLedgerOrdersStatusCd());
+
+        return String.format("원장차수 '%s'의 임원 확정이 취소되었습니다.", ledgerOrderValue);
+    }
+
+    /**
+     * 임원 최종확정 처리 (P4 → P5)
+     * 
+     * @param ledgerOrderValue 원장차수 값 (예: "2025-002")
+     * @return 최종확정 처리 결과 메시지
+     * @throws RuntimeException 최종확정 조건이 맞지 않을 때
+     */
+    @Override
+    @Transactional
+    public String finalConfirmExecutive(String ledgerOrderValue) {
+        log.info("임원 최종확정 처리 시작: ledgerOrderValue={}", ledgerOrderValue);
+
+        // 1. ledgerOrderValue로 해당 원장차수 조회
+        LedgerOrders ledgerOrder = ledgerOrdersRepository.findByLedgerOrdersTitle(ledgerOrderValue)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("원장차수 '%s'를 찾을 수 없습니다.", ledgerOrderValue)));
+
+        // 2. 해당 원장차수의 상태가 "임원확정"(P4)인지 확인
+        if (!"P4".equals(ledgerOrder.getLedgerOrdersStatusCd())) {
+            throw new RuntimeException(
+                    String.format("임원확정 상태의 원장차수만 최종확정할 수 있습니다. 현재 상태: %s", 
+                            ledgerOrder.getLedgerOrdersStatusCd()));
+        }
+
+        // 3. 상태를 P5(최종확정)로 업데이트
+        ledgerOrder.updateStatusCd("P5");
+        LedgerOrders updatedOrder = ledgerOrdersRepository.save(ledgerOrder);
+        
+        log.info("임원 최종확정 처리 완료: ID={}, Title={}, Status={} -> {}", 
+                updatedOrder.getLedgerOrdersId(), 
+                updatedOrder.getLedgerOrdersTitle(), 
+                "P4", 
+                updatedOrder.getLedgerOrdersStatusCd());
+
+        return String.format("원장차수 '%s'의 임원이 최종확정되었습니다.", ledgerOrderValue);
     }
 
     /**

@@ -1,0 +1,177 @@
+/**
+ * Dark Theme CSS Variables and Styles
+ * 다크 테마 전용 CSS 스타일 및 변수 정의
+ */
+
+/* 다크 테마 CSS 변수 */
+:root.dark-mode,
+body.dark-mode {
+  /* Primary Colors */
+  --bank-primary: #90caf9;
+  --bank-primary-dark: #42a5f5;
+  --bank-primary-light: #bbdefb;
+  
+  /* Background Colors */
+  --bank-bg-primary: #121212;
+  --bank-bg-secondary: #1e1e1e;
+  --bank-bg-tertiary: #2d2d2d;
+  --bank-bg-hover: #333333;
+  
+  /* Text Colors */
+  --bank-text-primary: #ffffff;
+  --bank-text-secondary: #b3b3b3;
+  --bank-text-disabled: #666666;
+  
+  /* Border Colors */
+  --bank-border: #333333;
+  --bank-border-light: #404040;
+  --bank-divider: #333333;
+  
+  /* Status Colors */
+  --bank-success: #66bb6a;
+  --bank-warning: #ffb74d;
+  --bank-error: #f44336;
+  --bank-info: #42a5f5;
+}
+
+/* 다크 테마 전용 스타일 */
+body.dark-mode {
+  background-color: var(--bank-bg-primary);
+  color: var(--bank-text-primary);
+}
+
+/* 다크 테마 스크롤바 스타일 */
+body.dark-mode *::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.dark-mode *::-webkit-scrollbar-track {
+  background-color: var(--bank-bg-secondary);
+}
+
+body.dark-mode *::-webkit-scrollbar-thumb {
+  background-color: var(--bank-border-light);
+  border-radius: 4px;
+}
+
+body.dark-mode *::-webkit-scrollbar-thumb:hover {
+  background-color: #555555;
+}
+
+/* 다크 테마 테이블 스타일 */
+body.dark-mode .MuiTableContainer-root {
+  background-color: var(--bank-bg-secondary);
+}
+
+body.dark-mode .MuiTableHead-root .MuiTableCell-root {
+  background-color: var(--bank-bg-tertiary) !important;
+  border-bottom: 1px solid var(--bank-border);
+  color: var(--bank-text-primary);
+}
+
+body.dark-mode .MuiTableBody-root .MuiTableRow-root {
+  background-color: var(--bank-bg-secondary);
+  border-bottom: 1px solid var(--bank-border);
+}
+
+body.dark-mode .MuiTableBody-root .MuiTableRow-root:hover {
+  background-color: var(--bank-bg-hover) !important;
+}
+
+/* 다크 테마 Paper 컴포넌트 */
+body.dark-mode .MuiPaper-root {
+  background-color: var(--bank-bg-secondary);
+  color: var(--bank-text-primary);
+}
+
+/* 다크 테마 TextField */
+body.dark-mode .MuiOutlinedInput-root {
+  background-color: var(--bank-bg-secondary);
+  color: var(--bank-text-primary);
+}
+
+body.dark-mode .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: var(--bank-border);
+}
+
+body.dark-mode .MuiInputLabel-root {
+  color: var(--bank-text-secondary);
+}
+
+/* 다크 테마 Select */
+body.dark-mode .MuiSelect-select {
+  background-color: var(--bank-bg-secondary);
+  color: var(--bank-text-primary);
+}
+
+/* 다크 테마 Menu */
+body.dark-mode .MuiMenu-paper {
+  background-color: var(--bank-bg-secondary);
+  border: 1px solid var(--bank-border);
+}
+
+body.dark-mode .MuiMenuItem-root {
+  color: var(--bank-text-primary);
+}
+
+body.dark-mode .MuiMenuItem-root:hover {
+  background-color: var(--bank-bg-hover);
+}
+
+/* 다크 테마 Dialog */
+body.dark-mode .MuiDialog-paper {
+  background-color: var(--bank-bg-secondary);
+  color: var(--bank-text-primary);
+}
+
+/* 다크 테마 AppBar */
+body.dark-mode .MuiAppBar-root {
+  background-color: var(--bank-bg-secondary);
+  border-bottom: 1px solid var(--bank-border);
+}
+
+/* 다크 테마 DataGrid */
+body.dark-mode .MuiDataGrid-root {
+  background-color: var(--bank-bg-secondary);
+  border: 1px solid var(--bank-border);
+  color: var(--bank-text-primary);
+}
+
+body.dark-mode .MuiDataGrid-columnHeaders {
+  background-color: var(--bank-bg-tertiary) !important;
+  border-bottom: 1px solid var(--bank-border);
+}
+
+body.dark-mode .MuiDataGrid-row {
+  background-color: var(--bank-bg-secondary);
+  border-bottom: 1px solid var(--bank-border);
+}
+
+body.dark-mode .MuiDataGrid-row:hover {
+  background-color: var(--bank-bg-hover) !important;
+}
+
+body.dark-mode .MuiDataGrid-row.Mui-selected {
+  background-color: rgba(144, 202, 249, 0.08) !important;
+}
+
+body.dark-mode .MuiDataGrid-row.Mui-selected:hover {
+  background-color: rgba(144, 202, 249, 0.12) !important;
+}
+
+/* 다크 테마 Chip */
+body.dark-mode .MuiChip-root {
+  background-color: var(--bank-bg-tertiary);
+  color: var(--bank-text-primary);
+}
+
+/* 다크 테마 Divider */
+body.dark-mode .MuiDivider-root {
+  border-color: var(--bank-border);
+}
+
+/* Transition effects */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}

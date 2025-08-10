@@ -41,6 +41,16 @@ export interface HodICItemRow {
   auditResultStatusCd?: string; // 점검결과상태코드
 }
 
+// 부서장차수생성 응답 타입
+export interface LedgerOrdersHodGenerateResponse {
+  ledgerOrdersHodId: number;
+  ledgerOrdersHodTitle: string;
+  ledgerOrdersHodStatusCd: string;
+  ledgerOrdersId: number;
+  ledgerOrdersTitle: string;
+  message: string;
+}
+
 // 부서장 내부통제 항목 상세 정보 타입
 export interface HodICItemDetail {
   hodIcItemId: number;
@@ -158,5 +168,12 @@ export const hodICItemApi = {
    */
   async isCreatedBy(hodIcItemId: number): Promise<boolean> {
     return apiClient.get(`/hod-ic-items/${hodIcItemId}/is-created-by`);
+  },
+
+  /**
+   * 부서장차수 생성
+   */
+  async generateHodLedgerOrder(): Promise<LedgerOrdersHodGenerateResponse> {
+    return apiClient.post('/positions/ledger-orders-hod/generate');
   },
 };

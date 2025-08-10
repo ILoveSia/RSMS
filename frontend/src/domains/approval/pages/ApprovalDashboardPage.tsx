@@ -40,15 +40,31 @@ import approvalApi, {
 } from '../api/approvalApi';
 import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
 import InlineApprovalDialog from '@/shared/components/approval/InlineApprovalDialog';
+import { useReduxState } from '@/app/store/use-store';
 import '../../../assets/scss/style.css';
 
-// 임시 사용자 정보 (실제 구현 시 context에서 가져오기)
-const CURRENT_USER_ID = 'user001';
+// LoginUser 타입 (loginStore용)
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+}
 
 /**
  * 결재 대시보드 페이지
  */
 const ApprovalDashboardPage: React.FC = () => {
+  // 로그인 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+  const currentUserId = loginData?.userid;
+
+  console.log('🔍 ApprovalDashboardPage - 로그인 사용자 정보:', {
+    loginData,
+    currentUserId,
+    hasLoginData: !!loginData,
+  });
+
   // 상태 관리
   const [summary, setSummary] = useState<ApprovalSummaryResponse | null>(null);
   const [urgentApprovals, setUrgentApprovals] = useState<ApprovalListResponse[]>([]);
@@ -66,22 +82,38 @@ const ApprovalDashboardPage: React.FC = () => {
 
   // 대시보드 데이터 로드
   const loadDashboardData = useCallback(async () => {
+    // 로그인 사용자 정보가 없으면 로드하지 않음
+    if (!currentUserId) {
+      console.warn('⚠️ currentUserId가 없어서 대시보드 데이터를 로드하지 않습니다.');
+      setError('로그인 정보를 불러올 수 없습니다.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
+      console.log('📊 대시보드 데이터 로드 시작 - currentUserId:', currentUserId);
+
       // 병렬로 대시보드 데이터 로드
       const [summaryData, pendingData, allData] = await Promise.all([
-        approvalApi.getApprovalSummary(CURRENT_USER_ID),
-        approvalApi.getMyPendingApprovals(CURRENT_USER_ID),
+        approvalApi.getApprovalSummary(currentUserId),
+        approvalApi.getMyPendingApprovals(currentUserId),
         approvalApi.getAllApprovals(),
       ]);
 
+      console.log('📊 API 응답 데이터:', {
+        summaryData,
+        pendingDataCount: pendingData?.length || 0,
+        pendingData,
+        allDataCount: allData?.length || 0
+      });
+
       setSummary(summaryData);
-      setMyPendingApprovals(pendingData);
+      setMyPendingApprovals(pendingData || []);
       
       // 긴급 결재만 필터링 (최근 5건)
-      const urgentData = allData
+      const urgentData = (allData || [])
         .filter(item => item.urgency === 'URGENT')
         .slice(0, 5);
       setUrgentApprovals(urgentData);
@@ -95,7 +127,7 @@ const ApprovalDashboardPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUserId]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -138,7 +170,7 @@ const ApprovalDashboardPage: React.FC = () => {
     try {
       // 내가 처리해야 할 단계 찾기
       const myStep = selectedApproval.steps.find(
-        step => step.approverId === CURRENT_USER_ID && step.status === 'PENDING'
+        step => step.approverId === currentUserId && step.status === 'PENDING'
       );
       
       if (!myStep?.stepId) {
@@ -433,6 +465,12 @@ const ApprovalDashboardPage: React.FC = () => {
         {error && (
           <Alert severity="error" sx={{ mb: 2, mx: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {!currentUserId && (
+          <Alert severity="warning" sx={{ mb: 2, mx: 2 }}>
+            로그인 정보를 확인 중입니다. 잠시만 기다려주세요.
           </Alert>
         )}
 

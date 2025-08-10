@@ -108,7 +108,11 @@ public class MenuController {
                 return ResponseEntity.ok(menu);
             } else {
                 logger.warn("메뉴를 찾을 수 없음 - 코드: {}", menuCode);
-                return ResponseEntity.notFound().build();
+                // 메뉴가 없을 경우 빈 객체로 응답 (404 대신)
+                MenuDto emptyMenu = new MenuDto();
+                emptyMenu.setMenuCode(menuCode);
+                emptyMenu.setMenuName("메뉴 없음");
+                return ResponseEntity.ok(emptyMenu);
             }
         } catch (Exception e) {
             logger.error("메뉴 조회 실패", e);

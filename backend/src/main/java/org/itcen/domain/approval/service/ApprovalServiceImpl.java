@@ -1,6 +1,7 @@
 package org.itcen.domain.approval.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.itcen.domain.approval.dto.ApprovalDto;
@@ -8,6 +9,9 @@ import org.itcen.domain.approval.entity.Approval;
 import org.itcen.domain.approval.entity.ApprovalStep;
 import org.itcen.domain.approval.repository.ApprovalRepository;
 import org.itcen.domain.approval.repository.ApprovalStepRepository;
+import org.itcen.domain.user.entity.User;
+import org.itcen.domain.user.repository.UserRepository;
+import org.itcen.domain.employee.entity.Employee;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +36,13 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     private final ApprovalRepository approvalRepository;
     private final ApprovalStepRepository approvalStepRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
     public ApprovalDto.SubmitResponse submitApproval(ApprovalDto.SubmitRequest request) {
-        log.info("결재 상신 요청: taskType={}, taskId={}, approvers={}", 
-                request.getTaskTypeCd(), request.getTaskId(), request.getApprovers());
+        log.info("결재 상신 요청: taskType={}, taskId={}, requesterId={}, approvers={}", 
+                request.getTaskTypeCd(), request.getTaskId(), request.getRequesterId(), request.getApprovers());
 
         try {
             // 기존 결재 중복 확인
@@ -47,22 +52,32 @@ public class ApprovalServiceImpl implements ApprovalService {
             validateApprovers(request.getApprovers());
 
             // 결재 생성
+            log.info("결재 엔티티 생성 전 requesterId: {}", request.getRequesterId());
             Approval approval = Approval.createApproval(
                 request.getTaskTypeCd(),
                 request.getTaskId(),
                 request.getRequesterId(),
                 request.getApprovers()
             );
+            log.info("결재 엔티티 생성 후 requesterId: {}", approval.getRequesterId());
 
             if (request.getComments() != null) {
                 approval.setComments(request.getComments());
             }
 
-            // 저장
+            // 임시로 단계 목록 저장
+            List<ApprovalStep> tempSteps = new ArrayList<>(approval.getSteps());
+            // 결재 먼저 저장 (단계 없이)
+            approval.getSteps().clear();
             Approval savedApproval = approvalRepository.save(approval);
 
-            // 결재 단계 ID 업데이트
-            savedApproval.getSteps().forEach(step -> step.setApprovalId(savedApproval.getApprovalId()));
+            // 결재 단계에 approval_id 설정 후 저장
+            for (ApprovalStep step : tempSteps) {
+                step.setApprovalId(savedApproval.getApprovalId());
+                step.setApproval(savedApproval);
+                approvalStepRepository.save(step);
+                savedApproval.getSteps().add(step);
+            }
 
             log.info("결재 상신 완료: approvalId={}", savedApproval.getApprovalId());
 
@@ -166,7 +181,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     public ApprovalDto.StatusResponse getApprovalDetail(Long approvalId) {
         return approvalRepository.findByIdWithSteps(approvalId)
                 .map(this::convertToStatusResponse)
-                .orElseThrow(() -> new RuntimeException("결재를 찾을 수 없습니다."));
+                .orElse(null); // Exception 대신 null 반환
     }
 
     @Override
@@ -214,9 +229,42 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     @Override
     public List<ApprovalDto.ApproverInfo> getAvailableApprovers() {
-        // TODO: 사용자 엔티티와 연동하여 구현
-        // 현재는 빈 리스트 반환
-        return List.of();
+        log.info("결재자 목록 조회 시작");
+        
+        try {
+            // 사용자와 직원 정보를 조인하여 조회
+            List<Object[]> usersWithEmployee = userRepository.findUsersWithEmployee();
+            log.info("조회된 사용자 수: {}", usersWithEmployee.size());
+            
+            List<ApprovalDto.ApproverInfo> approvers = usersWithEmployee.stream()
+                .map(this::convertToApproverInfo)
+                .filter(approver -> Boolean.TRUE.equals(approver.getIsAvailable())) // 사용 가능한 결재자만 필터링
+                .collect(Collectors.toList());
+                
+            log.info("필터링 후 결재자 수: {}", approvers.size());
+            return approvers;
+                
+        } catch (Exception e) {
+            log.error("결재자 목록 조회 실패: {}", e.getMessage(), e);
+            // 오류 발생 시 빈 리스트 반환
+            return List.of();
+        }
+    }
+    
+    /**
+     * User와 Employee 정보를 ApproverInfo DTO로 변환
+     */
+    private ApprovalDto.ApproverInfo convertToApproverInfo(Object[] userEmployeeData) {
+        User user = (User) userEmployeeData[0];
+        Employee employee = (Employee) userEmployeeData[1];
+        
+        return ApprovalDto.ApproverInfo.builder()
+                .userId(user.getId())
+                .userName(user.getUsername())
+                .departmentName(employee != null ? employee.getDeptName() : "미지정")
+                .positionName(employee != null ? employee.getPositionName() : "미지정")
+                .isAvailable(employee == null || employee.isUsable()) // employee가 null이거나 사용가능한 경우
+                .build();
     }
 
     @Override

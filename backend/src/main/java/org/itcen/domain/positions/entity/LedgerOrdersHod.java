@@ -61,4 +61,11 @@ public class LedgerOrdersHod extends BaseTimeEntity {
      */
     @Column(name = "ledger_orders_hod_conf_cd", length = 2)
     private String ledgerOrdersHodConfCd;
+
+    /**
+     * 원장차수 ID (외래키)
+     * ledger_orders 테이블의 ledger_orders_id 참조
+     */
+    @Column(name = "ledger_orders_id")
+    private Long ledgerOrdersId;
 }

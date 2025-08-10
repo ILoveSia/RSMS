@@ -1,4 +1,5 @@
 import { useAuth } from '@/shared/context/AuthContext';
+import ThemeToggle from '@/app/components/config/ThemeToggle';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -58,6 +59,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ style }) => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <ThemeToggle />
         {authState.isAuthenticated && authState.user && (
           <>
             <span style={{ fontSize: '14px' }}>

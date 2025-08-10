@@ -1,8 +1,11 @@
 package org.itcen.domain.approval.controller;
 
 import java.util.List;
+import java.util.Map;
+import org.itcen.common.dto.ApiResponse;
 import org.itcen.domain.approval.dto.ApprovalDto;
 import org.itcen.domain.approval.service.ApprovalService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,11 +34,44 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/approval")
+@RequestMapping("/approval-system")
 @RequiredArgsConstructor
 public class ApprovalController {
 
     private final ApprovalService approvalService;
+    
+    @Autowired
+    private RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+    /**
+     * 컨트롤러 테스트용 엔드포인트
+     * GET /api/approval/health-check
+     */
+    @GetMapping("/health-check")
+    public ResponseEntity<String> testEndpoint() {
+        return ResponseEntity.ok("ApprovalController is working!");
+    }
+    
+    /**
+     * URL 매핑 정보 디버깅용 엔드포인트
+     * GET /api/approval/debug-mappings
+     */
+    @GetMapping("/debug-mappings")
+    public ResponseEntity<String> debugMappings() {
+        var mappings = requestMappingHandlerMapping.getHandlerMethods();
+        StringBuilder result = new StringBuilder();
+        
+        // approval 관련 매핑만 필터링하여 로그 출력
+        mappings.entrySet().stream()
+            .filter(entry -> entry.getKey().toString().contains("approval"))
+            .forEach(entry -> {
+                String mapping = "Mapping: " + entry.getKey() + " -> " + entry.getValue();
+                log.info(mapping);
+                result.append(mapping).append("\n");
+            });
+            
+        return ResponseEntity.ok(result.toString());
+    }
 
     /**
      * 결재 상신
@@ -88,12 +126,12 @@ public class ApprovalController {
     /**
      * 결재 취소
      * 
-     * DELETE /api/approval/{approvalId}/cancel
+     * DELETE /api/approval/{approvalId}/cancel/{requesterId}
      */
-    @DeleteMapping("/{approvalId}/cancel")
+    @DeleteMapping("/{approvalId}/cancel/{requesterId}")
     public ResponseEntity<ApprovalDto.ProcessResponse> cancelApproval(
             @PathVariable Long approvalId,
-            @RequestParam String requesterId) {
+            @PathVariable String requesterId) {
         
         log.info("결재 취소 API 호출: approvalId={}, requesterId={}", approvalId, requesterId);
         
@@ -113,12 +151,12 @@ public class ApprovalController {
     /**
      * 결재 상태 조회 (업무별)
      * 
-     * GET /api/approval/status?taskType={taskType}&taskId={taskId}
+     * GET /api/approval/status/{taskType}/{taskId}
      */
-    @GetMapping("/status")
+    @GetMapping("/status/{taskType}/{taskId}")
     public ResponseEntity<ApprovalDto.StatusResponse> getApprovalStatus(
-            @RequestParam String taskType,
-            @RequestParam Long taskId) {
+            @PathVariable String taskType,
+            @PathVariable Long taskId) {
         
         log.debug("결재 상태 조회 API 호출: taskType={}, taskId={}", taskType, taskId);
         
@@ -127,7 +165,17 @@ public class ApprovalController {
             if (response != null) {
                 return ResponseEntity.ok(response);
             } else {
-                return ResponseEntity.notFound().build();
+                // 결재 데이터가 없을 경우 "결재 상신 전" 상태로 응답 (404 대신 200 OK)
+                ApprovalDto.StatusResponse noApprovalResponse = ApprovalDto.StatusResponse.builder()
+                        .taskTypeCd(taskType)
+                        .taskId(taskId)
+                        .status("NOT_SUBMITTED")
+                        .statusName("결재 상신 전")
+                        .currentStep(0)
+                        .totalSteps(0)
+                        .steps(List.of()) // 빈 리스트로 초기화
+                        .build();
+                return ResponseEntity.ok(noApprovalResponse);
             }
         } catch (Exception e) {
             log.error("결재 상태 조회 API 오류: {}", e.getMessage(), e);
@@ -138,9 +186,9 @@ public class ApprovalController {
     /**
      * 결재 상세 정보 조회
      * 
-     * GET /api/approval/{approvalId}
+     * GET /api/approval/detail/{approvalId}
      */
-    @GetMapping("/{approvalId}")
+    @GetMapping("/detail/{approvalId}")
     public ResponseEntity<ApprovalDto.StatusResponse> getApprovalDetail(
             @PathVariable Long approvalId) {
         
@@ -148,21 +196,34 @@ public class ApprovalController {
         
         try {
             ApprovalDto.StatusResponse response = approvalService.getApprovalDetail(approvalId);
-            return ResponseEntity.ok(response);
+            if (response != null) {
+                return ResponseEntity.ok(response);
+            } else {
+                // 결재 데이터가 없을 경우 "결재 없음" 상태로 응답
+                ApprovalDto.StatusResponse noApprovalResponse = ApprovalDto.StatusResponse.builder()
+                        .approvalId(approvalId)
+                        .status("NOT_FOUND")
+                        .statusName("결재 데이터 없음")
+                        .currentStep(0)
+                        .totalSteps(0)
+                        .steps(List.of()) // 빈 리스트로 초기화
+                        .build();
+                return ResponseEntity.ok(noApprovalResponse);
+            }
         } catch (Exception e) {
             log.error("결재 상세 조회 API 오류: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     /**
      * 내 결재 대기 목록 조회
      * 
-     * GET /api/approval/my-pending?approverId={approverId}
+     * GET /api/approval/my-pending/{approverId}
      */
-    @GetMapping("/my-pending")
+    @GetMapping("/my-pending/{approverId}")
     public ResponseEntity<List<ApprovalDto.ListResponse>> getMyPendingApprovals(
-            @RequestParam String approverId) {
+            @PathVariable String approverId) {
         
         log.debug("내 결재 대기 목록 조회 API 호출: approverId={}", approverId);
         
@@ -178,11 +239,11 @@ public class ApprovalController {
     /**
      * 내가 요청한 결재 목록 조회
      * 
-     * GET /api/approval/my-requests?requesterId={requesterId}
+     * GET /api/approval/my-requests/{requesterId}
      */
-    @GetMapping("/my-requests")
+    @GetMapping("/my-requests/{requesterId}")
     public ResponseEntity<List<ApprovalDto.ListResponse>> getMyRequestedApprovals(
-            @RequestParam String requesterId) {
+            @PathVariable String requesterId) {
         
         log.debug("내 요청 결재 목록 조회 API 호출: requesterId={}", requesterId);
         
@@ -198,11 +259,11 @@ public class ApprovalController {
     /**
      * 내 결재 처리 이력 조회
      * 
-     * GET /api/approval/my-history?approverId={approverId}
+     * GET /api/approval/my-history/{approverId}
      */
-    @GetMapping("/my-history")
+    @GetMapping("/my-history/{approverId}")
     public ResponseEntity<List<ApprovalDto.HistoryResponse>> getMyApprovalHistory(
-            @RequestParam String approverId) {
+            @PathVariable String approverId) {
         
         log.debug("내 결재 이력 조회 API 호출: approverId={}", approverId);
         
@@ -237,11 +298,11 @@ public class ApprovalController {
     /**
      * 결재 대시보드 요약 정보 조회
      * 
-     * GET /api/approval/summary?userId={userId}
+     * GET /api/approval/summary/{userId}
      */
-    @GetMapping("/summary")
+    @GetMapping("/summary/{userId}")
     public ResponseEntity<ApprovalDto.SummaryResponse> getApprovalSummary(
-            @RequestParam String userId) {
+            @PathVariable String userId) {
         
         log.debug("결재 요약 정보 조회 API 호출: userId={}", userId);
         
@@ -262,10 +323,12 @@ public class ApprovalController {
     @GetMapping("/approvers")
     public ResponseEntity<List<ApprovalDto.ApproverInfo>> getAvailableApprovers() {
         
-        log.debug("결재자 목록 조회 API 호출");
+        log.info("결재자 목록 조회 API 호출");
         
         try {
+            log.info("ApprovalService 호출 시작");
             List<ApprovalDto.ApproverInfo> response = approvalService.getAvailableApprovers();
+            log.info("ApprovalService 호출 완료, 결과 수: {}", response.size());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("결재자 목록 조회 API 오류: {}", e.getMessage(), e);
@@ -296,13 +359,13 @@ public class ApprovalController {
     /**
      * 결재 권한 확인
      * 
-     * GET /api/approval/check-authority?approverId={approverId}&taskType={taskType}&taskId={taskId}
+     * GET /api/approval/check-authority/{approverId}/{taskType}/{taskId}
      */
-    @GetMapping("/check-authority")
+    @GetMapping("/check-authority/{approverId}/{taskType}/{taskId}")
     public ResponseEntity<Boolean> checkApprovalAuthority(
-            @RequestParam String approverId,
-            @RequestParam String taskType,
-            @RequestParam Long taskId) {
+            @PathVariable String approverId,
+            @PathVariable String taskType,
+            @PathVariable Long taskId) {
         
         log.debug("결재 권한 확인 API 호출: approverId={}, taskType={}, taskId={}", 
                 approverId, taskType, taskId);
@@ -319,11 +382,11 @@ public class ApprovalController {
     /**
      * 지연 결재 목록 조회
      * 
-     * GET /api/approval/delayed?days={days}
+     * GET /api/approval/delayed/{days}
      */
-    @GetMapping("/delayed")
+    @GetMapping("/delayed/{days}")
     public ResponseEntity<List<ApprovalDto.ListResponse>> getDelayedApprovals(
-            @RequestParam(defaultValue = "3") Integer days) {
+            @PathVariable Integer days) {
         
         log.debug("지연 결재 목록 조회 API 호출: days={}", days);
         
@@ -339,12 +402,21 @@ public class ApprovalController {
     /**
      * 결재 통계 조회
      * 
-     * GET /api/approval/statistics?taskType={taskType}
+     * GET /api/approval/statistics
+     * GET /api/approval/statistics/{taskType}
      */
     @GetMapping("/statistics")
-    public ResponseEntity<List<ApprovalDto.StatisticsResponse>> getApprovalStatistics(
-            @RequestParam(required = false) String taskType) {
-        
+    public ResponseEntity<List<ApprovalDto.StatisticsResponse>> getAllStatistics() {
+        return getApprovalStatistics(null);
+    }
+    
+    @GetMapping("/statistics/{taskType}")
+    public ResponseEntity<List<ApprovalDto.StatisticsResponse>> getApprovalStatisticsByTaskType(
+            @PathVariable String taskType) {
+        return getApprovalStatistics(taskType);
+    }
+    
+    private ResponseEntity<List<ApprovalDto.StatisticsResponse>> getApprovalStatistics(String taskType) {
         log.debug("결재 통계 조회 API 호출: taskType={}", taskType);
         
         try {

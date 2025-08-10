@@ -9,16 +9,10 @@ import routes from '@/app/router/routes';
 import { LoadingProvider } from '@/shared/components/ui/feedback/LoadingProvider';
 import { ToastProvider } from '@/shared/components/ui/feedback/ToastProvider';
 import { AuthProvider } from '@/shared/context/AuthContext';
+import { ThemeProvider } from '@/app/theme/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { BrowserRouter, useRoutes } from 'react-router-dom';
-
-// 기본 테마 생성
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-  },
-});
+import '@/assets/css/dark-theme.css';
 
 // useRoutes hook을 사용하여 라우트 객체를 기반으로 라우팅을 설정하는 컴포넌트
 const AppRoutes = () => {
@@ -30,7 +24,7 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider>
       <CssBaseline />
       <LoadingProvider>
         <ToastProvider>

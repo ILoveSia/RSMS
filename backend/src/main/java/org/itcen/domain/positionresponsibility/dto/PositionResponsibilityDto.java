@@ -31,6 +31,11 @@ public class PositionResponsibilityDto {
     private String responsibility_detail_content;
     private String responsibility_mgt_sts; // 주요 관리업무
     private String responsibility_rel_evid; // 관련 근거
+    private Long ledger_orders_id; // 원장차수 ID
+    private String ledger_orders_title; // 원장차수 제목 (책무번호)
+    private String ledger_orders_status_cd; // 원장차수 상태코드 (진행상태)
+    private String appr_stat_cd; // 결재진행상태코드
+    private Long role_resp_status_id; // 직책별책무현황 ID
 
     @Data
     @Builder
@@ -66,5 +71,6 @@ public class PositionResponsibilityDto {
         private Long responsibility_id;
         private String updated_id;
         private String role_summ;
+        private Long ledger_order; // ledger_orders_id 추가
     }
 }

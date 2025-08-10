@@ -1,6 +1,7 @@
 package org.itcen.domain.positions.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.itcen.domain.positions.entity.LedgerOrdersHod;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -71,4 +72,16 @@ public interface LedgerOrdersHodRepository extends JpaRepository<LedgerOrdersHod
      * 제목 중복 체크 (수정 시)
      */
     boolean existsByLedgerOrdersHodTitleAndLedgerOrdersHodIdNot(String title, Long id);
+
+    /**
+     * 원장차수 ID로 중복 체크
+     * 같은 원장차수에 대해 부서장차수가 이미 생성되었는지 확인
+     */
+    boolean existsByLedgerOrdersId(Long ledgerOrdersId);
+
+    /**
+     * 최신 부서장 원장차수 조회 (ID 기준 최대값)
+     */
+    @Query("SELECT l FROM LedgerOrdersHod l WHERE l.ledgerOrdersHodId = (SELECT MAX(h.ledgerOrdersHodId) FROM LedgerOrdersHod h)")
+    Optional<LedgerOrdersHod> findLatestLedgerOrdersHod();
 }

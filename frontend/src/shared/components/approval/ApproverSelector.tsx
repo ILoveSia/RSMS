@@ -10,10 +10,19 @@ import {
   Select,
   MenuItem,
   Typography,
-  SelectChangeEvent,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
-import approvalApi, { ApproverInfo } from '@/domains/approval/api/approvalApi';
+import approvalApi from '@/domains/approval/api/approvalApi';
+
+// ApproverInfo 타입을 로컬에서 정의 (import 문제 해결)
+interface ApproverInfo {
+  userId: string;
+  userName: string;
+  departmentName: string;
+  positionName: string;
+  isAvailable: boolean;
+}
 
 // 결재자 선택 정보
 interface ApproverSelection {
@@ -110,9 +119,9 @@ const ApproverSelector: React.FC<ApproverSelectorProps> = ({
   };
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'nowrap' }}>
       {/* 1차 결재자 */}
-      <Box sx={{ minWidth: 200 }}>
+      <Box sx={{ width: 180 }}>
         <FormControl fullWidth size="small">
           <InputLabel required={required[0]}>1차 결재자</InputLabel>
           <Select
@@ -134,10 +143,10 @@ const ApproverSelector: React.FC<ApproverSelectorProps> = ({
       </Box>
 
       {/* 화살표 */}
-      <ArrowForwardIcon color="action" sx={{ display: { xs: 'none', sm: 'block' } }} />
+      <ArrowForwardIcon color="action" sx={{ mx: 0.5, fontSize: 20 }} />
 
       {/* 2차 결재자 */}
-      <Box sx={{ minWidth: 200 }}>
+      <Box sx={{ width: 180 }}>
         <FormControl fullWidth size="small">
           <InputLabel required={required[1]}>2차 결재자</InputLabel>
           <Select
@@ -159,10 +168,10 @@ const ApproverSelector: React.FC<ApproverSelectorProps> = ({
       </Box>
 
       {/* 화살표 */}
-      <ArrowForwardIcon color="action" sx={{ display: { xs: 'none', sm: 'block' } }} />
+      <ArrowForwardIcon color="action" sx={{ mx: 0.5, fontSize: 20 }} />
 
       {/* 3차 결재자 */}
-      <Box sx={{ minWidth: 200 }}>
+      <Box sx={{ width: 180 }}>
         <FormControl fullWidth size="small">
           <InputLabel required={required[2]}>3차 결재자</InputLabel>
           <Select

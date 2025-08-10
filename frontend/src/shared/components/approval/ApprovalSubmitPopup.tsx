@@ -1,7 +1,7 @@
 /**
  * 결재 상신 팝업 컴포넌트
  */
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -19,7 +19,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
-import approvalApi, { ApprovalSubmitRequest } from '@/domains/approval/api/approvalApi';
+import approvalApi, { type ApprovalSubmitRequest } from '@/domains/approval/api/approvalApi';
 import ApproverSelector from './ApproverSelector';
 import ApprovalStepIndicator from './ApprovalStepIndicator';
 
@@ -62,7 +62,7 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
   const [previewSteps, setPreviewSteps] = useState<any[]>([]);
 
   // 결재자 선택 변경 핸들러
-  const handleApproversChange = (selection: ApproverSelection) => {
+  const handleApproversChange = useCallback((selection: ApproverSelection) => {
     setApprovers(selection);
     setError(null);
     
@@ -75,7 +75,12 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
     } else {
       setPreviewSteps([]);
     }
-  };
+  }, []);
+
+  // 결재 요청 사유 변경 핸들러 최적화
+  const handleCommentsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setComments(event.target.value);
+  }, []);
 
   // 결재 라인 미리보기 업데이트
   const updatePreview = async (approverList: string[]) => {
@@ -108,6 +113,7 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
         taskTypeCd: taskType,
         taskId: taskId,
         taskTitle: taskTitle,
+        requesterId: requesterId,
         approvers: approverList,
         urgency: urgency,
         comments: comments.trim() || undefined,
@@ -148,9 +154,15 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
     <Dialog 
       open={open} 
       onClose={handleClose} 
-      maxWidth="md" 
+      maxWidth="sm" 
       fullWidth
       disableEscapeKeyDown={loading}
+      PaperProps={{
+        sx: {
+          maxWidth: '720px', // 3차 결재자까지만 표시되도록 폭 조정
+          width: '100%'
+        }
+      }}
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -222,7 +234,7 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
           label="결재 요청 사유"
           placeholder="결재 요청 사유를 입력하세요 (선택사항)"
           value={comments}
-          onChange={(e) => setComments(e.target.value)}
+          onChange={handleCommentsChange}
           disabled={loading}
         />
       </DialogContent>

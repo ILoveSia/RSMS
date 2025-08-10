@@ -28,6 +28,8 @@ export interface LedgerOrdersHodSelectProps {
   allLabel?: string;
   /** "전체" 옵션 값 (기본값: "ALL") */
   allValue?: string;
+  /** 새로고침 트리거 - 값이 변경되면 데이터를 다시 로드 */
+  refreshTrigger?: number;
   /** 플레이스홀더 텍스트 */
   placeholder?: string;
   /** 비활성화 여부 */
@@ -67,6 +69,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
   includeAll = true,
   allLabel = '전체',
   allValue = 'ALL',
+  refreshTrigger,
   placeholder,
   disabled = false,
   error = false,
@@ -111,7 +114,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     fetchLedgerOrdersHod();
-  }, [fetchLedgerOrdersHod]);
+  }, [fetchLedgerOrdersHod, refreshTrigger]);
 
   // SelectBox 옵션 생성
   const getSelectOptions = useCallback((): SelectOption[] => {
