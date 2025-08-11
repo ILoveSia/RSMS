@@ -117,7 +117,6 @@ const ApprovalStepIndicator: React.FC<ApprovalStepIndicatorProps> = ({
               label={step.approverName}
               color={getStepColor(step) as any}
               variant={step.status === 'PENDING' ? 'filled' : 'outlined'}
-              icon={getStepIcon(step)}
             />
           </Tooltip>
           {index < steps.length - 1 && (
