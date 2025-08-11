@@ -1,9 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
-import PositionSelect from '@/shared/components/ui/form/PositionSelect';
-import { CommonCodeSelect } from '@/shared/components/ui/form';
-import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 import { Box, Chip, Divider, InputAdornment, Tooltip, Typography, IconButton } from '@mui/material';
 import {
   AccountCircle as AccountCircleIcon,
@@ -16,6 +12,7 @@ import {
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { adminApi } from '../api/adminApi';
 import type { CreateUserRequest, Role } from '../types';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
 
 export interface CreateUserDialogProps {
   open: boolean;
@@ -25,29 +22,23 @@ export interface CreateUserDialogProps {
 }
 
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClose, onCreated }) => {
+  const { showError } = useSnackbar();
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState<Pick<CreateUserRequest, 'userId' | 'userName' | 'email' | 'empNo'>>({
-    userId: '',
-    userName: '',
-    email: '',
-    empNo: '',
-  });
-  const [dept, setDept] = useState<DepartmentSearchResult | null>(null);
-  const [position, setPosition] = useState<PositionSearchResult | null>(null);
+  type FormState = { userId: string; userName: string; email: string; empNo: string };
+  const [form, setForm] = useState<FormState>({ userId: '', userName: '', email: '', empNo: '' });
+  // 소속/직무 선택 제거
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
   // DB 컬럼 기반 추가 입력값
   const [address, setAddress] = useState<string>('');
   const [mobile, setMobile] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [jobRankCd, setJobRankCd] = useState<string>(''); // 직급코드
   // 직책코드(job_title_cd) 사용 안함
   const [touched, setTouched] = useState({ userId: false, email: false, password: false, userName: false });
 
   const reset = useCallback(() => {
     setForm({ userId: '', userName: '', email: '', empNo: '' });
-    setDept(null);
-    setPosition(null);
+    // 소속/직무 선택 제거로 초기화 불필요
     setSelectedRoles([]);
     setTouched({ userId: false, email: false, password: false, userName: false });
   }, []);
@@ -67,36 +58,29 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
     try {
       setSaving(true);
       const payload: CreateUserRequest = {
-        userId: form.userId.trim(),
-        userName: form.userName.trim(),
+        // 백엔드 DTO(UserDto.CreateRequest)의 필드명(id, username)에 맞춰 전달
+        id: form.userId.trim(),
+        username: form.userName.trim(),
         email: form.email.trim(),
+        // 필수 입력값(빈값 불가)
+        address: address.trim(),
+        mobile: mobile.trim(),
+        password: password,
+        // 선택값
         empNo: form.empNo?.trim() || undefined,
-        // DB 스키마 매핑 필드
-        address: address || undefined,
-        mobile: mobile || undefined,
-        password: password || undefined,
-        deptCd: dept?.deptCode,
-        jobRankCd: jobRankCd || undefined,
-        // jobTitleCd 제거
-        // 호환 필드(백엔드가 변환 지원 시)
-        department: dept?.deptCode,
-        departmentName: dept?.deptName,
-        position: position ? String(position.positionsId) : undefined,
-        positionName: position?.positionsNm,
-        isActive: true,
-        roleIds: selectedRoles,
       };
       await adminApi.createUser(payload);
       onCreated?.();
       reset();
       onClose();
-    } catch (e) {
-      // 상위에서 토스트 처리하므로 여기서는 삼킴
-      // console.error(e);
+    } catch (e: any) {
+      // 백엔드 에러 메시지 표시
+      const message = e?.message || '사용자 등록에 실패했습니다.';
+      showError(message);
     } finally {
       setSaving(false);
     }
-  }, [dept, form.email, form.empNo, form.userId, form.userName, onClose, onCreated, position, reset, selectedRoles]);
+  }, [form.email, form.empNo, form.userId, form.userName, onClose, onCreated, reset, selectedRoles, address, mobile, password]);
 
   return (
     <BaseDialog
@@ -218,16 +202,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
         </Box>
       </Box>
 
-      {/* 소속/직무 */}
-      <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>소속/직무</Typography>
-        <Divider sx={{ my: 0.5 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
-          <DepartmentSelect value={dept} onChange={setDept} size="small" placeholder="부서 선택" minWidth={0} maxWidth="100%" />
-          <PositionSelect value={position} onChange={setPosition} size="small" placeholder="직책 선택" minWidth={0} maxWidth="100%" />
-          <CommonCodeSelect groupCode="JOB_RANK" value={jobRankCd} onChange={setJobRankCd} size="small" placeholder="직급 선택" minWidth={0} maxWidth="100%" />
-        </Box>
-      </Box>
+      {/* 소속/직무 선택 영역 제거 */}
 
       {/* 연락처 */}
       <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>

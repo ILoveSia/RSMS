@@ -80,23 +80,25 @@ export interface UserWithRoles {
 
 /** 사용자 생성 요청 */
 export interface CreateUserRequest {
-  userId: string;
-  userName: string;
+  /** 백엔드 UserDto.CreateRequest와 일치 */
+  id: string;
+  username: string;
   email: string;
+  address: string;
+  mobile: string;
+  password: string;
+  // 선택 필드
   empNo?: string;
-  // DB 컬럼 호환 필드 (스키마 준수)
-  address?: string;
-  mobile?: string;
-  password?: string;
   deptCd?: string;
   jobRankCd?: string;
-  // 프론트 편의 필드
+  // 프론트 호환(내부 사용) 필드
+  userId?: string;
+  userName?: string;
   department?: string;
   departmentName?: string;
   position?: string;
   positionName?: string;
   isActive?: boolean;
-  /** 초기 할당할 역할 ID 목록 */
   roleIds?: string[];
 }
 

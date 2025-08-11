@@ -1,47 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  CircularProgress,
-  Chip,
-  IconButton,
-
-  FormControl,
-  Select,
-  MenuItem,
-  Avatar,
-  Paper,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  FormControlLabel,
-  Switch,
-  Divider
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-  Refresh as RefreshIcon,
-  Edit as EditIcon,
-  Person as PersonIcon,
-  Group as GroupIcon,
-  Close as CloseIcon,
-  Clear as ClearIcon,
-
-} from '@mui/icons-material';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, CircularProgress, Chip, IconButton, FormControl, Select, MenuItem, Avatar, Paper } from '@mui/material';
+import { Refresh as RefreshIcon, Edit as EditIcon, Person as PersonIcon, Clear as ClearIcon } from '@mui/icons-material';
 import { PersonAddAlt1 as PersonAddAlt1Icon } from '@mui/icons-material';
 
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -53,6 +12,7 @@ import Toast from '@/shared/components/ui/feedback/Toast';
 // no-op
 import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
 import { adminApi } from '../api/adminApi';
+import UserEditDialog from '@/domains/admin/components/UserEditDialog';
 import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
 import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
 import type {
@@ -114,11 +74,11 @@ const UserPermissionManagePage: React.FC = () => {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  // const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<UserFilter>({});
   const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingRoles, setEditingRoles] = useState<string[]>([]);
+  // 역할 편집은 분리된 다이얼로그 컴포넌트에서 관리
 
   // 사용자 등록 다이얼로그 상태
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -193,56 +153,19 @@ const UserPermissionManagePage: React.FC = () => {
   // 역할 편집 다이얼로그 열기
   const handleEditUser = useCallback((user: UserWithRoles) => {
     setSelectedUser(user);
-    setEditingRoles(user.roles.filter(r => r.isActive).map(r => r.roleId));
     setEditDialogOpen(true);
   }, []);
 
-  // 역할 토글
-  const handleRoleToggle = (roleId: string) => {
-    setEditingRoles(prev => 
-      prev.includes(roleId) 
-        ? prev.filter(id => id !== roleId)
-        : [...prev, roleId]
-    );
-  };
+  // 역할 편집은 분리된 다이얼로그에서 처리
 
-  // 역할 변경 저장
-  const handleSaveRoles = useCallback(async () => {
-    if (!selectedUser) return;
+  const handleRolesSaved = useCallback((updatedUser: UserWithRoles | null) => {
+    if (!updatedUser) return;
+    setUsers(prev => prev.map(u => (u.userId === updatedUser.userId ? updatedUser : u)));
+  }, []);
 
-    try {
-      setSaving(true);
-      await adminApi.updateUserRoles(selectedUser.userId, editingRoles);
-      
-      // 로컬 상태 업데이트
-      setUsers(prev => prev.map(user => 
-        user.userId === selectedUser.userId 
-          ? {
-              ...user,
-              roles: roles
-                .filter(role => editingRoles.includes(role.roleId))
-                .map(role => ({
-                  roleId: role.roleId,
-                  roleName: role.roleName,
-                  roleDescription: role.roleDescription,
-                  assignedAt: new Date().toISOString(),
-                  assignedBy: 'current-user', // 실제로는 현재 사용자 ID
-                  isActive: true
-                }))
-            }
-          : user
-      ));
-      
-      setEditDialogOpen(false);
-      showSuccess('사용자 역할이 성공적으로 업데이트되었습니다.');
-      
-    } catch (error) {
-      showError('역할 업데이트에 실패했습니다.');
-      console.error('역할 업데이트 실패:', error);
-    } finally {
-      setSaving(false);
-    }
-  }, [selectedUser, editingRoles, roles, showSuccess, showError]);
+  const handleUserDeleted = useCallback((userId: string) => {
+    setUsers(prev => prev.filter(u => u.userId !== userId));
+  }, []);
 
   // 등록 버튼 및 다이얼로그 핸들러
   const openCreateDialog = useCallback(() => {
@@ -567,103 +490,14 @@ const UserPermissionManagePage: React.FC = () => {
           </Paper>
         </Box>
 
-        {/* 역할 편집 다이얼로그 */}
-        <Dialog 
-          open={editDialogOpen} 
+        <UserEditDialog
+          open={editDialogOpen}
+          user={selectedUser}
+          roles={roles}
           onClose={() => setEditDialogOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>
-            <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Box display="flex" alignItems="center" gap={1}>
-                <GroupIcon />
-                사용자 역할 편집
-              </Box>
-              <IconButton onClick={() => setEditDialogOpen(false)}>
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          </DialogTitle>
-          
-          <DialogContent>
-            {selectedUser && (
-              <Box>
-                {/* 사용자 정보 */}
-                <Card variant="outlined" sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        {selectedUser.userName.charAt(0)}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="h6">{selectedUser.userName}</Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {selectedUser.email}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          {selectedUser.departmentName || selectedUser.department || '-'} | {selectedUser.positionName || selectedUser.position || '-'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-
-                <Divider sx={{ my: 2 }} />
-
-                {/* 역할 선택 */}
-                <Typography variant="subtitle1" gutterBottom>
-                  역할 할당
-                </Typography>
-                <List>
-                  {roles.map(role => (
-                    <ListItem key={role.roleId} divider>
-                      <ListItemText
-                        primary={role.roleName}
-                        secondary={
-                          <Box>
-                            <Typography variant="body2" color="textSecondary">
-                              {role.roleDescription}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                              할당된 사용자: {role.userCount}명 | 권한 수: {role.permissionCount}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                      <ListItemSecondaryAction>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={editingRoles.includes(role.roleId)}
-                              onChange={() => handleRoleToggle(role.roleId)}
-                              color="primary"
-                            />
-                          }
-                          label=""
-                        />
-                      </ListItemSecondaryAction>
-                    </ListItem>
-                  ))}
-                </List>
-              </Box>
-            )}
-          </DialogContent>
-          
-          <DialogActions>
-            <Button onClick={() => setEditDialogOpen(false)}>
-              취소
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleSaveRoles}
-              disabled={saving}
-              startIcon={<SaveIcon />}
-            >
-              {saving ? '저장 중...' : '저장'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onSaved={handleRolesSaved}
+          onDeleted={handleUserDeleted}
+        />
       </PageContent>
       
       {/* 사용자 등록 다이얼로그 */}

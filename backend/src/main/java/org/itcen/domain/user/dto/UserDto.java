@@ -122,7 +122,8 @@ public class UserDto {
                     .email(this.email)
                     .address(this.address)
                     .mobile(this.mobile)
-                    .password(this.password) // 실제로는 암호화 필요
+                    .password(this.password) // 서비스에서 암호화 처리
+                    .empNo(this.num) // empNo 저장 (num을 사번으로 사용)
                     .deptCd(this.deptCd)
                     .num(this.num)
                     .jobRankCd(this.jobRankCd)

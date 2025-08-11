@@ -34,6 +34,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final EmployeeRepository employeeRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     /**
      * 사용자 목록 조회
@@ -158,8 +159,9 @@ public class UserService {
             }
         }
 
-        // 엔티티 생성 및 저장
+        // 엔티티 생성 및 저장 (비밀번호 암호화 적용)
         User user = request.toEntity();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         User savedUser = userRepository.save(user);
 
         return UserDto.Response.from(savedUser);

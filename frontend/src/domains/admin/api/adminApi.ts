@@ -65,7 +65,8 @@ export const adminApi = {
    * 사용자 생성
    */
   createUser: async (payload: CreateUserRequest): Promise<UserWithRoles> => {
-    const response = await apiClient.post<UserWithRoles>('/admin/users', payload);
+    // 백엔드 사용자 생성 API에 맞춰 경로 수정
+    const response = await apiClient.post<UserWithRoles>('/users', payload);
     return response;
   },
 
@@ -89,6 +90,11 @@ export const adminApi = {
    */
   revokeUserRole: async (userId: string, roleId: string): Promise<void> => {
     await apiClient.delete(`/admin/users/${userId}/roles/${roleId}`);
+  },
+
+  /** 사용자 삭제 */
+  deleteUser: async (userId: string): Promise<void> => {
+    await apiClient.delete(`/users/${userId}`);
   },
 
   /**
