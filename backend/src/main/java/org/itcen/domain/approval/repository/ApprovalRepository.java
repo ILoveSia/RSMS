@@ -141,4 +141,13 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
                    "AND approval_datetime IS NOT NULL " +
                    "GROUP BY task_type_cd", nativeQuery = true)
     List<Object[]> getAverageProcessingTimeByTaskType();
+
+    /**
+     * 긴급도별 결재 목록 조회
+     */
+    @Query("SELECT a FROM Approval a " +
+           "LEFT JOIN FETCH a.steps " +
+           "WHERE a.urgencyCd = :urgencyCd " +
+           "ORDER BY a.requestDatetime DESC")
+    List<Approval> findByUrgencyCdWithSteps(@Param("urgencyCd") String urgencyCd);
 }

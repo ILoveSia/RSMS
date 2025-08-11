@@ -52,14 +52,15 @@ public class ApprovalServiceImpl implements ApprovalService {
             validateApprovers(request.getApprovers());
 
             // 결재 생성
-            log.info("결재 엔티티 생성 전 requesterId: {}", request.getRequesterId());
+            log.info("결재 엔티티 생성 전 requesterId: {}, urgency: {}", request.getRequesterId(), request.getUrgency());
             Approval approval = Approval.createApproval(
                 request.getTaskTypeCd(),
                 request.getTaskId(),
                 request.getRequesterId(),
-                request.getApprovers()
+                request.getApprovers(),
+                request.getUrgency()
             );
-            log.info("결재 엔티티 생성 후 requesterId: {}", approval.getRequesterId());
+            log.info("결재 엔티티 생성 후 requesterId: {}, urgency: {}", approval.getRequesterId(), approval.getUrgencyCd());
 
             if (request.getComments() != null) {
                 approval.setComments(request.getComments());
@@ -384,6 +385,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                 .requestDateTime(approval.getRequestDatetime())
                 .approvalDateTime(approval.getApprovalDatetime())
                 .comments(approval.getComments())
+                .urgency(approval.getUrgencyCd())
                 .steps(convertToStepInfoList(approval.getSteps(), null))
                 .build();
     }
@@ -402,6 +404,7 @@ public class ApprovalServiceImpl implements ApprovalService {
                 .currentStep(approval.getCurrentStep())
                 .totalSteps(approval.getTotalSteps())
                 .requestDateTime(approval.getRequestDatetime())
+                .urgency(approval.getUrgencyCd())
                 .build();
     }
 

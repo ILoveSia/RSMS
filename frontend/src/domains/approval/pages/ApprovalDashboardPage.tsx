@@ -41,6 +41,7 @@ import approvalApi, {
 import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
 import InlineApprovalDialog from '@/shared/components/approval/InlineApprovalDialog';
 import { useReduxState } from '@/app/store/use-store';
+import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
 import '../../../assets/scss/style.css';
 
 // LoginUser 타입 (loginStore용)
@@ -58,6 +59,9 @@ const ApprovalDashboardPage: React.FC = () => {
   // 로그인 사용자 정보 가져오기
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
   const currentUserId = loginData?.userid;
+
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
 
   console.log('🔍 ApprovalDashboardPage - 로그인 사용자 정보:', {
     loginData,
@@ -235,16 +239,20 @@ const ApprovalDashboardPage: React.FC = () => {
       field: 'taskTitle',
       headerName: '업무명',
       width: 250,
-      renderCell: ({ value, row }) => (
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#1976d2', cursor: 'pointer' }}>
-            {value}
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            {row.taskTypeName}
-          </Typography>
-        </Box>
-      ),
+      renderCell: ({ value, row }) => {
+        // taskTitle을 TASK_TYPE 공통코드로 변환
+        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
+        return (
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#1976d2', cursor: 'pointer' }}>
+              {taskTypeName}
+            </Typography>
+            <Typography variant="caption" color="textSecondary">
+              {row.taskTypeName}
+            </Typography>
+          </Box>
+        );
+      },
       flex: 1,
       align: 'left',
       headerAlign: 'center',
@@ -321,20 +329,24 @@ const ApprovalDashboardPage: React.FC = () => {
       field: 'taskTitle',
       headerName: '업무명',
       width: 200,
-      renderCell: ({ value, row }) => (
-        <Box>
-          <Typography 
-            variant="body2" 
-            sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
-            onClick={() => handleViewDetail(row.approvalId)}
-          >
-            {value}
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            {row.taskTypeName}
-          </Typography>
-        </Box>
-      ),
+      renderCell: ({ value, row }) => {
+        // taskTitle을 TASK_TYPE 공통코드로 변환
+        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
+        return (
+          <Box>
+            <Typography 
+              variant="body2" 
+              sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
+              onClick={() => handleViewDetail(row.approvalId)}
+            >
+              {taskTypeName}
+            </Typography>
+            <Typography variant="caption" color="textSecondary">
+              {row.taskTypeName}
+            </Typography>
+          </Box>
+        );
+      },
       flex: 1,
       align: 'left',
       headerAlign: 'center',
@@ -412,7 +424,15 @@ const ApprovalDashboardPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer>
+    <PageContainer
+      sx={{
+        height: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'auto',
+      }}
+    >
       <PageHeader
         title="[결재관리] 결재 대시보드"
         icon={<DashboardIcon />}
@@ -430,7 +450,7 @@ const ApprovalDashboardPage: React.FC = () => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
+          overflow: 'auto',
           minHeight: 0,
           position: 'relative',
           py: 1,

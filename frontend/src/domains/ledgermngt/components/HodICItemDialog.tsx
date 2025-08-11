@@ -6,6 +6,7 @@ import {
   type Department,
   type ResponsibilitySearchResult,
 } from '@/domains/common/components/search';
+import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
 import type { SelectOption } from '@/shared/types/common';
 import { Close as CloseIcon, Search as SearchIcon } from '@mui/icons-material';
 import {
@@ -13,7 +14,6 @@ import {
   Box,
   CircularProgress,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
@@ -26,7 +26,7 @@ import {
   Paper,
 } from '@mui/material';
 import { Select, LedgerOrdersHodSelect } from '@/shared/components/ui/form';
-import BaseDialog from '@/shared/components/modal/BaseDialog';
+import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -39,6 +39,7 @@ interface HodICItemDialogProps {
   onClose: () => void;
   mode: 'create' | 'edit' | 'view';
   itemId?: number;
+  approvalStatus?: string;
   onSuccess?: () => void;
 }
 
@@ -94,11 +95,20 @@ const initialFormData: FormData = {
   checkWay: '',
 };
 
+// LoginUser 타입 (loginStore용)
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+}
+
 const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   open,
   onClose,
   mode: initialMode,
   itemId,
+  approvalStatus,
   onSuccess,
 }) => {
   const [mode, setMode] = useState<'create' | 'edit' | 'view'>(initialMode);
@@ -106,8 +116,17 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [requestingApproval, setRequestingApproval] = useState(false);
-  const [canRequestApproval, setCanRequestApproval] = useState(false);
+
+  // 로그인 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+  const currentUserId = loginData?.userid || null;
+  
+  console.log('🔍 HodICItemDialog - 로그인 사용자 정보:', {
+    loginData,
+    currentUserId,
+    hasLoginData: !!loginData,
+    userid: loginData?.userid
+  });
 
   // 팝업 상태들
   const [responsibilitySearchOpen, setResponsibilitySearchOpen] = useState(false);
@@ -133,6 +152,26 @@ interface ResponsibilityDetail {
   const isViewMode = mode === 'view';
   const isCreateMode = mode === 'create';
   const isEditMode = mode === 'edit';
+
+  // 결재 상신 버튼 표시 여부 판단
+  const shouldShowApprovalButton = () => {
+    return approvalStatus === 'NONE' && itemId;
+  };
+
+  // 결재현황 버튼 표시 여부 판단 (결재가 진행중일 때)
+  const shouldShowApprovalStatusButton = () => {
+    return approvalStatus !== 'NONE' && itemId;
+  };
+
+  // 수정 버튼 표시 여부 판단
+  const shouldShowEditButton = () => {
+    return approvalStatus === 'NONE';
+  };
+
+  // 저장 버튼 표시 여부 판단
+  const shouldShowSaveButton = () => {
+    return approvalStatus === 'NONE' && isEditMode;
+  };
 
 
   // 공통코드 배열 추출 함수
@@ -332,17 +371,6 @@ interface ResponsibilityDetail {
     }
   }, [itemId]);
 
-  // 승인 권한 확인 함수
-  const checkApprovalPermission = useCallback(async () => {
-    if (!itemId) return;
-
-    try {
-      const canRequest = await hodICItemApi.isCreatedBy(itemId);
-      setCanRequestApproval(canRequest);
-    } catch (err) {
-      console.error('Failed to check approval permission:', err);
-    }
-  }, [itemId]);
 
   // 컴포넌트 마운트 시 localStorage에서 공통코드 복원
   useEffect(() => {
@@ -371,13 +399,17 @@ interface ResponsibilityDetail {
     setMode(initialMode);
   }, [initialMode]);
 
+  // 다이얼로그가 열릴 때 모드 초기화
+  useEffect(() => {
+    if (open) {
+      setMode(initialMode);
+    }
+  }, [open, initialMode]);
+
   // 데이터 로드
   useEffect(() => {
     if (open && itemId && (isEditMode || isViewMode)) {
       loadItemData();
-      if (isViewMode) {
-        checkApprovalPermission();
-      }
     } else if (open && isCreateMode) {
       setFormData(initialFormData);
       setError(null);
@@ -390,7 +422,6 @@ interface ResponsibilityDetail {
     isViewMode,
     isCreateMode,
     loadItemData,
-    checkApprovalPermission,
   ]);
 
   // 항목구분 변경시 직무구분 초기화
@@ -476,8 +507,9 @@ interface ResponsibilityDetail {
       }
 
 
+      // 저장 성공 시 view 모드로 변경
+      setMode('view');
       onSuccess?.();
-      onClose();
     } catch (err) {
       console.error('Failed to save item:', err);
       setError('저장 중 오류가 발생했습니다.');
@@ -486,24 +518,6 @@ interface ResponsibilityDetail {
     }
   };
 
-  const handleApprovalRequest = async () => {
-    if (!itemId) return;
-
-    setRequestingApproval(true);
-    setError(null);
-
-    try {
-      await hodICItemApi.requestApproval(itemId);
-      alert('승인요청이 완료되었습니다.');
-      onSuccess?.();
-      onClose();
-    } catch (err) {
-      console.error('Failed to request approval:', err);
-      setError('승인요청 중 오류가 발생했습니다.');
-    } finally {
-      setRequestingApproval(false);
-    }
-  };
 
   // 책무 선택 핸들러
   const handleResponsibilitySelect = (responsibility: ResponsibilitySearchResult) => {
@@ -564,12 +578,195 @@ interface ResponsibilityDetail {
   };
 
   const handleClose = () => {
-    if (saving || requestingApproval) return;
+    if (saving) return;
+    // 다이얼로그 닫을 때 모드 초기화
+    setMode(initialMode);
     onClose();
   };
 
-  const handleModeChange = (newMode: 'create' | 'edit' | 'view') => {
-    setMode(newMode);
+  const handleModeChange = (newMode: DialogMode) => {
+    if (newMode === 'onlyRead') return; // onlyRead 모드는 지원하지 않음
+    setMode(newMode as 'create' | 'edit' | 'view');
+  };
+
+  // 커스텀 액션 버튼들 생성
+  const renderCustomActions = () => {
+    const actions = [];
+
+    // 결재 상신 버튼 (approvalStatus가 NONE이고 itemId가 있을 때)
+    if (shouldShowApprovalButton() && itemId) {
+      console.log('🔵 결재 상신 버튼 렌더링:', {
+        taskType: 'hod_ic_item',
+        taskId: itemId,
+        taskIdType: typeof itemId,
+        currentUserId,
+        approvalStatus,
+        loading,
+        disabled: loading || !currentUserId
+      });
+      
+      actions.push(
+        <ApprovalActionButton
+          key="approval-submit"
+          taskType="hod_ic_item"
+          taskId={itemId}
+          taskTitle={`부서장 내부통제 항목 - ${formData.icTask || '항목명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            console.log('🔄 결재 상태 변경됨 - taskType: hod_ic_item, taskId:', itemId);
+            onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="medium"
+          variant="contained"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    // 결재현황 버튼 (approvalStatus가 NONE이 아니고 itemId가 있을 때 - 결재가 진행중)
+    if (shouldShowApprovalStatusButton() && itemId) {
+      console.log('🔍 결재현황 버튼 렌더링:', {
+        taskType: 'hod_ic_item',
+        taskId: itemId,
+        approvalStatus,
+        currentUserId
+      });
+      
+      actions.push(
+        <ApprovalActionButton
+          key="approval-status"
+          taskType="hod_ic_item"
+          taskId={itemId}
+          taskTitle={`부서장 내부통제 항목 - ${formData.icTask || '항목명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            console.log('🔄 결재 상태 변경됨 - taskType: hod_ic_item, taskId:', itemId);
+            onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="medium"
+          variant="outlined"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    // 수정 버튼 (결재상태가 NONE일 때)
+    if (shouldShowEditButton() && isViewMode) {
+      actions.push(
+        <Button
+          key="edit-button"
+          variant="contained"
+          onClick={() => handleModeChange('edit')}
+          disabled={loading}
+          color="warning"
+          size="medium"
+          sx={{
+            height: '36px !important',
+            minWidth: '80px !important',
+            fontSize: '0.875rem !important',
+            fontWeight: '600 !important',
+            borderRadius: '4px !important',
+          }}
+        >
+          수정
+        </Button>
+      );
+    }
+
+    // 저장 버튼 (edit 모드이면서 결재상태가 NONE일 때)
+    if (shouldShowSaveButton()) {
+      actions.push(
+        <Button
+          key="save-button"
+          variant="contained"
+          onClick={handleSave}
+          disabled={saving || loading}
+          color="success"
+          size="medium"
+          sx={{
+            height: '36px !important',
+            minWidth: '80px !important',
+            fontSize: '0.875rem !important',
+            fontWeight: '600 !important',
+            borderRadius: '4px !important',
+          }}
+        >
+          저장
+        </Button>
+      );
+    }
+
+    // 취소/닫기 버튼
+    actions.push(
+      <Button
+        key="close-button"
+        variant="outlined"
+        onClick={() => {
+          if (isEditMode) {
+            // 취소 버튼: edit 모드에서 view 모드로 변경
+            setMode('view');
+          } else {
+            // 닫기 버튼: 다이얼로그 닫기
+            handleClose();
+          }
+        }}
+        disabled={loading}
+        color="primary"
+        size="medium"
+        style={{
+          height: '36px',
+          minWidth: '80px',
+          fontSize: '0.875rem',
+          fontWeight: 600,
+          borderRadius: '4px',
+        }}
+        sx={{
+          height: '36px !important',
+          minWidth: '80px !important',
+          fontSize: '0.875rem !important',
+          fontWeight: '600 !important',
+          borderRadius: '4px !important',
+        }}
+      >
+        {isEditMode ? '취소' : '닫기'}
+      </Button>
+    );
+
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 1,
+        alignItems: 'center',
+        '& .MuiButton-root': {
+          height: '36px !important',
+          minWidth: '80px !important',
+          fontSize: '0.875rem !important',
+          fontWeight: '600 !important',
+          borderRadius: '4px !important',
+        },
+        // ButtonGroup 내부 버튼들도 통일
+        '& .MuiButtonGroup-root .MuiButton-root': {
+          height: '36px !important',
+          minWidth: '80px !important',
+          fontSize: '0.875rem !important',
+          fontWeight: '600 !important',
+          borderRadius: '4px !important',
+        },
+        // ButtonGroup 전체 스타일
+        '& .MuiButtonGroup-root': {
+          '& .MuiButton-root:first-of-type': {
+            borderTopRightRadius: '0 !important',
+            borderBottomRightRadius: '0 !important',
+          },
+          '& .MuiButton-root:last-of-type': {
+            borderTopLeftRadius: '0 !important',
+            borderBottomLeftRadius: '0 !important',
+          },
+        },
+      }}>
+        {actions}
+      </Box>
+    );
   };
 
   return (
@@ -582,6 +779,7 @@ interface ResponsibilityDetail {
         maxWidth='md'
         mode={mode}
         title={mode === 'create' ? '내부통제항목 등록' : mode === 'edit' ? '내부통제항목 수정' : '내부통제항목 조회'}
+        customActions={renderCustomActions()}
       >
 
         <DialogContent sx={{ 
@@ -897,20 +1095,6 @@ interface ResponsibilityDetail {
           )}
         </DialogContent>
 
-        <DialogActions>
-          <Box sx={{ display: 'flex', gap: 1, width: '100%', justifyContent: 'flex-end' }}>
-            {isViewMode && canRequestApproval && (
-              <Button
-                variant='contained'
-                color='warning'
-                onClick={handleApprovalRequest}
-                disabled={requestingApproval}
-              >
-                {requestingApproval ? '처리중...' : '승인요청'}
-              </Button>
-            )}
-          </Box>
-        </DialogActions>
       </BaseDialog>
 
       {/* 책무 조회 팝업 */}

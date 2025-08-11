@@ -68,6 +68,7 @@ public class ApprovalDto {
         private LocalDateTime requestDateTime; // 요청 일시
         private LocalDateTime approvalDateTime; // 완료 일시
         private String comments;            // 전체 의견
+        private String urgency;             // 긴급도
         private List<StepInfo> steps;       // 단계 정보 목록
     }
 

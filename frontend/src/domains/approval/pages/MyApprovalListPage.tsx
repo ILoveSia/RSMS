@@ -33,6 +33,8 @@ import approvalApi, {
 } from '../api/approvalApi';
 import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
 import InlineApprovalDialog from '@/shared/components/approval/InlineApprovalDialog';
+import { useReduxState } from '@/app/store/use-store';
+import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
 import '../../../assets/scss/style.css';
 
 // 결재 상태 옵션
@@ -43,13 +45,30 @@ const STATUS_OPTIONS = [
   { value: 'REJECTED', label: '반려' },
 ];
 
-// 임시 사용자 정보 (실제 구현 시 context에서 가져오기)
-const CURRENT_USER_ID = 'user001';
+// LoginUser 타입 (loginStore용)
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+}
 
 /**
  * 내 결재 목록 페이지
  */
 const MyApprovalListPage: React.FC = () => {
+  // 로그인 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+  const currentUserId = loginData?.userid;
+
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
+
+  console.log('🔍 MyApprovalListPage - 로그인 사용자 정보:', {
+    loginData,
+    currentUserId,
+    hasLoginData: !!loginData,
+  });
   // 상태 관리
   const [approvals, setApprovals] = useState<ApprovalListResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,6 +84,12 @@ const MyApprovalListPage: React.FC = () => {
 
   // 데이터 로드
   const loadApprovalData = useCallback(async () => {
+    // 로그인 사용자 정보가 없으면 로드하지 않음
+    if (!currentUserId) {
+      console.warn('⚠️ currentUserId가 없어서 결재 목록을 로드하지 않습니다.');
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -73,16 +98,16 @@ const MyApprovalListPage: React.FC = () => {
       if (selectedStatus === 'ALL') {
         // 전체 조회 - 모든 상태의 결재 목록
         const [pendingData, requestedData] = await Promise.all([
-          approvalApi.getMyPendingApprovals(CURRENT_USER_ID),
-          approvalApi.getMyRequestedApprovals(CURRENT_USER_ID),
+          approvalApi.getMyPendingApprovals(currentUserId),
+          approvalApi.getMyRequestedApprovals(currentUserId),
         ]);
         data = [...pendingData, ...requestedData];
       } else if (selectedStatus === 'PENDING') {
         // 결재 대기만 조회
-        data = await approvalApi.getMyPendingApprovals(CURRENT_USER_ID);
+        data = await approvalApi.getMyPendingApprovals(currentUserId);
       } else {
         // 승인 완료 또는 반려만 조회
-        const requestedData = await approvalApi.getMyRequestedApprovals(CURRENT_USER_ID);
+        const requestedData = await approvalApi.getMyRequestedApprovals(currentUserId);
         data = requestedData.filter(item => item.status === selectedStatus);
       }
 
@@ -97,7 +122,7 @@ const MyApprovalListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedStatus]);
+  }, [currentUserId, selectedStatus]);
 
   // 컴포넌트 마운트 시 및 상태 변경 시 데이터 로드
   useEffect(() => {
@@ -140,7 +165,7 @@ const MyApprovalListPage: React.FC = () => {
     try {
       // 내가 처리해야 할 단계 찾기
       const myStep = selectedApproval.steps.find(
-        step => step.approverId === CURRENT_USER_ID && step.status === 'PENDING'
+        step => step.approverId === currentUserId && step.status === 'PENDING'
       );
       
       if (!myStep?.stepId) {
@@ -173,20 +198,24 @@ const MyApprovalListPage: React.FC = () => {
       field: 'taskTitle',
       headerName: '업무명',
       width: 280,
-      renderCell: ({ value, row }) => (
-        <Box>
-          <Typography 
-            variant="body2" 
-            sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
-            onClick={() => handleViewDetail(row.approvalId)}
-          >
-            {value}
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            {row.taskTypeName}
-          </Typography>
-        </Box>
-      ),
+      renderCell: ({ value, row }) => {
+        // taskTitle을 TASK_TYPE 공통코드로 변환
+        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
+        return (
+          <Box>
+            <Typography 
+              variant="body2" 
+              sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
+              onClick={() => handleViewDetail(row.approvalId)}
+            >
+              {taskTypeName}
+            </Typography>
+            <Typography variant="caption" color="textSecondary">
+              {row.taskTypeName}
+            </Typography>
+          </Box>
+        );
+      },
       flex: 1,
       align: 'left',
       headerAlign: 'center',
@@ -374,6 +403,13 @@ const MyApprovalListPage: React.FC = () => {
             />
           </Box>
         </SearchConditionPanel>
+
+        {/* 로그인 정보 확인 알림 */}
+        {!currentUserId && (
+          <Alert severity="warning" sx={{ mb: 2, mx: 2 }}>
+            로그인 정보를 확인 중입니다. 잠시만 기다려주세요.
+          </Alert>
+        )}
 
         {/* 데이터 그리드 */}
         <Box sx={{
