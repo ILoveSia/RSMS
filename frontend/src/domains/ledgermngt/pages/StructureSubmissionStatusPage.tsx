@@ -6,7 +6,7 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { ComboBox, DatePicker } from '@/shared/components/ui/form';
+import { DatePicker, LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -35,19 +35,12 @@ const getDefaultDates = () => {
   return { startDate: threeMonthsAgo, endDate: today };
 };
 
-// 원장차수 옵션
-const LEDGER_ORDER_OPTIONS: SelectOption[] = [
-  { value: '', label: '전체' },
-  { value: '2024-001', label: '2024-001' },
-  { value: '2024-002', label: '2024-002' },
-  { value: '2024-003', label: '2024-003' }
-];
 
 const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProps> = (): React.JSX.Element => {
   // 기간 선택 상태
   const [startDate, setStartDate] = useState<Date | null>(getDefaultDates().startDate);
   const [endDate, setEndDate] = useState<Date | null>(getDefaultDates().endDate);
-  const [ledgerOrder, setLedgerOrder] = useState<string>('');
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
 
   // 상태 관리
   const [historyRows, setHistoryRows] = useState<SubmissionHistoryRow[]>([]);
@@ -138,14 +131,18 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   const handleFetchSubmissionHistory = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await fetchSubmissionHistory(startDate, endDate, ledgerOrder ? Number(ledgerOrder) : undefined);
+      const data = await fetchSubmissionHistory(
+        startDate, 
+        endDate, 
+        selectedLedgerOrder !== 'ALL' ? Number(selectedLedgerOrder) : undefined
+      );
       setHistoryRows(data);
     } catch (error) {
       showError('제출 이력 조회 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
-  }, [startDate, endDate, ledgerOrder, showError]);
+  }, [startDate, endDate, selectedLedgerOrder, showError]);
 
   // 초기 로드 시 자동 조회
   useEffect(() => {
@@ -254,13 +251,15 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           alignItems: 'center'
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
-          <ComboBox
-            options={LEDGER_ORDER_OPTIONS}
-            value={LEDGER_ORDER_OPTIONS.find(option => option.value === ledgerOrder) || LEDGER_ORDER_OPTIONS[0]}
-            onChange={value => setLedgerOrder((value as SelectOption)?.value?.toString() || '')}
+          <LedgerOrderSelect
+            value={selectedLedgerOrder}
+            onChange={setSelectedLedgerOrder}
+            includeAll={true}
+            placeholder="책무번호 선택"
             size="small"
-            mode="editable"
-            sx={{ width: '130px' }}
+            sx={{ width: '150px' }}
+            minWidth="150px"
+            maxWidth="150px"
           />
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <DatePicker
