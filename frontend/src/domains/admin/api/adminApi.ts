@@ -7,6 +7,7 @@ import type {
   UserRole,
   UserRoleAssign,
   Role,
+  EmployeeBasic,
   PermissionStatistics,
   MenuPermissionStat,
   RolePermissionStat,
@@ -111,6 +112,12 @@ export const adminApi = {
    */
   getRoles: async (): Promise<Role[]> => {
     const response = await apiClient.get<Role[]>('/admin/roles');
+    return response;
+  },
+
+  /** 직원(Users Employees View) 목록 조회 - emp_no 매칭용 */
+  getEmployeesBasic: async (): Promise<EmployeeBasic[]> => {
+    const response = await apiClient.get<EmployeeBasic[]>('/users/employees');
     return response;
   },
 

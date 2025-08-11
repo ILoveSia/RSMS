@@ -76,6 +76,8 @@ export interface UserWithRoles {
   lastLoginAt?: string;
   roles: UserRoleInfo[];
   permissionSummary?: PermissionSummary;
+  /** 매핑된 직원 기본 정보 (users.emp_no ↔ employees.num) */
+  employee?: EmployeeBasic;
 }
 
 /** 사용자 생성 요청 */
@@ -88,6 +90,9 @@ export interface CreateUserRequest {
   mobile: string;
   password: string;
   // 선택 필드
+  /** 사번(백엔드 필드: num). 프론트 내부 상태에서는 empNo를 쓰되, 전송은 num으로 해야 합니다. */
+  num?: string;
+  // 유지 호환(프론트 내부 사용). API 전송에는 사용하지 않음
   empNo?: string;
   deptCd?: string;
   jobRankCd?: string;
@@ -187,6 +192,19 @@ export interface RolePermissionStat {
   writeCount: number;
   deleteCount: number;
   totalMenus: number;
+}
+
+/** 직원(Employees) 기본 정보: users.emp_no와 연결용 */
+export interface EmployeeBasic {
+  id: string;
+  num: string;            // 사번 (emp_no)
+  username: string;       // 성명
+  deptCd: string;         // 부서 코드
+  email: string;
+  mobile: string;
+  jobRankCd?: string;     // 직급 코드
+  jobTitleCd?: string;    // 직책 코드
+  deptName?: string;      // 부서명 (있을 경우)
 }
 
 // UI 상태 관련 타입

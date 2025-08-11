@@ -137,8 +137,30 @@ class ApiClient {
     }
 
     if (!response.ok) {
+      // 가능한 한 백엔드의 상세 메시지를 노출
+      let message = 'API 요청이 실패했습니다.';
+      if (typeof data === 'string' && data.trim()) {
+        message = data;
+      } else if (data && typeof data === 'object') {
+        const obj = data as Record<string, any>;
+        // 공통 케이스 우선순위대로 메시지 추출
+        if (typeof obj.message === 'string' && obj.message.trim()) {
+          message = obj.message;
+        } else if (obj.data && typeof obj.data.message === 'string' && obj.data.message.trim()) {
+          message = obj.data.message;
+        } else if (Array.isArray(obj.errors) && obj.errors.length > 0) {
+          message = obj.errors.map((e: any) => (typeof e === 'string' ? e : e?.message)).filter(Boolean).join(', ');
+        } else if (typeof obj.error === 'string' && obj.error.trim()) {
+          message = obj.error;
+        } else if (typeof obj.detail === 'string' && obj.detail.trim()) {
+          message = obj.detail;
+        } else if (typeof obj.title === 'string' && obj.title.trim()) {
+          message = obj.title;
+        }
+      }
+
       const error: ApiError = {
-        message: typeof data === 'string' ? data : 'API 요청이 실패했습니다.',
+        message,
         status: response.status,
         details: data,
       };

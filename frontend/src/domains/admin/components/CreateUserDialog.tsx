@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import { Box, Chip, Divider, InputAdornment, Tooltip, Typography, IconButton } from '@mui/material';
+import { Box, Chip, Divider, InputAdornment, Tooltip, Typography, IconButton, Alert } from '@mui/material';
 import {
   AccountCircle as AccountCircleIcon,
   Badge as BadgeIcon,
@@ -22,7 +22,7 @@ export interface CreateUserDialogProps {
 }
 
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClose, onCreated }) => {
-  const { showError } = useSnackbar();
+  const { showError, showSuccess } = useSnackbar();
   const [saving, setSaving] = useState(false);
   type FormState = { userId: string; userName: string; email: string; empNo: string };
   const [form, setForm] = useState<FormState>({ userId: '', userName: '', email: '', empNo: '' });
@@ -34,20 +34,23 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
   const [password, setPassword] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
   // 직책코드(job_title_cd) 사용 안함
-  const [touched, setTouched] = useState({ userId: false, email: false, password: false, userName: false });
+  const [touched, setTouched] = useState({ userId: false, email: false, password: false, userName: false, mobile: false });
+  const [submitErrors, setSubmitErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<'userId' | 'userName' | 'email' | 'address' | 'mobile' | 'password' | 'empNo', string[]>>>({});
 
   const reset = useCallback(() => {
     setForm({ userId: '', userName: '', email: '', empNo: '' });
     // 소속/직무 선택 제거로 초기화 불필요
     setSelectedRoles([]);
-    setTouched({ userId: false, email: false, password: false, userName: false });
+    setTouched({ userId: false, email: false, password: false, userName: false, mobile: false });
   }, []);
 
   const emailValid = useMemo(() => /.+@.+\..+/.test(form.email.trim()), [form.email]);
+  const mobileValid = useMemo(() => /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(mobile.trim()), [mobile]);
   const passwordValid = useMemo(() => password.trim().length >= 8, [password]);
   const disabled = useMemo(
-    () => !form.userId.trim() || !form.userName.trim() || !emailValid || !passwordValid || !address.trim() || !mobile.trim(),
-    [form.userId, form.userName, emailValid, passwordValid, address, mobile]
+    () => !form.userId.trim() || !form.userName.trim() || !emailValid || !passwordValid || !address.trim() || !mobileValid,
+    [form.userId, form.userName, emailValid, passwordValid, address, mobileValid]
   );
 
   const toggleRole = useCallback((roleId: string) => {
@@ -67,20 +70,78 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
         mobile: mobile.trim(),
         password: password,
         // 선택값
-        empNo: form.empNo?.trim() || undefined,
+        num: form.empNo?.trim() || undefined,
       };
       await adminApi.createUser(payload);
+      showSuccess('사용자가 등록되었습니다.');
       onCreated?.();
       reset();
       onClose();
     } catch (e: any) {
-      // 백엔드 에러 메시지 표시
+      // 백엔드 에러 메시지 표시 (중복 이메일 등)
       const message = e?.message || '사용자 등록에 실패했습니다.';
       showError(message);
+      // 다이얼로그 내부 상세 표시 및 필드 매핑
+      const details = e?.details;
+      const messages: string[] = [];
+      const newFieldErrors: Partial<Record<'userId' | 'userName' | 'email' | 'address' | 'mobile' | 'password' | 'empNo', string[]>> = {};
+      const pushField = (field: keyof typeof newFieldErrors, msg: string) => {
+        if (!newFieldErrors[field]) newFieldErrors[field] = [];
+        newFieldErrors[field]!.push(msg);
+      };
+      const mapBackendFieldToUi = (field: string): keyof typeof newFieldErrors | undefined => {
+        switch (field) {
+          case 'id': return 'userId';
+          case 'username': return 'userName';
+          case 'email': return 'email';
+          case 'address': return 'address';
+          case 'mobile': return 'mobile';
+          case 'password': return 'password';
+          case 'num': return 'empNo';
+          default: return undefined;
+        }
+      };
+      if (typeof details === 'string') {
+        const regex = /field '([^']+)'[^\[]*default message \[([^\]]+)\]/gi;
+        let m: RegExpExecArray | null;
+        while ((m = regex.exec(details)) !== null) {
+          const backendField = m[1];
+          const msg = m[2];
+          const uiField = mapBackendFieldToUi(backendField);
+          if (uiField) pushField(uiField, msg);
+          else messages.push(`${backendField}: ${msg}`);
+        }
+        if (messages.length === 0 && Object.keys(newFieldErrors).length === 0 && details.trim()) messages.push(details.trim());
+      } else if (details && typeof details === 'object') {
+        const obj = details as any;
+        if (Array.isArray(obj.errors)) {
+          obj.errors.forEach((er: any) => {
+            const backendField: string | undefined = er?.field || er?.fieldName || er?.param || er?.path;
+            const msg: string | undefined = er?.defaultMessage || er?.message || er?.error || er?.title;
+            if (backendField && msg) {
+              const uiField = mapBackendFieldToUi(backendField);
+              if (uiField) pushField(uiField, msg);
+              else messages.push(`${backendField}: ${msg}`);
+            } else if (msg) {
+              messages.push(msg);
+            }
+          });
+        }
+        if (messages.length === 0 && typeof obj.message === 'string') messages.push(obj.message);
+      }
+      if (messages.length === 0 && Object.keys(newFieldErrors).length === 0) messages.push(message);
+      setFieldErrors(newFieldErrors);
+      setSubmitErrors(messages);
     } finally {
       setSaving(false);
     }
   }, [form.email, form.empNo, form.userId, form.userName, onClose, onCreated, reset, selectedRoles, address, mobile, password]);
+
+  // 입력 변경 시 서버 에러 초기화
+  useEffect(() => {
+    if (submitErrors.length > 0) setSubmitErrors([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.userId, form.userName, form.email, form.empNo, address, mobile, password]);
 
   return (
     <BaseDialog
@@ -93,6 +154,15 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       disableSave={disabled}
       loading={saving}
     >
+      {/* 서버 검증/비즈니스 에러 표시 */}
+      {submitErrors.length > 0 && (
+        <Alert severity="error" sx={{ mb: 1 }}>
+          {submitErrors.map((msg, idx) => (
+            <div key={idx}>{msg}</div>
+          ))}
+        </Alert>
+      )}
+
       {/* 계정 정보 */}
       <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>
         <Typography variant="overline" sx={{ color: 'text.secondary' }}>계정 정보</Typography>
@@ -102,29 +172,29 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             label="사용자 ID"
             mode="editable"
             value={form.userId}
-            onChange={(e) => setForm(prev => ({ ...prev, userId: e.target.value }))}
+            onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, userId: undefined })); setForm(prev => ({ ...prev, userId: e.target.value })); }}
             onBlur={() => setTouched(prev => ({ ...prev, userId: true }))}
             size="small"
             fullWidth
             required
-            error={touched.userId && !form.userId.trim()}
-            helperText={touched.userId && !form.userId.trim() ? '필수 입력' : ' '}
+            error={(touched.userId && !form.userId.trim()) || !!fieldErrors.userId?.length}
+            helperText={(touched.userId && !form.userId.trim()) ? '필수 입력' : (fieldErrors.userId?.[0] || ' ')}
           />
           <TextField
             label="이메일"
             mode="editable"
             type="email"
             value={form.email}
-            onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+            onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, email: undefined })); setForm(prev => ({ ...prev, email: e.target.value })); }}
             onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
             size="small"
             fullWidth
             required
-            error={touched.email && (!emailValid || !form.email.trim())}
+            error={(touched.email && (!emailValid || !form.email.trim())) || !!fieldErrors.email?.length}
             helperText={
               touched.email
-                ? (!form.email.trim() ? '필수 입력' : (!emailValid ? '올바른 이메일 형식이 아닙니다' : ' '))
-                : ' '
+                ? (!form.email.trim() ? '필수 입력' : (!emailValid ? '올바른 이메일 형식이 아닙니다' : (fieldErrors.email?.[0] || ' ')))
+                : (fieldErrors.email?.[0] || ' ')
             }
           />
           <TextField
@@ -132,16 +202,16 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             mode="editable"
             type={showPassword ? 'text' : 'password'}
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, password: undefined })); setPassword(e.target.value); }}
             onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
             size="small"
             fullWidth
             required
-            error={touched.password && (!passwordValid || !password.trim())}
+            error={(touched.password && (!passwordValid || !password.trim())) || !!fieldErrors.password?.length}
             helperText={
               touched.password
-                ? (!password.trim() ? '필수 입력' : (!passwordValid ? '8자 이상 입력해주세요' : ' '))
-                : ' '
+                ? (!password.trim() ? '필수 입력' : (!passwordValid ? '8자 이상 입력해주세요' : (fieldErrors.password?.[0] || ' ')))
+                : (fieldErrors.password?.[0] || ' ')
             }
             InputProps={{
               startAdornment: (
@@ -169,13 +239,13 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             label="성명"
             mode="editable"
             value={form.userName}
-            onChange={(e) => setForm(prev => ({ ...prev, userName: e.target.value }))}
+            onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, userName: undefined })); setForm(prev => ({ ...prev, userName: e.target.value })); }}
             onBlur={() => setTouched(prev => ({ ...prev, userName: true }))}
             size="small"
             fullWidth
             required
-            error={touched.userName && !form.userName.trim()}
-            helperText={touched.userName && !form.userName.trim() ? '필수 입력' : ' '}
+            error={(touched.userName && !form.userName.trim()) || !!fieldErrors.userName?.length}
+            helperText={(touched.userName && !form.userName.trim()) ? '필수 입력' : (fieldErrors.userName?.[0] || ' ')}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -188,7 +258,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             label="사번"
             mode="editable"
             value={form.empNo}
-            onChange={(e) => setForm(prev => ({ ...prev, empNo: e.target.value }))}
+            onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, empNo: undefined })); setForm(prev => ({ ...prev, empNo: e.target.value })); }}
             size="small"
             fullWidth
             InputProps={{
@@ -213,17 +283,28 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             label="주소"
             mode="editable"
             value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, address: undefined })); setAddress(e.target.value); }}
             size="small"
             fullWidth
+            required
+            error={!!fieldErrors.address?.length}
+            helperText={fieldErrors.address?.[0] || ' '}
           />
           <TextField
             label="전화번호"
             mode="editable"
             value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
+            onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, mobile: undefined })); setMobile(e.target.value); }}
+            onBlur={() => setTouched(prev => ({ ...prev, mobile: true }))}
             size="small"
             fullWidth
+            required
+            error={(touched.mobile && (!mobile.trim() || !mobileValid)) || !!fieldErrors.mobile?.length}
+            helperText={
+              touched.mobile
+                ? (!mobile.trim() ? '필수 입력' : (!mobileValid ? '올바른 휴대폰 번호 형식이 아닙니다.' : (fieldErrors.mobile?.[0] || ' ')))
+                : (fieldErrors.mobile?.[0] || ' ')
+            }
           />
         </Box>
       </Box>

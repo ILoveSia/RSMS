@@ -15,12 +15,7 @@ import { adminApi } from '../api/adminApi';
 import UserEditDialog from '@/domains/admin/components/UserEditDialog';
 import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
 import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
-import type {
-  UserWithRoles, 
-  Role, 
-  UserFilter,
-  UserRoleInfo
-} from '../types';
+import type { UserWithRoles, Role, UserFilter, UserRoleInfo, EmployeeBasic } from '../types';
 
 /**
  * 사용자 권한 컬러 매핑 함수
@@ -94,11 +89,32 @@ const UserPermissionManagePage: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [usersData, rolesData] = await Promise.all([
+      const [usersData, rolesData, employees] = await Promise.all([
         adminApi.getUsers(),
-        adminApi.getRoles()
+        adminApi.getRoles(),
+        adminApi.getEmployeesBasic(),
       ]);
-      setUsers(usersData);
+
+      // emp_no(사번)로 사용자와 직원정보 매칭
+      const numToEmployee: Record<string, EmployeeBasic> = Object.fromEntries(
+        employees.filter(e => e.num).map(e => [e.num, e])
+      );
+
+      const mergedUsers: UserWithRoles[] = usersData.map(u => {
+        const emp = u.empNo ? numToEmployee[u.empNo] : undefined;
+        return {
+          ...u,
+          // 직원 전체 오브젝트 항상 포함 (없으면 undefined)
+          employee: emp,
+          // 주요 필드 보강/보정 (직원 정보가 있을 경우에만 대체)
+          userName: u.userName || emp?.username || u.userName,
+          email: u.email || emp?.email || u.email,
+          department: u.department || emp?.deptCd || u.department,
+        };
+      });
+      console.log(mergedUsers);
+
+      setUsers(mergedUsers);
       setRoles(rolesData);
     } catch (error) {
       showError('사용자 권한 정보를 불러오는데 실패했습니다.');
