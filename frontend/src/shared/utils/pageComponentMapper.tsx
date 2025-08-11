@@ -210,6 +210,20 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'business_center',
   },
 
+  // 커뮤니티 (최상위 탭)
+  '/community': {
+    component: () => import('@/domains/admin/pages/CommunityPage'),
+    title: '커뮤니티',
+    icon: 'group',
+  },
+
+  // 커뮤니티 > Q&A
+  '/community/qna': {
+    component: () => import('@/domains/admin/pages/QnaPage'),
+    title: 'Q&A',
+    icon: 'list_alt',
+  },
+
   // 인수인계 관리 (다이얼로그 통합 버전)
   '/handover/assignments': {
     component: () => import('@/domains/handover/pages/HandoverAssignmentListPage'),

@@ -2,7 +2,8 @@
  * 도메인 페이지들을 위한 공통 페이지 컨텐츠 컴포넌트
  * 페이지 본문 영역을 일관된 스타일로 제공
  */
-import { Box } from '@mui/material';
+import { Box, Snackbar, Alert } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 import type { SxProps, Theme } from '@mui/system';
 import React, { useEffect, useState } from 'react';
 
@@ -15,6 +16,10 @@ interface PageContentProps {
   disablePadding?: boolean;
   /** 커스텀 스타일 */
   sx?: SxProps<Theme>;
+  /** 페이지 로드 성공 스낵바 표시 여부 (기본값: true) */
+  showLoadSuccess?: boolean;
+  /** 페이지 로드 성공 메시지 (기본: '페이지 로드 완료') */
+  loadSuccessMessage?: string;
 }
 
 /**
@@ -34,8 +39,11 @@ export const PageContent: React.FC<PageContentProps> = ({
   maxWidth,
   disablePadding = false,
   sx,
+  showLoadSuccess = true,
+  loadSuccessMessage = '페이지 로드 완1료',
 }) => {
   const [isInTab, setIsInTab] = useState(false);
+  const [loadSuccessOpen, setLoadSuccessOpen] = useState(false);
 
   useEffect(() => {
     // 탭 시스템 내부에 있는지 확인
@@ -80,6 +88,16 @@ export const PageContent: React.FC<PageContentProps> = ({
       }}
     >
       {children}
+      <Snackbar
+        open={loadSuccessOpen && showLoadSuccess}
+        autoHideDuration={2000}
+        onClose={() => setLoadSuccessOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert severity="success" onClose={() => setLoadSuccessOpen(false)}>
+          {loadSuccessMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

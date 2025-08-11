@@ -13,7 +13,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box } from '@mui/material';
+import { Box, Snackbar, Alert } from '@mui/material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -57,6 +57,10 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
   // 삭제 확인 모달 상태
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string[] | null>(null);
+
+  // 페이지 로드/조회 성공 알림 상태 (PageContent 기본 스낵바 대체)
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('페이지 로드 완료');
 
   // 회의체 현황 컬럼 정의
   const meetingColumns: DataGridColumn<MeetingBody>[] = useMemo(
@@ -179,6 +183,10 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
         totalElements: totalElements,
         totalPages: totalPages,
       }));
+
+      // 로드 성공 알림 (2초 노출)
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
     } catch (err: unknown) {
       if (
         typeof err === 'object' &&
@@ -336,6 +344,7 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
       />
 
       <PageContent
+        showLoadSuccess={false}
         sx={{
           flex: 1,
           display: 'flex',
@@ -473,6 +482,17 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             serverSide
           />
         </Box>
+        {/* 성공 알림 (상단 중앙, 크게 1회 표시) */}
+        <Snackbar
+          open={showSuccess}
+          autoHideDuration={2000}
+          onClose={() => setShowSuccess(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert severity="success">
+            {successMessage}
+          </Alert>
+        </Snackbar>
       </PageContent>
 
       {/* 회의체 등록/수정/조회 다이얼로그 */}
