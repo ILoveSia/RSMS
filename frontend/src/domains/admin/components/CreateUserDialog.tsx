@@ -39,12 +39,14 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
   const [password, setPassword] = useState<string>('');
   const [jobRankCd, setJobRankCd] = useState<string>(''); // 직급코드
   // 직책코드(job_title_cd) 사용 안함
+  const [touched, setTouched] = useState({ userId: false, email: false, password: false, userName: false });
 
   const reset = useCallback(() => {
     setForm({ userId: '', userName: '', email: '', empNo: '' });
     setDept(null);
     setPosition(null);
     setSelectedRoles([]);
+    setTouched({ userId: false, email: false, password: false, userName: false });
   }, []);
 
   const emailValid = useMemo(() => /.+@.+\..+/.test(form.email.trim()), [form.email]);
@@ -98,26 +100,28 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       open={open}
       mode="create"
       title="사용자 등록"
-      maxWidth="lg"
+      maxWidth="md"
       onClose={() => { reset(); onClose(); }}
       onSave={handleSave}
       disableSave={disabled}
       loading={saving}
     >
       {/* 계정 정보 */}
-      <Box sx={{ gridColumn: '1 / -1', mb: 2 }}>
+      <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>
         <Typography variant="overline" sx={{ color: 'text.secondary' }}>계정 정보</Typography>
-        <Divider sx={{ my: 1 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5 }}>
+        <Divider sx={{ my: 0.5 }} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
           <TextField
             label="사용자 ID"
             mode="editable"
             value={form.userId}
             onChange={(e) => setForm(prev => ({ ...prev, userId: e.target.value }))}
+            onBlur={() => setTouched(prev => ({ ...prev, userId: true }))}
             size="small"
+            fullWidth
             required
-            error={!form.userId.trim()}
-            helperText={!form.userId.trim() ? '필수 입력' : ' '}
+            error={touched.userId && !form.userId.trim()}
+            helperText={touched.userId && !form.userId.trim() ? '필수 입력' : ' '}
           />
           <TextField
             label="이메일"
@@ -125,10 +129,16 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             type="email"
             value={form.email}
             onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+            onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
             size="small"
+            fullWidth
             required
-            error={(!!form.email && !emailValid)||!form.email.trim()}
-            helperText={form.email && !emailValid ? '올바른 이메일 형식이 아닙니다' : ' '}
+            error={touched.email && (!emailValid || !form.email.trim())}
+            helperText={
+              touched.email
+                ? (!form.email.trim() ? '필수 입력' : (!emailValid ? '올바른 이메일 형식이 아닙니다' : ' '))
+                : ' '
+            }
           />
           <TextField
             label="비밀번호"
@@ -136,10 +146,16 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
             size="small"
+            fullWidth
             required
-            error={(password.length > 0 && !passwordValid)||!password.trim()}
-            helperText={password.length > 0 && !passwordValid ? '8자 이상 입력해주세요' : ' '}
+            error={touched.password && (!passwordValid || !password.trim())}
+            helperText={
+              touched.password
+                ? (!password.trim() ? '필수 입력' : (!passwordValid ? '8자 이상 입력해주세요' : ' '))
+                : ' '
+            }
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -149,16 +165,18 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             }}
           />
         </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5, mt: 1.5 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1, mt: 1 }}>
           <TextField
             label="성명"
             mode="editable"
             value={form.userName}
             onChange={(e) => setForm(prev => ({ ...prev, userName: e.target.value }))}
+            onBlur={() => setTouched(prev => ({ ...prev, userName: true }))}
             size="small"
+            fullWidth
             required
-            error={!form.userName.trim()}
-            helperText={!form.userName.trim() ? '필수 입력' : ' '}
+            error={touched.userName && !form.userName.trim()}
+            helperText={touched.userName && !form.userName.trim() ? '필수 입력' : ' '}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -173,6 +191,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             value={form.empNo}
             onChange={(e) => setForm(prev => ({ ...prev, empNo: e.target.value }))}
             size="small"
+            fullWidth
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -185,27 +204,28 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       </Box>
 
       {/* 소속/직무 */}
-      <Box sx={{ gridColumn: '1 / -1', mb: 2 }}>
+      <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>
         <Typography variant="overline" sx={{ color: 'text.secondary' }}>소속/직무</Typography>
-        <Divider sx={{ my: 1 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 1.5 }}>
-          <DepartmentSelect value={dept} onChange={setDept} size="small" placeholder="부서 선택" />
-          <PositionSelect value={position} onChange={setPosition} size="small" placeholder="직책 선택" />
-          <CommonCodeSelect groupCode="JOB_RANK" value={jobRankCd} onChange={setJobRankCd} size="small" placeholder="직급 선택" />
+        <Divider sx={{ my: 0.5 }} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
+          <DepartmentSelect value={dept} onChange={setDept} size="small" placeholder="부서 선택" minWidth={0} maxWidth="100%" />
+          <PositionSelect value={position} onChange={setPosition} size="small" placeholder="직책 선택" minWidth={0} maxWidth="100%" />
+          <CommonCodeSelect groupCode="JOB_RANK" value={jobRankCd} onChange={setJobRankCd} size="small" placeholder="직급 선택" minWidth={0} maxWidth="100%" />
         </Box>
       </Box>
 
       {/* 연락처 */}
-      <Box sx={{ gridColumn: '1 / -1', mb: 2 }}>
+      <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>
         <Typography variant="overline" sx={{ color: 'text.secondary' }}>연락처</Typography>
-        <Divider sx={{ my: 1 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
+        <Divider sx={{ my: 0.5 }} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>
           <TextField
             label="주소"
             mode="editable"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             size="small"
+            fullWidth
           />
           <TextField
             label="전화번호"
@@ -213,6 +233,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             value={mobile}
             onChange={(e) => setMobile(e.target.value)}
             size="small"
+            fullWidth
           />
         </Box>
       </Box>
@@ -220,14 +241,15 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       {/* 초기 역할 할당 */}
       <Box sx={{ gridColumn: '1 / -1' }}>
         <Typography variant="overline" sx={{ color: 'text.secondary' }}>초기 역할 할당</Typography>
-        <Divider sx={{ my: 1 }} />
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, maxHeight: 140, overflowY: 'auto' }}>
+        <Divider sx={{ my: 0.5 }} />
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxHeight: 120, overflowY: 'auto' }}>
           {roles.map(role => {
             const selected = selectedRoles.includes(role.roleId);
             return (
               <Tooltip key={role.roleId} title={role.roleName || role.roleId} placement="top" arrow>
                 <Chip
                   label={role.roleId}
+                  size="small"
                   color={selected ? 'primary' : 'default'}
                   variant={selected ? 'filled' : 'outlined'}
                   icon={selected ? <CheckCircleOutlineIcon /> : undefined}

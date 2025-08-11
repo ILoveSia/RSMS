@@ -6,7 +6,7 @@
 import apiClient from '@/app/common/api/client';
 import DepartmentApi from '@/domains/common/api/departmentApi';
 import { Button } from '@/shared/components/ui/button';
-import { getCodeName, useCommonCodes } from '@/shared/utils/codeUtils';
+import { getCodeName } from '@/shared/utils/codeUtils';
 import { Close as CloseIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import {
@@ -19,7 +19,7 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
-  TextField,
+  TextField as MuiTextField,
   Typography,
 } from '@mui/material';
 import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
@@ -66,8 +66,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   onSelect,
   title = '사원 검색',
 }) => {
-  // 공통코드 훅 사용
-  const allCodes = useCommonCodes();
+
 
   // 검색 조건 상태
   const [searchConditions, setSearchConditions] = useState({
@@ -260,7 +259,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       width: 80,
       renderCell: params => (
         <Typography variant='body2'>
-          {getCodeName(allCodes, 'JOB_RANK', params.value) || params.value}
+          {getCodeName('JOB_RANK', params.value) || params.value}
         </Typography>
       ),
     },
@@ -318,7 +317,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
         <Box sx={{ width: '100%', height: 500 }}>
           {/* 검색 영역 */}
           <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <TextField
+            <MuiTextField
               size='small'
               placeholder='성명'
               value={searchConditions.username}
@@ -333,7 +332,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
                 ),
               }}
             />
-            <TextField
+            <MuiTextField
               size='small'
               placeholder='사번'
               value={searchConditions.num}

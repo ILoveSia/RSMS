@@ -14,7 +14,7 @@ import {
   CircularProgress,
   Chip,
   IconButton,
-  TextField,
+
   FormControl,
   Select,
   MenuItem,
@@ -39,7 +39,8 @@ import {
   Person as PersonIcon,
   Group as GroupIcon,
   Close as CloseIcon,
-  Clear as ClearIcon
+  Clear as ClearIcon,
+
 } from '@mui/icons-material';
 import { PersonAddAlt1 as PersonAddAlt1Icon } from '@mui/icons-material';
 
@@ -52,6 +53,8 @@ import Toast from '@/shared/components/ui/feedback/Toast';
 // no-op
 import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
 import { adminApi } from '../api/adminApi';
+import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
+import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
 import type {
   UserWithRoles, 
   Role, 
@@ -120,6 +123,10 @@ const UserPermissionManagePage: React.FC = () => {
   // 사용자 등록 다이얼로그 상태
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   // create dialog saving state handled inside dialog component
+
+  // 검색 팝업 상태 및 선택값
+  const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
+  const [selectedDepartment, setSelectedDepartment] = useState<DepartmentSearchResult | null>(null);
 
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
@@ -252,6 +259,10 @@ const UserPermissionManagePage: React.FC = () => {
     await loadData();
   }, [loadData, showSuccess]);
 
+  // 사원/부서 선택 적용
+
+  // 부서 선택은 DepartmentSelect에서 직접 처리하므로 별도 핸들러 불필요
+
   if (loading) {
     return (
       <PageContainer>
@@ -301,20 +312,24 @@ const UserPermissionManagePage: React.FC = () => {
           }}
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>사용자명</span>
-          <TextField
-            value={filter.userName || ''}
-            onChange={(e) => setFilter({ ...filter, userName: e.target.value })}
+          <EmployeeSelect
+            value={selectedEmployee}
+            onChange={(emp) => { setSelectedEmployee(emp); setFilter(prev => ({ ...prev, userName: emp?.username || '' })); }}
             size="small"
-            sx={{ minWidth: 150, maxWidth: 200 }}
-            placeholder="사용자명 검색"
+            placeholder="사원 선택"
+            sx={{ minWidth: 180, maxWidth: 240 }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          <TextField
-            value={filter.department || ''}
-            onChange={(e) => setFilter({ ...filter, department: e.target.value })}
+          <DepartmentSelect
+            value={selectedDepartment}
+            onChange={(dept) => {
+              setSelectedDepartment(dept);
+              setFilter(prev => ({ ...prev, department: dept?.deptName || '' }));
+            }}
             size="small"
-            sx={{ minWidth: 120, maxWidth: 180 }}
-            placeholder="부서명 검색"
+            placeholder="부서 선택"
+            minWidth={160}
+            maxWidth={220}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>역할</span>
           <FormControl size="small" sx={{ minWidth: 120, maxWidth: 180 }}>
@@ -658,6 +673,10 @@ const UserPermissionManagePage: React.FC = () => {
         onClose={closeCreateDialog}
         onCreated={handleCreated}
       />
+
+
+
+      {/* 부서 검색 팝업 제거: DepartmentSelect 사용으로 대체 */}
 
       {/* Toast 컴포넌트 */}
       <Toast

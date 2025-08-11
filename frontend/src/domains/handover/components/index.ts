@@ -15,5 +15,5 @@ export { default as HandoverInfoCard } from './HandoverInfoCard';
 export { default as WorkflowActions } from './WorkflowActions';
 
 // 선택 컴포넌트
-export { default as EmployeeSelector } from './EmployeeSelector';
+export { default as EmployeeSelect } from './EmployeeSelect';
 export { default as PositionSelector } from './PositionSelector';

@@ -91,6 +91,8 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   return (
     <Box sx={{ ...sx }}>
       <TextField
+        label=""
+        mode="editable"
         value={value?.deptName || ''}
         size={size}
         disabled={disabled}
