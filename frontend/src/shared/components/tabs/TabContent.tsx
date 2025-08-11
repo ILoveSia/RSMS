@@ -61,7 +61,7 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, className = '' }) =>
       sx={{
         flex: 1,
         height: '100%',
-        overflow: 'hidden',
+        overflow: 'auto',
         backgroundColor: 'background.default',
         position: 'relative',
         display: 'flex',
@@ -94,7 +94,7 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, className = '' }) =>
             height: '100%',
             width: '100%',
             flex: 1,
-            overflow: 'auto', //스크롤 방지
+            overflow: 'auto', //스크롤 허용
             position: 'relative',
             animation: 'fadeIn 0.2s ease-in-out',
             '@keyframes fadeIn': {

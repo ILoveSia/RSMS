@@ -29,6 +29,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedItemId, setSelectedItemId] = useState<number | undefined>();
+  const [selectedRowApprovalStatus, setSelectedRowApprovalStatus] = useState<string>('');
 
   // 부서장차수생성 상태
   const [hodGenerating, setHodGenerating] = useState<boolean>(false);
@@ -336,12 +337,14 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const handleRowDoubleClick = useCallback((row: HodICItemRow) => {
     setDialogMode('view');
     setSelectedItemId(row.hodIcItemId);
+    setSelectedRowApprovalStatus(row.approvalStatus || '');
     setDialogOpen(true);
   }, []);
 
   const handleRowClick = useCallback((row: HodICItemRow) => {
     setDialogMode('view');
     setSelectedItemId(row.hodIcItemId);
+    setSelectedRowApprovalStatus(row.approvalStatus || '');
     setDialogOpen(true);
   }, []);
 
@@ -570,6 +573,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
         onClose={handleDialogClose}
         mode={dialogMode}
         itemId={selectedItemId}
+        approvalStatus={selectedRowApprovalStatus}
         onSuccess={handleDialogSuccess}
       />
 

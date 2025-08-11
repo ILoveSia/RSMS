@@ -170,6 +170,20 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
           variant={variant}
           disabled
           startIcon={<CircularProgress size={16} />}
+          style={{
+            height: '36px',
+            minWidth: '80px',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            borderRadius: '4px',
+          }}
+          sx={{
+            height: '36px !important',
+            minWidth: '80px !important',
+            fontSize: '0.875rem !important',
+            fontWeight: '600 !important',
+            borderRadius: '4px !important',
+          }}
         >
           로딩중
         </Button>
@@ -186,6 +200,20 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
             startIcon={<SendIcon />}
             onClick={() => setSubmitPopupOpen(true)}
             disabled={disabled}
+            style={{
+              height: '36px',
+              minWidth: '80px',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              borderRadius: '4px',
+            }}
+            sx={{
+              height: '36px !important',
+              minWidth: '80px !important',
+              fontSize: '0.875rem !important',
+              fontWeight: '600 !important',
+              borderRadius: '4px !important',
+            }}
           >
             결재상신
           </Button>
@@ -193,24 +221,60 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
         
       case 'APPROVE':
         return (
-          <ButtonGroup size={size} disabled={disabled}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              variant={variant}
+              size="medium"
+              variant="outlined"
               color="success"
               startIcon={<CheckIcon />}
               onClick={() => handleInlineApproval('approve')}
+              disabled={disabled}
+              style={{
+                height: '36px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: '4px',
+                padding: '6px 16px',
+              }}
+              sx={{
+                height: '36px !important',
+                minWidth: '80px !important',
+                fontSize: '0.875rem !important',
+                fontWeight: '600 !important',
+                borderRadius: '4px !important',
+                padding: '6px 16px !important',
+              }}
             >
               승인
             </Button>
             <Button
-              variant={variant}
+              size="medium"
+              variant="outlined"
               color="error"
               startIcon={<CloseIcon />}
               onClick={() => handleInlineApproval('reject')}
+              disabled={disabled}
+              style={{
+                height: '36px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: '4px',
+                padding: '6px 16px',
+              }}
+              sx={{
+                height: '36px !important',
+                minWidth: '80px !important',
+                fontSize: '0.875rem !important',
+                fontWeight: '600 !important',
+                borderRadius: '4px !important',
+                padding: '6px 16px !important',
+              }}
             >
               반려
             </Button>
-          </ButtonGroup>
+          </Box>
         );
         
       case 'VIEW':
@@ -222,6 +286,20 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
               startIcon={<VisibilityIcon />}
               onClick={handleViewApproval}
               disabled={disabled}
+              style={{
+                height: '36px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                borderRadius: '4px',
+              }}
+              sx={{
+                height: '36px !important',
+                minWidth: '80px !important',
+                fontSize: '0.875rem !important',
+                fontWeight: '600 !important',
+                borderRadius: '4px !important',
+              }}
             >
               결재현황
             </Button>
@@ -247,6 +325,13 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
             startIcon={<UndoIcon />}
             onClick={handleViewApproval}
             disabled={disabled}
+            sx={{
+              height: '36px !important',
+              minWidth: '80px !important',
+              fontSize: '0.875rem !important',
+              fontWeight: '600 !important',
+              borderRadius: '4px !important',
+            }}
           >
             취소됨
           </Button>

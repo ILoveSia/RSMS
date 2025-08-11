@@ -31,6 +31,7 @@ import { SearchConditionPanel } from '@/shared/components/ui/form';
 import type { DataGridColumn } from '@/shared/types/common';
 import approvalApi, { type ApprovalListResponse } from '../api/approvalApi';
 import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
+import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
 import '../../../assets/scss/style.css';
 
 // 검색 조건 인터페이스
@@ -71,6 +72,9 @@ const ApprovalHistoryPage: React.FC = () => {
   const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // 공통코드 가져오기
+  const allCodes = useCommonCodes();
 
   // 다이얼로그 상태
   const [selectedApproval, setSelectedApproval] = useState<any>(null);
@@ -180,20 +184,24 @@ const ApprovalHistoryPage: React.FC = () => {
       field: 'taskTitle',
       headerName: '업무명',
       width: 280,
-      renderCell: ({ value, row }) => (
-        <Box>
-          <Typography 
-            variant="body2" 
-            sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
-            onClick={() => handleViewDetail(row.approvalId)}
-          >
-            {value}
-          </Typography>
-          <Typography variant="caption" color="textSecondary">
-            {row.taskTypeName}
-          </Typography>
-        </Box>
-      ),
+      renderCell: ({ value, row }) => {
+        // taskTitle을 TASK_TYPE 공통코드로 변환
+        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
+        return (
+          <Box>
+            <Typography 
+              variant="body2" 
+              sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
+              onClick={() => handleViewDetail(row.approvalId)}
+            >
+              {taskTypeName}
+            </Typography>
+            <Typography variant="caption" color="textSecondary">
+              {row.taskTypeName}
+            </Typography>
+          </Box>
+        );
+      },
       flex: 1,
       align: 'left',
       headerAlign: 'center',

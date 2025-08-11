@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material';
 import type { ApprovalStatusResponse } from '../../../domains/approval/api/approvalApi';
 import ApprovalStepIndicator from './ApprovalStepIndicator';
+import { getCodeNameSync, useCommonCodes } from '@/shared/utils/codeUtils';
 
 // Props 인터페이스
 interface ApprovalStatusDialogProps {
@@ -40,6 +41,14 @@ const ApprovalStatusDialog: React.FC<ApprovalStatusDialogProps> = ({
   approvalData,
   onClose,
 }) => {
+  // 공통코드 데이터 가져오기
+  const allCodes = useCommonCodes();
+
+  // 업무 타입 코드명 가져오기
+  const getTaskTypeName = (taskTypeCd: string) => {
+    return getCodeNameSync(allCodes, 'TASK_TYPE', taskTypeCd);
+  };
+
   // 상태별 색상
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -86,7 +95,7 @@ const ApprovalStatusDialog: React.FC<ApprovalStatusDialogProps> = ({
             <Box sx={{ display: 'flex', justifyContent: 'between', alignItems: 'flex-start', mb: 2 }}>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="h6" gutterBottom>
-                  {approvalData.taskTitle}
+                  {getTaskTypeName(approvalData.taskTypeCd || approvalData.taskTitle)}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
                   <Chip

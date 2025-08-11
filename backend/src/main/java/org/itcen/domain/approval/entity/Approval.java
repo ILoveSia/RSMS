@@ -98,6 +98,13 @@ public class Approval extends BaseTimeEntity {
     private String comments;
 
     /**
+     * 긴급도 (NORMAL: 일반, URGENT: 긴급)
+     */
+    @Builder.Default
+    @Column(name = "urgency_cd", length = 20)
+    private String urgencyCd = "NORMAL";
+
+    /**
      * 결재 단계 목록 (양방향 관계)
      */
     @OneToMany(mappedBy = "approval", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, orphanRemoval = true)
@@ -114,6 +121,14 @@ public class Approval extends BaseTimeEntity {
         public static final String APPROVED = "APPROVED";         // 승인완료
         public static final String REJECTED = "REJECTED";         // 반려
         public static final String CANCELLED = "CANCELLED";       // 상신취소
+    }
+
+    /**
+     * 긴급도 상수
+     */
+    public static class Urgency {
+        public static final String NORMAL = "NORMAL";            // 일반
+        public static final String URGENT = "URGENT";            // 긴급
     }
 
     /**
@@ -221,12 +236,14 @@ public class Approval extends BaseTimeEntity {
      * 결재 생성을 위한 정적 팩토리 메서드
      */
     public static Approval createApproval(String taskTypeCd, Long taskId, 
-                                         String requesterId, List<String> approvers) {
+                                         String requesterId, List<String> approvers, 
+                                         String urgency) {
         Approval approval = Approval.builder()
                 .taskTypeCd(taskTypeCd)
                 .taskId(taskId)
                 .requesterId(requesterId)
                 .apprStatCd(Status.SUBMITTED)
+                .urgencyCd(urgency != null ? urgency : Urgency.NORMAL)
                 .build();
 
         // 결재 단계 생성

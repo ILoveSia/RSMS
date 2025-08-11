@@ -1,7 +1,7 @@
 /**
  * 결재 상신 팝업 컴포넌트
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -44,7 +44,7 @@ interface ApprovalSubmitPopupProps {
 /**
  * 결재 상신 팝업
  */
-const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
+const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = React.memo(({
   open,
   taskType,
   taskId,
@@ -78,8 +78,9 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
   }, []);
 
   // 결재 요청 사유 변경 핸들러 최적화
-  const handleCommentsChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setComments(event.target.value);
+  const handleCommentsChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = event.target.value;
+    setComments(value);
   }, []);
 
   // 결재 라인 미리보기 업데이트
@@ -147,8 +148,10 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
     }
   };
 
-  // 유효성 검증
-  const isValid = approvers.step1 && !loading;
+  // 유효성 검증 메모이제이션
+  const isValid = useMemo(() => {
+    return approvers.step1 && !loading;
+  }, [approvers.step1, loading]);
 
   return (
     <Dialog 
@@ -236,6 +239,14 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
           value={comments}
           onChange={handleCommentsChange}
           disabled={loading}
+          InputProps={{
+            style: { lineHeight: '1.4' }
+          }}
+          sx={{
+            '& .MuiInputBase-root': {
+              backgroundColor: 'transparent'
+            }
+          }}
         />
       </DialogContent>
       
@@ -254,6 +265,6 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = ({
       </DialogActions>
     </Dialog>
   );
-};
+});
 
 export default ApprovalSubmitPopup;
