@@ -372,15 +372,12 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
             error={!!validation.errors.planCode}
             helperText={validation.errors.planCode || '자동 생성된 점검계획 코드입니다'}
             placeholder="자동 생성됨"
-            InputProps={{
-              readOnly: true,
-            }}
+            mode="readonly"
             sx={{
               flex: 1,
               '& .MuiInputBase-input': {
-                backgroundColor: '#f5f5f5',
                 fontWeight: 600,
-              }
+              },
             }}
           />
         </Box>

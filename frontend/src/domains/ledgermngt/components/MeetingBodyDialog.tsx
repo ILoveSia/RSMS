@@ -212,7 +212,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
                 fullWidth
                 sx={
                   mode === 'view'
-                    ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
+                    ? { color: 'var(--bank-text-primary)', fontWeight: 600, backgroundColor: 'var(--bank-bg-secondary)' }
                     : {}
                 }
                 options={[
@@ -239,7 +239,7 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
                 fullWidth
                 sx={
                   mode === 'view'
-                    ? { color: 'black', fontWeight: 600, backgroundColor: '#f8fafc' }
+                    ? { color: 'var(--bank-text-primary)', fontWeight: 600, backgroundColor: 'var(--bank-bg-secondary)' }
                     : {}
                 }
                 options={[

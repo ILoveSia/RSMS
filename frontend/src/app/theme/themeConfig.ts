@@ -88,6 +88,20 @@ export const lightTheme = createTheme({
       selected: '#e3f2fd',
     },
   },
+  components: {
+    ...commonTheme.components,
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'var(--bank-surface)',
+          color: 'var(--bank-text-primary)',
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'var(--bank-border)',
+          },
+        },
+      },
+    },
+  },
 });
 
 // 다크 테마
@@ -123,10 +137,24 @@ export const darkTheme = createTheme({
   },
   components: {
     ...commonTheme.components,
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'var(--bank-surface)',
+          color: 'var(--bank-text-primary)',
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'var(--bank-border)',
+          },
+        },
+        input: {
+          color: 'var(--bank-text-primary)',
+        },
+      },
+    },
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1e1e1e',
+          backgroundColor: 'var(--bank-bg-paper)',
           backgroundImage: 'none',
         },
       },
@@ -134,8 +162,8 @@ export const darkTheme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1e1e1e',
-          borderBottom: '1px solid #333333',
+          backgroundColor: 'var(--bank-bg-secondary)',
+          borderBottom: '1px solid var(--bank-border)',
         },
       },
     },

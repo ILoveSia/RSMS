@@ -164,8 +164,8 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
           sx={{
             minWidth: '80px',
             fontWeight: 600,
-            color: 'white',
-            '& .MuiSvgIcon-root': { color: 'white' },
+            color: 'var(--bank-text-primary)',
+            '& .MuiSvgIcon-root': { color: 'var(--bank-text-primary)' },
           }}
         >
           {editLoading ? '수정중...' : '수정'}

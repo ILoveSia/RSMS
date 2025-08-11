@@ -140,10 +140,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
-        <span style={{
-          color: value === 'Y' ? '#dc3545' : value === 'N' ? '#28a745' : '#000000',
-          fontWeight: 'normal'
-        }}>
+          <span style={{
+            color: value === 'Y' ? 'var(--bank-error)' : value === 'N' ? 'var(--bank-success)' : 'var(--bank-text-primary)',
+            fontWeight: 'normal'
+          }}>
           {value === 'Y' ? '있음' : value === 'N' ? '없음 ' : value || '해당없음'}
         </span>
       )
@@ -157,7 +157,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <span style={{
-          color: "#000000",
+          color: 'var(--bank-text-primary)',
           fontStyle: value ? 'normal' : 'italic'
         }}>
           {value || '해당없음'}

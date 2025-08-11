@@ -406,7 +406,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                   boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
                 }}
               >
-                <Business sx={{ fontSize: 32, color: 'white' }} />
+                <Business sx={{ fontSize: 32, color: 'var(--bank-text-primary)' }} />
               </Box>
 
               <Typography variant='h4' component='h1' fontWeight='bold' color='text.primary' mb={1}>
@@ -552,6 +552,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                   size='large'
                   disabled={!isFormValid || loading}
                   startIcon={loading ? <Loading size={20} /> : <LoginOutlined />}
+                  disableRipple
                   sx={{
                     py: 1.5,
                     borderRadius: 2,
@@ -564,8 +565,13 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                       boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.6)}`,
                       transform: 'translateY(-1px)',
                     },
+                    '&:active': {
+                      boxShadow: `0 3px 12px ${alpha(theme.palette.primary.main, 0.5)}`,
+                      transform: 'none',
+                    },
                     '&:disabled': {
-                      background: theme.palette.grey[300],
+                      background: 'var(--bank-primary-bg)',
+                      color: 'var(--bank-text-primary)',
                       boxShadow: 'none',
                       transform: 'none',
                     },

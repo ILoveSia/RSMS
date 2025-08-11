@@ -412,6 +412,13 @@ const DataGrid = <T extends Record<string, any>>({
               hideFooterPagination
               sx={{
                 border: 'none',
+                '& .MuiDataGrid-cell': {
+                  borderBottom: '1px solid var(--bank-border)',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: 'var(--bank-bg-secondary)',
+                  borderBottom: '1px solid var(--bank-border)',
+                },
                 '& .MuiDataGrid-cell:focus': {
                   outline: 'none',
                 },

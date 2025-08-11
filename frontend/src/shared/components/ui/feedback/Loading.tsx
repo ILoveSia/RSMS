@@ -132,7 +132,7 @@ const Loading = forwardRef<HTMLDivElement, LoadingProps>(
           display='flex'
           alignItems='center'
           justifyContent='center'
-          bgcolor='rgba(255, 255, 255, 0.8)'
+          bgcolor='var(--bank-bg-secondary)'
           zIndex={1000}
         >
           {backdrop ? (
@@ -161,7 +161,7 @@ const Loading = forwardRef<HTMLDivElement, LoadingProps>(
         <Backdrop
           open={true}
           sx={{
-            color: '#fff',
+            color: 'var(--bank-text-primary)',
             zIndex: theme => theme.zIndex.drawer + 1,
             bgcolor: 'rgba(0, 0, 0, 0.5)',
           }}

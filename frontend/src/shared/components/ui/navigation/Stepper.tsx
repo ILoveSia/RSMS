@@ -28,7 +28,7 @@ const CustomStepIcon = styled('div')<{
     : ownerState.completed || ownerState.active
     ? theme.palette.primary.main
     : theme.palette.grey[300],
-  color: '#fff',
+  color: 'var(--bank-text-primary)',
   width: 32,
   height: 32,
   borderRadius: '50%',

@@ -46,11 +46,11 @@ const TopHeader: React.FC<TopHeaderProps> = ({ style }) => {
             gap: '6px',
             padding: '3px 12px',
             borderRadius: '20px',
-            background: 'rgba(255, 255, 255, 0.2)',
-            border: '1px solid rgba(255, 255, 255, 0.4)',
+            background: 'var(--bank-primary-bg)',
+            border: '1px solid var(--bank-border)',
             fontSize: '12px',
             fontWeight: 'bold',
-            color: '#FFFFFF',
+            color: 'var(--bank-text-primary)',
           }}
         >
           <span>PROTOTYPE</span>
@@ -68,9 +68,9 @@ const TopHeader: React.FC<TopHeaderProps> = ({ style }) => {
             <button
               onClick={handleLogout}
               style={{
-                background: 'rgba(255, 255, 255, 0.2)',
-                border: '1px solid rgba(255, 255, 255, 0.3)',
-                color: 'white',
+                background: 'var(--bank-primary-bg)',
+                border: '1px solid var(--bank-border)',
+                color: 'var(--bank-text-primary)',
                 padding: '5px 15px',
                 borderRadius: '4px',
                 cursor: 'pointer',

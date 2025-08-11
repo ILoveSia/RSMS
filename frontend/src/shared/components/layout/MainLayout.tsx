@@ -124,14 +124,7 @@ const MainLayout: IComponent<IMainLayoutProps> = ({
           }}
         >
           {/* 좌측 메뉴 */}
-          <LeftMenu
-            style={{
-              backgroundColor: '#f5f5f5',
-              width: '250px',
-              borderRight: '1px solid #ddd',
-              overflow: 'auto',
-            }}
-          />
+          <LeftMenu />
 
           {/* 메인 콘텐츠: 탭 시스템 */}
           <div

@@ -20,6 +20,8 @@ body.dark-mode {
   --bank-bg-hover: #333333;
   /* Surface color used by cards/submenus etc. */
   --bank-surface: #1a1a1a;
+  /* Paper background for dialogs/cards */
+  --bank-bg-paper: #1c1c1c;
   
   /* Text Colors */
   --bank-text-primary: #ffffff;

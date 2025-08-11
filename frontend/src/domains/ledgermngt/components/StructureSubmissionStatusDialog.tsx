@@ -419,7 +419,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
     >
       <Box sx={{
 
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--bank-surface)',
         padding: '16px',
         display: 'grid',
         gridTemplateColumns: 'auto 1fr',

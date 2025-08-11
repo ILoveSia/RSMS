@@ -32,6 +32,7 @@
   --bank-bg-secondary: #f2f4f6;
   --bank-bg-tertiary: #ebeef1;
   --bank-surface: #ffffff;
+  --bank-bg-paper: #ffffff;
 
   /* Text Colors */
   --bank-text-primary: #2d3e50;
@@ -252,22 +253,22 @@ body {
 }
 
 .top-header__search-input {
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: var(--bank-surface);
   color: var(--bank-text-primary);
   padding: 0.25rem 0.75rem;
   border-radius: 0.375rem;
   font-size: 0.875rem;
   width: 16rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--bank-border);
   outline: none;
   transition: all 0.2s ease;
 }
 
 .top-header__search-input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
-  background-color: white;
+  border-color: var(--bank-border);
+  box-shadow: 0 0 0 3px var(--bank-focus-ring);
+  background-color: var(--bank-surface);
 }
 
 .top-header__search-input::placeholder {
@@ -312,20 +313,20 @@ body {
 }
 
 .top-header__nav-button--active {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--bank-primary-bg);
+  color: var(--bank-text-primary);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--bank-border);
 }
 
 .top-header__nav-button--inactive {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
+  background-color: var(--bank-primary-bg);
+  color: var(--bank-text-secondary);
 }
 
 .top-header__nav-button--inactive:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: white;
+  background-color: var(--bank-bg-hover);
+  color: var(--bank-text-primary);
 }
 
 .top-header__right {
@@ -846,7 +847,7 @@ body {
 }
 
 .responsibility-card {
-  background-color: white;
+  background-color: var(--bank-surface);
   border-radius: 0.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -865,12 +866,12 @@ body {
 }
 
 .responsibility-card__header {
-  background-color: #e2e8f0; /* 연한 회색 */
+  background-color: var(--bank-bg-secondary); /* 연한 회색 */
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-bottom: 1px solid #cbd5e0;
+  border-bottom: 1px solid var(--bank-border);
 }
 
 .responsibility-card__number {
@@ -906,7 +907,7 @@ body {
   font-size: 0.875rem;
   font-weight: 600;
   margin: 0;
-  color: #2d3748;
+  color: var(--bank-text-primary);
 }
 
 .responsibility-card__content {
@@ -937,8 +938,8 @@ body {
   position: absolute;
   width: 50px;
   height: 70px;
-  background-color: white;
-  border: 1px solid #cbd5e0;
+  background-color: var(--bank-surface);
+  border: 1px solid var(--bank-border);
   border-radius: 2px;
 }
 
@@ -974,7 +975,7 @@ body {
 .responsibility-card__text p {
   font-size: 0.75rem;
   line-height: 1.4;
-  color: #4a5568;
+  color: var(--bank-text-secondary);
 }
 
 .responsibility-table {
@@ -1026,8 +1027,8 @@ body {
 .case-study-document {
   width: 80%;
   height: 80%;
-  background-color: white;
-  border: 1px solid #cbd5e0;
+  background-color: var(--bank-surface);
+  border: 1px solid var(--bank-border);
   border-radius: 0.25rem;
   padding: 0.5rem;
 }
@@ -1203,8 +1204,8 @@ body {
 }
 
 .my-work-button {
-  background-color: white;
-  border: 1px solid #e2e8f0;
+  background-color: var(--bank-surface);
+  border: 1px solid var(--bank-border);
   border-radius: 0.25rem;
   padding: 0.4rem;
   font-size: 0.7rem;
@@ -1369,24 +1370,24 @@ body {
 }
 
 .guidance-popup__table th {
-  background-color: #e2e8f0;
-  color: #2d3748;
+  background-color: var(--bank-bg-secondary);
+  color: var(--bank-text-primary);
   padding: 0.75rem;
   text-align: left;
   font-weight: 600;
-  border: 1px solid #cbd5e0;
+  border: 1px solid var(--bank-border);
   font-size: 0.8125rem;
 }
 
 .guidance-popup__table td {
   padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  background-color: white;
+  border: 1px solid var(--bank-border);
+  background-color: var(--bank-surface);
   vertical-align: middle;
 }
 
 .guidance-popup__table tbody tr:nth-child(even) td {
-  background-color: #f8f9fa;
+  background-color: var(--bank-bg-secondary);
 }
 
 .guidance-popup__table tbody tr:last-child td {
@@ -1408,12 +1409,12 @@ body {
 .guidance-grid {
   display: grid;
   grid-template-columns: 1fr 120px 60px;
-  border: 1px solid #cbd5e0;
+  border: 1px solid var(--bank-border);
   border-radius: 0.25rem;
   overflow: hidden;
   font-size: 0.875rem;
   width: 100%;
-  background-color: #f7fafc;
+  background-color: var(--bank-bg-secondary);
 }
 
 .guidance-grid__header {
@@ -1430,12 +1431,12 @@ body {
 
 .guidance-grid__cell {
   padding: 0.75rem;
-  border-right: 1px solid #cbd5e0;
-  border-bottom: 1px solid #cbd5e0;
+  border-right: 1px solid var(--bank-border);
+  border-bottom: 1px solid var(--bank-border);
   vertical-align: middle;
   display: flex;
   align-items: center;
-  background-color: white;
+  background-color: var(--bank-surface);
 }
 
 .guidance-grid__cell:last-child {
@@ -1445,8 +1446,8 @@ body {
 }
 
 .guidance-grid__cell--header {
-  background-color: #e2e8f0;
-  color: #2d3748;
+  background-color: var(--bank-bg-secondary);
+  color: var(--bank-text-primary);
   font-weight: 600;
   font-size: 0.8125rem;
 }

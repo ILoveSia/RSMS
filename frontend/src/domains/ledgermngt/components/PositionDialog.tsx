@@ -890,6 +890,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <TextField
+                            label=""
                             fullWidth
                             size='small'
                             value={dept.deptCode}
@@ -910,6 +911,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       </TableCell>
                       <TableCell>
                         <TextField
+                          label=""
                           fullWidth
                           size='small'
                           value={dept.deptName}
@@ -973,6 +975,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <TextField
+                            label=""
                             fullWidth
                             size='small'
                             value={meeting.meetingBodyName}
@@ -1015,6 +1018,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       </TableCell>
                       <TableCell sx={{ width: 120 }}>
                         <TextField
+                          label=""
                           size='small'
                           value={getCodeNameStable('PERIOD', meeting.meetingPeriod)}
                           mode="readonly"
@@ -1024,6 +1028,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       </TableCell>
                       <TableCell>
                         <TextField
+                          label=""
                           fullWidth
                           size='small'
                           value={meeting.deliberationContent}
@@ -1086,6 +1091,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
                           <TextField
+                            label=""
                             fullWidth
                             size='small'
                             value={manager.empNo}
@@ -1107,6 +1113,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       </TableCell>
                       <TableCell>
                         <TextField
+                          label=""
                           fullWidth
                           size='small'
                           value={manager.empName}
@@ -1116,6 +1123,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
                       </TableCell>
                       <TableCell>
                         <TextField
+                          label=""
                           fullWidth
                           size='small'
                           value={manager.position}

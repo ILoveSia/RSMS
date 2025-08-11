@@ -604,11 +604,11 @@ const ServerDataGrid = <T extends Record<string, any>>({
           sx={{
             border: 'none',
             '& .MuiDataGrid-cell': {
-              borderBottom: '1px solid rgba(224, 224, 224, 0.5)',
+              borderBottom: '1px solid var(--bank-border)',
             },
             '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: '#f5f5f5',
-              borderBottom: '1px solid rgba(224, 224, 224, 1)',
+              backgroundColor: 'var(--bank-bg-secondary)',
+              borderBottom: '1px solid var(--bank-border)',
             },
             '& .MuiDataGrid-row:hover': {
               backgroundColor: 'rgba(25, 118, 210, 0.04)',

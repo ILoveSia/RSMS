@@ -62,15 +62,24 @@ const TextField: React.FC<TextFieldProps> = ({
         // 읽기전용 스타일링
         sx={{
           '& .MuiInputBase-root': {
-            backgroundColor: 'background.paper',
+            backgroundColor: 'var(--bank-surface)',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'var(--bank-border)'
+            },
             '&.Mui-disabled': {
-              backgroundColor: '#f5f5f5 !important',
+              backgroundColor: 'var(--bank-bg-secondary) !important',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'var(--bank-border)'
+              },
               '& .MuiInputBase-input': {
-                color: value ? 'text.primary' : 'text.disabled',
+                color: value ? 'var(--bank-text-primary)' : 'var(--bank-text-secondary)',
                 fontStyle: value ? 'normal' : 'italic',
-                WebkitTextFillColor: value ? 'inherit' : 'text.disabled',
+                WebkitTextFillColor: value ? 'var(--bank-text-primary)' : 'var(--bank-text-secondary)',
               },
             },
+          },
+          '& .MuiInputLabel-root': {
+            color: 'var(--bank-text-secondary)'
           },
           ...sx,
         }}
@@ -93,7 +102,21 @@ const TextField: React.FC<TextFieldProps> = ({
       variant={variant}
       size={size}
       InputLabelProps={label ? { shrink: true } : undefined}
-      sx={sx}
+        sx={{
+          '& .MuiInputBase-root': {
+            backgroundColor: 'var(--bank-surface)',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'var(--bank-border)'
+            },
+          },
+          '& .MuiInputBase-input': {
+            color: 'var(--bank-text-primary)'
+          },
+          '& .MuiInputLabel-root': {
+            color: 'var(--bank-text-secondary)'
+          },
+          ...sx,
+        }}
       {...props}
     />
   );

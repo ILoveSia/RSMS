@@ -578,9 +578,9 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               px: 1.5,
               lineHeight: 1,
               borderRadius: 1,
-              color: 'white !important',
-              '& .MuiSvgIcon-root': { color: 'white' },
-              '& .MuiButton-root': { color: 'white !important' }
+              color: 'var(--bank-text-primary) !important',
+              '& .MuiSvgIcon-root': { color: 'var(--bank-text-primary)' },
+              '& .MuiButton-root': { color: 'var(--bank-text-primary) !important' }
             }}
           >
             점검자지정
@@ -600,9 +600,9 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               px: 1.5,
               lineHeight: 1,
               borderRadius: 1,
-              color: 'white !important',
-              '& .MuiSvgIcon-root': { color: 'white' },
-              '& .MuiButton-root': { color: 'white !important' }
+              color: 'var(--bank-text-primary) !important',
+              '& .MuiSvgIcon-root': { color: 'var(--bank-text-primary)' },
+              '& .MuiButton-root': { color: 'var(--bank-text-primary) !important' }
             }}
           >
             점검결과작성

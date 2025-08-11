@@ -147,7 +147,7 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({
         open={isLoading}
         sx={{
           zIndex: 9999,
-          color: '#fff',
+          color: 'var(--bank-text-primary)',
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
           flexDirection: 'column',
           gap: 2,

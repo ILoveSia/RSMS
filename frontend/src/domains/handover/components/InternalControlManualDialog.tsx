@@ -383,58 +383,62 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
           ...(isViewMode && {
             '& .MuiInputBase-input[disabled]': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
               opacity: '1 !important',
             },
             '& .MuiInputBase-input.Mui-disabled': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
               opacity: '1 !important',
             },
             '& .MuiTextField-root .MuiInputBase-input': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
               opacity: '1 !important',
             },
             '& .MuiSelect-select.Mui-disabled': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
               opacity: '1 !important',
             },
             '& .MuiSelect-select[disabled]': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
               opacity: '1 !important',
             },
             '& .MuiInputBase-inputMultiline[disabled]': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
               opacity: '1 !important',
             },
             '& .MuiInputBase-inputMultiline.Mui-disabled': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
               opacity: '1 !important',
             },
             '& .MuiInputLabel-root.Mui-disabled': {
-              color: '#666 !important',
+              color: 'var(--bank-text-secondary) !important',
               opacity: '1 !important',
             },
             '& .MuiFormHelperText-root': {
-              color: '#999 !important',
+              color: 'var(--bank-text-secondary) !important',
               opacity: '1 !important',
             },
             '& .MuiOutlinedInput-input[disabled]': {
               fontWeight: '600 !important',
-              color: '#1a1a1a !important',
-              WebkitTextFillColor: '#1a1a1a !important',
+              color: 'var(--bank-text-primary) !important',
+              WebkitTextFillColor: 'var(--bank-text-primary) !important',
+              opacity: '1 !important',
+            },
+            '& .MuiInputBase-input::placeholder': {
+              color: 'var(--bank-text-secondary) !important',
               opacity: '1 !important',
             }
           })
@@ -513,7 +517,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
                       disabled={isViewMode}
                       sx={{ flex: 1 }}
                     />
-                    {isViewMode && getStatusChip(formData.status)}
                   </Box>
                 </Grid>
 

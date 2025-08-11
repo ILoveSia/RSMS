@@ -138,7 +138,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
   // 결재 상신 버튼 표시 여부 판단
   const shouldShowApprovalButton = () => {
-    // appr_stat_cd가 빈 값이고 role_resp_status_id가 있으면 결재상신 버튼 표시
+    // appr_stat_cd가 빈 값이고 role_resp_status_id가 있으면 결재 송신 버튼 표시
     const isApprStatEmpty = !apprStatCd || apprStatCd === '';
     const hasRoleRespStatusId = roleRespStatusId !== null && roleRespStatusId !== undefined && roleRespStatusId !== '';
     return isApprStatEmpty && hasRoleRespStatusId;

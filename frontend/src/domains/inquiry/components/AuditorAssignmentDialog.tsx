@@ -138,7 +138,7 @@ const AuditorAssignmentDialog: React.FC<AuditorAssignmentDialogProps> = ({
       
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
         {/* 선택된 항목 정보 */}
-        <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+        <Box sx={{ p: 2, backgroundColor: 'var(--bank-bg-secondary)', borderRadius: 1, border: '1px solid var(--bank-border)' }}>
           <Typography variant="body2" color="text.secondary">
             선택된 점검 항목: {selectedItemIds.length}개
           </Typography>
@@ -176,7 +176,7 @@ const AuditorAssignmentDialog: React.FC<AuditorAssignmentDialogProps> = ({
 
         {/* 선택된 점검자 정보 */}
         {selectedAuditor && (
-          <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #2196f3' }}>
+          <Box sx={{ p: 2, backgroundColor: 'var(--bank-primary-bg)', borderRadius: 1, border: '1px solid var(--bank-primary)' }}>
             <Typography variant="body2" color="primary" fontWeight="bold">
               선택된 점검자
             </Typography>
@@ -188,9 +188,9 @@ const AuditorAssignmentDialog: React.FC<AuditorAssignmentDialogProps> = ({
 
         {/* 점검자 목록 테이블 */}
         <Box sx={{ flex: 1, minHeight: 300 }}>
-          <TableContainer component={Paper} sx={{ height: '100%', overflow: 'auto' }}>
+          <TableContainer component={Paper} sx={{ height: '100%', overflow: 'auto', backgroundColor: 'var(--bank-bg-paper)' }}>
             <Table stickyHeader>
-              <TableHead>
+              <TableHead sx={{ '& .MuiTableCell-root': { backgroundColor: 'var(--bank-bg-secondary)', borderBottom: '1px solid var(--bank-border)' } }}>
                 <TableRow>
                   <TableCell>사번</TableCell>
                   <TableCell>성명</TableCell>
@@ -216,10 +216,10 @@ const AuditorAssignmentDialog: React.FC<AuditorAssignmentDialogProps> = ({
                       sx={{
                         cursor: 'pointer',
                         '&:hover': {
-                          backgroundColor: '#f5f5f5'
+                          backgroundColor: 'var(--bank-primary-bg)'
                         },
                         '&.Mui-selected': {
-                          backgroundColor: '#e3f2fd'
+                          backgroundColor: 'var(--bank-primary-bg)'
                         }
                       }}
                     >

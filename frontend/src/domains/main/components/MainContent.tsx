@@ -326,20 +326,20 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                         '& .MuiDataGrid-cell': {
                           fontSize: '0.875rem',
                           padding: '16px 20px',
-                          borderBottom: '1px solid rgba(224, 224, 224, 0.5)',
+                          borderBottom: '1px solid var(--bank-border)',
                           transition: 'all 0.2s ease-in-out',
                           display: 'flex',
                           alignItems: 'center',
                         },
                         '& .MuiDataGrid-columnHeaders': {
-                          backgroundColor: '#9ca3af !important',
-                          color: 'white !important',
+                          backgroundColor: 'var(--bank-bg-secondary) !important',
+                          color: 'var(--bank-text-primary) !important',
                           fontSize: '0.95rem',
                           fontWeight: '600',
-                          borderBottom: 'none !important',
+                          borderBottom: '1px solid var(--bank-border) !important',
                           minHeight: '56px !important',
                           '& .MuiDataGrid-columnSeparator': {
-                            color: 'rgba(255, 255, 255, 0.3)',
+                            color: 'var(--bank-border)',
                           },
                         },
                         '& .MuiDataGrid-columnHeaders .MuiDataGrid-columnHeader': {
@@ -347,19 +347,19 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                         },
                         '& .MuiDataGrid-columnHeader': {
                           backgroundColor: '#9ca3af !important',
-                          color: 'white !important',
+                          color: 'var(--bank-text-primary) !important',
                           '&:focus': {
                             outline: 'none',
                           },
                         },
                         '& .MuiDataGrid-columnHeaderTitle': {
-                          color: 'white !important',
+                          color: 'var(--bank-text-primary) !important',
                           fontWeight: '600 !important',
                           textShadow: '0 1px 3px rgba(0,0,0,0.3)',
                           letterSpacing: '0.5px',
                         },
                         '& .MuiDataGrid-columnHeaderTitleContainer': {
-                          color: 'white !important',
+                          color: 'var(--bank-text-primary) !important',
                         },
                         '& .MuiDataGrid-row': {
                           backgroundColor: 'var(--bank-surface)',
@@ -453,7 +453,7 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                         },
                         '& .MuiDataGrid-columnHeaders': {
                           backgroundColor: '#9ca3af !important',
-                          color: 'white !important',
+                          color: 'var(--bank-text-primary) !important',
                           fontSize: '0.95rem',
                           fontWeight: '600',
                           borderBottom: 'none !important',
@@ -467,19 +467,19 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                         },
                         '& .MuiDataGrid-columnHeader': {
                           backgroundColor: '#9ca3af !important',
-                          color: 'white !important',
+                          color: 'var(--bank-text-primary) !important',
                           '&:focus': {
                             outline: 'none',
                           },
                         },
                         '& .MuiDataGrid-columnHeaderTitle': {
-                          color: 'white !important',
+                          color: 'var(--bank-text-primary) !important',
                           fontWeight: '600 !important',
                           textShadow: '0 1px 3px rgba(0,0,0,0.3)',
                           letterSpacing: '0.5px',
                         },
                         '& .MuiDataGrid-columnHeaderTitleContainer': {
-                          color: 'white !important',
+                          color: 'var(--bank-text-primary) !important',
                         },
                       }}
                     />

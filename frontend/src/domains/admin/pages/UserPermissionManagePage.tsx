@@ -358,9 +358,17 @@ const UserPermissionManagePage: React.FC = () => {
               onClick={openCreateDialog}
               variant="contained"
               color="primary"
-              size="medium"
+              size="small"
               startIcon={<PersonAddAlt1Icon />}
-              sx={{ fontWeight: 700 }}
+              sx={{
+                fontWeight: 700,
+                height: '32px',
+                minWidth: '120px',
+                fontSize: '0.875rem',
+                borderRadius: 1,
+                display: 'inline-flex',
+                alignItems: 'center'
+              }}
             >
               사용자 등록
             </SharedButton>

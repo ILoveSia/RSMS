@@ -353,10 +353,10 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       align="center" 
       onClick={() => handleCellClick(type, row)}
       sx={{ 
-        border: '1px solid #ddd',
+        border: '1px solid var(--bank-border)',
         cursor: row.department !== '합계' ? 'pointer' : 'default',
         '&:hover': row.department !== '합계' ? {
-          backgroundColor: '#f0f0f0'
+          backgroundColor: 'var(--bank-primary-bg)'
         } : {}
       }}
     >
@@ -366,7 +366,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
 
   // 일반 셀 렌더링 헬퍼 함수
   const renderNormalCell = (value: string | number, suffix: string = '') => (
-    <TableCell align="center" sx={{ border: '1px solid #ddd' }}>
+    <TableCell align="center" sx={{ border: '1px solid var(--bank-border)' }}>
       {value}{suffix}
     </TableCell>
   );

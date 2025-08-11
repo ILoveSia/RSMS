@@ -109,25 +109,25 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
           paddingX: 5,
           backgroundColor: 'var(--bank-bg-paper)',
           '& .MuiTextField-root.Mui-disabled': {
-            backgroundColor: '#f8fafc',
+            backgroundColor: 'var(--bank-bg-secondary)',
             '& .MuiInputBase-input.Mui-disabled': {
-              color: 'black',
-              WebkitTextFillColor: 'black',
+              color: 'var(--bank-text-primary)',
+              WebkitTextFillColor: 'var(--bank-text-primary)',
               fontWeight: 600,
             },
             '& .MuiInputLabel-root.Mui-disabled': {
-              color: 'black',
+              color: 'var(--bank-text-primary)',
               fontWeight: 700,
             },
           },
           '& .MuiSelect-select.Mui-disabled': {
-            backgroundColor: '#f8fafc',
-            color: 'black',
-            WebkitTextFillColor: 'black',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            color: 'var(--bank-text-primary)',
+            WebkitTextFillColor: 'var(--bank-text-primary)',
             fontWeight: 600,
           },
           '& .MuiInputLabel-root.Mui-disabled': {
-            color: 'black',
+            color: 'var(--bank-text-primary)',
             fontWeight: 700,
           },
         }}

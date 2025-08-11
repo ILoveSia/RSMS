@@ -317,7 +317,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
             borderRadius: '4px',
           }}
         >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>유형</span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--bank-text-primary)' }}>유형</span>
           <CommonCodeSelect
             groupCode="INSPECTION_TYPE"
             value={selectedType}
@@ -325,7 +325,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
           />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>상태</span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--bank-text-primary)', marginLeft: '16px' }}>상태</span>
           <CommonCodeSelect
             groupCode="INSPECTION_STATUS"
             value={selectedStatus}

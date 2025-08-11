@@ -378,10 +378,31 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     {
       field: 'appr_stat_cd',
       headerName: '결재상태',
-      width: 100,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value }) => getCodeNameFn('APPR_STAT_CD', (value as string) || ''),
+      renderCell: ({ value }) => {
+        const code = (value as string) || '';
+        const name = getCodeNameFn('APPR_STAT_CD', code);
+        // 시각적 강조와 다크 모드 가독성 확보
+        const color =
+          code === 'APPROVED' ? 'success' :
+          code === 'REJECTED' ? 'error' :
+          code === 'IN_PROGRESS' ? 'warning' :
+          code === 'REQUESTED' ? 'info' : 'default';
+        return (
+          <Chip
+            label={name || code || '-'}
+            size="small"
+            color={color as any}
+            sx={{
+              fontWeight: 600,
+              color: 'var(--bank-text-primary)',
+              '& .MuiChip-label': { color: 'var(--bank-text-primary)' }
+            }}
+          />
+        );
+      },
     },
     {
       field: 'role_resp_status_id',

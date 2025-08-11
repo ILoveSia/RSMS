@@ -144,7 +144,7 @@ const ExecutiveStatusPageWithApproval: React.FC<IExecutiveStatusPageProps> = ():
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <span style={{
-          color: "#000000",
+          color: 'var(--bank-text-primary)',
           fontStyle: value ? 'normal' : 'italic'
         }}>
           {value || '해당없음'}
@@ -403,6 +403,12 @@ const ExecutiveStatusPageWithApproval: React.FC<IExecutiveStatusPageProps> = ():
             }}
             sx={{
               flex: 1,
+              '& .MuiDataGrid-cell': {
+                color: 'var(--bank-text-primary)'
+              },
+              '& .MuiDataGrid-columnHeaders, & .MuiDataGrid-columnHeaderTitle': {
+                color: 'var(--bank-text-primary)'
+              },
               '& .MuiDataGrid-row:hover': {
                 cursor: 'pointer',
               }

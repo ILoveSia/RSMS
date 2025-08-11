@@ -118,7 +118,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({
           disabled={disabled || !searchQuery.trim()}
           sx={{
             bgcolor: 'primary.main',
-            color: 'white',
+            color: 'var(--bank-text-primary)',
             '&:hover': {
               bgcolor: 'primary.dark',
             },
