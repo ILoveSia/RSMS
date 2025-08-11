@@ -67,7 +67,7 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
                 COALESCE(emp.empName, apd.auditMenId, ''),
                 COALESCE(apd.auditResultStatusCd, ''),
                 COALESCE(rrs.roleSumm, ''),
-                COALESCE(apm.ledgerOrdersHod, ''),
+                COALESCE(apm.ledgerOrdersHod, 0L),
                 COALESCE(apd.auditResult, ''),
                 COALESCE(CAST(apd.auditDoneDt AS string), ''),
                 COALESCE(apd.auditDetailContent, ''),

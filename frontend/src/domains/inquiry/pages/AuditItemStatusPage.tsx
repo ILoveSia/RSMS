@@ -33,7 +33,7 @@ import DepartmentApi from '@/domains/common/api/departmentApi';
 import {
   useGetCodeName,
   useGetRoleTypeName,
-  getDepartmentName,
+  getDepartmentNameSync,
   extractCommonCodes,
   type CommonCode,
   type Department
@@ -212,7 +212,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       field: 'deptCd',
       headerName: '부서',
       width: 120,
-      renderCell: ({ value }) => getDepartmentName(departments, value as string),
+      renderCell: ({ value }) => getDepartmentNameSync(departments, value as string),
     },
     {
       field: 'fieldTypeCd',

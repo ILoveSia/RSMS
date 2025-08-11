@@ -54,7 +54,7 @@ export const InfoCard: React.FC<InfoCardProps> = ({
       className="info-card"
       onClick={onClick}
       sx={{
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--bank-surface)',
         borderRadius: '8px',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
         transition: 'all 0.3s ease',
@@ -72,8 +72,8 @@ export const InfoCard: React.FC<InfoCardProps> = ({
             position: 'absolute',
             width: '45px',
             height: '60px',
-            background: '#fff',
-            border: '1px solid #e5e7eb',
+            background: 'var(--bank-surface)',
+            border: '1px solid var(--bank-border)',
             borderRadius: '3px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             '&:nth-of-type(1)': {
@@ -101,8 +101,8 @@ export const InfoCard: React.FC<InfoCardProps> = ({
           display: 'flex',
           alignItems: 'center',
           padding: '10px 16px',
-          backgroundColor: '#e2e8f0',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+          backgroundColor: 'var(--bank-bg-secondary)',
+          borderBottom: '1px solid var(--bank-border)',
           borderRadius: '8px 8px 0 0',
         }}
       >
@@ -116,10 +116,10 @@ export const InfoCard: React.FC<InfoCardProps> = ({
               width: '24px',
               height: '24px',
               borderRadius: '50%',
-              backgroundColor: '#10b981',
+              backgroundColor: 'var(--bank-primary)',
               marginRight: '8px',
               '&:hover': {
-                backgroundColor: '#059669',
+                backgroundColor: 'var(--bank-primary-dark)',
               },
             }}
           >
@@ -139,7 +139,7 @@ export const InfoCard: React.FC<InfoCardProps> = ({
             margin: 0,
             fontSize: '0.9rem',
             fontWeight: 600,
-            color: 'rgba(0, 0, 0, 0.87)',
+            color: 'var(--bank-text-primary)',
           }}
         >
           {title}
@@ -155,6 +155,7 @@ export const InfoCard: React.FC<InfoCardProps> = ({
           alignItems: 'flex-start',
           gap: 2,
           fontSize: '0.75rem',
+          color: 'var(--bank-text-primary)'
         }}
       >
         {contentImage && (
@@ -187,7 +188,7 @@ export const InfoCard: React.FC<InfoCardProps> = ({
                 component="div"
                 sx={{
                   lineHeight: 1.5,
-                  color: 'rgba(0, 0, 0, 0.7)',
+                  color: 'var(--bank-text-secondary)',
                   whiteSpace: 'pre-line',
                 }}
               >

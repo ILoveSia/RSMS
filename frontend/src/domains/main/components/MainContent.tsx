@@ -362,24 +362,24 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                           color: 'white !important',
                         },
                         '& .MuiDataGrid-row': {
-                          backgroundColor: 'white',
+                          backgroundColor: 'var(--bank-surface)',
                           '&:nth-of-type(even)': {
-                            backgroundColor: '#f8fafc',
+                            backgroundColor: 'var(--bank-bg-primary)',
                           },
                           '&:hover': {
-                            backgroundColor: '#a7f3d0',
+                            backgroundColor: 'var(--bank-bg-hover)',
                             transform: 'translateY(-2px)',
                             boxShadow: '0 4px 20px rgba(20, 160, 133, 0.15)',
                             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                             '& .MuiDataGrid-cell': {
-                              color: '#0d7377',
+                              color: 'var(--bank-text-primary)',
                               fontWeight: '500',
                             },
                           },
                           '&.Mui-selected': {
-                            backgroundColor: '#99f6e4',
+                            backgroundColor: 'rgba(144, 202, 249, 0.08)',
                             '&:hover': {
-                              backgroundColor: '#7dd3fc',
+                              backgroundColor: 'rgba(144, 202, 249, 0.12)',
                             },
                           },
                         },
@@ -388,10 +388,10 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
                           borderTop: '1px solid rgba(224, 224, 224, 0.5)',
                         },
                         '& .MuiDataGrid-virtualScroller': {
-                          backgroundColor: 'white',
+                          backgroundColor: 'var(--bank-surface)',
                         },
                         '& .MuiDataGrid-overlay': {
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          backgroundColor: 'rgba(0, 0, 0, 0.4)',
                         },
                       }}
                     />

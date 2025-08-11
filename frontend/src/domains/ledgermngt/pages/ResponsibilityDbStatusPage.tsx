@@ -489,13 +489,13 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               gap: '8px',
               marginBottom: '16px',
               alignItems: 'center',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #e9ecef',
+              backgroundColor: 'var(--bank-bg-secondary)',
+              border: '1px solid var(--bank-border)',
               padding: '8px 16px',
               borderRadius: '4px',
             }}
           >
-            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
+            <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--bank-text-primary)' }}>책무번호</span>
             <LedgerOrderSelect
               value={ledgerOrder}
               onChange={useCallback((value: string, ledgerOrdersId?: number) => {
@@ -511,7 +511,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               }, [])}
             />
             <span
-            style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}
+            style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--bank-text-primary)', marginLeft: '16px' }}
           >
             책무 ID
           </span>

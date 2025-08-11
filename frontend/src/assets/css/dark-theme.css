@@ -10,12 +10,16 @@ body.dark-mode {
   --bank-primary: #90caf9;
   --bank-primary-dark: #42a5f5;
   --bank-primary-light: #bbdefb;
+  /* Primary tinted background for dark surfaces (replaces light's near-white) */
+  --bank-primary-bg: rgba(144, 202, 249, 0.12);
   
   /* Background Colors */
   --bank-bg-primary: #121212;
   --bank-bg-secondary: #1e1e1e;
   --bank-bg-tertiary: #2d2d2d;
   --bank-bg-hover: #333333;
+  /* Surface color used by cards/submenus etc. */
+  --bank-surface: #1a1a1a;
   
   /* Text Colors */
   --bank-text-primary: #ffffff;
@@ -38,6 +42,37 @@ body.dark-mode {
 body.dark-mode {
   background-color: var(--bank-bg-primary);
   color: var(--bank-text-primary);
+}
+
+/* LeftMenu - dark mode overrides */
+body.dark-mode .left-menu {
+  background-color: var(--bank-bg-secondary);
+  border-right-color: var(--bank-border);
+}
+
+body.dark-mode .left-menu__item:hover {
+  background-color: var(--bank-bg-hover);
+}
+
+body.dark-mode .left-menu__item--active {
+  background-color: var(--bank-primary-bg);
+}
+
+body.dark-mode .left-menu__item--active:hover {
+  background-color: var(--bank-primary-bg);
+}
+
+body.dark-mode .left-menu__submenu {
+  background-color: var(--bank-bg-secondary);
+}
+
+body.dark-mode .left-menu__submenu .left-menu__item {
+  background-color: var(--bank-bg-secondary);
+  border-bottom-color: var(--bank-border);
+}
+
+body.dark-mode .left-menu__submenu .left-menu__item:hover {
+  background-color: var(--bank-bg-hover);
 }
 
 /* 다크 테마 스크롤바 스타일 */

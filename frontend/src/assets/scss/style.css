@@ -157,12 +157,12 @@ body {
 }
 
 .left-menu__submenu {
-  background-color: var(--bank-surface);
+  background-color: var(--bank-bg-secondary);
 }
 
 .left-menu__submenu .left-menu__item {
   padding-left: 3rem;
-  background-color: var(--bank-surface);
+  background-color: var(--bank-bg-secondary);
   border-bottom: 1px solid var(--bank-border-light);
 }
 
@@ -442,7 +442,7 @@ body {
 .main-page__main {
   flex: 1;
   overflow-y: auto;
-  background-color: #f9fafb;
+  background-color: var(--bank-bg-primary);
 }
 
 /* ==========================================================================

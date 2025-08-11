@@ -431,9 +431,9 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                     rowSpan={2} 
                     align="center" 
                     sx={{ 
-                      backgroundColor: '#f5f5f5', 
+                      backgroundColor: 'var(--bank-bg-secondary)', 
                       fontWeight: 'bold',
-                      border: '1px solid #ddd',
+                      border: '1px solid var(--bank-border)',
                       minWidth: 120
                     }}
                   >
@@ -443,9 +443,9 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                     colSpan={5} 
                     align="center" 
                     sx={{ 
-                      backgroundColor: '#e3f2fd', 
+                      backgroundColor: 'var(--bank-bg-tertiary)', 
                       fontWeight: 'bold',
-                      border: '1px solid #ddd'
+                      border: '1px solid var(--bank-border)'
                     }}
                   >
                     점검 결과
@@ -454,9 +454,9 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                     colSpan={4} 
                     align="center" 
                     sx={{ 
-                      backgroundColor: '#e8f5e8', 
+                      backgroundColor: 'var(--bank-bg-tertiary)', 
                       fontWeight: 'bold',
-                      border: '1px solid #ddd'
+                      border: '1px solid var(--bank-border)'
                     }}
                   >
                     개선계획 등록 현황
@@ -465,37 +465,37 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                 
                 {/* 두 번째 행: 서브 헤더 */}
                 <TableRow>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     전체
                   </TableCell>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     적정
                   </TableCell>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     미흡
                   </TableCell>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     점검제외
                   </TableCell>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     적정 수행률(%)
                   </TableCell>
                   <TableCell 
                     align="center" 
                     sx={{ 
-                      backgroundColor: '#f5f5f5', 
-                      border: '1px solid #ddd'
+                      backgroundColor: 'var(--bank-bg-secondary)', 
+                      border: '1px solid var(--bank-border)'
                     }}
                   >
                     미흡사항
                   </TableCell>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     등록
                   </TableCell>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     미등록
                   </TableCell>
-                  <TableCell align="center" sx={{ backgroundColor: '#f5f5f5', border: '1px solid #ddd' }}>
+                  <TableCell align="center" sx={{ backgroundColor: 'var(--bank-bg-secondary)', border: '1px solid var(--bank-border)' }}>
                     등록률(%)
                   </TableCell>
                 </TableRow>
@@ -507,10 +507,10 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                     key={row.id} 
                     hover
                     sx={row.department === '합계' ? {
-                      backgroundColor: '#f0f8ff',
+                      backgroundColor: 'var(--bank-primary-bg)',
                       fontWeight: 'bold',
                       '& td': {
-                        borderTop: '2px solid #1976d2',
+                        borderTop: '2px solid var(--bank-primary)',
                         fontWeight: 'bold'
                       }
                     } : {}}
@@ -519,8 +519,8 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                       align="center" 
                       sx={{ 
                         fontWeight: 'bold',
-                        border: '1px solid #ddd',
-                        backgroundColor: row.department === '합계' ? '#e3f2fd' : '#fafafa'
+                        border: '1px solid var(--bank-border)',
+                        backgroundColor: row.department === '합계' ? 'var(--bank-primary-bg)' : 'var(--bank-bg-secondary)'
                       }}
                     >
                       {row.department}
