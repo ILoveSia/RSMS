@@ -8,7 +8,7 @@ import org.itcen.auth.repository.RoleRepository;
 import org.itcen.auth.repository.UserRoleRepository;
 import org.itcen.common.exception.BusinessException;
 import org.itcen.domain.admin.dto.*;
-import org.itcen.domain.departments.entity.Department;
+// import org.itcen.domain.departments.entity.Department;
 import org.itcen.domain.employee.entity.Employee;
 import org.itcen.domain.menu.entity.Menu;
 import org.itcen.domain.menu.entity.MenuPermission;
@@ -19,7 +19,7 @@ import org.itcen.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+// import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -408,7 +408,7 @@ public class AdminServiceImpl implements AdminService {
                 .empNo(user.getEmpNo())
                 .department(user.getDeptCd())
                 .departmentName(employee != null ? employee.getDeptName() : null)
-                .position(user.getJobTitleCd())
+                // .position(user.getJobTitleCd()) // job_title_cd 제거로 사용자 엔티티에서 제공하지 않음
                 .positionName(employee != null ? employee.getPositionName() : null)
                 .isActive(true) // 기본값
                 .createdAt(user.getCreatedAt())

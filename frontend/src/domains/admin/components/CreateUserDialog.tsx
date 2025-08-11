@@ -4,11 +4,13 @@ import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/componen
 import PositionSelect from '@/shared/components/ui/form/PositionSelect';
 import { CommonCodeSelect } from '@/shared/components/ui/form';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
-import { Box, Chip, Divider, InputAdornment, Tooltip, Typography } from '@mui/material';
+import { Box, Chip, Divider, InputAdornment, Tooltip, Typography, IconButton } from '@mui/material';
 import {
   AccountCircle as AccountCircleIcon,
   Badge as BadgeIcon,
   Lock as LockIcon,
+    Visibility as VisibilityIcon,
+    VisibilityOff as VisibilityOffIcon,
   CheckCircleOutline as CheckCircleOutlineIcon,
 } from '@mui/icons-material';
 import TextField from '@/shared/components/ui/data-display/TextField';
@@ -37,6 +39,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
   const [address, setAddress] = useState<string>('');
   const [mobile, setMobile] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [jobRankCd, setJobRankCd] = useState<string>(''); // 직급코드
   // 직책코드(job_title_cd) 사용 안함
   const [touched, setTouched] = useState({ userId: false, email: false, password: false, userName: false });
@@ -143,7 +146,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
           <TextField
             label="비밀번호"
             mode="editable"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
@@ -160,6 +163,18 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
               startAdornment: (
                 <InputAdornment position="start">
                   <LockIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
+                    onClick={() => setShowPassword(prev => !prev)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                  </IconButton>
                 </InputAdornment>
               ),
             }}

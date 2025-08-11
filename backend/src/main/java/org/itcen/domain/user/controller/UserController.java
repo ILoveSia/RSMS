@@ -46,7 +46,6 @@ public class UserController {
             @RequestParam(required = false) String deptCd,
             @RequestParam(required = false) String num,
             @RequestParam(required = false) String jobRankCd,
-            @RequestParam(required = false) String jobTitleCd,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sort,
@@ -60,7 +59,6 @@ public class UserController {
                 .deptCd(deptCd)
                 .num(num)
                 .jobRankCd(jobRankCd)
-                .jobTitleCd(jobTitleCd)
                 .page(page)
                 .size(size)
                 .sort(sort)

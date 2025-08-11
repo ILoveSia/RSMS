@@ -1,7 +1,7 @@
 package org.itcen.domain.user.repository;
 
-import org.itcen.domain.departments.entity.Department;
-import org.itcen.domain.employee.entity.Employee;
+// import org.itcen.domain.departments.entity.Department;
+// import org.itcen.domain.employee.entity.Employee;
 import org.itcen.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,7 +65,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     boolean existsByNum(String num);
 
     /**
-     * 사용자명, 이메일, 주소, 휴대폰, 부서코드, 사번, 직급코드, 직책코드로 검색
+     * 사용자명, 이메일, 주소, 휴대폰, 부서코드, 사번, 직급코드로 검색
      */
     @Query("SELECT u FROM User u WHERE " +
            "(:username IS NULL OR u.username LIKE %:username%) AND " +
@@ -74,8 +74,7 @@ public interface UserRepository extends JpaRepository<User, String> {
            "(:mobile IS NULL OR u.mobile LIKE %:mobile%) AND " +
            "(:deptCd IS NULL OR u.deptCd LIKE %:deptCd%) AND " +
            "(:num IS NULL OR u.num LIKE %:num%) AND " +
-           "(:jobRankCd IS NULL OR u.jobRankCd LIKE %:jobRankCd%) AND " +
-           "(:jobTitleCd IS NULL OR u.jobTitleCd LIKE %:jobTitleCd%)")
+           "(:jobRankCd IS NULL OR u.jobRankCd LIKE %:jobRankCd%)")
     Page<User> findBySearchCriteria(
             @Param("username") String username,
             @Param("email") String email,
@@ -84,7 +83,6 @@ public interface UserRepository extends JpaRepository<User, String> {
             @Param("deptCd") String deptCd,
             @Param("num") String num,
             @Param("jobRankCd") String jobRankCd,
-            @Param("jobTitleCd") String jobTitleCd,
             Pageable pageable
     );
 

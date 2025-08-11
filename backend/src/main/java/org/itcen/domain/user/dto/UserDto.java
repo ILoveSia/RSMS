@@ -38,7 +38,7 @@ public class UserDto {
         private String deptCd;
         private String num;
         private String jobRankCd;
-        private String jobTitleCd;
+        // private String jobTitleCd; // 제거: DB에서 해당 컬럼 삭제됨
         
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createdAt;
@@ -59,7 +59,6 @@ public class UserDto {
                     .deptCd(user.getDeptCd())
                     .num(user.getNum())
                     .jobRankCd(user.getJobRankCd())
-                    .jobTitleCd(user.getJobTitleCd())
                     .createdAt(user.getCreatedAt())
                     .updatedAt(user.getUpdatedAt())
                     .build();
@@ -110,8 +109,8 @@ public class UserDto {
         @Size(max = 100, message = "직급코드는 100자를 초과할 수 없습니다.")
         private String jobRankCd;
 
-        @Size(max = 100, message = "직책코드는 100자를 초과할 수 없습니다.")
-        private String jobTitleCd;
+        // @Size(max = 100, message = "직책코드는 100자를 초과할 수 없습니다.")
+        // private String jobTitleCd;
 
         /**
          * CreateRequest를 Entity로 변환
@@ -127,7 +126,7 @@ public class UserDto {
                     .deptCd(this.deptCd)
                     .num(this.num)
                     .jobRankCd(this.jobRankCd)
-                    .jobTitleCd(this.jobTitleCd)
+                    // .jobTitleCd(this.jobTitleCd)
                     .build();
         }
     }
@@ -161,8 +160,8 @@ public class UserDto {
         @Size(max = 100, message = "직급코드는 100자를 초과할 수 없습니다.")
         private String jobRankCd;
 
-        @Size(max = 100, message = "직책코드는 100자를 초과할 수 없습니다.")
-        private String jobTitleCd;
+        // @Size(max = 100, message = "직책코드는 100자를 초과할 수 없습니다.")
+        // private String jobTitleCd;
     }
 
     /**
@@ -180,7 +179,7 @@ public class UserDto {
         private String deptCd;
         private String num;
         private String jobRankCd;
-        private String jobTitleCd;
+        // private String jobTitleCd;
         
         @Builder.Default
         private int page = 0;

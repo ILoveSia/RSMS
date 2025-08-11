@@ -83,11 +83,7 @@ public class User {
     @Column(name = "job_rank_cd", length = 100)
     private String jobRankCd;
 
-    /**
-     * 직책코드
-     */
-    @Column(name = "job_title_cd", length = 100)
-    private String jobTitleCd;
+    // 직책코드(job_title_cd) 컬럼은 DB에서 제거됨. 엔티티에서도 제거하여 스키마에 맞춤
 
     /**
      * 사번 (employee number)

@@ -59,7 +59,6 @@ public class UserService {
                 request.getDeptCd(),
                 request.getNum(),
                 request.getJobRankCd(),
-                request.getJobTitleCd(),
                 pageable
         );
 
@@ -81,22 +80,18 @@ public class UserService {
         // limit 적용
         return employees.stream()
                 .limit(request.getLimit())
-                .map(employee -> {
-                    log.info("Employee 매핑 - empNo: {}, empName: {}", employee.getEmpNo(), employee.getEmpName());
-                    return UserDto.Response.builder()
-                            .id(employee.getEmpNo())
-                            .username(employee.getEmpName())
-                            .email(employee.getEmail())
-                            .address("")
-                            .mobile(employee.getPhoneNo())
-                            .deptCd(employee.getDeptCode())
-                            .num(employee.getEmpNo())
-                            .jobRankCd(employee.getPositionCode())
-                            .jobTitleCd(employee.getPositionName())
-                            .createdAt(employee.getCreatedAt())
-                            .updatedAt(employee.getUpdatedAt())
-                            .build();
-                })
+                .map(employee -> UserDto.Response.builder()
+                        .id(employee.getEmpNo())
+                        .username(employee.getEmpName())
+                        .email(employee.getEmail())
+                        .address("")
+                        .mobile(employee.getPhoneNo())
+                        .deptCd(employee.getDeptCode())
+                        .num(employee.getEmpNo())
+                        .jobRankCd(employee.getPositionCode())
+                        .createdAt(employee.getCreatedAt())
+                        .updatedAt(employee.getUpdatedAt())
+                        .build())
                 .collect(Collectors.toList());
     }
 
@@ -128,7 +123,6 @@ public class UserService {
                 .deptCd(employee.getDeptCode())
                 .num(employee.getEmpNo())
                 .jobRankCd(employee.getPositionCode())
-                .jobTitleCd(employee.getPositionName())
                 .createdAt(employee.getCreatedAt())
                 .updatedAt(employee.getUpdatedAt())
                 .build();
@@ -217,9 +211,7 @@ public class UserService {
             user.setJobRankCd(request.getJobRankCd());
         }
 
-        if (request.getJobTitleCd() != null) {
-            user.setJobTitleCd(request.getJobTitleCd());
-        }
+        // 직책코드 제거 반영: jobTitleCd 관련 업데이트 제거
 
         User updatedUser = userRepository.save(user);
         return UserDto.Response.from(updatedUser);
@@ -260,7 +252,6 @@ public class UserService {
                 .deptCd(employee.getDeptCode())
                 .num(employee.getEmpNo())
                 .jobRankCd(employee.getPositionCode())
-                .jobTitleCd(employee.getPositionName())
                 .createdAt(employee.getCreatedAt())
                 .updatedAt(employee.getUpdatedAt())
                 .build();
@@ -284,7 +275,6 @@ public class UserService {
                 .deptCd(employee.getDeptCode())
                 .num(employee.getEmpNo())
                 .jobRankCd(employee.getPositionCode())
-                .jobTitleCd(employee.getPositionName())
                 .createdAt(employee.getCreatedAt())
                 .updatedAt(employee.getUpdatedAt())
                 .build();
