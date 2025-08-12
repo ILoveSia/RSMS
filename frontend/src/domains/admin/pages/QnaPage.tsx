@@ -5,10 +5,11 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import DataGrid from '@/shared/components/ui/data-display/DataGrid';
-import { ExcelDownloadButton, SearchButton } from '@/shared/components/ui/button';
+import { ExcelDownloadButton, SearchButton, Button } from '@/shared/components/ui/button';
 import { TextField, InputAdornment, Box } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import QnaDetailDialog from '../components/QnaDetailDialog';
+import QnaCreateDialog from '../components/QnaCreateDialog';
 import type { QnaListResponseDto } from '@/app/types/qna';
 import type { GridSortModel } from '@mui/x-data-grid';
 import qnaApi from '../api/qnaApi';
@@ -29,6 +30,9 @@ const QnaPage: React.FC<QnaPageProps> = () => {
   const [keyword, setKeyword] = useState<string>('');
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createKey, setCreateKey] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -132,6 +136,9 @@ const QnaPage: React.FC<QnaPageProps> = () => {
               disabled={loading}
               loading={loading}
             />
+            <Button size="small" onClick={() => { setCreateKey(k => k + 1); setCreateOpen(true); }}>
+              등록
+            </Button>
           </Box>
         </Box>
 
@@ -169,6 +176,30 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           height={600}
         />
         <QnaDetailDialog open={detailOpen} qnaId={selectedId ?? undefined} onClose={() => setDetailOpen(false)} />
+
+        {createOpen && (
+          <QnaCreateDialog
+            key={createKey}
+            open={true}
+            onClose={() => setCreateOpen(false)}
+            loading={creating}
+            onSubmit={async (form) => {
+              try {
+                setCreating(true);
+                const userRaw = localStorage.getItem('user');
+                const userJson = userRaw ? JSON.parse(userRaw) : {};
+                const userId = userJson?.userid || 'anonymous';
+                const userName = userJson?.username || '익명';
+                await qnaApi.createQna(form, { userId, userName });
+                setCreateOpen(false);
+                setPage(1);
+                await loadData();
+              } finally {
+                setCreating(false);
+              }
+            }}
+          />
+        )}
       </PageContent>
     </PageContainer>
   );

@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -39,6 +41,9 @@ import java.util.stream.Collectors;
 public class QnaServiceImpl implements QnaService {
 
     private final QnaRepository qnaRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public Page<QnaListResponseDto> getQnaList(QnaSearchRequestDto searchRequest) {
@@ -107,6 +112,10 @@ public class QnaServiceImpl implements QnaService {
             throw new BusinessException("필수 입력 항목이 누락되었습니다.");
         }
         
+        // 시퀀스가 테이블의 MAX(id)보다 뒤쳐져 있을 수 있으므로, 사전 보정
+        // (운영 중 수동 데이터 마이그레이션/직접 Insert 이후 발생하는 PK 충돌 예방)
+        ensureQnaSequenceAhead();
+
         // Q&A 엔티티 생성
         Qna qna = Qna.builder()
             .department(createRequest.getDepartment())
@@ -124,6 +133,39 @@ public class QnaServiceImpl implements QnaService {
         Qna savedQna = qnaRepository.save(qna);
         
         return savedQna.getId();
+    }
+
+    /**
+     * qna 테이블의 id 시퀀스(qna_id_seq)가 MAX(id)+1 이상이 되도록 보정한다.
+     * 필요할 때만 setval을 호출 (불필요한 변경 방지).
+     */
+    private void ensureQnaSequenceAhead() {
+        try {
+            // MAX(id)
+            Number maxIdNum = (Number) entityManager
+                .createNativeQuery("SELECT COALESCE(MAX(id), 0) FROM public.qna")
+                .getSingleResult();
+            long maxId = maxIdNum != null ? maxIdNum.longValue() : 0L;
+
+            // 시퀀스 현재값(last_value)
+            Number lastValNum = (Number) entityManager
+                .createNativeQuery("SELECT last_value FROM public.qna_id_seq")
+                .getSingleResult();
+            long lastVal = lastValNum != null ? lastValNum.longValue() : 0L;
+
+            // 뒤쳐져 있으면 보정
+            if (maxId >= lastVal) {
+                long newVal = maxId + 1;
+                entityManager
+                    .createNativeQuery("SELECT setval('public.qna_id_seq', :newVal, false)")
+                    .setParameter("newVal", newVal)
+                    .getSingleResult();
+                log.info("[QNA] 시퀀스 보정: last_value={} -> {} (maxId={})", lastVal, newVal, maxId);
+            }
+        } catch (Exception e) {
+            // 보정 실패 시 로깅만 하고 계속 진행 (DB 권한/시퀀스명 변경 등 환경 이슈에 대비)
+            log.warn("[QNA] 시퀀스 보정 실패: {}", e.getMessage());
+        }
     }
 
     @Override
