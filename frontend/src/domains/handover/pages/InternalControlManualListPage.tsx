@@ -10,19 +10,22 @@
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup, ExcelDownloadButton, Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { CommonCodeSelect } from '@/shared/components/ui/form';
+import { TextField } from '@/shared/components/ui/data-display/';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
-import { Description as DocumentIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Box, Chip, IconButton, InputAdornment } from '@mui/material';
+import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import React, { useCallback, useEffect, useState } from 'react';
 import { internalControlManualApi, type InternalControlManualDto } from '../api/internalControlManualApi';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
 import InternalControlManualDialog from '../components/InternalControlManualDialog';
-import { useGetDepartmentName, useGetEmployeeName } from '@/shared/utils/codeUtils';
+
 
 interface IInternalControlManualListPageProps {
   className?: string;
@@ -30,48 +33,29 @@ interface IInternalControlManualListPageProps {
 
 
 const InternalControlManualListPage: React.FC<IInternalControlManualListPageProps> = (): React.JSX.Element => {
-  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
-  const [selectedDept, setSelectedDept] = useState<string>('ALL');
+  const [manualTitle, setManualTitle] = useState<string>('');
+  const [authorEmpNo, setAuthorEmpNo] = useState<string>('');
+  const [authorName, setAuthorName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<InternalControlManualDto[]>([]);
-  
-  // 부서명 변환 함수
-  const getDepartmentName = useGetDepartmentName();
-  // 직원명 변환 함수
-  const getEmployeeName = useGetEmployeeName();
+  const [apiResponseData, setApiResponseData] = useState<any>(null);
+
+  // 사원 검색 팝업 상태
+  const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
+
+  // 알림 처리
+  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedManualId, setSelectedManualId] = useState<number | undefined>();
-  const [selectedManualData, setSelectedManualData] = useState<InternalControlManualDto | undefined>();
-
-  // 상태 표시 함수
-  const getStatusChip = (status: string) => {
-    const statusConfig = {
-      DRAFT: { label: '초안', color: 'default' as const },
-      REVIEW: { label: '검토중', color: 'warning' as const },
-      APPROVED: { label: '승인됨', color: 'info' as const },
-      PUBLISHED: { label: '발행됨', color: 'success' as const },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, color: 'default' as const };
-    return <Chip label={config.label} color={config.color} size="small" />;
-  };
+  const [selectedManualApprovalStatus, setSelectedManualApprovalStatus] = useState<string>('NONE');
 
   // 컬럼 정의
   const columns: DataGridColumn<InternalControlManualDto>[] = [
-         {
-       field: 'deptName',
-       headerName: '부서',
-       width: 120,
-       align: 'center',
-       headerAlign: 'center',
-       renderCell: params => {
-         return <span>{params.value || params.row.deptCd}</span>;
-       },
-     },
     {
       field: 'manualTitle',
       headerName: '메뉴얼 제목',
@@ -92,7 +76,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
             }}
             onClick={() => handleRowClick(params.row)}
           >
-            {params.value}
+            {params.value as string}
           </Box>
         );
       },
@@ -105,23 +89,81 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       headerAlign: 'center',
     },
     {
-      field: 'status',
-      headerName: '상태',
+      field: 'approvalStatus',
+      headerName: '결재상태',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        const status = params.row.approvalStatus;
+        let statusText = '';
+        let statusColor = '#666';
+
+        switch (status) {
+          case 'NONE':
+            statusText = '미결재';
+            statusColor = '#999';
+            break;
+          case 'SUBMITTED':
+              statusText = '상신';
+              statusColor = '#2196f3';
+              break;  
+          case 'IN_PROGRESS':
+            statusText = '진행중';
+            statusColor = '#ff9800';
+            break;
+          case 'APPROVED':
+            statusText = '승인';
+            statusColor = '#4caf50';
+            break;
+          case 'REJECTED':
+            statusText = '반려';
+            statusColor = '#f44336';
+            break;
+          default:
+            statusText = status || '미결재';
+            statusColor = '#999';
+        }
+
+        return (
+          <Box
+            component="span"
+            sx={{
+              color: statusColor,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
+          >
+            {statusText}
+          </Box>
+        );
+      },
+    },
+    {
+      field: 'authorName',
+      headerName: '작성자',
       width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => getStatusChip(params.value as string),
     },
-         {
-       field: 'authorName',
-       headerName: '작성자',
-       width: 120,
-       align: 'center',
-       headerAlign: 'center',
-       renderCell: params => {
-         return <span>{params.value || params.row.authorEmpNo}</span>;
-       },
-     },
+    {
+      field: 'attachmentCount',
+      headerName: '첨부파일',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        const count = params.value as number || 0;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+            📎
+            <span style={{ fontSize: '0.875rem', color: count > 0 ? 'var(--bank-primary)' : '#999' }}>
+              {count}
+            </span>
+          </Box>
+        );
+      },
+    },
     {
       field: 'effectiveDate',
       headerName: '시행일',
@@ -129,7 +171,9 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
     {
@@ -139,7 +183,9 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
     {
@@ -149,7 +195,9 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
     {
@@ -159,7 +207,9 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
-        return params.value && typeof params.value === 'string' ? new Date(params.value).toLocaleDateString('ko-KR') : '';
+        if (!params.value) return '';
+        const date = new Date(params.value as string);
+        return date.toLocaleDateString('ko-KR');
       },
     },
   ];
@@ -177,35 +227,29 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
 
     try {
       const searchParams = {
-        status: selectedStatus !== 'ALL' ? selectedStatus : undefined,
-        deptCd: selectedDept !== 'ALL' ? selectedDept : undefined,
+        manualTitle: manualTitle.trim() || undefined,
+        authorEmpNo: authorEmpNo.trim() || undefined,
       };
 
-      const paginationParams = {
-        page: 0,
-        size: 100,
-      };
+      console.log('검색 파라미터:', searchParams);
+      console.log('Pagination 파라미터:', { page: 0, size: 100 });
 
-      const response = await internalControlManualApi.searchManuals(searchParams, paginationParams);
-      
-             // API 응답 데이터에 부서명과 직원명 추가
-       const enrichedData = await Promise.all(response.content.map(async item => {
-         const deptName = getDepartmentName(item.deptCd || '');
-         const authorName = await getEmployeeName(item.authorEmpNo || '');
-         return {
-           ...item,
-           deptName: deptName,
-           authorName: authorName,
-         };
-       }));
-      setRows(enrichedData);
+      // 결재 테이블과 조인하여 검색
+      const data = await internalControlManualApi.searchManualsWithApproval(
+        searchParams,
+        { page: 0, size: 100 }
+      );
+
+      console.log('API 응답 데이터:', data);
+      setRows(data.content);
+      setApiResponseData(data);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-     }, [selectedStatus, selectedDept, getDepartmentName, getEmployeeName]);
+  }, [manualTitle, authorEmpNo]);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
@@ -214,20 +258,21 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   const handleCreateClick = useCallback(() => {
     setDialogMode('create');
     setSelectedManualId(undefined);
+    setSelectedManualApprovalStatus('NONE');
     setDialogOpen(true);
   }, []);
 
   const handleRowDoubleClick = useCallback((row: InternalControlManualDto) => {
     setDialogMode('view');
     setSelectedManualId(row.manualId);
-    setSelectedManualData(row);
+    setSelectedManualApprovalStatus(row.approvalStatus || 'NONE');
     setDialogOpen(true);
   }, []);
 
   const handleRowClick = useCallback((row: InternalControlManualDto) => {
     setDialogMode('view');
     setSelectedManualId(row.manualId);
-    setSelectedManualData(row);
+    setSelectedManualApprovalStatus(row.approvalStatus || 'NONE');
     setDialogOpen(true);
   }, []);
 
@@ -262,12 +307,45 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
     setSelectedManualId(undefined);
-    setSelectedManualData(undefined);
+    setSelectedManualApprovalStatus('NONE');
   }, []);
 
   const handleDialogSuccess = useCallback(async () => {
     await handleSearch(); // 데이터 새로고침
   }, [handleSearch]);
+
+  // 결재 요청 처리
+  const handleApprovalStart = useCallback(async (manual: InternalControlManualDto) => {
+    if (!manual.manualId) {
+      showError('메뉴얼 ID가 없습니다.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await internalControlManualApi.startApproval(manual.manualId, {
+        taskTypeCode: 'internal_control_manuals',
+        taskId: manual.manualId,
+        title: `내부통제 업무메뉴얼 결재 - ${manual.manualTitle}`,
+        description: `내부통제 업무메뉴얼 "${manual.manualTitle}" 결재를 요청합니다.`
+      });
+      
+      showSuccess('결재 요청이 완료되었습니다.');
+      await handleSearch(); // 데이터 새로고침
+    } catch (error) {
+      console.error('결재 요청 실패:', error);
+      showError('결재 요청 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [showSuccess, showError, handleSearch]);
+
+  // 사원 선택 핸들러
+  const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
+    setAuthorEmpNo(employee.num);
+    setAuthorName(employee.username);
+    setAuthorSearchOpen(false);
+  }, []);
 
   return (
     <PageContainer>
@@ -305,27 +383,53 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
             borderRadius: '4px',
           }}
         >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>상태</span>
-          <CommonCodeSelect
-            groupCode="MANUAL_STATUS"
-            value={selectedStatus}
-            onChange={setSelectedStatus}
-            size='small'
-            sx={{ minWidth: 120, maxWidth: 180 }}
-          />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          <CommonCodeSelect
-            groupCode="DEPARTMENT"
-            value={selectedDept}
-            onChange={setSelectedDept}
-            size='small'
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>메뉴얼제목</span>
+          <TextField
+            value={manualTitle}
+            onChange={(e) => setManualTitle(e.target.value)}
+            size="small"
+            placeholder="메뉴얼제목을 입력하세요"
             sx={{ minWidth: 150, maxWidth: 200 }}
+          />
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>작성자</span>
+          <TextField
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            size="small"
+            placeholder="작성자명"
+            helperText={authorEmpNo ? `사번: ${authorEmpNo}` : ''}
+            sx={{ minWidth: 120, maxWidth: 180 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setAuthorSearchOpen(true)}
+                    size="small"
+                    edge="end"
+                    title="사원 검색"
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <SearchButton
             onClick={handleSearch}
             loading={loading}
             disabled={loading}
           />
+          <Button
+            onClick={() => {
+              setManualTitle('');
+              setAuthorEmpNo('');
+              setAuthorName('');
+            }}
+            variant="outlined"
+            size="small"
+          >
+            초기화
+          </Button>
         </Box>
 
         <Box sx={{ 
@@ -395,8 +499,25 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         onClose={handleDialogClose}
         mode={dialogMode}
         manualId={selectedManualId}
-        manualData={selectedManualData}
+        approvalStatus={selectedManualApprovalStatus}
         onSuccess={handleDialogSuccess}
+        apiResponseData={apiResponseData}
+      />
+      
+      {/* 사원 검색 팝업 */}
+      <EmployeeSearchPopup
+        open={authorSearchOpen}
+        onClose={() => setAuthorSearchOpen(false)}
+        onSelect={handleAuthorSelect}
+        title="작성자 검색"
+      />
+
+      {/* 알림 토스트 */}
+      <Toast
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
       />
     </PageContainer>
   );

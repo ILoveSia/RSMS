@@ -156,7 +156,7 @@ public class InternalControlManualController {
      */
     @GetMapping("/status/{status}")
     public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getManualsByStatus(
-            @PathVariable InternalControlManual.ManualStatus status) {
+            @PathVariable String status) {
         log.debug("상태별 내부통제 메뉴얼 조회 요청 - status: {}", status);
         
         List<InternalControlManualService.InternalControlManualDto> manuals = 
@@ -295,5 +295,71 @@ public class InternalControlManualController {
         List<InternalControlManualService.MonthlyStatisticsDto> statistics = 
                 internalControlManualService.getMonthlyCreationStatistics();
         return ResponseEntity.ok(statistics);
+    }
+
+    // 결재 연동 API 엔드포인트들
+
+    /**
+     * 결재 테이블과 조인하여 메뉴얼 검색
+     */
+    @PostMapping("/search-with-approval")
+    public ResponseEntity<Page<InternalControlManualService.InternalControlManualWithApprovalDto>> searchManualsWithApproval(
+            @RequestBody org.itcen.domain.handover.dto.ManualSearchDto searchDto,
+            @PageableDefault Pageable pageable) {
+        log.debug("결재 연동 검색 요청 - searchDto: {}", searchDto);
+        
+        Page<InternalControlManualService.InternalControlManualWithApprovalDto> manuals = 
+                internalControlManualService.searchManualsWithApproval(searchDto, pageable);
+        return ResponseEntity.ok(manuals);
+    }
+
+    /**
+     * 결재 요청 시작
+     */
+    @PostMapping("/{manualId}/approval/start")
+    public ResponseEntity<Void> startApproval(
+            @PathVariable Long manualId,
+            @RequestBody org.itcen.domain.handover.dto.ApprovalStartRequestDto request) {
+        log.debug("결재 요청 시작 - manualId: {}", manualId);
+        
+        internalControlManualService.startApproval(manualId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 결재 승인
+     */
+    @PostMapping("/{manualId}/approval/approve")
+    public ResponseEntity<Void> approveApproval(
+            @PathVariable Long manualId,
+            @RequestParam String comment) {
+        log.debug("결재 승인 - manualId: {}, comment: {}", manualId, comment);
+        
+        internalControlManualService.approveApproval(manualId, comment);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 결재 반려
+     */
+    @PostMapping("/{manualId}/approval/reject")
+    public ResponseEntity<Void> rejectApproval(
+            @PathVariable Long manualId,
+            @RequestParam String reason) {
+        log.debug("결재 반려 - manualId: {}, reason: {}", manualId, reason);
+        
+        internalControlManualService.rejectApproval(manualId, reason);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * 결재 취소
+     */
+    @PostMapping("/{manualId}/approval/cancel")
+    public ResponseEntity<Void> cancelApproval(@PathVariable Long manualId) {
+        log.debug("결재 취소 - manualId: {}", manualId);
+        
+        internalControlManualService.cancelApproval(manualId);
+        return ResponseEntity.ok().build();
     }
 }

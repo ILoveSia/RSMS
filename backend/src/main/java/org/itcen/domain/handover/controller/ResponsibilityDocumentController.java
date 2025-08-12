@@ -181,7 +181,7 @@ public class ResponsibilityDocumentController {
      */
     @GetMapping("/status/{status}")
     public ResponseEntity<List<ResponsibilityDocumentService.ResponsibilityDocumentDto>> getDocumentsByStatus(
-            @PathVariable ResponsibilityDocument.DocumentStatus status) {
+            @PathVariable String status) {
         log.debug("상태별 책무기술서 조회 요청 - status: {}", status);
         
         List<ResponsibilityDocumentService.ResponsibilityDocumentDto> documents = 

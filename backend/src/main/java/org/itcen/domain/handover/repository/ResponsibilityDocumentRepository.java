@@ -25,18 +25,6 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
 
     
 
-    /**
-     * 상태별 책무기술서 조회 (JOIN 포함)
-     */
-    @Query("SELECT rd FROM ResponsibilityDocument rd " +
-           "LEFT JOIN FETCH rd.author " +
-           "WHERE rd.status = :status")
-    List<ResponsibilityDocument> findByStatusWithJoin(@Param("status") ResponsibilityDocument.DocumentStatus status);
-
-    /**
-     * 상태별 책무기술서 조회
-     */
-    List<ResponsibilityDocument> findByStatus(ResponsibilityDocument.DocumentStatus status);
 
     /**
      * 작성자별 책무기술서 조회 (JOIN 포함)
@@ -52,18 +40,18 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     List<ResponsibilityDocument> findByAuthorEmpNo(String authorEmpNo);
 
     /**
-     * 직책과 상태로 최신 문서 조회
+     * 최신 문서 조회
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.status = :status " +
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
            "ORDER BY rd.createdAt DESC")
-    List<ResponsibilityDocument> findByPositionIdAndStatusOrderByCreatedAtDesc(@Param("status") ResponsibilityDocument.DocumentStatus status);
+    List<ResponsibilityDocument> findByPositionIdOrderByCreatedAtDesc();
 
     /**
-     * 직책의 최신 발행 문서 조회
+     * 최신 문서 조회 (효력일 기준)
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.status = 'PUBLISHED' " +
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
            "ORDER BY rd.effectiveDate DESC")
-    Optional<ResponsibilityDocument> findLatestPublishedByPositionId();
+    Optional<ResponsibilityDocument> findLatestByPositionId();
 
     /**
      * 문서 제목과 버전으로 조회
@@ -73,23 +61,23 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     /**
      * 유효한 문서 조회 (현재 날짜 기준)
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.status = 'PUBLISHED' " +
-           "AND (rd.effectiveDate IS NULL OR rd.effectiveDate <= :currentDate) " +
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
+           "WHERE (rd.effectiveDate IS NULL OR rd.effectiveDate <= :currentDate) " +
            "AND (rd.expiryDate IS NULL OR rd.expiryDate > :currentDate)")
     List<ResponsibilityDocument> findValidDocuments(@Param("currentDate") LocalDate currentDate);
 
     /**
      * 만료 예정 문서 조회
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.status = 'PUBLISHED' " +
-           "AND rd.expiryDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
+           "WHERE rd.expiryDate BETWEEN :startDate AND :endDate")
     List<ResponsibilityDocument> findExpiringDocuments(@Param("startDate") LocalDate startDate,
                                                        @Param("endDate") LocalDate endDate);
 
     /**
-     * 승인 대기중인 문서 조회
+     * 최근 문서 조회 (결재 대기용)
      */
-    @Query("SELECT rd FROM ResponsibilityDocument rd WHERE rd.status IN ('REVIEW', 'APPROVED') " +
+    @Query("SELECT rd FROM ResponsibilityDocument rd " +
            "ORDER BY rd.createdAt ASC")
     List<ResponsibilityDocument> findPendingApprovalDocuments();
 
@@ -99,11 +87,9 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     @Query("SELECT rd FROM ResponsibilityDocument rd " +
            "LEFT JOIN FETCH rd.author a " +
            "LEFT JOIN FETCH rd.attachments att " +
-           "WHERE (:status IS NULL OR rd.status = :status) AND " +
-           "(:authorEmpNo IS NULL OR rd.authorEmpNo LIKE %:authorEmpNo%) AND " +
+           "WHERE (:authorEmpNo IS NULL OR rd.authorEmpNo LIKE %:authorEmpNo%) AND " +
            "(:documentTitle IS NULL OR rd.documentTitle LIKE %:documentTitle%)")
-    Page<ResponsibilityDocument> findBySearchCriteriaWithJoin(@Param("status") ResponsibilityDocument.DocumentStatus status,
-                                                              @Param("authorEmpNo") String authorEmpNo,
+    Page<ResponsibilityDocument> findBySearchCriteriaWithJoin(@Param("authorEmpNo") String authorEmpNo,
                                                               @Param("documentTitle") String documentTitle,
                                                               Pageable pageable);
 
@@ -111,14 +97,17 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
      * 복합 조건 검색 (결재정보 포함) - Native Query 사용
      */
     @Query(value = "SELECT rd.document_id, rd.document_title, rd.document_version, " +
-           "rd.document_content, rd.status, rd.effective_date, rd.expiry_date, " +
+           "rd.document_content, rd.effective_date, rd.expiry_date, " +
            "rd.author_emp_no, e.emp_name as author_name, " +
            "rd.created_at, rd.updated_at, rd.created_id, rd.updated_id, " +
            "COALESCE(ap.appr_stat_cd, 'NONE') as approval_status, " +
-           "ap.approval_id, ap.requester_id, ap.approver_id, ap.approval_datetime " +
+           "ap.approval_id, ap.requester_id, ap.approver_id, ap.approval_datetime, " +
+           "COALESCE(att_count.attachment_count, 0) as attachment_count " +
            "FROM responsibility_documents rd " +
            "LEFT JOIN employee e ON rd.author_emp_no = e.emp_no " +
            "LEFT JOIN approval ap ON rd.document_id = ap.task_id AND ap.task_type_cd = 'responsibility_documents' " +
+           "LEFT JOIN (SELECT entity_id, COUNT(*) as attachment_count FROM attachments WHERE entity_type = 'responsibility_documents' GROUP BY entity_id) att_count " +
+           "ON rd.document_id = att_count.entity_id " +
            "WHERE (COALESCE(:authorEmpNo, '') = '' OR rd.author_emp_no LIKE CONCAT('%', :authorEmpNo, '%')) AND " +
            "(COALESCE(:documentTitle, '') = '' OR rd.document_title LIKE CONCAT('%', :documentTitle, '%')) " +
            "ORDER BY rd.created_at DESC",
@@ -134,19 +123,17 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
      * 복합 조건 검색 (기존 버전 유지)
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd WHERE " +
-           "(:status IS NULL OR rd.status = :status) AND " +
            "(:authorEmpNo IS NULL OR rd.authorEmpNo LIKE %:authorEmpNo%) AND " +
            "(:documentTitle IS NULL OR rd.documentTitle LIKE %:documentTitle%)")
-    Page<ResponsibilityDocument> findBySearchCriteria(@Param("status") ResponsibilityDocument.DocumentStatus status,
-                                                      @Param("authorEmpNo") String authorEmpNo,
+    Page<ResponsibilityDocument> findBySearchCriteria(@Param("authorEmpNo") String authorEmpNo,
                                                       @Param("documentTitle") String documentTitle,
                                                       Pageable pageable);
 
     /**
-     * 상태별 문서 통계
+     * 전체 문서 통계
      */
-    @Query("SELECT rd.status, COUNT(rd) FROM ResponsibilityDocument rd GROUP BY rd.status")
-    List<Object[]> getDocumentStatistics();
+    @Query("SELECT COUNT(rd) FROM ResponsibilityDocument rd")
+    Long getTotalDocumentCount();
 
     /**
      * 월별 문서 생성 통계

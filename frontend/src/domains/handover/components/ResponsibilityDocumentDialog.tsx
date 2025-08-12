@@ -25,7 +25,6 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
-import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
@@ -55,7 +54,6 @@ interface FormData {
   documentTitle: string;
   documentVersion: string;
   documentContent: string;
-  status: string;
   effectiveDate: Date | null;
   expiryDate: Date | null;
   authorEmpNo: string;
@@ -66,7 +64,6 @@ const initialFormData: FormData = {
   documentTitle: '',
   documentVersion: 'v1.0',
   documentContent: '',
-  status: 'DRAFT',
   effectiveDate: null,
   expiryDate: null,
   authorEmpNo: '',
@@ -125,7 +122,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
 
   // 결재 상신 버튼 표시 여부 판단
   const shouldShowApprovalButton = () => {
-    return (approvalStatus === 'NONE' || !approvalStatus) && documentId && formData.status === 'DRAFT';
+    return (approvalStatus === 'NONE' || !approvalStatus) && documentId;
   };
 
   // 결재현황 버튼 표시 여부 판단 (결재가 진행중일 때)
@@ -138,9 +135,9 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     return approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined;
   };
 
-  // 저장 버튼 표시 여부 판단 - 결재상태가 NONE이고 편집모드일 때만 저장 가능
+  // 저장 버튼 표시 여부 판단 - 결재상태가 NONE이고 편집모드 또는 생성모드일 때 저장 가능
   const shouldShowSaveButton = () => {
-    return (approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && isEditMode;
+    return (approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && (isEditMode || isCreateMode);
   };
 
   // 공통코드 배열 추출 함수
@@ -199,7 +196,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
           documentTitle: documentData.documentTitle || '',
           documentVersion: documentData.documentVersion || 'v1.0',
           documentContent: documentData.documentContent || '',
-          status: documentData.status || 'DRAFT',
           effectiveDate: parseDate(documentData.effectiveDate),
           expiryDate: parseDate(documentData.expiryDate),
           authorEmpNo: documentData.authorEmpNo || '',
@@ -298,7 +294,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         documentTitle: formData.documentTitle,
         documentVersion: formData.documentVersion,
         documentContent: formData.documentContent,
-        status: formData.status as 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED',
         effectiveDate: formatDate(formData.effectiveDate),
         expiryDate: formatDate(formData.expiryDate),
         authorEmpNo: formData.authorEmpNo,
@@ -623,21 +618,31 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                   />
                 </Grid>
 
-                {/* 상태 */}
+                {/* 작성자 */}
                 <Grid item xs={12} sm={6}>
-                  <Select
-                    value={formData.status}
-                    label='상태'
-                    options={
-                      isCreateMode
-                        ? [{ value: 'DRAFT', label: '초안' }]
-                        : getCommonCodeOptions('RESPONSIBILITY_STATUS')
-                    }
-                    onChange={(value) => handleInputChange('status', value as string)}
-                    disabled={isViewMode || isCreateMode}
+                  <TextField
+                    fullWidth
+                    label='작성자'
+                    value={formData.authorName}
+                    disabled={isViewMode}
+                    mode={isViewMode ? "readonly" : "editable"}
+                    helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
+                    InputProps={{
+                      endAdornment: !isViewMode && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setAuthorSearchOpen(true)}
+                            size="small"
+                            edge="end"
+                          >
+                            <SearchIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
                   />
                 </Grid>
-
+               
                 {/* 시행일 */}
                 <Grid item xs={12} sm={6}>
                   <DatePicker
@@ -677,30 +682,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                   />
                 </Grid>
 
-                {/* 작성자 */}
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label='작성자'
-                    value={formData.authorName}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                    helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
-                    InputProps={{
-                      endAdornment: !isViewMode && (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setAuthorSearchOpen(true)}
-                            size="small"
-                            edge="end"
-                          >
-                            <SearchIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
+                
 
                 {/* 첨부파일 섹션 */}
                 <Grid item xs={12}>

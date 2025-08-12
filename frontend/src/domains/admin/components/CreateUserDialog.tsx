@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import { Box, Chip, Divider, InputAdornment, Tooltip, Typography, IconButton, Alert } from '@mui/material';
+import { Box, Chip, InputAdornment, Tooltip, Typography, IconButton, Alert } from '@mui/material';
 import {
   AccountCircle as AccountCircleIcon,
   Badge as BadgeIcon,
@@ -147,16 +147,37 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
     <BaseDialog
       open={open}
       mode="create"
-      title="사용자 등록"
+      title="🙋‍♂️ 새 사용자 등록"
       maxWidth="md"
       onClose={() => { reset(); onClose(); }}
       onSave={handleSave}
       disableSave={disabled}
       loading={saving}
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: '12px',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+        },
+        '& .MuiDialogContent-root': {
+          padding: '24px',
+          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
+        }
+      }}
     >
       {/* 서버 검증/비즈니스 에러 표시 */}
       {submitErrors.length > 0 && (
-        <Alert severity="error" sx={{ mb: 1 }}>
+        <Alert 
+          severity="error" 
+          sx={{ 
+            mb: 3,
+            borderRadius: '8px',
+            border: '1px solid #ffcdd2',
+            backgroundColor: '#ffebee',
+            '& .MuiAlert-message': {
+              fontSize: '0.875rem'
+            }
+          }}
+        >
           {submitErrors.map((msg, idx) => (
             <div key={idx}>{msg}</div>
           ))}
@@ -164,10 +185,28 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       )}
 
       {/* 계정 정보 */}
-      <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>계정 정보</Typography>
-        <Divider sx={{ my: 0.5 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
+      <Box sx={{ 
+        gridColumn: '1 / -1', 
+        mb: 3, 
+        p: 3, 
+        backgroundColor: 'var(--bank-bg-secondary)', 
+        borderRadius: '8px', 
+        border: '1px solid var(--bank-border)' 
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+          <AccountCircleIcon sx={{ color: 'primary.main', fontSize: '1.2rem' }} />
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              color: 'primary.main', 
+              fontWeight: 600, 
+              fontSize: '1rem' 
+            }}
+          >
+            계정 정보
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
           <TextField
             label="사용자 ID"
             mode="editable"
@@ -234,7 +273,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             }}
           />
         </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1, mt: 1 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mt: 2 }}>
           <TextField
             label="성명"
             mode="editable"
@@ -275,10 +314,28 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       {/* 소속/직무 선택 영역 제거 */}
 
       {/* 연락처 */}
-      <Box sx={{ gridColumn: '1 / -1', mb: 1.5 }}>
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>연락처</Typography>
-        <Divider sx={{ my: 0.5 }} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>
+      <Box sx={{ 
+        gridColumn: '1 / -1', 
+        mb: 3, 
+        p: 3, 
+        backgroundColor: 'var(--bank-bg-secondary)', 
+        borderRadius: '8px', 
+        border: '1px solid var(--bank-border)' 
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+          <BadgeIcon sx={{ color: 'secondary.main', fontSize: '1.2rem' }} />
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              color: 'secondary.main', 
+              fontWeight: 600, 
+              fontSize: '1rem' 
+            }}
+          >
+            연락처
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
           <TextField
             label="주소"
             mode="editable"
@@ -310,22 +367,50 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       </Box>
 
       {/* 초기 역할 할당 */}
-      <Box sx={{ gridColumn: '1 / -1' }}>
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>초기 역할 할당</Typography>
-        <Divider sx={{ my: 0.5 }} />
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxHeight: 120, overflowY: 'auto' }}>
+      <Box sx={{ 
+        gridColumn: '1 / -1',
+        p: 3, 
+        backgroundColor: 'var(--bank-bg-secondary)', 
+        borderRadius: '8px', 
+        border: '1px solid var(--bank-border)' 
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+          <CheckCircleOutlineIcon sx={{ color: 'success.main', fontSize: '1.2rem' }} />
+          <Typography 
+            variant="subtitle1" 
+            sx={{ 
+              color: 'success.main', 
+              fontWeight: 600, 
+              fontSize: '1rem' 
+            }}
+          >
+            초기 역할 할당
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, maxHeight: 120, overflowY: 'auto' }}>
           {roles.map(role => {
             const selected = selectedRoles.includes(role.roleId);
             return (
               <Tooltip key={role.roleId} title={role.roleName || role.roleId} placement="top" arrow>
                 <Chip
                   label={role.roleId}
-                  size="small"
+                  size="medium"
                   color={selected ? 'primary' : 'default'}
                   variant={selected ? 'filled' : 'outlined'}
-                  icon={selected ? <CheckCircleOutlineIcon /> : undefined}
+                  icon={selected ? <CheckCircleOutlineIcon fontSize="small" /> : undefined}
                   onClick={() => toggleRole(role.roleId)}
-                  sx={{ cursor: 'pointer' }}
+                  sx={{ 
+                    cursor: 'pointer',
+                    height: '36px',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    borderRadius: '18px',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                    }
+                  }}
                 />
               </Tooltip>
             );

@@ -358,18 +358,24 @@ const UserPermissionManagePage: React.FC = () => {
               onClick={openCreateDialog}
               variant="contained"
               color="primary"
-              size="medium"
+              size="small"
               startIcon={<PersonAddAlt1Icon />}
-              sx={{ fontWeight: 700 }}
+              sx={{ 
+                fontWeight: 700,
+                height: '32px',
+                minWidth: '80px',
+                fontSize: '0.875rem',
+                borderRadius: 1,
+              }}
             >
               사용자 등록
             </SharedButton>
-            <ExcelDownloadButton
+            {/* <ExcelDownloadButton
               onDownload={() => {}}
               filename="user_permissions_list"
               disabled={loading}
               loading={loading}
-            />
+            /> */}
           </Box>
         </Box>
 

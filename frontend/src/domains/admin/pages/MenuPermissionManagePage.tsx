@@ -387,14 +387,14 @@ const MenuPermissionManagePage: React.FC = () => {
               <Typography variant="caption" color="textSecondary">변경사항</Typography>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          {/* <Box sx={{ display: 'flex', gap: 1 }}>
             <ExcelDownloadButton
               onDownload={() => {}}
               filename="menu_permissions_matrix"
               disabled={loading}
               loading={loading}
             />
-          </Box>
+          </Box> */}
         </Box>
 
         {/* 권한 매트릭스 테이블 */}

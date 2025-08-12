@@ -28,9 +28,9 @@ public class ManualSearchDto {
     private String deptCd;
     
     /**
-     * 메뉴얼 상태
+     * 메뉴얼 상태 (status 컬럼 삭제됨)
      */
-    private InternalControlManual.ManualStatus status;
+    private String status;
     
     /**
      * 메뉴얼 분류

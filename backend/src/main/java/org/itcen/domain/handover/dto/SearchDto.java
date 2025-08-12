@@ -32,7 +32,7 @@ public class SearchDto {
     @AllArgsConstructor
     public static class DocumentSearch {
         private Long positionId;
-        private ResponsibilityDocument.DocumentStatus status;
+        private String status;
         private String authorEmpNo;
         private String documentTitle;
         private LocalDate startDate;
@@ -57,7 +57,7 @@ public class SearchDto {
     @AllArgsConstructor
     public static class ManualSearch {
         private String deptCd;
-        private InternalControlManual.ManualStatus status;
+        private String status;
         private String manualCategory;
         private String authorEmpNo;
         private String manualTitle;

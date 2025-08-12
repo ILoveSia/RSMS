@@ -78,9 +78,9 @@ public interface InternalControlManualService {
     List<InternalControlManualDto> getManualsByDepartment(String deptCd);
 
     /**
-     * 상태별 내부통제 메뉴얼 조회
+     * 상태별 내부통제 메뉴얼 조회 (status 컬럼 삭제됨)
      */
-    List<InternalControlManualDto> getManualsByStatus(InternalControlManual.ManualStatus status);
+    List<InternalControlManualDto> getManualsByStatus(String status);
 
     /**
      * 작성자별 내부통제 메뉴얼 조회
@@ -134,6 +134,33 @@ public interface InternalControlManualService {
      */
     List<MonthlyStatisticsDto> getMonthlyCreationStatistics();
 
+    // 결재 연동 기능
+
+    /**
+     * 결재 테이블과 조인하여 메뉴얼 검색
+     */
+    Page<InternalControlManualWithApprovalDto> searchManualsWithApproval(org.itcen.domain.handover.dto.ManualSearchDto searchDto, Pageable pageable);
+
+    /**
+     * 결재 요청 시작
+     */
+    void startApproval(Long manualId, org.itcen.domain.handover.dto.ApprovalStartRequestDto request);
+
+    /**
+     * 결재 승인
+     */
+    void approveApproval(Long manualId, String comment);
+
+    /**
+     * 결재 반려
+     */
+    void rejectApproval(Long manualId, String reason);
+
+    /**
+     * 결재 취소
+     */
+    void cancelApproval(Long manualId);
+
     // DTO 인터페이스들
 
     interface InternalControlManualDto {
@@ -143,16 +170,11 @@ public interface InternalControlManualService {
         String getManualTitle();
         String getManualVersion();
         String getManualContent();
-        InternalControlManual.ManualStatus getStatus();
-        Long getApprovalId();
+        // status, approval_id, reviewer_emp_no, approver_emp_no 컴럼 삭제됨
         LocalDate getEffectiveDate();
         LocalDate getExpiryDate();
         String getAuthorEmpNo();
         String getAuthorName();
-        String getReviewerEmpNo();
-        String getReviewerName();
-        String getApproverEmpNo();
-        String getApproverName();
     }
 
     interface ManualStatisticsDto {
@@ -179,5 +201,55 @@ public interface InternalControlManualService {
         Integer getYear();
         Integer getMonth();
         Long getCreatedCount();
+    }
+
+    // 결재 연동 DTO 인터페이스들
+
+    /**
+     * 결재 정보가 포함된 내부통제 메뉴얼 DTO
+     */
+    interface InternalControlManualWithApprovalDto {
+        Long getManualId();
+        String getDeptCd();
+        String getDeptName();
+        String getManualTitle();
+        String getManualVersion();
+        String getManualContent();
+        LocalDate getEffectiveDate();
+        LocalDate getExpiryDate();
+        String getAuthorEmpNo();
+        String getAuthorName();
+        
+        // 감사 필드
+        LocalDate getCreatedAt();
+        LocalDate getUpdatedAt();
+        String getCreatedId();
+        String getUpdatedId();
+        
+        // 첨부파일 관련
+        Long getAttachmentCount();
+        List<AttachmentInfo> getAttachments();
+        
+        // 결재 관련 필드
+        String getApprovalStatus();
+        Long getApprovalId();
+        String getRequesterId();
+        String getRequesterName();
+        String getCurrentApproverId();
+        String getCurrentApproverName();
+        LocalDate getApprovedAt();
+        LocalDate getRejectedAt();
+        String getRejectionReason();
+    }
+
+    /**
+     * 첨부파일 정보 인터페이스
+     */
+    interface AttachmentInfo {
+        Long getAttachId();
+        String getOriginalName();
+        String getStoredName();
+        Long getFileSize();
+        String getMimeType();
     }
 }

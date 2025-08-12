@@ -10,9 +10,6 @@ CREATE TABLE public.responsibility_documents (
     document_version VARCHAR(20) DEFAULT '1.0',     -- 문서 버전
     document_content TEXT,                          -- 문서 내용
     
-    -- 상태 관리
-    status VARCHAR(20) DEFAULT 'DRAFT' NOT NULL,    -- 상태 (DRAFT, REVIEW, APPROVED, PUBLISHED)
-    
     -- 유효 기간
     effective_date DATE,                            -- 시행일
     expiry_date DATE DEFAULT '9999-12-31',          -- 만료일
@@ -32,7 +29,6 @@ CREATE TABLE public.responsibility_documents (
 );
 
 -- 인덱스 생성
-CREATE INDEX idx_responsibility_documents_status ON public.responsibility_documents(status);
 CREATE INDEX idx_responsibility_documents_author ON public.responsibility_documents(author_emp_no);
 CREATE INDEX idx_responsibility_documents_effective ON public.responsibility_documents(effective_date, expiry_date);
 CREATE INDEX idx_responsibility_documents_version ON public.responsibility_documents(document_title, document_version);
@@ -44,6 +40,4 @@ CREATE TRIGGER update_responsibility_documents_updated_at
 
 -- 테이블 코멘트
 COMMENT ON TABLE public.responsibility_documents IS '책무기술서 관리 테이블';
-COMMENT ON COLUMN public.responsibility_documents.status IS '상태 (DRAFT: 초안, REVIEW: 검토중, APPROVED: 승인완료, PUBLISHED: 발행완료)';
 COMMENT ON COLUMN public.responsibility_documents.document_version IS '문서 버전 (예: 1.0, 1.1, 2.0)';
-COMMENT ON COLUMN public.responsibility_documents.approval_id IS '승인 ID (approval 테이블 연동)';

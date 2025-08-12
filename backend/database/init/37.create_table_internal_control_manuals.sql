@@ -12,32 +12,23 @@ CREATE TABLE public.internal_control_manuals (
     manual_version VARCHAR(20) DEFAULT '1.0',       -- 메뉴얼 버전
     manual_content TEXT,                            -- 메뉴얼 내용
     
-    -- 상태 관리
-    status VARCHAR(20) DEFAULT 'DRAFT' NOT NULL,    -- 상태 (DRAFT, REVIEW, APPROVED, PUBLISHED)
-    approval_id BIGINT,                             -- 승인 ID
-    
     -- 유효 기간
     effective_date DATE,                            -- 시행일
     expiry_date DATE DEFAULT '9999-12-31',          -- 만료일
     
     -- 담당자 정보
     author_emp_no VARCHAR(20),                      -- 작성자 사번
-    reviewer_emp_no VARCHAR(20),                    -- 검토자 사번
-    approver_emp_no VARCHAR(20),                    -- 승인자 사번
     
     -- 감사 필드
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_id VARCHAR(100),
-    updated_id VARCHAR(100),
+    updated_id VARCHAR(100)
     
-    -- 제약 조건
-    CONSTRAINT chk_internal_control_manuals_status CHECK (status IN ('DRAFT', 'REVIEW', 'APPROVED', 'PUBLISHED'))
 );
 
 -- 인덱스 생성
 CREATE INDEX idx_internal_control_manuals_dept_cd ON public.internal_control_manuals(dept_cd);
-CREATE INDEX idx_internal_control_manuals_status ON public.internal_control_manuals(status);
 CREATE INDEX idx_internal_control_manuals_author ON public.internal_control_manuals(author_emp_no);
 CREATE INDEX idx_internal_control_manuals_effective ON public.internal_control_manuals(effective_date, expiry_date);
 
@@ -49,4 +40,3 @@ CREATE TRIGGER update_internal_control_manuals_updated_at
 -- 테이블 코멘트
 COMMENT ON TABLE public.internal_control_manuals IS '부서장 내부통제 업무메뉴얼 관리 테이블';
 COMMENT ON COLUMN public.internal_control_manuals.dept_cd IS '부서코드';
-COMMENT ON COLUMN public.internal_control_manuals.status IS '상태 (DRAFT: 초안, REVIEW: 검토중, APPROVED: 승인완료, PUBLISHED: 발행완료)';

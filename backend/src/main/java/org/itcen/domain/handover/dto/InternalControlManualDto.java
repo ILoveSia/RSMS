@@ -35,7 +35,7 @@ public class InternalControlManualDto {
     private String manualContent;
     private String manualCategory;
     private String icTaskCategory;
-    private InternalControlManual.ManualStatus status;
+    private String status;
     private Long approvalId;
     private LocalDate effectiveDate;
     private LocalDate expiryDate;

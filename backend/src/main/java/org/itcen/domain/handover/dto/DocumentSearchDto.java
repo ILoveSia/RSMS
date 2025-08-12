@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class DocumentSearchDto implements ResponsibilityDocumentService.DocumentSearchDto {
     private Long positionId;
-    private ResponsibilityDocument.DocumentStatus status;
+    private String status;
     private String authorEmpNo;
     private String documentTitle;
     private String positionName;

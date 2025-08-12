@@ -48,11 +48,8 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
             .manualTitle(manual.getManualTitle())
             .manualContent(manual.getManualContent())
             .manualVersion(manual.getManualVersion())
-            .status(manual.getStatus())
             .deptCd(manual.getDeptCd())
             .authorEmpNo(manual.getAuthorEmpNo())
-            .reviewerEmpNo(manual.getReviewerEmpNo())
-            .approverEmpNo(manual.getApproverEmpNo())
             .createdId(manual.getCreatedId())
             .updatedId(manual.getUpdatedId())
             .effectiveDate(manual.getEffectiveDate())
@@ -84,22 +81,14 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         InternalControlManual existingManual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 수정 가능 여부 확인 (발행된 메뉴얼은 수정 불가)
-        if (existingManual.getStatus() == InternalControlManual.ManualStatus.PUBLISHED) {
-            throw new BusinessException("발행된 내부통제 업무메뉴얼은 수정할 수 없습니다.");
-        }
-
-        // 필드 업데이트
+        // 필드 업데이트 (status 컬럼 삭제되어 상태 확인 로직 제거)
         existingManual.setManualTitle(manual.getManualTitle());
         existingManual.setManualContent(manual.getManualContent());
         existingManual.setManualVersion(manual.getManualVersion());
-        existingManual.setStatus(manual.getStatus());
         existingManual.setDeptCd(manual.getDeptCd());
         existingManual.setEffectiveDate(manual.getEffectiveDate());
         existingManual.setExpiryDate(manual.getExpiryDate());
         existingManual.setAuthorEmpNo(manual.getAuthorEmpNo());
-        existingManual.setReviewerEmpNo(manual.getReviewerEmpNo());
-        existingManual.setApproverEmpNo(manual.getApproverEmpNo());
         existingManual.setUpdatedId(manual.getUpdatedId());
 
         InternalControlManual savedManual = internalControlManualRepository.save(existingManual);
@@ -132,10 +121,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 발행된 메뉴얼은 삭제 불가
-        if (manual.getStatus() == InternalControlManual.ManualStatus.PUBLISHED) {
-            throw new BusinessException("발행된 내부통제 업무메뉴얼은 삭제할 수 없습니다.");
-        }
+        // status 컬럼 삭제되어 상태 확인 로직 제거
 
         internalControlManualRepository.delete(manual);
 
@@ -155,12 +141,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 초안 상태에서만 검토 제출 가능
-        if (manual.getStatus() != InternalControlManual.ManualStatus.DRAFT) {
-            throw new BusinessException("초안 상태의 메뉴얼만 검토 제출할 수 있습니다.");
-        }
-
-        manual.submitForReview();
+        // status 컬럼 삭제되어 상태 확인 로직 제거
         manual.setUpdatedId(actorEmpNo);
         internalControlManualRepository.save(manual);
 
@@ -186,12 +167,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 승인된 메뉴얼만 발행 가능
-        if (manual.getStatus() != InternalControlManual.ManualStatus.APPROVED) {
-            throw new BusinessException("승인된 메뉴얼만 발행할 수 있습니다.");
-        }
-
-        manual.publish();
+        // status 컬럼 삭제되어 상태 확인 로직 제거
         manual.setUpdatedId(actorEmpNo);
         internalControlManualRepository.save(manual);
 
@@ -217,12 +193,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 발행된 메뉴얼은 되돌릴 수 없음
-        if (manual.getStatus() == InternalControlManual.ManualStatus.PUBLISHED) {
-            throw new BusinessException("발행된 메뉴얼은 초안으로 되돌릴 수 없습니다.");
-        }
-
-        manual.revertToDraft();
+        // status 컬럼 삭제되어 상태 확인 로직 제거
         manual.setUpdatedId(actorEmpNo);
         internalControlManualRepository.save(manual);
 
@@ -248,12 +219,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         InternalControlManual manual = internalControlManualRepository.findById(manualId)
                 .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
 
-        // 발행된 메뉴얼만 버전 업데이트 가능
-        if (manual.getStatus() != InternalControlManual.ManualStatus.PUBLISHED) {
-            throw new BusinessException("발행된 메뉴얼만 버전 업데이트할 수 있습니다.");
-        }
-
-        manual.updateVersion(newVersion);
+        // status 컬럼 삭제되어 상태 확인 로직 제거
         manual.setUpdatedId(actorEmpNo);
         InternalControlManual savedManual = internalControlManualRepository.save(manual);
 
@@ -279,8 +245,9 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
     }
 
     @Override
-    public List<InternalControlManualDto> getManualsByStatus(InternalControlManual.ManualStatus status) {
-        List<InternalControlManual> manuals = internalControlManualRepository.findByStatus(status);
+    public List<InternalControlManualDto> getManualsByStatus(String status) {
+        // status 컬럼 삭제로 인해 전체 메뉴얼 조회
+        List<InternalControlManual> manuals = internalControlManualRepository.findAll();
         return convertToDto(manuals);
     }
 
@@ -292,7 +259,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
 
     @Override
     public List<InternalControlManualDto> getLatestPublishedManuals(String deptCd) {
-        List<InternalControlManual> manuals = internalControlManualRepository.findLatestPublishedByDept(deptCd);
+        List<InternalControlManual> manuals = internalControlManualRepository.findLatestByDept(deptCd);
         return convertToDto(manuals);
     }
 
@@ -319,7 +286,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
     public Page<InternalControlManualDto> searchManuals(org.itcen.domain.handover.dto.ManualSearchDto searchDto, Pageable pageable) {
         Page<InternalControlManual> manuals = internalControlManualRepository.searchManuals(
             searchDto.getDeptCd(),
-            searchDto.getStatus(),
             searchDto.getManualTitle(),
             searchDto.getAuthorEmpNo(),
             searchDto.getManualVersion(),
@@ -390,11 +356,7 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
             @Override
             public String getManualContent() { return manual.getManualContent(); }
 
-            @Override
-            public InternalControlManual.ManualStatus getStatus() { return manual.getStatus(); }
-
-            @Override
-            public Long getApprovalId() { return manual.getApprovalId(); }
+            // status, approval_id 컬럼 삭제됨
 
             @Override
             public LocalDate getEffectiveDate() { return manual.getEffectiveDate(); }
@@ -408,17 +370,259 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
             @Override
             public String getAuthorName() { return null; } // TODO: User 조인 후 구현
 
-            @Override
-            public String getReviewerEmpNo() { return manual.getReviewerEmpNo(); }
-
-            @Override
-            public String getReviewerName() { return null; } // TODO: User 조인 후 구현
-
-            @Override
-            public String getApproverEmpNo() { return manual.getApproverEmpNo(); }
-
-            @Override
-            public String getApproverName() { return null; } // TODO: User 조인 후 구현
+            // reviewer_emp_no, approver_emp_no 컬럼 삭제됨
         };
+    }
+
+    // 결재 연동 메서드들
+
+    @Override
+    public Page<InternalControlManualService.InternalControlManualWithApprovalDto> searchManualsWithApproval(
+            org.itcen.domain.handover.dto.ManualSearchDto searchDto, Pageable pageable) {
+        log.info("결재 연동 검색 - searchDto: {}", searchDto);
+        log.info("Repository 호출 파라미터 - deptCd: '{}', authorEmpNo: '{}', manualTitle: '{}'", 
+                searchDto.getDeptCd(), searchDto.getAuthorEmpNo(), searchDto.getManualTitle());
+
+        // Native Query로 approval 테이블과 조인해서 데이터 조회
+        Page<Object[]> results = internalControlManualRepository.findBySearchCriteriaWithApproval(
+                searchDto.getDeptCd(),
+                searchDto.getAuthorEmpNo(),
+                searchDto.getManualTitle(),
+                pageable
+        );
+
+        log.info("검색 결과 개수: {}", results.getTotalElements());
+        return results.map(this::convertObjectArrayToApprovalDto);
+    }
+
+    @Override
+    @Transactional
+    public void startApproval(Long manualId, org.itcen.domain.handover.dto.ApprovalStartRequestDto request) {
+        log.debug("결재 요청 시작 - manualId: {}, taskType: {}", manualId, request.getTaskTypeCode());
+
+        Optional<InternalControlManual> manualOpt = internalControlManualRepository.findById(manualId);
+        if (manualOpt.isEmpty()) {
+            throw new BusinessException("메뉴얼을 찾을 수 없습니다. manualId: " + manualId);
+        }
+
+        InternalControlManual manual = manualOpt.get();
+        
+        // 결재 요청 가능성 기본 확인
+
+        // TODO: 실제 구현에서는 approval 테이블에 레코드 생성 필요
+        // 현재는 로그만 출력
+        log.info("결재 요청 생성됨 - manualId: {}, title: {}", manualId, request.getTitle());
+    }
+
+    @Override
+    @Transactional
+    public void approveApproval(Long manualId, String comment) {
+        log.debug("결재 승인 - manualId: {}, comment: {}", manualId, comment);
+
+        // TODO: 실제 구현에서는 approval 테이블 업데이트 및 다음 단계 처리 필요
+        log.info("결재 승인 처리됨 - manualId: {}", manualId);
+    }
+
+    @Override
+    @Transactional
+    public void rejectApproval(Long manualId, String reason) {
+        log.debug("결재 반려 - manualId: {}, reason: {}", manualId, reason);
+
+        // TODO: 실제 구현에서는 approval 테이블 업데이트 및 메뉴얼 상태 변경 필요
+        log.info("결재 반려 처리됨 - manualId: {}, reason: {}", manualId, reason);
+    }
+
+    @Override
+    @Transactional
+    public void cancelApproval(Long manualId) {
+        log.debug("결재 취소 - manualId: {}", manualId);
+
+        // TODO: 실제 구현에서는 approval 테이블 상태 변경 필요
+        log.info("결재 취소됨 - manualId: {}", manualId);
+    }
+
+    /**
+     * Native Query 결과를 InternalControlManualWithApprovalDto로 변환
+     */
+    private InternalControlManualWithApprovalDto convertObjectArrayToApprovalDto(Object[] row) {
+        // 디버깅을 위한 로깅 추가
+        log.info("Converting Object Array to DTO. Array length: {}", row.length);
+        for (int i = 0; i < row.length; i++) {
+            log.info("row[{}] = {} (type: {})", i, row[i], row[i] != null ? row[i].getClass().getName() : "null");
+        }
+        
+        return new InternalControlManualWithApprovalDto() {
+            @Override
+            public Long getManualId() { 
+                return safeLongValue(row[0]); 
+            }
+
+            @Override
+            public String getDeptCd() { 
+                return safeStringValue(row[1]); 
+            }
+
+            @Override
+            public String getDeptName() { 
+                return safeStringValue(row[2]); // d.dept_name (인덱스 2)
+            }
+
+            @Override
+            public String getManualTitle() { 
+                return safeStringValue(row[3]); // icm.manual_title (인덱스 3)
+            }
+
+            @Override
+            public String getManualVersion() { 
+                return safeStringValue(row[4]); // icm.manual_version (인덱스 4)
+            }
+
+            @Override
+            public String getManualContent() { 
+                return safeStringValue(row[5]); // icm.manual_content (인덱스 5)
+            }
+
+            @Override
+            public LocalDate getEffectiveDate() { 
+                return safeDateValue(row[6]); // icm.effective_date (인덱스 6)
+            }
+
+            @Override
+            public LocalDate getExpiryDate() { 
+                return safeDateValue(row[7]); // icm.expiry_date (인덱스 7)
+            }
+
+            @Override
+            public String getAuthorEmpNo() { 
+                return safeStringValue(row[8]); // icm.author_emp_no (인덱스 8)
+            }
+
+            @Override
+            public String getAuthorName() { 
+                return safeStringValue(row[9]); // e.emp_name (인덱스 9)
+            }
+            
+            // 감사 필드
+            @Override
+            public LocalDate getCreatedAt() {
+                return safeTimestampValue(row[10]); // icm.created_at (인덱스 10)
+            }
+
+            @Override
+            public LocalDate getUpdatedAt() {
+                return safeTimestampValue(row[11]); // icm.updated_at (인덱스 11)
+            }
+
+            @Override
+            public String getCreatedId() {
+                return safeStringValue(row[12]); // icm.created_id (인덱스 12)
+            }
+
+            @Override
+            public String getUpdatedId() {
+                return safeStringValue(row[13]); // icm.updated_id (인덱스 13)
+            }
+            
+            @Override
+            public Long getAttachmentCount() { 
+                return safeLongValue(row[19]); // attachment_count (인덱스 19)
+            }
+
+            @Override
+            public List<AttachmentInfo> getAttachments() { return List.of(); }
+
+            // 결재 관련 필드 
+            @Override
+            public String getApprovalStatus() {
+                String status = safeStringValue(row[14]); // approval_status (인덱스 14)
+                return status != null ? status : "NONE";
+            }
+
+            @Override
+            public Long getApprovalId() { 
+                return safeLongValue(row[15]); // ap.approval_id (인덱스 15)
+            }
+
+            @Override
+            public String getRequesterId() { 
+                return safeStringValue(row[16]); // ap.requester_id (인덱스 16)
+            }
+
+            @Override
+            public String getRequesterName() { return null; }
+
+            @Override
+            public String getCurrentApproverId() { 
+                return safeStringValue(row[17]); // ap.approver_id (인덱스 17)
+            }
+
+            @Override
+            public String getCurrentApproverName() { return null; }
+
+            @Override
+            public LocalDate getApprovedAt() { 
+                return safeTimestampValue(row[18]); // ap.approval_datetime (인덱스 18)
+            }
+
+            @Override
+            public LocalDate getRejectedAt() { 
+                if ("REJECTED".equals(getApprovalStatus())) {
+                    return safeTimestampValue(row[18]); // ap.approval_datetime (인덱스 18)
+                }
+                return null; 
+            }
+
+            @Override
+            public String getRejectionReason() { 
+                // 추후 comments 필드를 쿼리에 추가할 수 있음
+                return null; 
+            }
+        };
+    }
+
+    // 안전한 타입 변환 헬퍼 메서드들
+    private String safeStringValue(Object obj) {
+        return obj != null ? obj.toString() : null;
+    }
+
+    private Long safeLongValue(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Number) {
+            return ((Number) obj).longValue();
+        }
+        if (obj instanceof String) {
+            try {
+                return Long.valueOf((String) obj);
+            } catch (NumberFormatException e) {
+                log.warn("Cannot convert string to Long: {}", obj);
+                return null;
+            }
+        }
+        log.warn("Unexpected type for Long conversion: {} ({})", obj, obj.getClass().getName());
+        return null;
+    }
+
+    private LocalDate safeDateValue(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof java.sql.Date) {
+            return ((java.sql.Date) obj).toLocalDate();
+        }
+        if (obj instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) obj).toLocalDateTime().toLocalDate();
+        }
+        log.warn("Unexpected type for Date conversion: {} ({})", obj, obj.getClass().getName());
+        return null;
+    }
+
+    private LocalDate safeTimestampValue(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) obj).toLocalDateTime().toLocalDate();
+        }
+        if (obj instanceof java.sql.Date) {
+            return ((java.sql.Date) obj).toLocalDate();
+        }
+        log.warn("Unexpected type for Timestamp conversion: {} ({})", obj, obj.getClass().getName());
+        return null;
     }
 }
