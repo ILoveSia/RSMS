@@ -127,7 +127,9 @@ public class SecurityConfig {
                     // 책무구조도 제출 API (개발 편의를 위해 임시 허용)
                     "/submissions/**",
                     // 결재 API (개발 편의를 위해 임시 허용)
-                    "/approval-system/**"
+                    "/approval-system/**",
+                    // 관리자 API 중 로그인 페이지에서 사용하는 사용자 목록 조회 허용
+                    "/admin/users"
             ).permitAll()
 
             // 모든 API 엔드포인트는 인증 필요 (일반화)

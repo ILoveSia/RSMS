@@ -6,7 +6,7 @@
 import apiClient from '@/app/common/api/client';
 import DepartmentApi from '@/domains/common/api/departmentApi';
 import { Button } from '@/shared/components/ui/button';
-import { getCodeName } from '@/shared/utils/codeUtils';
+import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
 import { Close as CloseIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import {
@@ -66,6 +66,8 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   onSelect,
   title = '사원 검색',
 }) => {
+  // 공통코드 데이터 조회
+  const allCodes = useCommonCodes();
 
 
   // 검색 조건 상태
@@ -259,7 +261,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       width: 80,
       renderCell: params => (
         <Typography variant='body2'>
-          {getCodeName('JOB_RANK', params.value) || params.value}
+          {getCodeNameSync(allCodes, 'JOB_RANK', params.value) || params.value}
         </Typography>
       ),
     },

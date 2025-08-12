@@ -374,7 +374,7 @@ const BusinessPlanInspectionDialog: React.FC<BusinessPlanInspectionDialogProps> 
         onClose={handleClose}
         onSave={handleSave}
         onModeChange={handleModeChange}
-        maxWidth='xl'
+        maxWidth='md'
         mode={mode}
         title={mode === 'create' ? '사업계획 점검 등록' : mode === 'edit' ? '사업계획 점검 수정' : '사업계획 점검 조회'}
       >

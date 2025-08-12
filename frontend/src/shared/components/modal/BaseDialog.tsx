@@ -27,6 +27,8 @@ export interface BaseDialogProps {
   disableSave?: boolean;
   customActions?: ReactNode;
   loading?: boolean;
+  showEditButton?: boolean;    // 수정 버튼 표시 여부
+  showSaveButton?: boolean;    // 저장 버튼 표시 여부
 }
 
 const BaseDialog: React.FC<BaseDialogProps> = ({
@@ -41,6 +43,8 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   disableSave = false,
   customActions,
   loading = false,
+  showEditButton = true,
+  showSaveButton = true,
 }) => {
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit';
@@ -139,41 +143,68 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
           p: 2,
           backgroundColor: 'var(--bank-bg-paper)',
           borderTop: '1px solid var(--bank-border)',
+          display: 'flex',
+          gap: 1,
+          justifyContent: 'flex-end',
         }}
       >
-        {customActions || (
-          <>
-            {isViewMode && (
-              <Button
-                variant="contained"
-                onClick={handleEdit}
-                disabled={loading}
-                color="warning"
-              >
-                수정
-              </Button>
-            )}
-            {(isEditMode || isCreateMode) && (
-              <Button
-                variant="contained"
-                onClick={onSave}
-                disabled={disableSave || loading}
-                color="success"
-              >
-                {isCreateMode ? '등록' : '저장'}
-              </Button>
-            )}
-            <Button
-              variant="outlined"
-              onClick={handleCancel}
-              disabled={loading}
-              color="primary"
-              sx={{ ml: 1 }}
-            >
-              {isEditMode ? '취소' : '닫기'}
-            </Button>
-          </>
+        {/* CustomActions가 있으면 먼저 표시 */}
+        {customActions && (
+          <Box sx={{ display: 'flex', gap: 1, mr: 1 }}>
+            {customActions}
+          </Box>
         )}
+        
+        {/* 기본 버튼들 (customActions와 함께 표시 가능) */}
+        {isViewMode && showEditButton && (
+          <Button
+            variant="contained"
+            onClick={handleEdit}
+            disabled={loading}
+            color="warning"
+            sx={{
+              height: '36px !important',
+              minWidth: '80px !important',
+              fontSize: '0.875rem !important',
+              fontWeight: '600 !important',
+              borderRadius: '4px !important',
+            }}
+          >
+            수정
+          </Button>
+        )}
+        {(isEditMode || isCreateMode) && showSaveButton && (
+          <Button
+            variant="contained"
+            onClick={onSave}
+            disabled={disableSave || loading}
+            color="success"
+            sx={{
+              height: '36px !important',
+              minWidth: '80px !important',
+              fontSize: '0.875rem !important',
+              fontWeight: '600 !important',
+              borderRadius: '4px !important',
+            }}
+          >
+            {isCreateMode ? '등록' : '저장'}
+          </Button>
+        )}
+        <Button
+          variant="outlined"
+          onClick={handleCancel}
+          disabled={loading}
+          color="primary"
+          sx={{
+            height: '36px !important',
+            minWidth: '80px !important',
+            fontSize: '0.875rem !important',
+            fontWeight: '600 !important',
+            borderRadius: '4px !important',
+          }}
+        >
+          {isEditMode ? '취소' : '닫기'}
+        </Button>
       </DialogActions>
     </Dialog>
   );

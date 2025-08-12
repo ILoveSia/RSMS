@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS public.handover_assignments CASCADE;
 
 CREATE TABLE public.handover_assignments (
     assignment_id BIGSERIAL PRIMARY KEY,
-    handover_type VARCHAR(20) NOT NULL,             -- 인수인계 유형 (POSITION, RESPONSIBILITY)
+    handover_type VARCHAR(20) NOT NULL,             -- 인수인계 유형 HANDOVER_TYPE (POSITION, RESPONSIBILITY)
     
     -- 인계자 정보
     handover_from_emp_no VARCHAR(20),               -- 인계자 사번
@@ -19,7 +19,7 @@ CREATE TABLE public.handover_assignments (
     actual_end_date TIMESTAMP,                      -- 실제 완료일시
     
     -- 상태 관리
-    status VARCHAR(20) DEFAULT 'PLANNED' NOT NULL,  -- 상태 (PLANNED, IN_PROGRESS, COMPLETED, CANCELLED)
+    status VARCHAR(20) DEFAULT 'PLANNED' NOT NULL,  -- 상태 HANDOVER_STATUS (PLANNED, IN_PROGRESS, COMPLETED, CANCELLED)
     
     -- 비고
     notes TEXT,                                     -- 특이사항
@@ -48,7 +48,5 @@ CREATE TRIGGER update_handover_assignments_updated_at
 
 -- 테이블 코멘트
 COMMENT ON TABLE public.handover_assignments IS '인수인계 지정 관리 테이블';
-COMMENT ON COLUMN public.handover_assignments.position_id IS '직책 ID (positions 테이블 FK)';
 COMMENT ON COLUMN public.handover_assignments.handover_type IS '인수인계 유형 (POSITION: 직책, RESPONSIBILITY: 책무)';
 COMMENT ON COLUMN public.handover_assignments.status IS '상태 (PLANNED: 계획, IN_PROGRESS: 진행중, COMPLETED: 완료, CANCELLED: 취소)';
-COMMENT ON COLUMN public.handover_assignments.progress_rate IS '진행률 (0-100%)';

@@ -3,6 +3,7 @@ package org.itcen.domain.handover.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.common.exception.BusinessException;
+import org.itcen.domain.handover.dto.ApprovalStartRequestDto;
 import org.itcen.domain.handover.dto.DocumentSearchDto;
 import org.itcen.domain.handover.entity.ResponsibilityDocument;
 import org.itcen.domain.handover.repository.ResponsibilityDocumentRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -288,6 +290,73 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         return null;
     }
 
+    // 결재 연동 메소드들
+
+    @Override
+    public Page<ResponsibilityDocumentWithApprovalDto> searchDocumentsWithApproval(DocumentSearchDto searchDto, Pageable pageable) {
+        log.info("결재 연동 검색 - searchDto: {}", searchDto);
+        log.info("Repository 호출 파라미터 - authorEmpNo: '{}', documentTitle: '{}'", 
+                searchDto.getAuthorEmpNo(), searchDto.getDocumentTitle());
+
+        // Native Query로 approval 테이블과 조인해서 데이터 조회
+        Page<Object[]> results = responsibilityDocumentRepository.findBySearchCriteriaWithApproval(
+                searchDto.getAuthorEmpNo(),
+                searchDto.getDocumentTitle(),
+                pageable
+        );
+
+        log.info("검색 결과 개수: {}", results.getTotalElements());
+        return results.map(this::convertObjectArrayToApprovalDto);
+    }
+
+    @Override
+    @Transactional
+    public void startApproval(Long documentId, ApprovalStartRequestDto request) {
+        log.debug("결재 요청 시작 - documentId: {}, taskType: {}", documentId, request.getTaskTypeCode());
+
+        Optional<ResponsibilityDocument> documentOpt = responsibilityDocumentRepository.findById(documentId);
+        if (documentOpt.isEmpty()) {
+            throw new BusinessException("문서를 찾을 수 없습니다. documentId: " + documentId);
+        }
+
+        ResponsibilityDocument document = documentOpt.get();
+        
+        if (document.getStatus() != ResponsibilityDocument.DocumentStatus.DRAFT) {
+            throw new BusinessException("초안 상태의 문서만 결재 요청할 수 있습니다.");
+        }
+
+        // TODO: 실제 구현에서는 approval 테이블에 레코드 생성 필요
+        // 현재는 로그만 출력
+        log.info("결재 요청 생성됨 - documentId: {}, title: {}", documentId, request.getTitle());
+    }
+
+    @Override
+    @Transactional
+    public void approveApproval(Long documentId, String comment) {
+        log.debug("결재 승인 - documentId: {}, comment: {}", documentId, comment);
+
+        // TODO: 실제 구현에서는 approval 테이블 업데이트 및 다음 단계 처리 필요
+        log.info("결재 승인 처리됨 - documentId: {}", documentId);
+    }
+
+    @Override
+    @Transactional
+    public void rejectApproval(Long documentId, String reason) {
+        log.debug("결재 반려 - documentId: {}, reason: {}", documentId, reason);
+
+        // TODO: 실제 구현에서는 approval 테이블 업데이트 및 문서 상태 변경 필요
+        log.info("결재 반려 처리됨 - documentId: {}, reason: {}", documentId, reason);
+    }
+
+    @Override
+    @Transactional
+    public void cancelApproval(Long documentId) {
+        log.debug("결재 취소 - documentId: {}", documentId);
+
+        // TODO: 실제 구현에서는 approval 테이블 상태 변경 필요
+        log.info("결재 취소됨 - documentId: {}", documentId);
+    }
+
     // Private helper methods
 
     private List<ResponsibilityDocumentDto> convertToDto(List<ResponsibilityDocument> documents) {
@@ -345,21 +414,230 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
                 return document.getAuthor() != null ? document.getAuthor().getEmpName() : null;
             }
 
+            // 검토자, 승인자는 approval 테이블에서 관리
+            
             @Override
-            public String getReviewerEmpNo() { return document.getReviewerEmpNo(); }
-
-            @Override
-            public String getReviewerName() {
-                return document.getReviewer() != null ? document.getReviewer().getEmpName() : null;
+            public Long getAttachmentCount() {
+                return document.getAttachments() != null ? (long) document.getAttachments().size() : 0L;
             }
 
             @Override
-            public String getApproverEmpNo() { return document.getApproverEmpNo(); }
-
-            @Override
-            public String getApproverName() {
-                return document.getApprover() != null ? document.getApprover().getEmpName() : null;
+            public List<AttachmentInfo> getAttachments() {
+                if (document.getAttachments() == null) {
+                    return new ArrayList<>();
+                }
+                return document.getAttachments().stream()
+                    .map(attachment -> new AttachmentInfo() {
+                        @Override
+                        public Long getAttachId() { return attachment.getAttachId(); }
+                        @Override
+                        public String getOriginalName() { return attachment.getOriginalName(); }
+                        @Override
+                        public String getStoredName() { return attachment.getStoredName(); }
+                        @Override
+                        public Long getFileSize() { return attachment.getFileSize(); }
+                        @Override
+                        public String getMimeType() { return attachment.getMimeType(); }
+                    })
+                    .collect(Collectors.toList());
             }
         };
+    }
+
+
+    /**
+     * Native Query 결과를 ResponsibilityDocumentWithApprovalDto로 변환
+     */
+    private ResponsibilityDocumentWithApprovalDto convertObjectArrayToApprovalDto(Object[] row) {
+        // 디버깅을 위한 로깅 추가
+        log.info("Converting Object Array to DTO. Array length: {}", row.length);
+        for (int i = 0; i < row.length; i++) {
+            log.info("row[{}] = {} (type: {})", i, row[i], row[i] != null ? row[i].getClass().getName() : "null");
+        }
+        
+        return new ResponsibilityDocumentWithApprovalDto() {
+            @Override
+            public Long getDocumentId() { 
+                return safeLongValue(row[0]); 
+            }
+
+            @Override
+            public Long getPositionId() { return null; }
+
+            @Override
+            public String getPositionName() { return null; }
+
+            @Override
+            public Long getResponsibilityId() { return null; }
+
+            @Override
+            public String getDocumentTitle() { 
+                return safeStringValue(row[1]); 
+            }
+
+            @Override
+            public String getDocumentVersion() { 
+                return safeStringValue(row[2]); 
+            }
+
+            @Override
+            public String getDocumentContent() { 
+                return safeStringValue(row[3]); 
+            }
+
+            @Override
+            public ResponsibilityDocument.DocumentStatus getStatus() { 
+                String statusStr = safeStringValue(row[4]);
+                if (statusStr != null) {
+                    try {
+                        return ResponsibilityDocument.DocumentStatus.valueOf(statusStr);
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid status value: {}", statusStr);
+                        return null;
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            public LocalDate getEffectiveDate() { 
+                return safeDateValue(row[5]); 
+            }
+
+            @Override
+            public LocalDate getExpiryDate() { 
+                return safeDateValue(row[6]); 
+            }
+
+            @Override
+            public String getAuthorEmpNo() { 
+                return safeStringValue(row[7]); 
+            }
+
+            @Override
+            public String getAuthorName() { 
+                return safeStringValue(row[8]); 
+            }
+            
+            // 감사 필드
+            @Override
+            public LocalDate getCreatedAt() {
+                return safeTimestampValue(row[9]); // rd.created_at (인덱스 9)
+            }
+
+            @Override
+            public LocalDate getUpdatedAt() {
+                return safeTimestampValue(row[10]); // rd.updated_at (인덱스 10)
+            }
+
+            @Override
+            public String getCreatedId() {
+                return safeStringValue(row[11]); // rd.created_id (인덱스 11)
+            }
+
+            @Override
+            public String getUpdatedId() {
+                return safeStringValue(row[12]); // rd.updated_id (인덱스 12)
+            }
+            
+            @Override
+            public Long getAttachmentCount() { return 0L; }
+
+            @Override
+            public List<AttachmentInfo> getAttachments() { return new ArrayList<>(); }
+
+            // 결재 관련 필드 (Native Query에서 조회) - 올바른 인덱스 매핑
+            @Override
+            public String getApprovalStatus() {
+                String status = safeStringValue(row[13]); // approval_status (인덱스 13)
+                return status != null ? status : "NONE";
+            }
+
+            @Override
+            public Long getApprovalId() { 
+                return safeLongValue(row[14]); // ap.approval_id (인덱스 14)
+            }
+
+            @Override
+            public String getRequesterId() { 
+                return safeStringValue(row[15]); // ap.requester_id (인덱스 15)
+            }
+
+            @Override
+            public String getRequesterName() { return null; }
+
+            @Override
+            public String getCurrentApproverId() { 
+                return safeStringValue(row[16]); // ap.approver_id (인덱스 16)
+            }
+
+            @Override
+            public String getCurrentApproverName() { return null; }
+
+            @Override
+            public LocalDate getApprovedAt() { 
+                return safeTimestampValue(row[17]); // ap.approval_datetime (인덱스 17)
+            }
+
+            @Override
+            public LocalDate getRejectedAt() { 
+                if ("REJECTED".equals(getApprovalStatus())) {
+                    return safeTimestampValue(row[17]); // ap.approval_datetime (인덱스 17)
+                }
+                return null; 
+            }
+
+            @Override
+            public String getRejectionReason() { 
+                // 추후 comments 필드를 쿼리에 추가할 수 있음
+                return null; 
+            }
+        };
+    }
+
+    // 안전한 타입 변환 헬퍼 메서드들
+    private String safeStringValue(Object obj) {
+        return obj != null ? obj.toString() : null;
+    }
+
+    private Long safeLongValue(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Number) {
+            return ((Number) obj).longValue();
+        }
+        if (obj instanceof String) {
+            try {
+                return Long.valueOf((String) obj);
+            } catch (NumberFormatException e) {
+                log.warn("Cannot convert string to Long: {}", obj);
+                return null;
+            }
+        }
+        log.warn("Unexpected type for Long conversion: {} ({})", obj, obj.getClass().getName());
+        return null;
+    }
+
+    private LocalDate safeDateValue(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof java.sql.Date) {
+            return ((java.sql.Date) obj).toLocalDate();
+        }
+        if (obj instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) obj).toLocalDateTime().toLocalDate();
+        }
+        log.warn("Unexpected type for Date conversion: {} ({})", obj, obj.getClass().getName());
+        return null;
+    }
+
+    private LocalDate safeTimestampValue(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) obj).toLocalDateTime().toLocalDate();
+        }
+        if (obj instanceof java.sql.Date) {
+            return ((java.sql.Date) obj).toLocalDate();
+        }
+        log.warn("Unexpected type for Timestamp conversion: {} ({})", obj, obj.getClass().getName());
+        return null;
     }
 }

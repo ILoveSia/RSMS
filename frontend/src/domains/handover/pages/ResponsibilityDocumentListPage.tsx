@@ -10,17 +10,21 @@
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup, ExcelDownloadButton, Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { CommonCodeSelect } from '@/shared/components/ui/form';
+import { TextField } from '@/shared/components/ui/data-display/';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
-import { Description as DocumentIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { Description as DocumentIcon, Send as SendIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Box, Chip, IconButton, InputAdornment } from '@mui/material';
+import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import React, { useCallback, useEffect, useState } from 'react';
 import { responsibilityDocumentApi, type ResponsibilityDocumentDto } from '../api/responsibilityDocumentApi';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
 import ResponsibilityDocumentDialog from '../components/ResponsibilityDocumentDialog';
 
 
@@ -29,27 +33,51 @@ interface IResponsibilityDocumentListPageProps {
 }
 
 const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPageProps> = (): React.JSX.Element => {
-  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
-  const [selectedPosition, setSelectedPosition] = useState<string>('ALL');
+  const [documentTitle, setDocumentTitle] = useState<string>('');
+  const [authorEmpNo, setAuthorEmpNo] = useState<string>('');
+  const [authorName, setAuthorName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<ResponsibilityDocumentDto[]>([]);
   const [apiResponseData, setApiResponseData] = useState<any>(null);
 
+  // 사원 검색 팝업 상태
+  const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
+
+  // 알림 처리
+  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | undefined>();
+  const [selectedDocumentApprovalStatus, setSelectedDocumentApprovalStatus] = useState<string>('NONE');
 
 
 
-  // 상태 표시 함수
-  const getStatusChip = (status: string) => {
+  // 상태 표시 함수 (결재 연동)
+  const getStatusChip = (status: string, approvalStatus?: string) => {
+    // 결재 상태가 있는 경우 결재 상태 우선 표시
+    if (status === 'DRAFT' && approvalStatus) {
+      if (approvalStatus === 'PENDING') {
+        return <Chip label="결재 시작" color="warning" size="small" />;
+      }
+      if (approvalStatus === 'IN_PROGRESS') {
+        return <Chip label="결재 진행중" color="info" size="small" />;
+      }
+      if (approvalStatus === 'COMPLETED') {
+        return <Chip label="결재 완료" color="success" size="small" />;
+      }
+      if (approvalStatus === 'REJECTED') {
+        return <Chip label="결재 반려" color="error" size="small" />;
+      }
+    }
+    
     const statusConfig = {
       DRAFT: { label: '초안', color: 'default' as const },
       REVIEW: { label: '검토중', color: 'warning' as const },
-      APPROVED: { label: '승인됨', color: 'info' as const },
+      APPROVED: { label: '승인됨', color: 'success' as const },
       PUBLISHED: { label: '발행됨', color: 'success' as const },
     };
     const config = statusConfig[status as keyof typeof statusConfig] || { label: status, color: 'default' as const };
@@ -98,7 +126,58 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       width: 120,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => getStatusChip(params.value),
+      renderCell: params => getStatusChip(params.value, params.row.status),
+    },
+    {
+      field: 'approvalStatus',
+      headerName: '결재상태',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        const status = params.row.approvalStatus;
+        let statusText = '';
+        let statusColor = '#666';
+
+        switch (status) {
+          case 'NONE':
+            statusText = '미결재';
+            statusColor = '#999';
+            break;
+          case 'SUBMITTED':
+              statusText = '상신';
+              statusColor = '#2196f3';
+              break;  
+          case 'IN_PROGRESS':
+            statusText = '진행중';
+            statusColor = '#ff9800';
+            break;
+          case 'APPROVED':
+            statusText = '승인';
+            statusColor = '#4caf50';
+            break;
+          case 'REJECTED':
+            statusText = '반려';
+            statusColor = '#f44336';
+            break;
+          default:
+            statusText = status || '미결재';
+            statusColor = '#999';
+        }
+
+        return (
+          <Box
+            component="span"
+            sx={{
+              color: statusColor,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
+          >
+            {statusText}
+          </Box>
+        );
+      },
     },
     {
       field: 'authorName',
@@ -106,6 +185,24 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       width: 120,
       align: 'center',
       headerAlign: 'center',
+    },
+    {
+      field: 'attachmentCount',
+      headerName: '첨부파일',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: params => {
+        const count = params.value as number || 0;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+            📎
+            <span style={{ fontSize: '0.875rem', color: count > 0 ? 'var(--bank-primary)' : '#999' }}>
+              {count}
+            </span>
+          </Box>
+        );
+      },
     },
     {
       field: 'effectiveDate',
@@ -168,14 +265,20 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
 
     try {
       const searchParams = {
-        status: selectedStatus !== 'ALL' ? selectedStatus : undefined,
+        documentTitle: documentTitle.trim() || undefined,
+        authorEmpNo: authorEmpNo.trim() || undefined,
       };
 
-      const data = await responsibilityDocumentApi.searchDocuments(
+      console.log('검색 파라미터:', searchParams);
+      console.log('Pagination 파라미터:', { page: 0, size: 100 });
+
+      // 결재 테이블과 조인하여 검색
+      const data = await responsibilityDocumentApi.searchDocumentsWithApproval(
         searchParams,
         { page: 0, size: 100 }
       );
 
+      console.log('API 응답 데이터:', data);
       setRows(data.content);
       setApiResponseData(data);
     } catch (err) {
@@ -184,7 +287,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
     } finally {
       setLoading(false);
     }
-  }, [selectedStatus]);
+  }, [documentTitle, authorEmpNo]);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
@@ -193,18 +296,21 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
   const handleCreateClick = useCallback(() => {
     setDialogMode('create');
     setSelectedDocumentId(undefined);
+    setSelectedDocumentApprovalStatus('NONE');
     setDialogOpen(true);
   }, []);
 
   const handleRowDoubleClick = useCallback((row: ResponsibilityDocumentDto) => {
     setDialogMode('view');
     setSelectedDocumentId(row.documentId);
+    setSelectedDocumentApprovalStatus(row.approvalStatus || 'NONE');
     setDialogOpen(true);
   }, []);
 
   const handleRowClick = useCallback((row: ResponsibilityDocumentDto) => {
     setDialogMode('view');
     setSelectedDocumentId(row.documentId);
+    setSelectedDocumentApprovalStatus(row.approvalStatus || 'NONE');
     setDialogOpen(true);
   }, []);
 
@@ -239,11 +345,45 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
     setSelectedDocumentId(undefined);
+    setSelectedDocumentApprovalStatus('NONE');
   }, []);
 
   const handleDialogSuccess = useCallback(async () => {
     await handleSearch(); // 데이터 새로고침
   }, [handleSearch]);
+
+  // 결재 요청 처리
+  const handleApprovalStart = useCallback(async (document: ResponsibilityDocumentDto) => {
+    if (!document.documentId) {
+      showError('문서 ID가 없습니다.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await responsibilityDocumentApi.startApproval(document.documentId, {
+        taskTypeCode: 'responsibility_documents',
+        taskId: document.documentId,
+        title: `책무기술서 결재 - ${document.documentTitle}`,
+        description: `책무기술서 "${document.documentTitle}" 결재를 요청합니다.`
+      });
+      
+      showSuccess('결재 요청이 완료되었습니다.');
+      await handleSearch(); // 데이터 새로고침
+    } catch (error) {
+      console.error('결재 요청 실패:', error);
+      showError('결재 요청 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [showSuccess, showError, handleSearch]);
+
+  // 사원 선택 핸들러
+  const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
+    setAuthorEmpNo(employee.num);
+    setAuthorName(employee.username);
+    setAuthorSearchOpen(false);
+  }, []);
 
   return (
     <PageContainer>
@@ -281,27 +421,53 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
             borderRadius: '4px',
           }}
         >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>상태</span>
-          <CommonCodeSelect
-            groupCode="RESPONSIBILITY_STATUS"
-            value={selectedStatus}
-            onChange={setSelectedStatus}
-            size='small'
-            sx={{ minWidth: 120, maxWidth: 180 }}
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>문서제목</span>
+          <TextField
+            value={documentTitle}
+            onChange={(e) => setDocumentTitle(e.target.value)}
+            size="small"
+            placeholder="문서제목을 입력하세요"
+            sx={{ minWidth: 150, maxWidth: 200 }}
           />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
-          <CommonCodeSelect
-            groupCode="POSITION_TYPE"
-            value={selectedPosition}
-            onChange={setSelectedPosition}
-            size='small'
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>작성자</span>
+          <TextField
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            size="small"
+            placeholder="작성자명"
+            helperText={authorEmpNo ? `사번: ${authorEmpNo}` : ''}
             sx={{ minWidth: 120, maxWidth: 180 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setAuthorSearchOpen(true)}
+                    size="small"
+                    edge="end"
+                    title="사원 검색"
+                  >
+                    <SearchIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           <SearchButton
             onClick={handleSearch}
             loading={loading}
             disabled={loading}
           />
+          <Button
+            onClick={() => {
+              setDocumentTitle('');
+              setAuthorEmpNo('');
+              setAuthorName('');
+            }}
+            variant="outlined"
+            size="small"
+          >
+            초기화
+          </Button>
         </Box>
 
         <Box sx={{
@@ -372,8 +538,25 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
         onClose={handleDialogClose}
         mode={dialogMode}
         documentId={selectedDocumentId}
+        approvalStatus={selectedDocumentApprovalStatus}
         onSuccess={handleDialogSuccess}
         apiResponseData={apiResponseData}
+      />
+      
+      {/* 사원 검색 팝업 */}
+      <EmployeeSearchPopup
+        open={authorSearchOpen}
+        onClose={() => setAuthorSearchOpen(false)}
+        onSelect={handleAuthorSelect}
+        title="작성자 검색"
+      />
+
+      {/* 알림 토스트 */}
+      <Toast
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
       />
     </PageContainer>
   );

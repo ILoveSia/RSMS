@@ -600,10 +600,41 @@ This codebase follows enterprise-grade patterns with clear separation of concern
 ## 📋 인수인계관리 시스템 개발 계획 (진행 중)
 
 ### 개발 상태: 분석 완료, 구현 대기
-- **분석 완료일**: 2025-01-04
+- **분석 완료일**: 2025-01-04  
+- **최종 업데이트**: 2025-08-11
 - **예상 개발 기간**: 13일 (3단계 구현)
 - **개발 우선순위**: 높음
 - **현재 상태**: Phase 1 구현 준비 완료
+
+### 🔄 최근 완료된 준비 작업 (2025-08-11)
+
+#### ✅ BaseDialog 아키텍처 개선
+- **customActions와 기본 버튼 통합**: customActions(결재 버튼)와 기본 버튼들(수정, 저장, 닫기)을 함께 표시
+- **스타일링 통일**: 모든 버튼 높이 36px, 최소 너비 80px, 폰트 크기 0.875rem으로 통일
+- **확장성 확보**: 다른 Dialog들도 동일한 패턴으로 쉽게 적용 가능
+
+#### ✅ AttachmentController API 수정  
+- **URL 매핑 수정**: `/attachments` → `/common/attachments`로 프론트엔드 API 호출과 일치
+- **쿼리 파라미터 지원**: `?entityType=responsibility_documents&entityId=1` 형태 지원
+- **에러 해결**: "No static resource common/attachments" 500 에러 해결
+
+#### ✅ ResponsibilityDocument 시스템 완성
+- **첨부파일 연동**: OneToMany 관계로 attachment 테이블 조인, WHERE 절로 entity_type 필터링
+- **결재 시스템 통합**: approval 테이블과 연동, ApprovalActionButton 컴포넌트 활용
+- **데이터베이스 정리**: approver_id 컬럼 삭제 후 approval 테이블로 완전 이관
+- **COALESCE 패턴**: `COALESCE(approval.appr_stat_cd, 'NONE') as "approvalStatus"` 구현
+
+#### ✅ Dialog 패턴 표준화 완료
+- **ResponsibilityDocumentDialog**: BaseDialog 기본 기능 활용하도록 개선
+- **HodICItemDialog**: 중복 버튼 로직 제거, BaseDialog 표준 기능 사용  
+- **코드 중복 제거**: 수정/저장/닫기 버튼 로직을 BaseDialog에서 통합 관리
+- **유지보수성 향상**: 버튼 관련 수정사항은 BaseDialog에서만 관리
+
+### 🎯 검증 완료된 기능들
+- **결재상신 버튼**: approvalStatus가 'NONE'일 때 정상 표시
+- **버튼 조합**: 결재상신 + 수정 + 닫기 버튼 3개 동시 표시 확인  
+- **첨부파일 API**: `/api/common/attachments` 엔드포인트 정상 동작
+- **approval 조인**: JPQL LEFT JOIN FETCH로 최적화된 데이터 조회
 
 ### 🎯 구현 대상 화면 (4개)
 

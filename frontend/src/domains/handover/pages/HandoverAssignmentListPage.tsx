@@ -110,6 +110,29 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
       renderCell: params => getStatusChip(params.value),
     },
     {
+      field: 'notes',
+      headerName: '비고',
+      width: 200,
+      align: 'left',
+      headerAlign: 'center',
+      renderCell: params => {
+        const notes = params.value || '';
+        return (
+          <Box
+            sx={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '180px',
+            }}
+            title={notes} // 툴팁으로 전체 내용 표시
+          >
+            {notes}
+          </Box>
+        );
+      },
+    },
+    {
       field: 'plannedStartDate',
       headerName: '목표시작일자',
       width: 120,
@@ -330,7 +353,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>상태</span>
           <CommonCodeSelect
-            groupCode="ASSIGNMENT_STATUS"
+            groupCode="HANDOVER_TYPE"
             value={selectedStatus}
             onChange={setSelectedStatus}
             size='small'
@@ -338,7 +361,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>유형</span>
           <CommonCodeSelect
-            groupCode="ASSIGNMENT_TYPE"
+            groupCode="HANDOVER_STATUS"
             value={selectedAssignmentType}
             onChange={setSelectedAssignmentType}
             size='small'

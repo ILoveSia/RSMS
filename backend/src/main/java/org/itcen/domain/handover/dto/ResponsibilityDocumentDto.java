@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.itcen.domain.handover.entity.ResponsibilityDocument;
-import org.itcen.domain.handover.service.ResponsibilityDocumentService;
 
 import java.time.LocalDate;
 
@@ -36,10 +35,7 @@ public class ResponsibilityDocumentDto {
     private LocalDate expiryDate;
     private String authorEmpNo;
     private String authorName;
-    private String reviewerEmpNo;
-    private String reviewerName;
-    private String approverEmpNo;
-    private String approverName;
+    // 검토자, 승인자는 approval 테이블에서 관리
     
     // 계산된 필드들
     private boolean isValid;

@@ -29,19 +29,27 @@ import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
+import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
 import { DatePicker } from '@/shared/components/ui/form';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { ResponsibilityDocumentApi, type ResponsibilityDocumentDto, type ResponsibilityDocument } from '../api/responsibilityDocumentApi';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
+import { uploadAttachment, getAttachments, downloadAttachment, deleteAttachment, type AttachmentInfo as CommonAttachmentInfo } from '@/domains/common/api/attachmentApi';
 
 interface ResponsibilityDocumentDialogProps {
   open: boolean;
   onClose: () => void;
   mode: 'create' | 'edit' | 'view';
   documentId?: number;
+  approvalStatus?: string;
   onSuccess?: () => void;
   apiResponseData?: any;
 }
+
+// CommonAttachmentInfo를 그대로 사용
+type AttachmentInfo = CommonAttachmentInfo;
 
 interface FormData {
   documentTitle: string;
@@ -52,10 +60,6 @@ interface FormData {
   expiryDate: Date | null;
   authorEmpNo: string;
   authorName: string;
-  reviewerEmpNo: string;
-  reviewerName: string;
-  approverEmpNo: string;
-  approverName: string;
 }
 
 const initialFormData: FormData = {
@@ -67,17 +71,22 @@ const initialFormData: FormData = {
   expiryDate: null,
   authorEmpNo: '',
   authorName: '',
-  reviewerEmpNo: '',
-  reviewerName: '',
-  approverEmpNo: '',
-  approverName: '',
 };
+
+// LoginUser 타입 (loginStore용)
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+}
 
 const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> = ({
   open,
   onClose,
   mode: initialMode,
   documentId,
+  approvalStatus,
   onSuccess,
   apiResponseData,
 }) => {
@@ -87,10 +96,21 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 로그인 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+  const currentUserId = loginData?.userid || null;
+
   // 사원 검색 팝업 상태
   const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
-  const [reviewerSearchOpen, setReviewerSearchOpen] = useState(false);
-  const [approverSearchOpen, setApproverSearchOpen] = useState(false);
+  
+  // 첨부파일 상태
+  const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 알림 처리
+  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
 
 
@@ -102,6 +122,26 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   const isViewMode = mode === 'view';
   const isCreateMode = mode === 'create';
   const isEditMode = mode === 'edit';
+
+  // 결재 상신 버튼 표시 여부 판단
+  const shouldShowApprovalButton = () => {
+    return (approvalStatus === 'NONE' || !approvalStatus) && documentId && formData.status === 'DRAFT';
+  };
+
+  // 결재현황 버튼 표시 여부 판단 (결재가 진행중일 때)
+  const shouldShowApprovalStatusButton = () => {
+    return approvalStatus !== 'NONE' && approvalStatus && documentId;
+  };
+
+  // 수정 버튼 표시 여부 판단 - 결재상태가 NONE일 때만 수정 가능
+  const shouldShowEditButton = () => {
+    return approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined;
+  };
+
+  // 저장 버튼 표시 여부 판단 - 결재상태가 NONE이고 편집모드일 때만 저장 가능
+  const shouldShowSaveButton = () => {
+    return (approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && isEditMode;
+  };
 
   // 공통코드 배열 추출 함수
   const getCodesArray = useCallback((): CommonCode[] => {
@@ -164,10 +204,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
           expiryDate: parseDate(documentData.expiryDate),
           authorEmpNo: documentData.authorEmpNo || '',
           authorName: documentData.authorName || '',
-          reviewerEmpNo: documentData.reviewerEmpNo || '',
-          reviewerName: documentData.reviewerName || '',
-          approverEmpNo: documentData.approverEmpNo || '',
-          approverName: documentData.approverName || '',
         });
       }
 
@@ -186,22 +222,33 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
 
   // 데이터 로드
   useEffect(() => {
-    if (open && documentId && (isEditMode || isViewMode)) {
-      loadDocumentData();
-    } else if (open && isCreateMode) {
-      setFormData(initialFormData);
-      setError(null);
+    if (open) {
+      // 다이얼로그가 열릴 때 mode를 initialMode로 리셋
+      setMode(initialMode);
+      
+      if (documentId && (initialMode === 'edit' || initialMode === 'view')) {
+        loadDocumentData();
+        // loadAttachments는 loadDocumentData 완료 후 별도 useEffect에서 호출
+      } else if (initialMode === 'create') {
+        setFormData(initialFormData);
+        setError(null);
+        setAttachments([]);
+      }
     }
   }, [
     open,
     documentId,
-    mode,
-    isEditMode,
-    isViewMode,
-    isCreateMode,
+    initialMode,
     loadDocumentData,
     apiResponseData,
   ]);
+
+  // 첨부파일 로드 (documentId가 있을 때만)
+  useEffect(() => {
+    if (open && documentId && (mode === 'edit' || mode === 'view')) {
+      loadAttachments();
+    }
+  }, [open, documentId, mode]);
 
   const handleInputChange = (field: keyof FormData, value: string | number | Date | null) => {
     setFormData(prev => ({
@@ -255,8 +302,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         effectiveDate: formatDate(formData.effectiveDate),
         expiryDate: formatDate(formData.expiryDate),
         authorEmpNo: formData.authorEmpNo,
-        reviewerEmpNo: formData.reviewerEmpNo,
-        approverEmpNo: formData.approverEmpNo,
       };
 
       if (isCreateMode) {
@@ -279,6 +324,14 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
 
   const handleClose = () => {
     if (saving) return;
+    // 다이얼로그 닫힐 때 mode를 initialMode로 리셋
+    setMode(initialMode);
+    // 파일 상태 초기화
+    setSelectedFile(null);
+    setUploadingFiles(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     onClose();
   };
 
@@ -300,22 +353,156 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     setAuthorSearchOpen(false);
   };
 
-  const handleReviewerSelect = (employee: EmployeeSearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      reviewerEmpNo: employee.num,
-      reviewerName: employee.username,
-    }));
-    setReviewerSearchOpen(false);
-  };
+  // 파일 크기 포맷팅 함수
+  const formatFileSize = useCallback((bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }, []);
 
-  const handleApproverSelect = (employee: EmployeeSearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      approverEmpNo: employee.num,
-      approverName: employee.username,
-    }));
-    setApproverSearchOpen(false);
+  // 파일 선택 핸들러
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0]; // 첫 번째 파일만 선택
+    
+    // 파일 크기 검증 (10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      showError('파일 크기는 10MB를 초과할 수 없습니다.');
+      return;
+    }
+
+    setSelectedFile(file);
+  }, [showError]);
+
+  // 첨부파일 목록 로드
+  const loadAttachments = useCallback(async () => {
+    if (!documentId) return;
+
+    try {
+      const result = await getAttachments('responsibility_documents', documentId);
+      setAttachments(Array.isArray(result) ? result : []);
+    } catch (error) {
+      console.error('첨부파일 로드 실패:', error);
+    }
+  }, [documentId]);
+
+  // 파일 업로드 핸들러
+  const handleFileUpload = useCallback(async () => {
+    if (!selectedFile || !documentId) {
+      showError('문서를 먼저 저장한 후 파일을 업로드해주세요.');
+      return;
+    }
+
+    try {
+      setUploadingFiles(true);
+      
+      await uploadAttachment(selectedFile, {
+        entityType: 'responsibility_documents',
+        entityId: documentId,
+        uploadedBy: currentUserId || 'system'
+      });
+      
+      showSuccess('파일이 업로드되었습니다.');
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      // 첨부파일 목록 새로고침
+      await loadAttachments();
+      
+    } catch (error) {
+      console.error('파일 업로드 실패:', error);
+      showError(error instanceof Error ? error.message : '파일 업로드 중 오류가 발생했습니다.');
+    } finally {
+      setUploadingFiles(false);
+    }
+  }, [selectedFile, documentId, currentUserId, showSuccess, showError, loadAttachments]);
+
+  // 파일 다운로드 핸들러
+  const handleFileDownload = useCallback(async (attachment: AttachmentInfo) => {
+    try {
+      const blob = await downloadAttachment(attachment.attachId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', attachment.originalFilename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('파일 다운로드 실패:', error);
+      showError(error instanceof Error ? error.message : '파일 다운로드 중 오류가 발생했습니다.');
+    }
+  }, [showError]);
+
+  // 파일 삭제 핸들러
+  const handleFileDelete = useCallback(async (attachment: AttachmentInfo) => {
+    if (!confirm(`"${attachment.originalFilename}" 파일을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      await deleteAttachment(attachment.attachId, currentUserId || 'system');
+      showSuccess('파일이 삭제되었습니다.');
+      await loadAttachments();
+      
+    } catch (error) {
+      console.error('파일 삭제 실패:', error);
+      showError(error instanceof Error ? error.message : '파일 삭제 중 오류가 발생했습니다.');
+    }
+  }, [showSuccess, showError, loadAttachments, currentUserId]);
+
+  // 커스텀 액션 버튼들 생성
+  const renderCustomActions = () => {
+    const actions = [];
+
+    // 결재 상신 버튼 (approvalStatus가 NONE이고 documentId가 있을 때)
+    if (shouldShowApprovalButton() && documentId) {
+      actions.push(
+        <ApprovalActionButton
+          key="approval-submit"
+          taskType="responsibility_documents"
+          taskId={documentId}
+          taskTitle={`책무기술서 - ${formData.documentTitle || '문서명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="medium"
+          variant="contained"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    // 결재현황 버튼 (approvalStatus가 NONE이 아니고 documentId가 있을 때 - 결재가 진행중)
+    if (shouldShowApprovalStatusButton() && documentId) {
+      actions.push(
+        <ApprovalActionButton
+          key="approval-status"
+          taskType="responsibility_documents"
+          taskId={documentId}
+          taskTitle={`책무기술서 - ${formData.documentTitle || '문서명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="medium"
+          variant="outlined"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    return actions.length > 0 ? actions : undefined;
   };
 
   return (
@@ -325,9 +512,16 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         onClose={handleClose}
         onSave={handleSave}
         onModeChange={handleModeChange}
-        maxWidth='lg'
+        maxWidth='md'
         mode={mode}
-        title={mode === 'create' ? '책무기술서 등록' : mode === 'edit' ? '책무기술서 수정' : '책무기술서 조회'}
+        title={(() => {
+          if (mode === 'create') return '책무기술서 등록';
+          if (mode === 'edit') return '책무기술서 수정';
+          return '책무기술서 조회';
+        })()}
+        customActions={renderCustomActions()}
+        showEditButton={shouldShowEditButton()}
+        showSaveButton={shouldShowSaveButton()}
       >
         <DialogContent sx={{
           p: 3,
@@ -513,55 +707,128 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                   />
                 </Grid>
 
-                {/* 검토자 */}
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label='검토자'
-                    value={formData.reviewerName}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                    helperText={formData.reviewerEmpNo ? `사번: ${formData.reviewerEmpNo}` : ''}
-                    InputProps={{
-                      endAdornment: !isViewMode && (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setReviewerSearchOpen(true)}
+                {/* 첨부파일 섹션 */}
+                <Grid item xs={12}>
+                  <Box sx={{ 
+                    border: '1px solid var(--bank-border)',
+                    borderRadius: '4px',
+                    p: 2,
+                    backgroundColor: 'var(--bank-bg-secondary)',
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>📎 첨부파일</span>
+                        <span style={{ fontSize: '0.8rem', color: '#666' }}>
+                          ({attachments.length}개)
+                        </span>
+                      </Box>
+                    </Box>
+                    
+                    {/* 새 파일 업로드 (create/edit 모드) */}
+                    {!isViewMode && (
+                      <Box sx={{ mb: 2 }}>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            hidden
+                            accept="*/*"
+                            onChange={handleFileSelect}
+                          />
+                          <Button
+                            variant="outlined"
                             size="small"
-                            edge="end"
+                            onClick={() => fileInputRef.current?.click()}
+                            sx={{ 
+                              height: '32px', 
+                              fontSize: '0.75rem',
+                            }}
                           >
-                            <SearchIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
+                            파일선택
+                          </Button>
+                          {selectedFile && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <span style={{ fontSize: '0.8rem' }}>{selectedFile.name}</span>
+                              {documentId && (
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={handleFileUpload}
+                                  disabled={uploadingFiles}
+                                  sx={{ height: '28px', fontSize: '0.75rem' }}
+                                >
+                                  {uploadingFiles ? '업로드 중...' : '업로드'}
+                                </Button>
+                              )}
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                    )}
+                    
+                    {/* 기존 첨부파일 목록 */}
+                    <Box sx={{ maxHeight: '150px', overflow: 'auto' }}>
+                      {attachments.length === 0 && !selectedFile ? (
+                        <Box sx={{ 
+                          textAlign: 'center', 
+                          py: 2, 
+                          color: '#999',
+                          fontSize: '0.875rem'
+                        }}>
+                          첨부파일이 없습니다.
+                        </Box>
+                      ) : (
+                        attachments.map((attachment) => (
+                          <Box
+                            key={attachment.attachId}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              py: 1,
+                              px: 1.5,
+                              borderRadius: '4px',
+                              backgroundColor: '#f8f9fa',
+                              mb: 1,
+                              border: '1px solid #e0e0e0',
+                              '&:last-child': { mb: 0 }
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                              <span style={{ fontSize: '0.875rem' }}>📄</span>
+                              <span style={{ fontSize: '0.875rem', flex: 1 }}>
+                                {attachment.originalFilename}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: '#666' }}>
+                                {formatFileSize(attachment.fileSize)}
+                              </span>
+                            </Box>
+                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleFileDownload(attachment)}
+                                title="다운로드"
+                              >
+                                📥
+                              </IconButton>
+                              {!isViewMode && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleFileDelete(attachment)}
+                                  title="삭제"
+                                  sx={{ color: 'error.main' }}
+                                >
+                                  🗑️
+                                </IconButton>
+                              )}
+                            </Box>
+                          </Box>
+                        ))
+                      )}
+                    </Box>
+                  </Box>
                 </Grid>
 
-                {/* 승인자 */}
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    label='승인자'
-                    value={formData.approverName}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                    helperText={formData.approverEmpNo ? `사번: ${formData.approverEmpNo}` : ''}
-                    InputProps={{
-                      endAdornment: !isViewMode && (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setApproverSearchOpen(true)}
-                            size="small"
-                            edge="end"
-                          >
-                            <SearchIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
               </Grid>
             </>
           )}
@@ -582,18 +849,12 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         title="작성자 검색"
       />
 
-      <EmployeeSearchPopup
-        open={reviewerSearchOpen}
-        onClose={() => setReviewerSearchOpen(false)}
-        onSelect={handleReviewerSelect}
-        title="검토자 검색"
-      />
-
-      <EmployeeSearchPopup
-        open={approverSearchOpen}
-        onClose={() => setApproverSearchOpen(false)}
-        onSelect={handleApproverSelect}
-        title="승인자 검색"
+      {/* Toast 알림 */}
+      <Toast
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
       />
     </>
   );

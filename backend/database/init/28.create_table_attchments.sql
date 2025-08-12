@@ -18,7 +18,7 @@ CREATE TABLE public.attachments (
     mime_type varchar(100) NULL,             -- MIME 타입 (예: image/png, application/pdf)
     
     -- 업무별 구분을 위한 필드들
-    entity_type varchar(50) NOT NULL,        -- 연결된 엔티티 타입 (예: 'LEDGER_MGMT_STRUCTURE_SUBMISSION')
+    entity_type varchar(50) NOT NULL,        -- 연결된 엔티티 타입 (예: 'rm_submit_mgmt' x테이블블)
     entity_id int8 NOT NULL,                 -- 해당 엔티티의 ID
     content_type varchar(100) NULL,          -- 콘텐츠 타입 (업무별 구분용, entity_type과 동일하게 사용 가능)
     

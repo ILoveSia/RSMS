@@ -30,6 +30,8 @@ import {
   TextField,
   Typography,
   useTheme,
+  Autocomplete,
+  CircularProgress,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
@@ -81,6 +83,15 @@ interface CommonCode {
   description?: string;
 }
 
+// 사용자 옵션 타입
+interface UserOption {
+  userid: string;
+  username: string;
+  email?: string;
+  deptNm?: string;
+  positionNm?: string;
+}
+
 interface Menu {
   id: number;
   menuCode: string;
@@ -121,17 +132,74 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
   const { showSuccess, showError } = useToastHelpers();
 
   // 상태 관리
-  const [userid, setUserid] = useState('testuser');
+  const [userid, setUserid] = useState('');
+  const [selectedUser, setSelectedUser] = useState<UserOption | null>(null);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
 
+  // 사용자 목록 로드
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setUsersLoading(true);
+        const response = await apiClient.get<any[]>('/admin/users');
+        const userOptions: UserOption[] = response
+          .filter(user => user.userId && user.userName) // userId와 userName이 있는 사용자만 포함
+          .map((user, index) => ({
+            userid: user.userId || `user-${index}`,
+            username: user.userName || '알 수 없는 사용자',
+            email: user.email || '',
+            deptNm: user.departmentName || '',
+            positionNm: user.positionName || '',
+          }));
+        console.log('🔍 [Login] 사용자 목록 조회 성공:', userOptions);
+        setUsers(userOptions);
+        
+        // testuser를 기본값으로 설정
+        const defaultUser = userOptions.find(user => user.userid === 'testuser');
+        if (defaultUser) {
+          setSelectedUser(defaultUser);
+          console.log('✅ [Login] 기본 사용자 설정:', defaultUser);
+        }
+      } catch (error) {
+        console.error('❌ [Login] 사용자 목록 조회 실패:', error);
+        // API 호출 실패 시 하드코딩된 사용자 목록으로 대체
+        const fallbackUsers: UserOption[] = [
+          { userid: 'admin', username: '관리자', email: 'admin@itcen.com', deptNm: 'IT부서', positionNm: '부장' },
+          { userid: 'testuser', username: '테스트사용자', email: 'test@itcen.com', deptNm: '기획부서', positionNm: '팀장' },
+          { userid: 'user01', username: '사용자01', email: 'user01@itcen.com', deptNm: '영업부서', positionNm: '대리' },
+        ];
+        setUsers(fallbackUsers);
+        const defaultUser = fallbackUsers.find(user => user.userid === 'testuser');
+        if (defaultUser) {
+          setSelectedUser(defaultUser);
+        }
+      } finally {
+        setUsersLoading(false);
+      }
+    };
+    
+    loadUsers();
+  }, []);
+
   // 폼 유효성 검사
   useEffect(() => {
     setIsFormValid(userid.trim().length > 0 && password.trim().length > 0);
   }, [userid, password]);
+
+  // 선택된 사용자 변경 시 userid 업데이트
+  useEffect(() => {
+    if (selectedUser?.userid && !selectedUser.userid.startsWith('user-')) {
+      setUserid(selectedUser.userid);
+    } else {
+      setUserid('');
+    }
+  }, [selectedUser]);
 
   // 로그인 데이터 변경 시 console에 출력
   useEffect(() => {
@@ -455,36 +523,72 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
             {/* 로그인 폼 */}
             <Box component='form' onSubmit={handleLogin} noValidate>
               <Stack spacing={3}>
-                <TextField
+                <Autocomplete
                   fullWidth
                   id='userid'
-                  name='userid'
-                  label='사용자 ID'
-                  value={userid}
-                  onChange={e => setUserid(e.target.value)}
-                  autoComplete='username'
-                  autoFocus
-                  required
-                  variant='outlined'
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position='start'>
-                        <AccountCircle sx={{ color: 'text.secondary' }} />
-                      </InputAdornment>
-                    ),
+                  options={users}
+                  getOptionLabel={(option) => {
+                    const username = option.username || '알 수 없음';
+                    const userid = option.userid || 'N/A';
+                    return `${username} (${userid})`;
                   }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        boxShadow: `0 4px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
-                      },
-                      '&.Mui-focused': {
-                        boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                      },
-                    },
+                  renderOption={(props, option, { index }) => {
+                    const { key, ...otherProps } = props;
+                    const safeKey = option.userid || `option-${index}`;
+                    return (
+                      <Box component="li" key={safeKey} {...otherProps}>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="body1" component="div">
+                            {option.username || '알 수 없는 사용자'}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {option.userid || 'N/A'} {option.deptNm && `• ${option.deptNm}`} {option.positionNm && `• ${option.positionNm}`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
                   }}
+                  value={selectedUser}
+                  onChange={(_, newValue) => {
+                    setSelectedUser(newValue);
+                  }}
+                  loading={usersLoading}
+                  noOptionsText="사용자를 찾을 수 없습니다"
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="사용자 선택"
+                      variant="outlined"
+                      required
+                      autoFocus
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <AccountCircle sx={{ color: 'text.secondary' }} />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <React.Fragment>
+                            {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </React.Fragment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            boxShadow: `0 4px 8px ${alpha(theme.palette.primary.main, 0.15)}`,
+                          },
+                          '&.Mui-focused': {
+                            boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
+                          },
+                        },
+                      }}
+                    />
+                  )}
                 />
 
                 <TextField
@@ -606,10 +710,10 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
                   <Stack spacing={0.5}>
                     <Typography variant='caption' color='text.secondary'>
-                      React 18.2, Spring Boot 3.5, PostgreSQL 17 ✅
+                      React 18.2, TypeScript 5.8.3  ✅
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      TypeScript 5.8.3, Redis 7.4  ✅
+                     Spring Boot 3.5, PostgreSQL 17, Redis 7.4  ✅
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
                       Material-UI v5 기반 모던 디자인 시스템 ✅

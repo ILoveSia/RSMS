@@ -327,7 +327,7 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--bank-text-primary)', marginLeft: '16px' }}>상태</span>
           <CommonCodeSelect
-            groupCode="INSPECTION_STATUS"
+            groupCode="HANDOVER_STATUS"
             value={selectedStatus}
             onChange={setSelectedStatus}
             size='small'

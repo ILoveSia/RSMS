@@ -10,9 +10,11 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import org.itcen.domain.employee.entity.Employee;
+import org.itcen.domain.common.entity.Attachment;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 책무기술서 관리 엔티티
@@ -99,30 +101,13 @@ public class ResponsibilityDocument {
     private Employee author;
 
     /**
-     * 검토자 사번
+     * 첨부파일 목록 (ONE-TO-MANY)
      */
-    @Column(name = "reviewer_emp_no", length = 20)
-    private String reviewerEmpNo;
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "entity_id", referencedColumnName = "document_id", insertable = false, updatable = false)
+    @org.hibernate.annotations.Where(clause = "entity_type = 'responsibility_documents' AND deleted_yn = 'N'")
+    private List<Attachment> attachments;
 
-    /**
-     * 검토자 정보 (JOIN)
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewer_emp_no", insertable = false, updatable = false)
-    private Employee reviewer;
-
-    /**
-     * 승인자 사번
-     */
-    @Column(name = "approver_emp_no", length = 20)
-    private String approverEmpNo;
-
-    /**
-     * 승인자 정보 (JOIN)
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approver_emp_no", insertable = false, updatable = false)
-    private Employee approver;
 
     /**
      * 생성일시
@@ -165,7 +150,7 @@ public class ResponsibilityDocument {
      */
     public void submitForReview(String reviewerEmpNo) {
         this.status = DocumentStatus.REVIEW;
-        this.reviewerEmpNo = reviewerEmpNo;
+        // 검토자는 approval 테이블에서 관리
     }
 
     /**
@@ -173,7 +158,7 @@ public class ResponsibilityDocument {
      */
     public void approve(String approverEmpNo) {
         this.status = DocumentStatus.APPROVED;
-        this.approverEmpNo = approverEmpNo;
+        // 승인자는 approval 테이블에서 관리
     }
 
     /**
@@ -193,8 +178,7 @@ public class ResponsibilityDocument {
      */
     public void revertToDraft() {
         this.status = DocumentStatus.DRAFT;
-        this.reviewerEmpNo = null;
-        this.approverEmpNo = null;
+        // 검토자, 승인자는 approval 테이블에서 관리
     }
 
     /**

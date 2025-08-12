@@ -650,123 +650,9 @@ interface ResponsibilityDetail {
       );
     }
 
-    // 수정 버튼 (결재상태가 NONE일 때)
-    if (shouldShowEditButton() && isViewMode) {
-      actions.push(
-        <Button
-          key="edit-button"
-          variant="contained"
-          onClick={() => handleModeChange('edit')}
-          disabled={loading}
-          color="warning"
-          size="medium"
-          sx={{
-            height: '36px !important',
-            minWidth: '80px !important',
-            fontSize: '0.875rem !important',
-            fontWeight: '600 !important',
-            borderRadius: '4px !important',
-          }}
-        >
-          수정
-        </Button>
-      );
-    }
+    // 기본 버튼들(수정, 저장, 닫기)은 BaseDialog가 처리하므로 제거
 
-    // 저장 버튼 (edit 모드이면서 결재상태가 NONE일 때)
-    if (shouldShowSaveButton()) {
-      actions.push(
-        <Button
-          key="save-button"
-          variant="contained"
-          onClick={handleSave}
-          disabled={saving || loading}
-          color="success"
-          size="medium"
-          sx={{
-            height: '36px !important',
-            minWidth: '80px !important',
-            fontSize: '0.875rem !important',
-            fontWeight: '600 !important',
-            borderRadius: '4px !important',
-          }}
-        >
-          저장
-        </Button>
-      );
-    }
-
-    // 취소/닫기 버튼
-    actions.push(
-      <Button
-        key="close-button"
-        variant="outlined"
-        onClick={() => {
-          if (isEditMode) {
-            // 취소 버튼: edit 모드에서 view 모드로 변경
-            setMode('view');
-          } else {
-            // 닫기 버튼: 다이얼로그 닫기
-            handleClose();
-          }
-        }}
-        disabled={loading}
-        color="primary"
-        size="medium"
-        style={{
-          height: '36px',
-          minWidth: '80px',
-          fontSize: '0.875rem',
-          fontWeight: 600,
-          borderRadius: '4px',
-        }}
-        sx={{
-          height: '36px !important',
-          minWidth: '80px !important',
-          fontSize: '0.875rem !important',
-          fontWeight: '600 !important',
-          borderRadius: '4px !important',
-        }}
-      >
-        {isEditMode ? '취소' : '닫기'}
-      </Button>
-    );
-
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 1,
-        alignItems: 'center',
-        '& .MuiButton-root': {
-          height: '36px !important',
-          minWidth: '80px !important',
-          fontSize: '0.875rem !important',
-          fontWeight: '600 !important',
-          borderRadius: '4px !important',
-        },
-        // ButtonGroup 내부 버튼들도 통일
-        '& .MuiButtonGroup-root .MuiButton-root': {
-          height: '36px !important',
-          minWidth: '80px !important',
-          fontSize: '0.875rem !important',
-          fontWeight: '600 !important',
-          borderRadius: '4px !important',
-        },
-        // ButtonGroup 전체 스타일
-        '& .MuiButtonGroup-root': {
-          '& .MuiButton-root:first-of-type': {
-            borderTopRightRadius: '0 !important',
-            borderBottomRightRadius: '0 !important',
-          },
-          '& .MuiButton-root:last-of-type': {
-            borderTopLeftRadius: '0 !important',
-            borderBottomLeftRadius: '0 !important',
-          },
-        },
-      }}>
-        {actions}
-      </Box>
-    );
+    return actions.length > 0 ? actions : undefined;
   };
 
   return (
@@ -780,6 +666,8 @@ interface ResponsibilityDetail {
         mode={mode}
         title={mode === 'create' ? '내부통제항목 등록' : mode === 'edit' ? '내부통제항목 수정' : '내부통제항목 조회'}
         customActions={renderCustomActions()}
+        showEditButton={shouldShowEditButton()}
+        showSaveButton={shouldShowSaveButton()}
       >
 
         <DialogContent sx={{ 

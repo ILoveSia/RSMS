@@ -133,7 +133,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
     if (!itemId) return;
 
     try {
-      const attachmentList = await getAttachments('LEDGER_MGMT_STRUCTURE_SUBMISSION', itemId);
+      const attachmentList = await getAttachments('rm_submit_mgmt', itemId);
       setAttachments(attachmentList);
     } catch (error) {
       console.error('첨부파일 목록 로드 실패:', error);
@@ -312,7 +312,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         if (targetEntityId) {
           try {
             await uploadAttachment(selectedFile, {
-              entityType: 'LEDGER_MGMT_STRUCTURE_SUBMISSION',
+              entityType: 'rm_submit_mgmt',
               entityId: targetEntityId,
               uploadedBy: 'system'
             });
