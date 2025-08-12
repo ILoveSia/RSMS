@@ -5,7 +5,7 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import DataGrid from '@/shared/components/ui/data-display/DataGrid';
-import { ExcelDownloadButton, SearchButton, Button } from '@/shared/components/ui/button';
+import { ExcelDownloadButton, SearchButton, Button, RefreshButton } from '@/shared/components/ui/button';
 import { TextField, InputAdornment, Box } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import QnaDetailDialog from '../components/QnaDetailDialog';
@@ -13,6 +13,8 @@ import QnaCreateDialog from '../components/QnaCreateDialog';
 import type { QnaListResponseDto } from '@/app/types/qna';
 import type { GridSortModel } from '@mui/x-data-grid';
 import qnaApi from '../api/qnaApi';
+import { QnaStatus } from '@/app/types/qna';
+import { useToastHelpers } from '@/shared/components/ui/feedback/ToastProvider';
 
 interface QnaPageProps {
   className?: string;
@@ -33,6 +35,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [creating, setCreating] = useState(false);
   const [createKey, setCreateKey] = useState(0);
+  const { showError } = useToastHelpers();
 
   const loadAllData = useCallback(async () => {
     try {
@@ -164,8 +167,14 @@ const QnaPage: React.FC<QnaPageProps> = () => {
             onClick={() => { setPage(1); }}
             loading={loading}
             disabled={loading}
+            sx={{ height: '36px' }}
           />
           <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+            <RefreshButton
+              size="small"
+              disabled={loading}
+              onClick={async () => { setPage(1); await loadAllData(); }}
+            />
             {selectedIds.length > 0 && (
               <Button
                 size="small"
@@ -180,6 +189,13 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                     const userJson = userRaw ? JSON.parse(userRaw) : {};
                     const userId = userJson?.userid || 'anonymous';
                     const userName = userJson?.username || '익명';
+                    // 상태 검사: 답변완료(ANSWERED) 또는 종료(CLOSED) 항목은 삭제 불가 처리
+                    const blocked = allRows.filter(r => selectedIds.includes(Number(r.id)) && (r.status === QnaStatus.ANSWERED || r.status === QnaStatus.CLOSED));
+                    if (blocked.length > 0) {
+                      showError('답변완료 또는 종료된 항목은 삭제할 수 없습니다. 선택에서 제외해 주세요.');
+                      return;
+                    }
+
                     await qnaApi.deleteQnaBulk(selectedIds, { userId, userName });
                     setSelectedIds([]);
                     await loadAllData();
@@ -196,8 +212,9 @@ const QnaPage: React.FC<QnaPageProps> = () => {
               filename="qna_list"
               disabled={loading}
               loading={loading}
+              sx={{ height: '36px' }}
             />
-            <Button size="small" onClick={() => { setCreateKey(k => k + 1); setCreateOpen(true); }}>
+            <Button size="small" onClick={() => { setCreateKey(k => k + 1); setCreateOpen(true); }} sx={{ height: '36px' }}>
               등록
             </Button>
           </Box>

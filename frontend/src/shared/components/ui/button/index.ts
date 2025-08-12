@@ -19,6 +19,9 @@ export type { ManagementButtonGroupProps } from './ManagementButtonGroup';
 export { default as PermissionButton } from './PermissionButton';
 export type { PermissionButtonProps } from './PermissionButton';
 
+export { default as RefreshButton } from './RefreshButton';
+export type { RefreshButtonProps } from './RefreshButton';
+
 // 향후 추가될 버튼 컴포넌트들
 // export { default as IconButton } from './IconButton';
 // export { default as LoadingButton } from './LoadingButton';

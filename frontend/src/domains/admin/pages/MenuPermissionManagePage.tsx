@@ -37,7 +37,7 @@ import {
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ExcelDownloadButton, RefreshButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import { adminApi } from '../api/adminApi';
@@ -340,21 +340,7 @@ const MenuPermissionManagePage: React.FC = () => {
             >
               {saving ? '저장 중...' : `변경사항 저장 (${changes.size})`}
             </Button>
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={loadMatrix}
-              disabled={loading}
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
-            >
-              새로고침
-            </Button>
+            <RefreshButton size="small" disabled={loading} onClick={loadMatrix} />
           </Box>
         </Box>
 

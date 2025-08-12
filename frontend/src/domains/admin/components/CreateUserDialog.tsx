@@ -301,7 +301,14 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
         <SharedButton
           variant="outlined"
           color="error"
-          size="small"
+          size="medium"
+          sx={{
+            height: '36px !important',
+            minWidth: '80px !important',
+            fontSize: '0.875rem !important',
+            fontWeight: '600 !important',
+            borderRadius: '4px !important',
+          }}
           onClick={() => setConfirmOpen(true)}
         >
           삭제

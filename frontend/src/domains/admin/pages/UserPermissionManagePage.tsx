@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, CircularProgress, Chip, IconButton, FormControl, Select, MenuItem, Avatar, Paper } from '@mui/material';
-import { Refresh as RefreshIcon, Edit as EditIcon, Person as PersonIcon, Clear as ClearIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Person as PersonIcon, Clear as ClearIcon } from '@mui/icons-material';
 import { PersonAddAlt1 as PersonAddAlt1Icon } from '@mui/icons-material';
 
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, ExcelDownloadButton, Button as SharedButton } from '@/shared/components/ui/button';
+import { SearchButton, ExcelDownloadButton, Button as SharedButton, RefreshButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 // no-op
@@ -306,21 +306,7 @@ const UserPermissionManagePage: React.FC = () => {
             초기화
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={loadData}
-              disabled={loading}
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
-            >
-              새로고침
-            </Button>
+            <RefreshButton size="small" disabled={loading} onClick={loadData} />
           </Box>
         </Box>
 
