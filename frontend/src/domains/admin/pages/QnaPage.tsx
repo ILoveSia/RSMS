@@ -173,7 +173,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           loading={loading}
           error={error}
           columns={[
-            { field: 'category', headerName: '카테고리', width: 140 },
+            { field: 'category', headerName: '카테고리', width: 140, align: 'center' },
             {
               field: 'title',
               headerName: '제목',
@@ -188,11 +188,11 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                 </span>
               ),
             },
-            { field: 'questionerName', headerName: '작성자', width: 120 },
-            { field: 'createdAtFormatted', headerName: '작성일', width: 140 },
-            { field: 'statusDescription', headerName: '상태', width: 120 },
-            { field: 'priorityDescription', headerName: '우선순위', width: 120 },
-            { field: 'viewCount', headerName: '조회수', width: 100 },
+            { field: 'questionerName', headerName: '작성자', width: 120, align: 'center' },
+            { field: 'createdAtFormatted', headerName: '작성일', width: 140, align: 'center' },
+            { field: 'statusDescription', headerName: '상태', width: 120, align: 'center' },
+            { field: 'priorityDescription', headerName: '우선순위', width: 120, align: 'center' },
+            { field: 'viewCount', headerName: '조회수', width: 100, align: 'center' },
           ]}
           pagination={pagination}
           serverSide

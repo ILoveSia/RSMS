@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
+import { Button } from '@/shared/components/ui/button';
 import { Box, Chip, Divider, Typography } from '@mui/material';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import type { QnaDetailResponseDto } from '../api/qnaApi';
@@ -18,7 +19,15 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'view' | 'edit' | 'onlyRead'>('onlyRead');
-  const isEditable = useMemo(() => detail?.status === 'PENDING', [detail?.status]);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [editForm, setEditForm] = useState({
+    department: '',
+    title: '',
+    content: '',
+    category: '',
+    answerContent: '',
+  });
+  const [savingAnswer, setSavingAnswer] = useState(false);
   const { showSuccess } = useToastHelpers();
 
   useEffect(() => {
@@ -33,7 +42,17 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
         const data = await qnaApi.getQnaDetail(qnaId);
         setDetail(data);
         // 상태에 따라 초기 모드 결정: PENDING이면 보기 모드(수정 버튼 노출), 아니면 읽기 전용
-        setMode(data.status === 'PENDING' ? 'view' : 'onlyRead');
+        const editable = data.status === 'PENDING';
+        setCanEdit(editable);
+        setMode(editable ? 'view' : 'onlyRead');
+        // 편집 폼 초기화
+        setEditForm({
+          department: data.department || '',
+          title: data.title || '',
+          content: data.content || '',
+          category: data.category || '',
+          answerContent: data.answerContent || '',
+        });
       } catch (e: any) {
         setError(e?.message || 'Q&A 상세를 불러오지 못했습니다.');
         setDetail(null);
@@ -47,7 +66,7 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
   return (
     <BaseDialog
       open={open}
-      mode={isEditable ? mode : 'onlyRead'}
+      mode={canEdit ? mode : 'onlyRead'}
       title="Q&A 상세"
       maxWidth="md"
       onClose={() => { setMode('onlyRead'); onClose(); }}
@@ -56,21 +75,17 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
         if (!detail || mode !== 'edit') return;
         try {
           setLoading(true);
-          // 업데이트 API (백엔드는 PENDING일 때만 허용)
           await qnaApi.updateQna(detail.id, {
-            department: detail.department,
-            title: detail.title,
-            content: detail.content,
+            department: editForm.department,
+            title: editForm.title,
+            content: editForm.content,
             priority: detail.priority as any,
-            category: detail.category,
+            category: editForm.category,
             isPublic: detail.isPublic,
           });
           showSuccess('수정이 완료되었습니다.');
           onSaved?.();
-          setMode('onlyRead');
           onClose();
-          // 저장 후 최신 데이터 재조회
-          // (닫으므로 재조회는 생략)
         } finally {
           setLoading(false);
         }
@@ -95,35 +110,35 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
           )}
           <Divider sx={{ my: 1 }} />
           <Typography variant="subtitle1">질문</Typography>
-          {isEditable && mode === 'edit' ? (
+          {canEdit && mode === 'edit' ? (
             <>
               <TextField
                 size="small"
                 label="담당업무/부서"
-                value={detail.department}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetail({ ...detail, department: e.target.value })}
+                value={editForm.department}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
                 mode="editable"
               />
               <TextField
                 size="small"
                 label="제목"
-                value={detail.title}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetail({ ...detail, title: e.target.value })}
+                value={editForm.title}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
                 mode="editable"
               />
               <TextField
                 size="small"
                 label="내용"
-                value={detail.content}
+                value={editForm.content}
                 multiline minRows={4}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetail({ ...detail, content: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
                 mode="editable"
               />
               <TextField
                 size="small"
                 label="카테고리"
-                value={detail.category || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDetail({ ...detail, category: e.target.value })}
+                value={editForm.category}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
                 mode="editable"
               />
             </>
@@ -135,6 +150,44 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
           <Typography variant="subtitle1">답변</Typography>
           {detail.answerContent && detail.answerContent.trim() ? (
             <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{detail.answerContent}</Typography>
+          ) : canEdit ? (
+            <>
+              <TextField
+                size="small"
+                label="답변 내용"
+                value={editForm.answerContent}
+                multiline minRows={4}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, answerContent: e.target.value }))}
+                mode="editable"
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="caption" color="text.secondary">등록 시 상태가 ANSWERED로 변경됩니다.</Typography>
+                <Button
+                  size="small"
+                  color="success"
+                  loading={savingAnswer}
+                  onClick={async () => {
+                    if (!detail) return;
+                    try {
+                      setSavingAnswer(true);
+                      const userRaw = localStorage.getItem('user');
+                      const userJson = userRaw ? JSON.parse(userRaw) : {};
+                      const userId = userJson?.userid || 'anonymous';
+                      const userName = userJson?.username || '익명';
+                      await qnaApi.addAnswer(detail.id, { answerContent: editForm.answerContent || '' }, { userId, userName });
+                      showSuccess('답변이 등록되었습니다.');
+                      onSaved?.();
+                      onClose();
+                    } finally {
+                      setSavingAnswer(false);
+                    }
+                  }}
+                  disabled={!editForm.answerContent.trim()}
+                >
+                  답변 저장
+                </Button>
+              </Box>
+            </>
           ) : (
             <Typography variant="body2" color="text.secondary">등록된 답변이 없습니다.</Typography>
           )}

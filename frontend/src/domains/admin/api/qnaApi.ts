@@ -111,6 +111,32 @@ export const qnaApi = {
   },
 
   /**
+   * Q&A 답변 등록
+   */
+  addAnswer: async (
+    id: number,
+    data: { answerContent: string },
+    user: { userId: string; userName: string }
+  ): Promise<void> => {
+    return apiClient.post<void>(`/qna/${id}/answer`, data, {
+      headers: {
+        'X-User-Id': user.userId,
+        'X-User-Name': user.userName,
+      },
+    });
+  },
+
+  /**
+   * Q&A 답변 수정
+   */
+  updateAnswer: async (
+    id: number,
+    data: { answerContent: string },
+  ): Promise<void> => {
+    return apiClient.put<void>(`/qna/${id}/answer`, data);
+  },
+
+  /**
    * Q&A 생성
    */
   createQna: async (
