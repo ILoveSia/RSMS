@@ -12,7 +12,7 @@ import Toast from '@/shared/components/ui/feedback/Toast';
 // no-op
 import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
 import { adminApi } from '../api/adminApi';
-import UserEditDialog from '@/domains/admin/components/UserEditDialog';
+// import UserEditDialog from '@/domains/admin/components/UserEditDialog';
 import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
 import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
 import type { UserWithRoles, Role, UserFilter, UserRoleInfo, EmployeeBasic } from '../types';
@@ -514,12 +514,14 @@ const UserPermissionManagePage: React.FC = () => {
           </Paper>
         </Box>
 
-        <UserEditDialog
+        {/* 사용자 관리 다이얼로그 (등록/수정 겸용) */}
+        <CreateUserDialog
           open={editDialogOpen}
+          mode="edit"
           user={selectedUser}
           roles={roles}
           onClose={() => setEditDialogOpen(false)}
-          onSaved={handleRolesSaved}
+          onSaved={(u) => handleRolesSaved(u)}
           onDeleted={handleUserDeleted}
         />
       </PageContent>
@@ -527,6 +529,7 @@ const UserPermissionManagePage: React.FC = () => {
       {/* 사용자 등록 다이얼로그 */}
       <CreateUserDialog
         open={createDialogOpen}
+        mode="create"
         roles={roles}
         onClose={closeCreateDialog}
         onCreated={handleCreated}

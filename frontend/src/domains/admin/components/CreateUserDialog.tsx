@@ -11,17 +11,25 @@ import {
 } from '@mui/icons-material';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { adminApi } from '../api/adminApi';
-import type { CreateUserRequest, Role } from '../types';
+import type { CreateUserRequest, Role, UpdateUserRequest, UserWithRoles } from '../types';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Confirm from '@/shared/components/modal/Confirm';
+import SharedButton from '@/shared/components/ui/button/Button';
 
 export interface CreateUserDialogProps {
   open: boolean;
   roles: Role[];
   onClose: () => void;
+  /** 기본값 'create' */
+  mode?: 'create' | 'edit';
+  /** 편집 모드일 때 채울 사용자 */
+  user?: UserWithRoles | null;
   onCreated?: () => void;
+  onSaved?: (updated: UserWithRoles) => void;
+  onDeleted?: (userId: string) => void;
 }
 
-const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClose, onCreated }) => {
+const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClose, mode = 'create', user, onCreated, onSaved, onDeleted }) => {
   const { showError, showSuccess } = useSnackbar();
   const [saving, setSaving] = useState(false);
   type FormState = { userId: string; userName: string; email: string; empNo: string };
@@ -37,6 +45,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
   const [touched, setTouched] = useState({ userId: false, email: false, password: false, userName: false, mobile: false });
   const [submitErrors, setSubmitErrors] = useState<string[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<'userId' | 'userName' | 'email' | 'address' | 'mobile' | 'password' | 'empNo', string[]>>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const reset = useCallback(() => {
     setForm({ userId: '', userName: '', email: '', empNo: '' });
@@ -45,13 +54,28 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
     setTouched({ userId: false, email: false, password: false, userName: false, mobile: false });
   }, []);
 
-  const emailValid = useMemo(() => /.+@.+\..+/.test(form.email.trim()), [form.email]);
+  // 이메일: 공백/공간 금지, '@' 정확히 1개, 도메인에 '.' 포함
+  const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()), [form.email]);
   const mobileValid = useMemo(() => /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/.test(mobile.trim()), [mobile]);
   const passwordValid = useMemo(() => password.trim().length >= 8, [password]);
-  const disabled = useMemo(
-    () => !form.userId.trim() || !form.userName.trim() || !emailValid || !passwordValid || !address.trim() || !mobileValid,
-    [form.userId, form.userName, emailValid, passwordValid, address, mobileValid]
-  );
+  const disabled = useMemo(() => {
+    if (mode === 'create') {
+      return !form.userId.trim()
+        || !form.userName.trim()
+        || !form.email.trim()
+        || !emailValid
+        || !passwordValid
+        || !address.trim()
+        || !mobile.trim()
+        || !mobileValid;
+    }
+    // edit 모드: 비밀번호/주소는 선택 입력 허용, 단 이메일/전화는 형식 맞아야 함
+    return !form.userName.trim()
+      || !form.email.trim()
+      || !emailValid
+      || !mobile.trim()
+      || !mobileValid;
+  }, [address, emailValid, mobileValid, mode, passwordValid, form.userId, form.userName]);
 
   const toggleRole = useCallback((roleId: string) => {
     setSelectedRoles(prev => (prev.includes(roleId) ? prev.filter(id => id !== roleId) : [...prev, roleId]));
@@ -60,34 +84,86 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
   const handleSave = useCallback(async () => {
     try {
       setSaving(true);
-      const payload: CreateUserRequest = {
-        // 백엔드 DTO(UserDto.CreateRequest)의 필드명(id, username)에 맞춰 전달
-        id: form.userId.trim(),
-        username: form.userName.trim(),
-        email: form.email.trim(),
-        // 필수 입력값(빈값 불가)
-        address: address.trim(),
-        mobile: mobile.trim(),
-        password: password,
-        // 선택값
-        num: form.empNo?.trim() || undefined,
-      };
-      await adminApi.createUser(payload);
-      showSuccess('사용자가 등록되었습니다.');
-      onCreated?.();
-      reset();
+      if (mode === 'create') {
+        const payload: CreateUserRequest = {
+          id: form.userId.trim(),
+          username: form.userName.trim(),
+          email: form.email.trim(),
+          address: address.trim(),
+          mobile: mobile.trim(),
+          password: password,
+          num: form.empNo?.trim() || undefined,
+        };
+        const created = await adminApi.createUser(payload);
+        // 초기 역할 할당 (선택 시)
+        if (selectedRoles.length > 0) {
+          await adminApi.updateUserRoles(created.userId, selectedRoles);
+        }
+        showSuccess('사용자가 등록되었습니다.');
+        onCreated?.();
+        reset();
+        onClose();
+        return;
+      }
+
+      // edit 모드
+      if (!user) return;
+      const updatePayload: UpdateUserRequest = {};
+      if (form.userName.trim()) updatePayload.username = form.userName.trim();
+      if (form.email.trim()) updatePayload.email = form.email.trim();
+      if (address.trim()) updatePayload.address = address.trim();
+      if (mobile.trim()) updatePayload.mobile = mobile.trim();
+      // 비밀번호는 수정 API에서 지원하지 않으므로 전송하지 않음
+      if (form.empNo?.trim()) updatePayload.num = form.empNo.trim();
+
+      const updated = await adminApi.updateUser(user.userId, updatePayload);
+      // 역할 일괄 업데이트
+      await adminApi.updateUserRoles(user.userId, selectedRoles);
+
+      // 콜백에 최신 정보 전달(역할은 UI 기준 반영)
+      const merged: UserWithRoles = {
+        ...user,
+        userName: updated.username || user.userName,
+        email: updated.email || user.email,
+        empNo: updated.num || user.empNo,
+        address: updated.address || user.address,
+        mobile: updated.mobile || user.mobile,
+        roles: roles
+          .filter(r => selectedRoles.includes(r.roleId))
+          .map(r => ({
+            roleId: r.roleId,
+            roleName: r.roleName,
+            roleDescription: r.roleDescription,
+            assignedAt: new Date().toISOString(),
+            assignedBy: 'current-user',
+            isActive: true,
+          })),
+      } as UserWithRoles;
+
+      showSuccess('사용자 정보가 업데이트되었습니다.');
+      onSaved?.(merged);
       onClose();
     } catch (e: any) {
-      // 백엔드 에러 메시지 표시 (중복 이메일 등)
-      const message = e?.message || '사용자 등록에 실패했습니다.';
+      const message = e?.message || (mode === 'create' ? '사용자 등록에 실패했습니다.' : '사용자 업데이트에 실패했습니다.');
       showError(message);
-      // 다이얼로그 내부 상세 표시 및 필드 매핑
       const details = e?.details;
       const messages: string[] = [];
       const newFieldErrors: Partial<Record<'userId' | 'userName' | 'email' | 'address' | 'mobile' | 'password' | 'empNo', string[]>> = {};
       const pushField = (field: keyof typeof newFieldErrors, msg: string) => {
         if (!newFieldErrors[field]) newFieldErrors[field] = [];
         newFieldErrors[field]!.push(msg);
+      };
+      const fieldLabel = (backendField: string): string => {
+        switch (backendField) {
+          case 'id': return '사용자 ID';
+          case 'username': return '성명';
+          case 'email': return '이메일';
+          case 'address': return '주소';
+          case 'mobile': return '전화번호';
+          case 'password': return '비밀번호';
+          case 'num': return '사번';
+          default: return backendField;
+        }
       };
       const mapBackendFieldToUi = (field: string): keyof typeof newFieldErrors | undefined => {
         switch (field) {
@@ -109,7 +185,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
           const msg = m[2];
           const uiField = mapBackendFieldToUi(backendField);
           if (uiField) pushField(uiField, msg);
-          else messages.push(`${backendField}: ${msg}`);
+          messages.push(`${fieldLabel(backendField)}: ${msg}`);
         }
         if (messages.length === 0 && Object.keys(newFieldErrors).length === 0 && details.trim()) messages.push(details.trim());
       } else if (details && typeof details === 'object') {
@@ -121,10 +197,19 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             if (backendField && msg) {
               const uiField = mapBackendFieldToUi(backendField);
               if (uiField) pushField(uiField, msg);
-              else messages.push(`${backendField}: ${msg}`);
+              messages.push(`${fieldLabel(backendField)}: ${msg}`);
             } else if (msg) {
               messages.push(msg);
             }
+          });
+        }
+        // ApiResponse.data 가 { fieldName: errorMessage } 형태인 경우 처리
+        if (obj && obj.data && typeof obj.data === 'object' && !Array.isArray(obj.data)) {
+          Object.entries(obj.data as Record<string, unknown>).forEach(([backendField, val]) => {
+            const msg = String(val ?? '유효하지 않은 값입니다.');
+            const uiField = mapBackendFieldToUi(backendField);
+            if (uiField) pushField(uiField, msg);
+            messages.push(`${fieldLabel(backendField)}: ${msg}`);
           });
         }
         if (messages.length === 0 && typeof obj.message === 'string') messages.push(obj.message);
@@ -135,24 +220,93 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
     } finally {
       setSaving(false);
     }
-  }, [form.email, form.empNo, form.userId, form.userName, onClose, onCreated, reset, selectedRoles, address, mobile, password]);
+  }, [address, emailValid, mobileValid, mode, onClose, onCreated, onSaved, password, reset, roles, selectedRoles, showError, showSuccess, user, form.userId, form.userName, form.email, form.empNo]);
 
-  // 입력 변경 시 서버 에러 초기화
+  // 입력 변경 시 서버 에러 초기화 및 모드 변경/유저 변경 시 초기화
   useEffect(() => {
     if (submitErrors.length > 0) setSubmitErrors([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.userId, form.userName, form.email, form.empNo, address, mobile, password]);
 
+  // 모드/유저에 따른 초기값 설정
+  useEffect(() => {
+    if (!open) return;
+    if (mode === 'create') {
+      reset();
+      setAddress('');
+      setMobile('');
+      setPassword('');
+      setSelectedRoles([]);
+      setConfirmOpen(false);
+      return;
+    }
+    // edit 모드
+    if (user) {
+      setForm({
+        userId: user.userId || '',
+        userName: user.userName || '',
+        email: user.email || '',
+        empNo: user.empNo || user.employee?.num || '',
+      });
+      setAddress(user.address || '');
+      setMobile(user.mobile || user.employee?.mobile || '');
+      setPassword('');
+      setSelectedRoles(user.roles.filter(r => r.isActive).map(r => r.roleId));
+      setTouched({ userId: false, email: false, password: false, userName: false, mobile: false });
+      setFieldErrors({});
+      setSubmitErrors([]);
+      setConfirmOpen(false);
+    }
+  }, [mode, open, reset, user]);
+
+  // 편집 모드에서 상세 정보 가져와 주소/전화 등 채우기
+  useEffect(() => {
+    let mounted = true;
+    const fetchDetail = async () => {
+      if (!open || mode !== 'edit' || !user) return;
+      try {
+        const detail = await adminApi.getUserDetail(user.userId);
+        if (!mounted) return;
+        setForm(prev => ({
+          ...prev,
+          userName: detail.username || prev.userName,
+          email: detail.email || prev.email,
+          empNo: detail.num || prev.empNo,
+        }));
+        setAddress(detail.address || '');
+        setMobile(detail.mobile || '');
+      } catch (e) {
+        // 무시: 주소/전화 미표시일 수 있음
+      }
+    };
+    fetchDetail();
+    return () => {
+      mounted = false;
+    };
+  }, [open, mode, user]);
+
   return (
+    <>
     <BaseDialog
       open={open}
-      mode="create"
-      title="사용자 등록"
+      mode={mode}
+      title={mode === 'create' ? '사용자 등록' : '사용자 편집'}
       maxWidth="md"
       onClose={() => { reset(); onClose(); }}
+      onModeChange={() => { onClose(); }}
       onSave={handleSave}
       disableSave={disabled}
       loading={saving}
+      customActions={mode === 'edit' ? (
+        <SharedButton
+          variant="outlined"
+          color="error"
+          size="small"
+          onClick={() => setConfirmOpen(true)}
+        >
+          삭제
+        </SharedButton>
+      ) : undefined}
     >
       {/* 서버 검증/비즈니스 에러 표시 */}
       {submitErrors.length > 0 && (
@@ -177,7 +331,8 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             size="small"
             fullWidth
             required
-            error={(touched.userId && !form.userId.trim()) || !!fieldErrors.userId?.length}
+            disabled={mode === 'edit'}
+            error={(mode === 'create' && (touched.userId && !form.userId.trim())) || !!fieldErrors.userId?.length}
             helperText={(touched.userId && !form.userId.trim()) ? '필수 입력' : (fieldErrors.userId?.[0] || ' ')}
           />
           <TextField
@@ -190,11 +345,18 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             size="small"
             fullWidth
             required
-            error={(touched.email && (!emailValid || !form.email.trim())) || !!fieldErrors.email?.length}
+            error={
+              (!!form.email && !emailValid) // 값이 있고 형식이 틀리면 즉시 에러
+              || (touched.email && !form.email.trim()) // 블러 이후 비어있으면 에러
+              || !!fieldErrors.email?.length
+            }
             helperText={
-              touched.email
-                ? (!form.email.trim() ? '필수 입력' : (!emailValid ? '올바른 이메일 형식이 아닙니다' : (fieldErrors.email?.[0] || ' ')))
-                : (fieldErrors.email?.[0] || ' ')
+              fieldErrors.email?.[0]
+                || (!!form.email && !emailValid
+                      ? '올바른 이메일 형식이 아닙니다'
+                      : (touched.email && !form.email.trim()
+                          ? '필수 입력'
+                          : ' '))
             }
           />
           <TextField
@@ -206,12 +368,20 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
             size="small"
             fullWidth
-            required
-            error={(touched.password && (!passwordValid || !password.trim())) || !!fieldErrors.password?.length}
+            required={mode === 'create'}
+            error={
+              (mode === 'create' && (touched.password && (!passwordValid || !password.trim())))
+              || (mode === 'edit' && password.trim().length > 0 && !passwordValid)
+              || !!fieldErrors.password?.length
+            }
             helperText={
-              touched.password
-                ? (!password.trim() ? '필수 입력' : (!passwordValid ? '8자 이상 입력해주세요' : (fieldErrors.password?.[0] || ' ')))
-                : (fieldErrors.password?.[0] || ' ')
+              mode === 'create'
+                ? (touched.password
+                    ? (!password.trim() ? '필수 입력' : (!passwordValid ? '8자 이상 입력해주세요' : (fieldErrors.password?.[0] || ' ')))
+                    : (fieldErrors.password?.[0] || ' '))
+                : (password.trim().length > 0 && !passwordValid
+                    ? '8자 이상 입력해주세요'
+                    : (fieldErrors.password?.[0] || ' '))
             }
             InputProps={{
               startAdornment: (
@@ -286,7 +456,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
             onChange={(e) => { setSubmitErrors([]); setFieldErrors(prev => ({ ...prev, address: undefined })); setAddress(e.target.value); }}
             size="small"
             fullWidth
-            required
+            required={mode === 'create'}
             error={!!fieldErrors.address?.length}
             helperText={fieldErrors.address?.[0] || ' '}
           />
@@ -309,9 +479,9 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
         </Box>
       </Box>
 
-      {/* 초기 역할 할당 */}
+      {/* 역할 설정 */}
       <Box sx={{ gridColumn: '1 / -1' }}>
-        <Typography variant="overline" sx={{ color: 'text.secondary' }}>초기 역할 할당</Typography>
+        <Typography variant="overline" sx={{ color: 'text.secondary' }}>{mode === 'create' ? '초기 역할 할당' : '역할 설정'}</Typography>
         <Divider sx={{ my: 0.5 }} />
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxHeight: 120, overflowY: 'auto' }}>
           {roles.map(role => {
@@ -333,6 +503,31 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
         </Box>
       </Box>
     </BaseDialog>
+
+    <Confirm
+      open={confirmOpen}
+      title="사용자 삭제"
+      message="정말로 이 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+      confirmText="삭제"
+      cancelText="취소"
+      onConfirm={async () => {
+        if (!user) return;
+        try {
+          setSaving(true);
+          await adminApi.deleteUser(user.userId);
+          showSuccess('사용자가 삭제되었습니다.');
+          onDeleted?.(user.userId);
+          setConfirmOpen(false);
+          onClose();
+        } catch (e: any) {
+          showError(e?.message || '사용자 삭제에 실패했습니다.');
+        } finally {
+          setSaving(false);
+        }
+      }}
+      onCancel={() => setConfirmOpen(false)}
+    />
+    </>
   );
 };
 

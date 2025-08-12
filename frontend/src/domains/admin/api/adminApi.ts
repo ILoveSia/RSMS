@@ -11,7 +11,9 @@ import type {
   PermissionStatistics,
   MenuPermissionStat,
   RolePermissionStat,
-  CreateUserRequest
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserDetailResponse
 } from '../types';
 
 /**
@@ -68,6 +70,20 @@ export const adminApi = {
   createUser: async (payload: CreateUserRequest): Promise<UserWithRoles> => {
     // 백엔드 사용자 생성 API에 맞춰 경로 수정
     const response = await apiClient.post<UserWithRoles>('/users', payload);
+    return response;
+  },
+
+  /**
+   * 사용자 수정
+   */
+  updateUser: async (id: string, payload: UpdateUserRequest): Promise<UserDetailResponse> => {
+    const response = await apiClient.put<UserDetailResponse>(`/users/${id}`, payload);
+    return response;
+  },
+
+  /** 사용자 상세 조회 */
+  getUserDetail: async (id: string): Promise<UserDetailResponse> => {
+    const response = await apiClient.get<UserDetailResponse>(`/users/${id}`);
     return response;
   },
 

@@ -140,6 +140,8 @@ public class UserDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UpdateRequest {
+        @Size(min = 3, max = 50, message = "사용자명은 3-50자 사이여야 합니다.")
+        private String username;
         
         @Size(max = 100, message = "이메일은 100자를 초과할 수 없습니다.")
         @Email(message = "올바른 이메일 형식이 아닙니다.")

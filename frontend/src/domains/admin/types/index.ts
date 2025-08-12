@@ -66,6 +66,8 @@ export interface UserWithRoles {
   userId: string;
   userName: string;
   email: string;
+  address?: string;
+  mobile?: string;
   empNo?: string;
   department?: string;        // 부서코드
   departmentName?: string;    // 부서명
@@ -105,6 +107,32 @@ export interface CreateUserRequest {
   positionName?: string;
   isActive?: boolean;
   roleIds?: string[];
+}
+
+/** 사용자 수정 요청 */
+export interface UpdateUserRequest {
+  /** 백엔드 UserDto.UpdateRequest와 일치 (선택 필드 업데이트) */
+  username?: string;
+  email?: string;
+  address?: string;
+  mobile?: string;
+  password?: string;
+  /** 사번(백엔드 필드: num) */
+  num?: string;
+}
+
+/** 사용자 상세 응답 (GET /users/{id}) */
+export interface UserDetailResponse {
+  id: string;
+  username: string;
+  email: string;
+  address?: string;
+  mobile?: string;
+  deptCd?: string;
+  num?: string; // 사번
+  jobRankCd?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface UserRole {

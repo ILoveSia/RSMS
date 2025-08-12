@@ -176,6 +176,14 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + id));
 
+        // 사용자명 변경
+        if (request.getUsername() != null && !request.getUsername().equals(user.getUsername())) {
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new IllegalArgumentException("이미 존재하는 사용자명입니다: " + request.getUsername());
+            }
+            user.setUsername(request.getUsername());
+        }
+
         // 이메일 중복 검사 (자신 제외)
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
