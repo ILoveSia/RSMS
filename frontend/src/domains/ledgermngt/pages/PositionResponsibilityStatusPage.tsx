@@ -3,6 +3,7 @@
  * TestGrid.tsx를 대체하는 실제 업무 페이지
  */
 import { Box, Chip } from '@mui/material';
+import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import React, { useCallback, useEffect, useState } from 'react';
 import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import ErrorDialog from '@/app/components/ErrorDialog';
@@ -902,7 +903,12 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             height: '32px',
           }}
         >
-          <Button
+        <ManagementButtonGroup
+            onExcelDownload={handleExcelDownload}
+            showExcelDownload={true}
+            filename="position_responsibility_status"
+          />
+          {/* <Button
             variant="contained"
             size="small"
             onClick={handleExcelUpload}
@@ -916,13 +922,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             }}
           >
             엑셀 업로드
-          </Button>
-          <ExcelDownloadButton
-            onDownload={handleExcelDownload}
-            filename="position_responsibility_status"
-            disabled={loading}
-            loading={loading}
-          />
+          </Button> */}
           {/* <Button
             variant="contained"
             size="small"
@@ -937,18 +937,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             }}
           >
             변경 이력
-          </Button> */}
-          {/* <Button
-            variant="contained"
-            size="small"
-            onClick={() => {
-              setDialogMode('create');
-              setSelectedDetailData(null);
-              setDialogOpen(true);
-            }}
-            color="primary"
-          >
-            등록
           </Button> */}
         </Box>
 

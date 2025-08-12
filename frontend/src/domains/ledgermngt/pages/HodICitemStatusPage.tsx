@@ -515,13 +515,10 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
           alignItems: 'center',
           height: '32px',
         }}>
-          <ExcelDownloadButton
-            onDownload={handleExcelDownload}
-            filename="hod_ic_item_status"
-            disabled={loading}
-            loading={loading}
-          />
           <ManagementButtonGroup
+            onExcelDownload={handleExcelDownload}
+            showExcelDownload={true}
+            filename="hod_ic_item_status"
             onRegister={handleCreateClick}
             onDelete={handleDelete}
             showRegister={true}

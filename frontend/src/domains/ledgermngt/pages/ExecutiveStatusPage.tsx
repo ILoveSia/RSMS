@@ -704,11 +704,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           >
             엑셀 업로드
           </Button> */}
-          <ExcelDownloadButton
-            onDownload={handleExcelDownload}
+          <ManagementButtonGroup
+            onExcelDownload={handleExcelDownload}
+            showExcelDownload={true}
             filename="executive_status"
-            disabled={loading || rows.length === 0}
-            loading={loading}
           />
         </Box>
 
