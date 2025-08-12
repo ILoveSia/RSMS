@@ -87,14 +87,14 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
      * @return Q&A 페이지
      */
     @Query("SELECT q FROM Qna q WHERE "
-            + "(:keyword IS NULL OR q.title LIKE %:keyword% OR q.content LIKE %:keyword%) AND "
+            + "(:keyword IS NULL OR q.title LIKE CONCAT('%', :keyword, '%') OR q.content LIKE CONCAT('%', :keyword, '%')) AND "
             + "(:department IS NULL OR q.department = :department) AND "
             + "(:status IS NULL OR q.status = :status) AND "
             + "(:priority IS NULL OR q.priority = :priority) AND "
             + "(:category IS NULL OR q.category = :category) AND "
             + "(:isPublic IS NULL OR q.isPublic = :isPublic) AND "
-            + "(:startDate IS NULL OR q.createdAt >= :startDate) AND "
-            + "(:endDate IS NULL OR q.createdAt <= :endDate)")
+            + "q.createdAt >= COALESCE(:startDate, q.createdAt) AND "
+            + "q.createdAt <= COALESCE(:endDate, q.createdAt)")
     Page<Qna> findBySearchConditions(@Param("keyword") String keyword,
             @Param("department") String department, @Param("status") QnaStatus status,
             @Param("priority") QnaPriority priority, @Param("category") String category,

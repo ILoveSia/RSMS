@@ -48,23 +48,40 @@ export const qnaApi = {
       endDate,
     } = params;
 
+    // 필요한 파라미터만 전송 (빈 문자열/undefined/null 제외)
+    const queryParams: Record<string, string | number> = {
+      page,
+      size,
+      sort,
+      direction,
+    };
+
+    const pushIf = (key: string, value: unknown) => {
+      if (value === undefined || value === null) return;
+      if (typeof value === 'string' && value.trim() === '') return;
+      if (typeof value === 'boolean') {
+        // boolean은 서버에서 Boolean 바인딩되도록 1/0이 아닌 true/false 문자열로 전달하지 않고 제외
+        // 서버는 @ModelAttribute로 boolean 파라미터를 안전히 변환하므로 'true'/'false' 문자열 전달
+        queryParams[key] = value ? 'true' : 'false';
+        return;
+      }
+      // enum/string/date 그대로 문자열로 전달
+      queryParams[key] = String(value);
+    };
+
+    pushIf('keyword', keyword);
+    pushIf('category', category);
+    pushIf('status', status);
+    pushIf('priority', priority);
+    pushIf('department', department);
+    pushIf('questionerId', questionerId);
+    pushIf('answererId', answererId);
+    pushIf('isPublic', isPublic);
+    pushIf('startDate', startDate);
+    pushIf('endDate', endDate);
+
     const response = await apiClient.get<PageResponse<QnaListResponseDto>>('/qna', {
-      params: {
-        page,
-        size,
-        sort,
-        direction,
-        keyword: keyword ?? '',
-        category: category ?? '',
-        status: status ?? '',
-        priority: priority ?? '',
-        department: department ?? '',
-        questionerId: questionerId ?? '',
-        answererId: answererId ?? '',
-        isPublic: typeof isPublic === 'boolean' ? Number(isPublic) : '',
-        startDate: startDate ?? '',
-        endDate: endDate ?? '',
-      },
+      params: queryParams,
     });
 
     return response;
@@ -74,6 +91,23 @@ export const qnaApi = {
    */
   getQnaDetail: async (id: number): Promise<QnaDetailResponseDto> => {
     return apiClient.get<QnaDetailResponseDto>(`/qna/${id}`);
+  },
+
+  /**
+   * Q&A 수정
+   */
+  updateQna: async (
+    id: number,
+    data: {
+      department: string;
+      title: string;
+      content?: string;
+      priority?: string;
+      category?: string;
+      isPublic: boolean;
+    }
+  ): Promise<void> => {
+    return apiClient.put<void>(`/qna/${id}`, data);
   },
 
   /**

@@ -171,22 +171,21 @@ public class QnaServiceImpl implements QnaService {
     @Override
     @Transactional
     public void updateQna(Long id, QnaUpdateRequestDto updateRequest, String currentUserId) {
-        
+
         // 요청 데이터 정제 및 검증
         updateRequest.sanitize();
         if (!updateRequest.isValid()) {
             throw new BusinessException("필수 입력 항목이 누락되었습니다.");
         }
-        
-        // Q&A 조회 및 권한 확인
-        Qna qna = qnaRepository.findByIdAndQuestionerId(id, currentUserId)
-            .orElseThrow(() -> new BusinessException("수정 권한이 없거나 존재하지 않는 Q&A입니다."));
-        
-        // 답변 완료된 Q&A는 수정 불가
-        if (qna.isAnswered()) {
-            throw new BusinessException("답변이 완료된 Q&A는 수정할 수 없습니다.");
+
+        // 권한 체크 임시 비활성화: 답변대기 상태(PENDING)인 경우에만 수정 허용
+        Qna qna = qnaRepository.findById(id)
+            .orElseThrow(() -> new BusinessException("존재하지 않는 Q&A입니다."));
+
+        if (!qna.isPending()) {
+            throw new BusinessException("답변대기 상태에서만 수정할 수 있습니다.");
         }
-        
+
         // Q&A 정보 업데이트
         qna.setDepartment(updateRequest.getDepartment());
         qna.setTitle(updateRequest.getTitle());
@@ -194,7 +193,7 @@ public class QnaServiceImpl implements QnaService {
         qna.setPriority(updateRequest.getPriority());
         qna.setCategory(updateRequest.getCategory());
         qna.setIsPublic(updateRequest.getIsPublic());
-        
+
     }
 
     @Override

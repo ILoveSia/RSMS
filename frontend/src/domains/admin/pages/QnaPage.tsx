@@ -207,7 +207,15 @@ const QnaPage: React.FC<QnaPageProps> = () => {
             setSelectedIds(ids);
           }}
         />
-        <QnaDetailDialog open={detailOpen} qnaId={selectedId ?? undefined} onClose={() => setDetailOpen(false)} />
+        <QnaDetailDialog
+          open={detailOpen}
+          qnaId={selectedId ?? undefined}
+          onClose={() => setDetailOpen(false)}
+          onSaved={async () => {
+            // 수정 저장 시 목록 새로고침
+            await loadData();
+          }}
+        />
 
         {createOpen && (
           <QnaCreateDialog
