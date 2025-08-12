@@ -251,7 +251,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       }
 
       const url = `/api/position-responsibilities${params.toString() ? `?${params.toString()}` : ''}`;
-      console.log('📊 직책별 책무 현황 조회 - URL:', url, 'ledgerOrdersId:', ledgerOrdersId, 'positionsId:', selectedPosition?.positionsId);
       
       const response = await fetch(url);
       const data = await response.json();
@@ -312,17 +311,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       const response = await fetch('/api/position-responsibilities');
       const data = await response.json();
 
-      // API 응답 데이터 샘플 로깅 (첫 번째 항목만)
-      if (data.length > 0) {
-        console.log('🔍 API 응답 데이터 샘플:', {
-          id: data[0].id,
-          appr_stat_cd: data[0].appr_stat_cd,
-          role_resp_status_id: data[0].role_resp_status_id,
-          positions_id: data[0].positions_id,
-          positions_name: data[0].positions_name
-        });
-      }
-      
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         id: item.id ?? 0,
         responsibility_id: item.respontibility_id ?? item.id ?? 0,
@@ -663,13 +651,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       return;
     }
 
-    console.log('📋 확정 조건 검증 통과:', {
-      selectedLedgerOrder,
-      statusInfo,
-      totalRows: rows.length,
-      approvedRows: rows.filter(row => row.appr_stat_cd === 'APPROVED').length
-    });
-
     // 5. 확정 confirm 창 표시
     setConfirmConfirmOpen(true);
   }, [selectedLedgerOrder, ledgerOrderOptions, rows, showError]);
@@ -677,7 +658,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // LedgerOrderSelect 새로고침 함수
   const refreshLedgerOrderSelect = useCallback(() => {
     setLedgerOrderRefreshTrigger(prev => prev + 1);
-    console.log('📋 LedgerOrderSelect 새로고침 트리거:', ledgerOrderRefreshTrigger + 1);
   }, [ledgerOrderRefreshTrigger]);
 
   // 확정 처리 핸들러
@@ -689,10 +669,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
     setLoading(true);
     try {
-      console.log('📋 확정 처리 시작:', {
-        selectedLedgerOrder
-      });
-
       // 직책별 책무 확정 전용 API 사용 (P2 → P3)
       const response = await positionApi.confirmPositionResponsibility(selectedLedgerOrder);
       showSuccess(response.message || '직책별 책무가 확정되었습니다.');
@@ -749,11 +725,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       return;
     }
 
-    console.log('🔄 확정취소 조건 검증 통과:', {
-      selectedLedgerOrder,
-      statusInfo
-    });
-
     // 3. 확정취소 confirm 창 표시
     setCancelConfirmOpen(true);
   }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
@@ -767,9 +738,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
     setLoading(true);
     try {
-      console.log('🔄 확정취소 처리 시작:', {
-        selectedLedgerOrder
-      });
 
       // 직책별 책무 확정취소 전용 API 사용 (P3 → P2)
       const response = await positionApi.cancelPositionResponsibility(selectedLedgerOrder);
@@ -857,14 +825,12 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             onChange={useCallback((value: string, ledgerOrdersId?: number) => {
               setSelectedLedgerOrder(value);
               setLedgerOrdersId(ledgerOrdersId);
-              console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
             }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
             refreshTrigger={ledgerOrderRefreshTrigger}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
               setLedgerOrderOptions(options);
-              console.log('LedgerOrder 옵션 로드 완료:', options);
             }, [])}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
@@ -876,7 +842,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
           />
           <SearchButton
             onClick={useCallback(() => {
-              console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', ledgerOrdersId, 'positionsId:', selectedPosition?.positionsId);
               fetchPositionResponsibilityData();
             }, [fetchPositionResponsibilityData, ledgerOrdersId, selectedPosition?.positionsId])}
             loading={loading}

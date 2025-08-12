@@ -19,13 +19,12 @@ interface QnaPageProps {
 }
 
 const QnaPage: React.FC<QnaPageProps> = () => {
-  const [rows, setRows] = useState<QnaListResponseDto[]>([]);
+  const [allRows, setAllRows] = useState<QnaListResponseDto[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1); // UI 1-based
   const [pageSize, setPageSize] = useState<number>(10);
-  const [totalItems, setTotalItems] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(0);
+  // 클라이언트 페이지네이션으로 전환됨: 총계는 sortedRows.length로 계산
   const [sortModel, setSortModel] = useState<GridSortModel>([{ field: 'createdAt', sort: 'desc' }]);
   const [keyword, setKeyword] = useState<string>('');
   const [detailOpen, setDetailOpen] = useState(false);
@@ -35,47 +34,83 @@ const QnaPage: React.FC<QnaPageProps> = () => {
   const [creating, setCreating] = useState(false);
   const [createKey, setCreateKey] = useState(0);
 
-  const loadData = useCallback(async () => {
+  const loadAllData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      const fetchSize = 200; // 초기 일괄 로드 페이지 크기
       const primarySort = sortModel[0];
-      const sortField = primarySort?.field || 'createdAt';
+      const sortField = (primarySort?.field as string) || 'createdAt';
       const sortDir = (primarySort?.sort || 'desc').toUpperCase() as 'ASC' | 'DESC';
-      const resp = await qnaApi.getQnaList({
-        page: page - 1,
-        size: pageSize,
-        sort: sortField,
-        direction: sortDir,
-        keyword: keyword || undefined,
-      });
-      setRows(resp.content || []);
-      setTotalItems(resp.totalElements || 0);
-      setTotalPages(resp.totalPages || 0);
+
+      const first = await qnaApi.getQnaList({ page: 0, size: fetchSize, sort: sortField, direction: sortDir });
+      let items = first.content || [];
+      const total = first.totalPages || 1;
+      for (let p = 1; p < total; p++) {
+        // eslint-disable-next-line no-await-in-loop
+        const resp = await qnaApi.getQnaList({ page: p, size: fetchSize, sort: sortField, direction: sortDir });
+        items = items.concat(resp.content || []);
+      }
+      setAllRows(items);
     } catch (e: any) {
       setError(e?.message || 'Q&A 데이터를 불러오는데 실패했습니다.');
-      setRows([]);
-      setTotalItems(0);
-      setTotalPages(0);
+      setAllRows([]);
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, sortModel, keyword]);
+  }, [sortModel]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadAllData();
+  }, [loadAllData]);
+
+  // 키워드 필터링 (제목 기준)
+  const filteredRows = useMemo(() => {
+    const k = keyword.trim();
+    if (!k) return allRows;
+    const lower = k.toLowerCase();
+    return allRows.filter(r => (r.title || '').toLowerCase().includes(lower));
+  }, [allRows, keyword]);
+
+  // 정렬 (primary sort만 적용)
+  const sortedRows = useMemo(() => {
+    const primary = sortModel[0];
+    if (!primary) return filteredRows;
+    const { field, sort } = primary;
+    const dir = sort === 'asc' ? 1 : -1;
+    const sorted = [...filteredRows].sort((a: any, b: any) => {
+      const va = a?.[field as keyof typeof a];
+      const vb = b?.[field as keyof typeof b];
+      if (va == null && vb == null) return 0;
+      if (va == null) return -1 * dir;
+      if (vb == null) return 1 * dir;
+      // 숫자 비교
+      if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+      // 날짜/문자 비교 (ISO 문자열 포함)
+      const sa = String(va);
+      const sb = String(vb);
+      return sa.localeCompare(sb) * dir;
+    });
+    return sorted;
+  }, [filteredRows, sortModel]);
+
+  // 페이지네이션 계산 (클라이언트 사이드)
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    return sortedRows.slice(start, end);
+  }, [sortedRows, page, pageSize]);
 
   const pagination = useMemo(
     () => ({
       page,
       pageSize,
-      totalItems,
-      totalPages,
+      totalItems: sortedRows.length,
+      totalPages: Math.max(1, Math.ceil(sortedRows.length / pageSize)),
       onPageChange: (p: number) => setPage(p),
       onPageSizeChange: (ps: number) => setPageSize(ps),
     }),
-    [page, pageSize, totalItems, totalPages]
+    [page, pageSize, sortedRows]
   );
 
   return (
@@ -123,10 +158,10 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                 </InputAdornment>
               ),
             }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); loadData(); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); } }}
           />
           <SearchButton
-            onClick={() => { setPage(1); loadData(); }}
+            onClick={() => { setPage(1); }}
             loading={loading}
             disabled={loading}
           />
@@ -147,7 +182,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                     const userName = userJson?.username || '익명';
                     await qnaApi.deleteQnaBulk(selectedIds, { userId, userName });
                     setSelectedIds([]);
-                    await loadData();
+                    await loadAllData();
                   } finally {
                     setLoading(false);
                   }
@@ -169,7 +204,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
         </Box>
 
         <DataGrid<QnaListResponseDto>
-          data={rows}
+          data={pagedRows}
           loading={loading}
           error={error}
           columns={[
@@ -195,9 +230,9 @@ const QnaPage: React.FC<QnaPageProps> = () => {
             { field: 'viewCount', headerName: '조회수', width: 100, align: 'center' },
           ]}
           pagination={pagination}
-          serverSide
+          serverSide={false}
           sortable
-          onSortChange={model => setSortModel(model)}
+          onSortChange={model => { setSortModel(model); setPage(1); }}
           onRowDoubleClick={undefined}
           height={600}
           checkboxSelection
@@ -212,8 +247,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           qnaId={selectedId ?? undefined}
           onClose={() => setDetailOpen(false)}
           onSaved={async () => {
-            // 수정 저장 시 목록 새로고침
-            await loadData();
+            await loadAllData();
           }}
         />
 
@@ -232,8 +266,8 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                 const userName = userJson?.username || '익명';
                 await qnaApi.createQna(form, { userId, userName });
                 setCreateOpen(false);
-                setPage(1);
-                await loadData();
+                 setPage(1);
+                 await loadAllData();
               } finally {
                 setCreating(false);
               }

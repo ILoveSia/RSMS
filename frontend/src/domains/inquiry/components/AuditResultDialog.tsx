@@ -17,7 +17,6 @@ import {
 import {
   Delete as DeleteIcon,
   AttachFile as AttachFileIcon,
-  Upload as UploadIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { DatePicker, RadioGroup, type RadioOption } from '@/shared/components/ui/form';
@@ -171,9 +170,7 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
         };
         
         // React 18의 상태 업데이트 방식에 맞게 수정
-        setFormData(prevData => {
-          return newFormData;
-        });
+        setFormData(() => newFormData);
       } else {
       }
       
@@ -519,51 +516,26 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
     }
   };
 
-  // 모드별 버튼 설정
-  const getDialogActions = () => {
-    if (mode === 'view') {
-      return (
-        <Button
-          variant="outlined"
-          onClick={handleClose}
-          disabled={loading}
-        >
-          닫기
-        </Button>
-      );
-    }
-
-    return (
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button
-          variant="outlined"
-          onClick={handleClose}
-          disabled={loading}
-        >
-          취소
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={loading}
-          startIcon={loading ? undefined : <UploadIcon />}
-        >
-{loading ? (mode === 'edit' ? '수정중...' : '저장중...') : mode === 'edit' ? '수정' : '저장'}
-        </Button>
-      </Box>
-    );
-  };
+  // 저장 가능 여부 (기본 검증 조건 충족 시에만 저장 활성화)
+  const canSave = mode !== 'view'
+    && !!formData.auditResultStatusCd
+    && formData.auditResult.trim() !== ''
+    && !!formData.beforeAuditYn
+    && formData.auditDetailContent.trim() !== ''
+    && !!formData.auditDoneDt;
 
   return (
     <BaseDialog
       open={open}
       mode={mode}
       onClose={handleClose}
+      onSave={handleSave}
       title={getDialogTitle()}
       maxWidth="lg"
       fullWidth
       loading={loading || detailLoading}
-      customActions={getDialogActions()}
+      showEditButton={false}
+      disableSave={loading || detailLoading || !canSave}
     >
       <Box sx={{ p: 2, maxHeight: '80vh', overflow: 'auto' }}>
         {/* 선택된 항목 정보 */}

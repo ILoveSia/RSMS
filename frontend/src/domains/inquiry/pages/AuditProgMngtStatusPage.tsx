@@ -530,6 +530,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
+          minHeight: 0,
         }}>
           <DataGrid
             data={auditRows}

@@ -179,8 +179,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           ? selectedResponsibility.responsibilityId.toString()
           : undefined;
 
-        console.log('📊 책무 현황 조회 - ledgerOrdersId:', ledgerOrdersId, 'responsibilityId:', responsibilityIdParam);
-        
         // API 호출: responsibilityId와 ledgerOrdersId 모두 전달
         const data = await responsibilityApi.getStatusList(responsibilityIdParam, ledgerOrdersId);
 
@@ -374,7 +372,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // 조회 버튼 클릭 핸들러
     const handleSearch = useCallback(() => {
-      console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', ledgerOrdersId);
       fetchResponsibilityData();
     }, [fetchResponsibilityData]);
 
@@ -406,8 +403,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         showError('직책확정 상태의 원장차수만 등록 가능합니다.');
         return;
       }
-
-      console.log('✅ 등록 버튼 검증 통과 - 선택된 원장차수:', ledgerOrder, '상태:', statusInfo);
 
       // 3. ResponsibilityDialog 열기 (원장차수 값 전달)
       setSelectedResponsibilityId(null);
@@ -501,13 +496,11 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               onChange={useCallback((value: string, ledgerOrdersId?: number) => {
                 setLedgerOrder(value);
                 setLedgerOrdersId(ledgerOrdersId);
-                console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
               }, [])}
               size='small'
               sx={{ minWidth: 150, maxWidth: 200 }}
               onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
                 setLedgerOrderOptions(options);
-                console.log('LedgerOrder 옵션 로드 완료:', options);
               }, [])}
             />
             <span

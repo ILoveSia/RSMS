@@ -342,18 +342,6 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
     }
   };
 
-  // 모드별 버튼 텍스트 설정
-  const getButtonText = () => {
-    switch (mode) {
-      case 'create': return '등록';
-      case 'edit': return '수정';
-      case 'view': return '닫기';
-      default: return '등록';
-    }
-  };
-
-  const isViewMode = mode === 'view';
-
   // 다이얼로그 닫기 핸들러 - 파일 상태 초기화 포함
   const handleClose = () => {
     setSelectedFile(null);
@@ -381,41 +369,8 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
       maxWidth="sm"
       onClose={handleClose}
       loading={loading}
-      customActions={
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', }}>
-          {isViewMode && onModeChange && (
-            <Button
-              variant="contained"
-              size="medium"
-              onClick={() => onModeChange('edit')}
-              color="primary"
-              sx={{ mr: 1 }}
-            >
-              수정
-            </Button>
-          )}
-          {!isViewMode && (
-            <Button
-              variant="contained"
-              size="medium"
-              onClick={handleSubmit}
-              color="primary"
-              disabled={loading}
-              sx={{ mr: 1 }}
-            >
-              {getButtonText()}
-            </Button>
-          )}
-          <Button
-            variant="contained"
-            size="medium"
-            onClick={handleClose}
-            color="secondary"
-          >
-            {isViewMode ? '닫기' : '취소'}
-          </Button>
-        </Box>
-      }
+      onSave={handleSubmit}
+      onModeChange={(m) => onModeChange?.(m as 'create' | 'edit' | 'view')}
     >
       <Box sx={{
 
@@ -431,6 +386,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           제출이력 코드
         </Typography>
         <TextField
+          label=" "
           value={registrationData.submitHistCd}
           placeholder="자동생성됩니다"
           size="small"
@@ -445,6 +401,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <TextField
+            label=" "
             value={registrationData.position?.label || ''}
             placeholder="직책을 선택하세요"
             size="small"
@@ -468,6 +425,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <TextField
+            label=" "
             value={registrationData.executiveName?.label || ''}
             placeholder="제출 대상 임원을 선택하세요"
             size="small"
@@ -590,6 +548,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           비고
         </Typography>
         <TextField
+          label=" "
           value={registrationData.remarks?.label || ''}
           onChange={(e) => {
             const value = e.target.value;

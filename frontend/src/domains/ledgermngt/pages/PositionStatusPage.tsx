@@ -105,7 +105,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
     setError(null);
     try {
       const searchLedgerOrdersId = ledgerOrdersId || selectedLedgerOrderId;
-      console.log('📊 직책 현황 조회 - ledgerOrdersId:', searchLedgerOrdersId);
       const data = await positionApi.getStatusList(searchLedgerOrdersId);
       setRows(data);
     } catch (err: unknown) {
@@ -132,18 +131,12 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   // 권한 디버깅
   useEffect(() => {
     if (!permissionLoading && permissions.length > 0) {
-      console.log('🔐 [PositionStatusPage] 현재 사용자 권한 정보:');
-      console.log('  - 전체 권한 목록:', permissions);
-      console.log('  - POSITION_MGMT 권한:', hasMenuPermission('POSITION_MGMT', 'write'));
-      console.log('  - LEDGER_MGMT_POSITION 권한:', hasMenuPermission('LEDGER_MGMT_POSITION', 'write'));
-      
       // 직책 관련 메뉴 코드들 확인
       const positionRelatedMenus = permissions.filter(p => 
         p.menuCode.includes('POSITION') || 
         p.menuName.includes('직책') ||
         p.menuUrl?.includes('position')
       );
-      console.log('  - 직책 관련 메뉴들:', positionRelatedMenus);
     }
   }, [permissions, permissionLoading, hasMenuPermission]);
 
@@ -421,7 +414,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   ];
 
   const handleSearch = () => {
-    console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', selectedLedgerOrderId);
     fetchPositionStatus(selectedLedgerOrderId);
   };
 
@@ -452,8 +444,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       showError('신규 상태의 원장차수만 등록 가능합니다.');
       return;
     }
-
-    console.log('✅ 등록 버튼 검증 통과 - 선택된 원장차수:', selectedLedgerOrder, '상태:', statusInfo);
 
     // 3. PositionDialog 열기
     setSelectedPositionId(null);
@@ -626,14 +616,12 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             onChange={useCallback((value: string, ledgerOrdersId?: number) => {
               setSelectedLedgerOrder(value);
               setSelectedLedgerOrderId(ledgerOrdersId);
-              console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
             }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
             refreshTrigger={ledgerOrderRefreshTrigger}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
               setLedgerOrderOptions(options);
-              console.log('LedgerOrder 옵션 로드 완료:', options);
             }, [])}
           />
           <SearchButton

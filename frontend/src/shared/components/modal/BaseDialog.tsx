@@ -56,7 +56,11 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
 
   const handleCancel = () => {
     if (isEditMode) {
-      onModeChange?.('view');
+      if (onModeChange) {
+        onModeChange('view');
+      } else {
+        onClose();
+      }
     } else {
       onClose();
     }
