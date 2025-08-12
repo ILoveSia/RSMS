@@ -256,7 +256,7 @@ const DataGrid = <T extends Record<string, any>>({
   error = null,
   selectable = false,
   multiSelect = true,
-  selectedRows = [],
+  selectedRows = undefined,
   checkboxSelection = false,
   rowSelectionModel,
   onRowClick,
@@ -396,7 +396,7 @@ const DataGrid = <T extends Record<string, any>>({
               checkboxSelection={checkboxSelection || selectable}
               disableRowSelectionOnClick={disableRowSelectionOnClick}
               disableMultipleRowSelection={!multiSelect}
-              rowSelectionModel={rowSelectionModel || selectedRows}
+              rowSelectionModel={rowSelectionModel ?? selectedRows}
               onRowClick={handleRowClick}
               onRowDoubleClick={handleRowDoubleClick}
               onRowSelectionModelChange={handleSelectionChange}

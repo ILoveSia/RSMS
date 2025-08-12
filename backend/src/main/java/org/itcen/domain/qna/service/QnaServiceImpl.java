@@ -200,18 +200,18 @@ public class QnaServiceImpl implements QnaService {
     @Override
     @Transactional
     public void deleteQna(Long id, String currentUserId) {
-        
-        // Q&A 조회 및 권한 확인
-        Qna qna = qnaRepository.findByIdAndQuestionerId(id, currentUserId)
-            .orElseThrow(() -> new BusinessException("삭제 권한이 없거나 존재하지 않는 Q&A입니다."));
-        
-        // 답변 완료된 Q&A는 삭제 불가
+
+        // 권한 체크 임시 비활성화: 작성자와 무관하게 삭제 허용 (요청 반영)
+        Qna qna = qnaRepository.findById(id)
+            .orElseThrow(() -> new BusinessException("존재하지 않는 Q&A입니다."));
+
+        // 답변 완료된 Q&A는 삭제 불가 (유지)
         if (qna.isAnswered()) {
             throw new BusinessException("답변이 완료된 Q&A는 삭제할 수 없습니다.");
         }
-        
+
         qnaRepository.delete(qna);
-        
+
     }
 
     @Override

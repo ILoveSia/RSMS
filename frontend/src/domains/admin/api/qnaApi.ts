@@ -101,6 +101,34 @@ export const qnaApi = {
       }
     );
   },
+
+  /**
+   * Q&A 삭제 (단건)
+   */
+  deleteQna: async (id: number, user: { userId: string; userName: string }): Promise<void> => {
+    return apiClient.delete<void>(`/qna/${id}`, {
+      headers: {
+        'X-User-Id': user.userId,
+        'X-User-Name': user.userName,
+      },
+    });
+  },
+
+  /**
+   * Q&A 일괄 삭제
+   */
+  deleteQnaBulk: async (ids: number[], user: { userId: string; userName: string }): Promise<void> => {
+    // 서버에 일괄 삭제 엔드포인트가 없으면 순차 삭제로 폴백
+    for (const id of ids) {
+      // eslint-disable-next-line no-await-in-loop
+      await apiClient.delete<void>(`/qna/${id}`, {
+        headers: {
+          'X-User-Id': user.userId,
+          'X-User-Name': user.userName,
+        },
+      });
+    }
+  },
 };
 
 export default qnaApi;

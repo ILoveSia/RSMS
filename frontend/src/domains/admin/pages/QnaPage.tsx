@@ -31,6 +31,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [creating, setCreating] = useState(false);
   const [createKey, setCreateKey] = useState(0);
 
@@ -130,6 +131,31 @@ const QnaPage: React.FC<QnaPageProps> = () => {
             disabled={loading}
           />
           <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+            {selectedIds.length > 0 && (
+              <Button
+                size="small"
+                color="error"
+                onClick={async () => {
+                  // 간단 확인 (Confirm 컴포넌트 연결 가능)
+                  const ok = window.confirm(`${selectedIds.length}건 삭제하시겠습니까?`);
+                  if (!ok) return;
+                  try {
+                    setLoading(true);
+                    const userRaw = localStorage.getItem('user');
+                    const userJson = userRaw ? JSON.parse(userRaw) : {};
+                    const userId = userJson?.userid || 'anonymous';
+                    const userName = userJson?.username || '익명';
+                    await qnaApi.deleteQnaBulk(selectedIds, { userId, userName });
+                    setSelectedIds([]);
+                    await loadData();
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                선택삭제
+              </Button>
+            )}
             <ExcelDownloadButton
               onDownload={async () => { /* TODO: export hook up if needed */ }}
               filename="qna_list"
@@ -174,6 +200,12 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           onSortChange={model => setSortModel(model)}
           onRowDoubleClick={undefined}
           height={600}
+          checkboxSelection
+          onRowSelectionChange={(_, selected) => {
+            // keys는 DataGrid 내부 _gridId, selected는 row 데이터 배열
+            const ids = selected.map(r => Number(r.id)).filter(n => !Number.isNaN(n));
+            setSelectedIds(ids);
+          }}
         />
         <QnaDetailDialog open={detailOpen} qnaId={selectedId ?? undefined} onClose={() => setDetailOpen(false)} />
 
