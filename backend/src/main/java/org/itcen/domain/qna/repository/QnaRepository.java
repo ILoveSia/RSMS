@@ -35,14 +35,8 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
      */
     Page<Qna> findByStatus(QnaStatus status, Pageable pageable);
 
-    /**
-     * 부서별 Q&A 목록 조회
-     *
-     * @param department 부서
-     * @param pageable 페이징 정보
-     * @return Q&A 페이지
-     */
-    Page<Qna> findByDepartment(String department, Pageable pageable);
+    // NOTE: DB 스키마에서 department 컬럼이 제거되어 더 이상 사용하지 않습니다.
+    // Page<Qna> findByDepartment(String department, Pageable pageable);
 
     /**
      * 질문자별 Q&A 목록 조회
@@ -88,9 +82,9 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
      */
     @Query("SELECT q FROM Qna q WHERE "
             + "(:keyword IS NULL OR q.title LIKE CONCAT('%', :keyword, '%') OR q.content LIKE CONCAT('%', :keyword, '%')) AND "
-            + "(:department IS NULL OR q.department = :department) AND "
+            + "(:department IS NULL OR 1=1) AND "
             + "(:status IS NULL OR q.status = :status) AND "
-            + "(:priority IS NULL OR q.priority = :priority) AND "
+            + "(:priority IS NULL OR 1=1) AND "
             + "(:category IS NULL OR q.category = :category) AND "
             + "(:isPublic IS NULL OR q.isPublic = :isPublic) AND "
             + "q.createdAt >= COALESCE(:startDate, q.createdAt) AND "
@@ -135,13 +129,8 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
      */
     Long countByStatus(QnaStatus status);
 
-    /**
-     * 부서별 Q&A 개수 조회
-     *
-     * @param department 부서
-     * @return Q&A 개수
-     */
-    Long countByDepartment(String department);
+    // NOTE: DB 스키마에서 department 컬럼이 제거되어 더 이상 사용하지 않습니다.
+    // Long countByDepartment(String department);
 
     /**
      * 조회수 증가
@@ -207,11 +196,11 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
      *
      * @return 부서별 통계 목록
      */
-    @Query("SELECT new org.itcen.domain.qna.dto.QnaStatisticsDto(" + "q.department, " + "COUNT(q), "
+    @Query("SELECT new org.itcen.domain.qna.dto.QnaStatisticsDto('ALL', COUNT(q), "
             + "COUNT(CASE WHEN q.status = 'PENDING' THEN 1 END), "
             + "COUNT(CASE WHEN q.status = 'ANSWERED' THEN 1 END), "
             + "COUNT(CASE WHEN q.status = 'CLOSED' THEN 1 END)) "
-            + "FROM Qna q GROUP BY q.department")
+            + "FROM Qna q")
     List<QnaStatisticsDto> findDepartmentStatistics();
 
     /**
@@ -220,12 +209,12 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
      * @param startDate 시작일
      * @return 월별 통계 목록
      */
-    @Query(value = "SELECT " + "TO_CHAR(q.created_at, 'YYYY-MM') as month, " + "q.department, "
+    @Query(value = "SELECT " + "TO_CHAR(q.created_at, 'YYYY-MM') as month, 'ALL' as department, "
             + "COUNT(q.*) as question_count, "
             + "COUNT(CASE WHEN q.status = 'ANSWERED' THEN 1 END) as answer_count, "
             + "COUNT(CASE WHEN q.status = 'PENDING' THEN 1 END) as pending_count "
             + "FROM qna q WHERE q.created_at >= :startDate "
-            + "GROUP BY TO_CHAR(q.created_at, 'YYYY-MM'), q.department "
+            + "GROUP BY TO_CHAR(q.created_at, 'YYYY-MM') "
             + "ORDER BY TO_CHAR(q.created_at, 'YYYY-MM') DESC", nativeQuery = true)
     List<Object[]> findMonthlyStatisticsRaw(@Param("startDate") LocalDateTime startDate);
 }

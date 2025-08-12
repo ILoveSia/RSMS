@@ -70,9 +70,9 @@ public class QnaServiceImpl implements QnaService {
                 
             qnaPage = qnaRepository.findBySearchConditions(
                 searchRequest.getKeyword(),
-                searchRequest.getDepartment(),
+                null, // department 제거
                 searchRequest.getStatus(),
-                searchRequest.getPriority(),
+                null, // priority 제거
                 searchRequest.getCategory(),
                 searchRequest.getIsPublic(),
                 startDateTime,
@@ -118,11 +118,11 @@ public class QnaServiceImpl implements QnaService {
 
         // Q&A 엔티티 생성
         Qna qna = Qna.builder()
-            .department(createRequest.getDepartment())
+            // department 제거됨
             .title(createRequest.getTitle())
             .content(createRequest.getContent())
             .questionerId(currentUserId)
-            .questionerName(currentUserName)
+            // 이름 비정규화 제거됨
             .priority(createRequest.getPriority())
             .category(createRequest.getCategory())
             .isPublic(createRequest.getIsPublic())
@@ -187,10 +187,10 @@ public class QnaServiceImpl implements QnaService {
         }
 
         // Q&A 정보 업데이트
-        qna.setDepartment(updateRequest.getDepartment());
+        // department 제거됨
         qna.setTitle(updateRequest.getTitle());
         qna.setContent(updateRequest.getContent());
-        qna.setPriority(updateRequest.getPriority());
+        // priority 제거됨
         qna.setCategory(updateRequest.getCategory());
         qna.setIsPublic(updateRequest.getIsPublic());
 

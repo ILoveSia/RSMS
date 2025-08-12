@@ -24,11 +24,7 @@ import org.itcen.domain.qna.entity.QnaPriority;
 @AllArgsConstructor
 public class QnaUpdateRequestDto {
 
-    /**
-     * 담당업무/부서
-     */
-    @NotBlank(message = "담당업무는 필수입니다.")
-    @Size(max = 100, message = "담당업무는 100자 이하로 입력해주세요.")
+    // DB 스키마 변경으로 department 제거
     private String department;
 
     /**
@@ -44,9 +40,7 @@ public class QnaUpdateRequestDto {
     @Size(max = 5000, message = "질문 내용은 5000자 이하로 입력해주세요.")
     private String content;
 
-    /**
-     * 우선순위
-     */
+    // DB 스키마 변경으로 priority 제거 (프론트/비즈니스 호환 위해 유지)
     private QnaPriority priority;
 
     /**

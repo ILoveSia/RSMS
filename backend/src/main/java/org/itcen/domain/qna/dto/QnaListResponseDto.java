@@ -31,25 +31,25 @@ public class QnaListResponseDto {
      */
     private Long id;
 
-    /**
-     * 담당업무/부서
-     */
-    private String department;
+     /**
+      * 담당업무/부서 (스키마 변경으로 임시 제거)
+      */
+     private String department;
 
     /**
      * 제목
      */
     private String title;
 
-    /**
-     * 질문자 이름
-     */
-    private String questionerName;
+     /**
+      * 질문자 이름 (DB 컬럼 없음)
+      */
+     private String questionerName;
 
-    /**
-     * 답변자 이름
-     */
-    private String answererName;
+     /**
+      * 답변자 이름 (DB 컬럼 없음)
+      */
+     private String answererName;
 
     /**
      * 상태
@@ -117,10 +117,10 @@ public class QnaListResponseDto {
 
         return QnaListResponseDto.builder()
                 .id(qna.getId())
-                .department(qna.getDepartment())
+                 .department(qna.getDepartment())
                 .title(qna.getTitle())
-                .questionerName(qna.getQuestionerName())
-                .answererName(qna.getAnswererName())
+                 .questionerName(qna.getQuestionerName())
+                 .answererName(qna.getAnswererName())
                 .status(qna.getStatus())
                 .statusDescription(qna.getStatus().getDescription())
                 .priority(qna.getPriority())

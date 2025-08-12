@@ -41,9 +41,9 @@ public class Qna extends BaseEntity {
     private Long id;
 
     /**
-     * 담당업무/부서
+     * 담당업무/부서 (DB 컬럼 제거됨) - 애플리케이션 호환을 위한 임시 필드
      */
-    @Column(nullable = false, length = 100)
+    @Transient
     private String department;
 
     /**
@@ -59,15 +59,15 @@ public class Qna extends BaseEntity {
     private String content;
 
     /**
-     * 질문자 ID (PostgreSQL 테이블 구조에 맞춰 String으로 변경)
+     * 질문자 사번 (DB: questioner_emp_no)
      */
-    @Column(name = "questioner_id", nullable = false, length = 100)
+    @Column(name = "questioner_emp_no", nullable = false, length = 100)
     private String questionerId;
 
     /**
-     * 질문자 이름 (비정규화 - 성능 최적화)
+     * 질문자 이름 (DB 컬럼 없음) - 애플리케이션 호환을 위한 임시 필드
      */
-    @Column(name = "questioner_name", nullable = false, length = 100)
+    @Transient
     private String questionerName;
 
     /**
@@ -77,15 +77,15 @@ public class Qna extends BaseEntity {
     private String answerContent;
 
     /**
-     * 답변자 ID (PostgreSQL 테이블 구조에 맞춰 String으로 변경)
+     * 답변자 사번 (DB: answerer_emp_no)
      */
-    @Column(name = "answerer_id", length = 100)
+    @Column(name = "answerer_emp_no", length = 100)
     private String answererId;
 
     /**
-     * 답변자 이름 (비정규화 - 성능 최적화)
+     * 답변자 이름 (DB 컬럼 없음) - 애플리케이션 호환을 위한 임시 필드
      */
-    @Column(name = "answerer_name", length = 100)
+    @Transient
     private String answererName;
 
     /**
@@ -97,10 +97,9 @@ public class Qna extends BaseEntity {
     private QnaStatus status = QnaStatus.PENDING;
 
     /**
-     * 우선순위
+     * 우선순위 (DB 컬럼 제거됨) - 애플리케이션 호환을 위한 임시 필드
      */
-    @Enumerated(EnumType.STRING)
-    @Column(length = 10)
+    @Transient
     @Builder.Default
     private QnaPriority priority = QnaPriority.NORMAL;
 

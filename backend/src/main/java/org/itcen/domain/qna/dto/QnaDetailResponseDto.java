@@ -31,10 +31,10 @@ public class QnaDetailResponseDto {
      */
     private Long id;
 
-    /**
-     * 담당업무/부서
-     */
-    private String department;
+     /**
+      * 담당업무/부서 (스키마 변경으로 임시 제거)
+      */
+     private String department;
 
     /**
      * 제목
@@ -46,30 +46,30 @@ public class QnaDetailResponseDto {
      */
     private String content;
 
-    /**
-     * 질문자 ID
-     */
-    private String questionerId;
+     /**
+      * 질문자 사번
+      */
+     private String questionerId;
 
-    /**
-     * 질문자 이름
-     */
-    private String questionerName;
+     /**
+      * 질문자 이름 (DB 컬럼 없음)
+      */
+     private String questionerName;
 
     /**
      * 답변 내용
      */
     private String answerContent;
 
-    /**
-     * 답변자 ID
-     */
-    private String answererId;
+     /**
+      * 답변자 사번
+      */
+     private String answererId;
 
-    /**
-     * 답변자 이름
-     */
-    private String answererName;
+     /**
+      * 답변자 이름 (DB 컬럼 없음)
+      */
+     private String answererName;
 
     /**
      * 상태

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ListAlt as ListAltIcon } from '@mui/icons-material';
 // removed unused Box, Typography imports
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import DataGrid from '@/shared/components/ui/data-display/DataGrid';
@@ -170,11 +171,6 @@ const QnaPage: React.FC<QnaPageProps> = () => {
             sx={{ height: '36px' }}
           />
           <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-            <RefreshButton
-              size="small"
-              disabled={loading}
-              onClick={async () => { setPage(1); await loadAllData(); }}
-            />
             {selectedIds.length > 0 && (
               <Button
                 size="small"
@@ -207,16 +203,15 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                 선택삭제
               </Button>
             )}
-            <ExcelDownloadButton
-              onDownload={async () => { /* TODO: export hook up if needed */ }}
+            <ManagementButtonGroup
+              onRefresh={async () => { setPage(1); await loadAllData(); }}
+              onRegister={() => { setCreateKey(k => k + 1); setCreateOpen(true); }}
+              showRegister={true}
+              showRefresh={true}
+              onExcelDownload={async () => { /* TODO: export hook up if needed */ }}
+              showExcelDownload={true}
               filename="qna_list"
-              disabled={loading}
-              loading={loading}
-              sx={{ height: '36px' }}
             />
-            <Button size="small" onClick={() => { setCreateKey(k => k + 1); setCreateOpen(true); }} sx={{ height: '36px' }}>
-              등록
-            </Button>
           </Box>
         </Box>
 
