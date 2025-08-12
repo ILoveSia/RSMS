@@ -6,9 +6,8 @@ import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButto
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import DataGrid from '@/shared/components/ui/data-display/DataGrid';
-import { ExcelDownloadButton, SearchButton, Button, RefreshButton } from '@/shared/components/ui/button';
-import { TextField, InputAdornment, Box } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+import { Button } from '@/shared/components/ui/button';
+import TitleSearch from '../components/TitleSearch';
 import QnaDetailDialog from '../components/QnaDetailDialog';
 import QnaCreateDialog from '../components/QnaCreateDialog';
 import type { QnaListResponseDto } from '@/app/types/qna';
@@ -137,83 +136,53 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           py: 1,
         }}
       >
-        <Box sx={{
-          display: 'flex',
-          gap: 1,
-          mb: 2,
-          alignItems: 'center',
-          backgroundColor: 'var(--bank-bg-secondary)',
-          border: '1px solid var(--bank-border)',
-          px: 2,
-          py: 1,
-          borderRadius: '4px',
-        }}>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>제목</span>
-          <TextField
-            size="small"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="제목 입력"
-            sx={{ minWidth: 220, maxWidth: 360 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); } }}
-          />
-          <SearchButton
-            onClick={() => { setPage(1); }}
-            loading={loading}
-            disabled={loading}
-            sx={{ height: '36px' }}
-          />
-          <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-            {selectedIds.length > 0 && (
-              <Button
-                size="small"
-                color="error"
-                onClick={async () => {
-                  // 간단 확인 (Confirm 컴포넌트 연결 가능)
-                  const ok = window.confirm(`${selectedIds.length}건 삭제하시겠습니까?`);
-                  if (!ok) return;
-                  try {
-                    setLoading(true);
-                    const userRaw = localStorage.getItem('user');
-                    const userJson = userRaw ? JSON.parse(userRaw) : {};
-                    const userId = userJson?.userid || 'anonymous';
-                    const userName = userJson?.username || '익명';
-                    // 상태 검사: 답변완료(ANSWERED) 또는 종료(CLOSED) 항목은 삭제 불가 처리
-                    const blocked = allRows.filter(r => selectedIds.includes(Number(r.id)) && (r.status === QnaStatus.ANSWERED || r.status === QnaStatus.CLOSED));
-                    if (blocked.length > 0) {
-                      showError('답변완료 또는 종료된 항목은 삭제할 수 없습니다. 선택에서 제외해 주세요.');
-                      return;
+        <TitleSearch
+          value={keyword}
+          onChange={(v) => setKeyword(v)}
+          onEnter={() => setPage(1)}
+          right={
+            <>
+              {selectedIds.length > 0 && (
+                <Button
+                  size="small"
+                  color="error"
+                  onClick={async () => {
+                    const ok = window.confirm(`${selectedIds.length}건 삭제하시겠습니까?`);
+                    if (!ok) return;
+                    try {
+                      setLoading(true);
+                      const userRaw = localStorage.getItem('user');
+                      const userJson = userRaw ? JSON.parse(userRaw) : {};
+                      const userId = userJson?.userid || 'anonymous';
+                      const userName = userJson?.username || '익명';
+                      const blocked = allRows.filter(r => selectedIds.includes(Number(r.id)) && (r.status === QnaStatus.ANSWERED || r.status === QnaStatus.CLOSED));
+                      if (blocked.length > 0) {
+                        showError('답변완료 또는 종료된 항목은 삭제할 수 없습니다. 선택에서 제외해 주세요.');
+                        return;
+                      }
+                      await qnaApi.deleteQnaBulk(selectedIds, { userId, userName });
+                      setSelectedIds([]);
+                      await loadAllData();
+                    } finally {
+                      setLoading(false);
                     }
-
-                    await qnaApi.deleteQnaBulk(selectedIds, { userId, userName });
-                    setSelectedIds([]);
-                    await loadAllData();
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-              >
-                선택삭제
-              </Button>
-            )}
-            <ManagementButtonGroup
-              onRefresh={async () => { setPage(1); await loadAllData(); }}
-              onRegister={() => { setCreateKey(k => k + 1); setCreateOpen(true); }}
-              showRegister={true}
-              showRefresh={true}
-              onExcelDownload={async () => { /* TODO: export hook up if needed */ }}
-              showExcelDownload={true}
-              filename="qna_list"
-            />
-          </Box>
-        </Box>
+                  }}
+                >
+                  선택삭제
+                </Button>
+              )}
+              <ManagementButtonGroup
+                onRefresh={async () => { setPage(1); await loadAllData(); }}
+                onRegister={() => { setCreateKey(k => k + 1); setCreateOpen(true); }}
+                showRegister={true}
+                showRefresh={true}
+                onExcelDownload={async () => { /* TODO: export hook up if needed */ }}
+                showExcelDownload={true}
+                filename="qna_list"
+              />
+            </>
+          }
+        />
 
         <DataGrid<QnaListResponseDto>
           data={pagedRows}

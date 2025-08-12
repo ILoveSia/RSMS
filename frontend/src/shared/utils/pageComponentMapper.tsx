@@ -43,29 +43,29 @@ const ErrorPage: React.FC<{ error?: string }> = ({ error }) => (
   </Box>
 );
 
-// 준비 중 페이지 컴포넌트
-const ComingSoonPage: React.FC<{ title?: string }> = ({ title }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100%',
-      p: 3,
-    }}
-  >
-    <Typography variant='h5' gutterBottom>
-      🚧 준비 중입니다
-    </Typography>
-    <Typography variant='body1' color='text.secondary'>
-      {title ? `${title} 페이지를 준비 중입니다.` : '페이지를 준비 중입니다.'}
-    </Typography>
-    <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
-      빠른 시일 내에 서비스를 제공하겠습니다.
-    </Typography>
-  </Box>
-);
+// 준비 중 페이지 컴포넌트 (현재 미사용)
+// const ComingSoonPage: React.FC<{ title?: string }> = ({ title }) => (
+//   <Box
+//     sx={{
+//       display: 'flex',
+//       flexDirection: 'column',
+//       alignItems: 'center',
+//       justifyContent: 'center',
+//       height: '100%',
+//       p: 3,
+//     }}
+//   >
+//     <Typography variant='h5' gutterBottom>
+//       🚧 준비 중입니다
+//     </Typography>
+//     <Typography variant='body1' color='text.secondary'>
+//       {title ? `${title} 페이지를 준비 중입니다.` : '페이지를 준비 중입니다.'}
+//     </Typography>
+//     <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>
+//       빠른 시일 내에 서비스를 제공하겠습니다.
+//     </Typography>
+//   </Box>
+// );
 
 // 페이지 컴포넌트 매핑 설정
 const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
@@ -215,6 +215,13 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     component: () => import('@/domains/admin/pages/CommunityPage'),
     title: '커뮤니티',
     icon: 'group',
+  },
+
+  // 커뮤니티 > 공지사항
+  '/community/notice': {
+    component: () => import('@/domains/admin/pages/NoticePage'),
+    title: '공지사항',
+    icon: 'campaign',
   },
 
   // 커뮤니티 > Q&A

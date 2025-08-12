@@ -3,6 +3,7 @@
  * 결재 현황 요약과 중요한 결재 목록을 한눈에 확인할 수 있는 대시보드입니다.
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import {
   Box,
   Grid,
@@ -23,15 +24,12 @@ import {
   Cancel as CancelIcon,
   HourglassEmpty as HourglassEmptyIcon,
   Notifications as NotificationsIcon,
-  Refresh as RefreshIcon,
-  TrendingUp as TrendingUpIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { ExcelDownloadButton } from '@/shared/components/ui/button';
 import { SearchConditionPanel } from '@/shared/components/ui/form';
 import type { DataGridColumn } from '@/shared/types/common';
 import approvalApi, {
@@ -456,29 +454,13 @@ const ApprovalDashboardPage: React.FC = () => {
           py: 1,
         }}
       >
-        {/* 새로고침 버튼 */}
-        <SearchConditionPanel disabled={loading}>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              size="small"
-              startIcon={<RefreshIcon />}
-              onClick={loadDashboardData}
-              disabled={loading}
-              sx={{
-                minWidth: '80px',
-                fontWeight: 600,
-              }}
-            >
-              {loading ? '새로고침중...' : '새로고침'}
-            </Button>
-          </Box>
-          <ExcelDownloadButton
-            onDownload={handleExcelDownload}
+        <SearchConditionPanel disabled={loading}>          
+          <ManagementButtonGroup
+            onRefresh={loadDashboardData}
+            onExcelDownload={handleExcelDownload}
+            showExcelDownload={true}
             filename="approval_dashboard"
-            disabled={loading || !summary}
-            loading={loading}
+            showRefresh={true}
           />
         </SearchConditionPanel>
 
