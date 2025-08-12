@@ -5,7 +5,7 @@
 import type { MeetingBody } from '@/app/types';
 import { useCommonCodes, useGetCodeName, type CommonCode } from '@/shared/utils/codeUtils';
 import { Confirm } from '@/shared/components/modal';
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup, ExcelDownloadButton, RegisterButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -426,25 +426,21 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
           gap: 1, 
           alignItems: 'center',
           height: '32px', // 명시적 높이 설정
-        }}>
-          <ExcelDownloadButton
-            onDownload={handleExcelDownload}
-            filename="meeting_status"
-            disabled={loading}
-            loading={loading}
-          />
+        }}>          
           <ManagementButtonGroup
             onRegister={handleCreateClick}
+            onExcelDownload={handleExcelDownload}
+            showExcelDownload={true}
+            filename="meeting_status"
             onDelete={handleDelete}
             showRegister={true}
             showDelete={true}
             showEdit={false}
             showRefresh={false}
-            registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"
             sx={{
-              mb: 0, // ManagementButtonGroup의 기본 mb 제거
+              mb: 0,
               alignSelf: 'center',
             }}
           />

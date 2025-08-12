@@ -701,19 +701,14 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           alignItems: 'center',
           height: '32px',
         }}>
-          <ExcelDownloadButton
-            onDownload={handleExcelDownload}
-            filename="position_status"
-            disabled={loading}
-            loading={loading}
-          />
           <ManagementButtonGroup
+            filename="position_status"
+            onExcelDownload={handleExcelDownload}
             onRegister={handleCreateClick}
             onDelete={handleDelete}
+            showExcelDownload={true}
             showRegister={true}
             showDelete={true}
-            showEdit={false}
-            showRefresh={false}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"

@@ -22,6 +22,21 @@ export type { PermissionButtonProps } from './PermissionButton';
 export { default as RefreshButton } from './RefreshButton';
 export type { RefreshButtonProps } from './RefreshButton';
 
+export { default as RegisterButton } from './RegisterButton';
+export type { RegisterButtonProps } from './RegisterButton';
+
+export { default as EditButton } from './EditButton';
+export type { EditButtonProps } from './EditButton';
+
+export { default as SaveButton } from './SaveButton';
+export type { SaveButtonProps } from './SaveButton';
+
+export { default as CancelButton } from './CancelButton';
+export type { CancelButtonProps } from './CancelButton';
+
+export { default as DeleteButton } from './DeleteButton';
+export type { DeleteButtonProps } from './DeleteButton';
+
 // 향후 추가될 버튼 컴포넌트들
 // export { default as IconButton } from './IconButton';
 // export { default as LoadingButton } from './LoadingButton';
