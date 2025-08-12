@@ -76,6 +76,7 @@ public class AdminController {
 
     /**
      * 사용자 목록 조회 (권한 관리용)
+     * 로그인 페이지에서도 사용할 수 있도록 인증 없이 접근 가능
      */
     @GetMapping("/users")
     public ResponseEntity<List<UserWithRolesDto>> getUsers() {

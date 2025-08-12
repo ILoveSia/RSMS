@@ -1,5 +1,6 @@
 package org.itcen.domain.handover.service;
 
+import org.itcen.domain.handover.dto.ApprovalStartRequestDto;
 import org.itcen.domain.handover.entity.ResponsibilityDocument;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -131,6 +132,33 @@ public interface ResponsibilityDocumentService {
      */
     List<StatusStatisticsDto> getStatusStatistics();
 
+    // 결재 연동 기능
+
+    /**
+     * 결재 테이블과 조인하여 문서 검색
+     */
+    Page<ResponsibilityDocumentWithApprovalDto> searchDocumentsWithApproval(DocumentSearchDto searchDto, Pageable pageable);
+
+    /**
+     * 결재 요청 시작
+     */
+    void startApproval(Long documentId, ApprovalStartRequestDto request);
+
+    /**
+     * 결재 승인
+     */
+    void approveApproval(Long documentId, String comment);
+
+    /**
+     * 결재 반려
+     */
+    void rejectApproval(Long documentId, String reason);
+
+    /**
+     * 결재 취소
+     */
+    void cancelApproval(Long documentId);
+
     // DTO 인터페이스들
 
     interface ResponsibilityDocumentDto {
@@ -147,10 +175,11 @@ public interface ResponsibilityDocumentService {
         LocalDate getExpiryDate();
         String getAuthorEmpNo();
         String getAuthorName();
-        String getReviewerEmpNo();
-        String getReviewerName();
-        String getApproverEmpNo();
-        String getApproverName();
+        // 검토자, 승인자는 approval 테이블에서 관리
+        
+        // 첨부파일 관련
+        Long getAttachmentCount();
+        List<AttachmentInfo> getAttachments();
     }
 
     interface DocumentSearchDto {
@@ -182,4 +211,57 @@ public interface ResponsibilityDocumentService {
         Long getCount();
         Double getPercentage();
     }
+
+    // 결재 연동 DTO 인터페이스들
+
+    /**
+     * 결재 정보가 포함된 책무기술서 DTO
+     */
+    interface ResponsibilityDocumentWithApprovalDto {
+        Long getDocumentId();
+        Long getPositionId();
+        String getPositionName();
+        Long getResponsibilityId();
+        String getDocumentTitle();
+        String getDocumentVersion();
+        String getDocumentContent();
+        ResponsibilityDocument.DocumentStatus getStatus();
+        Long getApprovalId();
+        LocalDate getEffectiveDate();
+        LocalDate getExpiryDate();
+        String getAuthorEmpNo();
+        String getAuthorName();
+        
+        // 감사 필드
+        LocalDate getCreatedAt();
+        LocalDate getUpdatedAt();
+        String getCreatedId();
+        String getUpdatedId();
+        
+        // 첨부파일 관련
+        Long getAttachmentCount();
+        List<AttachmentInfo> getAttachments();
+        
+        // 결재 관련 필드
+        String getApprovalStatus();
+        String getRequesterId();
+        String getRequesterName();
+        String getCurrentApproverId();
+        String getCurrentApproverName();
+        LocalDate getApprovedAt();
+        LocalDate getRejectedAt();
+        String getRejectionReason();
+    }
+
+    /**
+     * 첨부파일 정보 인터페이스
+     */
+    interface AttachmentInfo {
+        Long getAttachId();
+        String getOriginalName();
+        String getStoredName();
+        Long getFileSize();
+        String getMimeType();
+    }
+
 }

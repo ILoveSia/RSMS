@@ -30,7 +30,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
      * @param entityId 엔티티 ID
      * @return 해당 엔티티의 첨부파일 목록 (생성일시 기준 정렬)
      */
-    @Query("SELECT a FROM Attachment a WHERE a.entityType = :entityType AND a.entityId = :entityId ORDER BY a.createdAt ASC")
+    @Query("SELECT a FROM Attachment a WHERE a.entityType = :entityType AND a.entityId = :entityId AND (a.deletedYn IS NULL OR a.deletedYn = 'N') ORDER BY a.createdAt ASC")
     List<Attachment> findByEntityTypeAndEntityIdOrderByCreatedAtAsc(
             @Param("entityType") String entityType, 
             @Param("entityId") Long entityId);
@@ -42,7 +42,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
      * @param entityId 엔티티 ID
      * @return 첨부파일 개수
      */
-    @Query("SELECT COUNT(a) FROM Attachment a WHERE a.entityType = :entityType AND a.entityId = :entityId")
+    @Query("SELECT COUNT(a) FROM Attachment a WHERE a.entityType = :entityType AND a.entityId = :entityId AND (a.deletedYn IS NULL OR a.deletedYn = 'N')")
     long countByEntityTypeAndEntityId(@Param("entityType") String entityType, @Param("entityId") Long entityId);
 
     /**
@@ -68,7 +68,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
      * @param uploadedBy 업로드자 ID
      * @return 업로드자의 첨부파일 목록 (생성일시 기준 역순 정렬)
      */
-    @Query("SELECT a FROM Attachment a WHERE a.uploadedBy = :uploadedBy ORDER BY a.createdAt DESC")
+    @Query("SELECT a FROM Attachment a WHERE a.uploadedBy = :uploadedBy AND (a.deletedYn IS NULL OR a.deletedYn = 'N') ORDER BY a.createdAt DESC")
     List<Attachment> findByUploadedByOrderByCreatedAtDesc(@Param("uploadedBy") String uploadedBy);
 
     /**

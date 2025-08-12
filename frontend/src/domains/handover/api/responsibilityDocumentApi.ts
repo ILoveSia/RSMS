@@ -61,6 +61,23 @@ export interface ResponsibilityDocument {
   approverEmpNo?: string;
 }
 
+// 결재 요청 데이터 타입
+export interface ApprovalStartRequest {
+  taskTypeCode: string;
+  taskId: number;
+  title: string;
+  description: string;
+}
+
+// 첨부파일 정보 타입
+export interface AttachmentInfo {
+  attachId: number;
+  originalName: string;
+  storedName: string;
+  fileSize: number;
+  mimeType?: string;
+}
+
 export interface ResponsibilityDocumentDto extends ResponsibilityDocument {
   authorName?: string;
   reviewerName?: string;
@@ -75,8 +92,18 @@ export interface ResponsibilityDocumentDto extends ResponsibilityDocument {
   updatedAt?: string;
   createdByName?: string;
   updatedByName?: string;
+  // 첨부파일 관련 (백엔드와 동기화)
   attachmentCount?: number;
-  attachmentFileNames?: string;
+  attachments?: AttachmentInfo[];
+  // 결재 연동 필드 - 백엔드에서 COALESCE(ap.appr_stat_cd, 'NONE')로 전달
+  approvalStatus?: string; // 'NONE' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED' | 'SUBMITTED' | 'APPROVED' 등
+  requesterId?: string;
+  requesterName?: string;
+  currentApproverId?: string;
+  currentApproverName?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface DocumentSearchParams {
@@ -295,6 +322,66 @@ export class ResponsibilityDocumentApi {
    */
   static async getStatusStatistics(): Promise<DocumentStatusStatistics[]> {
     return apiClient.get<DocumentStatusStatistics[]>(`${this.BASE_PATH}/statistics/status`);
+  }
+
+  /**
+   * 결재 테이블과 조인하여 문서 검색
+   */
+  static async searchDocumentsWithApproval(
+    searchParams: DocumentSearchParams,
+    paginationParams: PaginationParams
+  ): Promise<PageResponse<ResponsibilityDocumentDto>> {
+    return apiClient.post<PageResponse<ResponsibilityDocumentDto>>(
+      `${this.BASE_PATH}/search-with-approval`,
+      searchParams,
+      { params: paginationParams }
+    );
+  }
+
+  /**
+   * 결재 요청 시작
+   */
+  static async startApproval(
+    documentId: number,
+    approvalRequest: ApprovalStartRequest
+  ): Promise<void> {
+    return apiClient.post(
+      `${this.BASE_PATH}/${documentId}/approval/start`,
+      approvalRequest
+    );
+  }
+
+  /**
+   * 결재 승인
+   */
+  static async approveApproval(
+    documentId: number,
+    comment?: string
+  ): Promise<void> {
+    return apiClient.post(
+      `${this.BASE_PATH}/${documentId}/approval/approve`,
+      { comment }
+    );
+  }
+
+  /**
+   * 결재 반려
+   */
+  static async rejectApproval(
+    documentId: number,
+    reason: string
+  ): Promise<void> {
+    return apiClient.post(
+      `${this.BASE_PATH}/${documentId}/approval/reject`,
+      { reason }
+    );
+  }
+
+  /**
+   * 결재 취소
+   */
+  static async cancelApproval(documentId: number): Promise<void> {
+    return apiClient.post(`${this.BASE_PATH}/${documentId}/approval/cancel`);
   }
 }
 

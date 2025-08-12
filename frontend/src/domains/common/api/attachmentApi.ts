@@ -35,7 +35,7 @@ export async function uploadAttachment(
   formData.append('entityId', request.entityId.toString());
   formData.append('uploadedBy', request.uploadedBy);
 
-  const response = await apiClient.post('/attachments/upload/single', formData);
+  const response = await apiClient.post('/common/attachments/upload/single', formData);
   if (response.success !== false) {
     return response.data || response;
   } else {
@@ -47,7 +47,12 @@ export async function uploadAttachment(
  * 첨부파일 목록 조회
  */
 export async function getAttachments(entityType: string, entityId: number): Promise<AttachmentInfo[]> {
-  const response = await apiClient.get(`/attachments/entity/${entityType}/${entityId}`);
+  const response = await apiClient.get(`/common/attachments`, {
+    params: {
+      entityType,
+      entityId
+    }
+  });
   
   if (response.success !== false) {
     return response.data || response || [];
@@ -61,7 +66,7 @@ export async function getAttachments(entityType: string, entityId: number): Prom
  */
 export async function downloadAttachment(attachmentId: number): Promise<Blob> {
   // Blob 응답을 위해 fetch API를 직접 사용
-  const response = await fetch(`/attachments/download/${attachmentId}`, {
+  const response = await fetch(`/api/common/attachments/${attachmentId}/download`, {
     method: 'GET',
     credentials: 'include'
   });
@@ -77,7 +82,7 @@ export async function downloadAttachment(attachmentId: number): Promise<Blob> {
  * 첨부파일 삭제
  */
 export async function deleteAttachment(attachmentId: number, deletedBy: string = 'system'): Promise<void> {
-  const response = await apiClient.delete(`/attachments/${attachmentId}?deletedBy=${deletedBy}`);
+  const response = await apiClient.delete(`/common/attachments/${attachmentId}?deletedBy=${deletedBy}`);
   
   if (response.success === false) {
     throw new Error(response.message || '첨부파일 삭제에 실패했습니다.');
@@ -88,7 +93,7 @@ export async function deleteAttachment(attachmentId: number, deletedBy: string =
  * 첨부파일 정보 조회
  */
 export async function getAttachmentInfo(attachmentId: number): Promise<AttachmentInfo> {
-  const response = await apiClient.get(`/attachments/${attachmentId}`);
+  const response = await apiClient.get(`/common/attachments/${attachmentId}`);
   
   if (response.success !== false) {
     return response.data || response;

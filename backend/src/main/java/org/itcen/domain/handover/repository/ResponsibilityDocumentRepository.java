@@ -30,8 +30,6 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd " +
            "LEFT JOIN FETCH rd.author " +
-           "LEFT JOIN FETCH rd.reviewer " +
-           "LEFT JOIN FETCH rd.approver " +
            "WHERE rd.status = :status")
     List<ResponsibilityDocument> findByStatusWithJoin(@Param("status") ResponsibilityDocument.DocumentStatus status);
 
@@ -45,8 +43,6 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd " +
            "LEFT JOIN FETCH rd.author " +
-           "LEFT JOIN FETCH rd.reviewer " +
-           "LEFT JOIN FETCH rd.approver " +
            "WHERE rd.authorEmpNo = :authorEmpNo")
     List<ResponsibilityDocument> findByAuthorEmpNoWithJoin(@Param("authorEmpNo") String authorEmpNo);
 
@@ -98,12 +94,11 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     List<ResponsibilityDocument> findPendingApprovalDocuments();
 
     /**
-     * 복합 조건 검색 (JOIN 포함)
+     * 복합 조건 검색 (JOIN 포함 - 첨부파일, 작성자, 결재정보 포함)
      */
     @Query("SELECT rd FROM ResponsibilityDocument rd " +
            "LEFT JOIN FETCH rd.author a " +
-           "LEFT JOIN FETCH rd.reviewer r " +
-           "LEFT JOIN FETCH rd.approver ap " +
+           "LEFT JOIN FETCH rd.attachments att " +
            "WHERE (:status IS NULL OR rd.status = :status) AND " +
            "(:authorEmpNo IS NULL OR rd.authorEmpNo LIKE %:authorEmpNo%) AND " +
            "(:documentTitle IS NULL OR rd.documentTitle LIKE %:documentTitle%)")
@@ -111,6 +106,29 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
                                                               @Param("authorEmpNo") String authorEmpNo,
                                                               @Param("documentTitle") String documentTitle,
                                                               Pageable pageable);
+
+    /**
+     * 복합 조건 검색 (결재정보 포함) - Native Query 사용
+     */
+    @Query(value = "SELECT rd.document_id, rd.document_title, rd.document_version, " +
+           "rd.document_content, rd.status, rd.effective_date, rd.expiry_date, " +
+           "rd.author_emp_no, e.emp_name as author_name, " +
+           "rd.created_at, rd.updated_at, rd.created_id, rd.updated_id, " +
+           "COALESCE(ap.appr_stat_cd, 'NONE') as approval_status, " +
+           "ap.approval_id, ap.requester_id, ap.approver_id, ap.approval_datetime " +
+           "FROM responsibility_documents rd " +
+           "LEFT JOIN employee e ON rd.author_emp_no = e.emp_no " +
+           "LEFT JOIN approval ap ON rd.document_id = ap.task_id AND ap.task_type_cd = 'responsibility_documents' " +
+           "WHERE (COALESCE(:authorEmpNo, '') = '' OR rd.author_emp_no LIKE CONCAT('%', :authorEmpNo, '%')) AND " +
+           "(COALESCE(:documentTitle, '') = '' OR rd.document_title LIKE CONCAT('%', :documentTitle, '%')) " +
+           "ORDER BY rd.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM responsibility_documents rd " +
+                       "WHERE (COALESCE(:authorEmpNo, '') = '' OR rd.author_emp_no LIKE CONCAT('%', :authorEmpNo, '%')) AND " +
+                       "(COALESCE(:documentTitle, '') = '' OR rd.document_title LIKE CONCAT('%', :documentTitle, '%'))",
+           nativeQuery = true)
+    Page<Object[]> findBySearchCriteriaWithApproval(@Param("authorEmpNo") String authorEmpNo,
+                                                    @Param("documentTitle") String documentTitle,
+                                                    Pageable pageable);
 
     /**
      * 복합 조건 검색 (기존 버전 유지)

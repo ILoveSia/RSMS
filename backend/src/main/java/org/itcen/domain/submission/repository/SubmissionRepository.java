@@ -36,7 +36,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             LEFT JOIN positions p ON s.positions_id = p.positions_id
             LEFT JOIN execofficer e ON e.execofficer_id::varchar = s.execofficer_id
             LEFT JOIN employee u ON e.emp_id = u.emp_no
-            LEFT JOIN attachments a ON a.entity_type = 'LEDGER_MGMT_STRUCTURE_SUBMISSION'
+            LEFT JOIN attachments a ON a.entity_type = 'rm_submit_mgmt'
                 AND a.entity_id = s.rm_submit_mgmt_id
                 AND (a.deleted_yn = 'N' OR a.deleted_yn IS NULL)
             GROUP BY s.rm_submit_mgmt_id, s.submit_hist_cd, s.execofficer_id, u.emp_name,

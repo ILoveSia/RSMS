@@ -33,7 +33,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/attachments")
+@RequestMapping("/common/attachments")
 @RequiredArgsConstructor
 public class AttachmentController {
 
@@ -101,7 +101,33 @@ public class AttachmentController {
     }
 
     /**
-     * 엔티티의 첨부파일 목록 조회
+     * 엔티티의 첨부파일 목록 조회 (쿼리 파라미터 방식)
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<AttachmentDto.Response>>> getAttachments(
+            @RequestParam String entityType,
+            @RequestParam Long entityId) {
+        
+        try {
+            log.info("첨부파일 목록 조회 요청 - entityType: {}, entityId: {}", entityType, entityId);
+            
+            List<AttachmentDto.Response> attachments = attachmentService
+                    .getAttachmentsByEntity(entityType, entityId);
+            
+            log.info("첨부파일 목록 조회 완료 - 총 {}개", attachments.size());
+
+            return ResponseEntity.ok(
+                ApiResponse.success("첨부파일 목록 조회가 완료되었습니다.", attachments)
+            );
+        } catch (Exception e) {
+            log.error("첨부파일 목록 조회 중 오류 발생 - entityType: {}, entityId: {}", entityType, entityId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("첨부파일 목록 조회에 실패했습니다: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * 엔티티의 첨부파일 목록 조회 (패스 파라미터 방식)
      */
     @GetMapping("/entity/{entityType}/{entityId}")
     public ResponseEntity<ApiResponse<List<AttachmentDto.Response>>> getAttachmentsByEntity(
@@ -133,7 +159,7 @@ public class AttachmentController {
     /**
      * 첨부파일 다운로드
      */
-    @GetMapping("/download/{attachId}")
+    @GetMapping("/{attachId}/download")
     public ResponseEntity<InputStreamResource> downloadFile(@PathVariable Long attachId) {
         
         try {

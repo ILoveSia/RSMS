@@ -12,7 +12,6 @@ CREATE TABLE public.responsibility_documents (
     
     -- 상태 관리
     status VARCHAR(20) DEFAULT 'DRAFT' NOT NULL,    -- 상태 (DRAFT, REVIEW, APPROVED, PUBLISHED)
-    approval_id BIGINT,                             -- 승인 ID (approval 테이블 FK)
     
     -- 유효 기간
     effective_date DATE,                            -- 시행일
@@ -20,8 +19,7 @@ CREATE TABLE public.responsibility_documents (
     
     -- 담당자 정보
     author_emp_no VARCHAR(20),                      -- 작성자 사번
-    reviewer_emp_no VARCHAR(20),                    -- 검토자 사번
-    approver_emp_no VARCHAR(20),                    -- 승인자 사번
+ 
     
     -- 감사 필드
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -30,7 +28,7 @@ CREATE TABLE public.responsibility_documents (
     updated_id VARCHAR(100),
     
     -- 제약 조건
-    CONSTRAINT chk_responsibility_documents_status CHECK (status IN ('DRAFT', 'REVIEW', 'APPROVED', 'PUBLISHED')),
+    CONSTRAINT chk_responsibility_documents_status CHECK (status IN ('DRAFT', 'REVIEW', 'APPROVED', 'PUBLISHED'))
 );
 
 -- 인덱스 생성
@@ -46,8 +44,6 @@ CREATE TRIGGER update_responsibility_documents_updated_at
 
 -- 테이블 코멘트
 COMMENT ON TABLE public.responsibility_documents IS '책무기술서 관리 테이블';
-COMMENT ON COLUMN public.responsibility_documents.position_id IS '직책 ID (positions 테이블 FK)';
-COMMENT ON COLUMN public.responsibility_documents.responsibility_id IS '책무 ID (responsibility 테이블 FK, 선택)';
 COMMENT ON COLUMN public.responsibility_documents.status IS '상태 (DRAFT: 초안, REVIEW: 검토중, APPROVED: 승인완료, PUBLISHED: 발행완료)';
 COMMENT ON COLUMN public.responsibility_documents.document_version IS '문서 버전 (예: 1.0, 1.1, 2.0)';
 COMMENT ON COLUMN public.responsibility_documents.approval_id IS '승인 ID (approval 테이블 연동)';

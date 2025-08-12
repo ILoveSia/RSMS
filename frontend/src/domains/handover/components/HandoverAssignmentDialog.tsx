@@ -63,8 +63,6 @@ interface FormData {
   assignorDeptName: string;
   assigneeDeptCd: string;
   assigneeDeptName: string;
-  assignorPositionCd: string;
-  assigneePositionCd: string;
   plannedStartDate: Date | null;
   plannedEndDate: Date | null;
   description: string;
@@ -82,8 +80,6 @@ const initialFormData: FormData = {
   assignorDeptName: '',
   assigneeDeptCd: '',
   assigneeDeptName: '',
-  assignorPositionCd: '',
-  assigneePositionCd: '',
   plannedStartDate: null,
   plannedEndDate: null,
   description: '',
@@ -175,8 +171,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
           assignorDeptName: assignmentData.assignorDeptName || '',
           assigneeDeptCd: assignmentData.assigneeDeptCd || '',
           assigneeDeptName: assignmentData.assigneeDeptName || '',
-          assignorPositionCd: assignmentData.assignorPositionCd || '',
-          assigneePositionCd: assignmentData.assigneePositionCd || '',
           plannedStartDate: plannedStartDate,
           plannedEndDate: plannedEndDate,
           description: assignmentData.description || assignmentData.notes || '',
@@ -285,7 +279,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       assignorName: employee.username,
       assignorDeptCd: employee.deptCd || '',
       assignorDeptName: employee.deptName || '',
-      assignorPositionCd: employee.jobTitleCd || '',
     }));
 
     setAssignorSearchOpen(false);
@@ -299,7 +292,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
       assigneeName: employee.username,
       assigneeDeptCd: employee.deptCd || '',
       assigneeDeptName: employee.deptName || '',
-      assigneePositionCd: employee.jobTitleCd || '',
     }));
 
     setAssigneeSearchOpen(false);
@@ -328,7 +320,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
         title={mode === 'create' ? '인수인계 지정 등록' : mode === 'edit' ? '인수인계 지정 수정' : '인수인계 지정 조회'}
       >
         <DialogContent sx={{
-          p: 3,
+          p: 2,
           // view 모드에서 텍스트 스타일 진하게 통일
           ...(isViewMode && {
             '& .MuiInputBase-input[disabled]': {
@@ -411,7 +403,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                 </Alert>
               )}
 
-              <Grid container spacing={2}>
+              <Grid container spacing={1.5}>
 
 
                 {/* 인수인계 유형 */}
@@ -529,25 +521,6 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                     />
                   </Box>
                 </Grid>
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
-                    <TextField
-                      fullWidth
-                      value={formData.assignorPositionCd}
-                      label='인계자 직위'
-                      disabled={isViewMode}
-                      mode='readonly'
-                    />
-                    {/* <Box sx={{ fontWeight: 'bold', fontSize: '2rem', minWidth: '60px', textAlign: 'center'}}>→</Box> */}
-                    <TextField
-                      fullWidth
-                      value={formData.assigneePositionCd}
-                      label='인수자 직위'
-                      disabled={isViewMode}
-                      mode='readonly'
-                    />
-                  </Box>
-                </Grid>
 
                 <Grid item xs={12}>
                   <TextField
@@ -558,7 +531,7 @@ const HandoverAssignmentDialog: React.FC<HandoverAssignmentDialogProps> = ({
                     onChange={e => handleInputChange('description', e.target.value)}
                     disabled={isViewMode}
                     multiline
-                    rows={3}
+                    rows={4}
                     placeholder='인수인계에 대한 상세 설명을 입력하세요.'
                   />
                 </Grid>
