@@ -136,7 +136,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       field: 'fieldTypeName',
       headerName: '항목구분',
       width: 100,
-      align: 'center',
+      align: 'left',
       headerAlign: 'center',
       renderCell: params => {
         return params.value || params.row.fieldTypeCd;
@@ -146,7 +146,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       field: 'roleTypeName',
       headerName: '직무구분',
       width: 100,
-      align: 'center',
+      align: 'left',
       headerAlign: 'center',
       renderCell: params => {
         return params.value || params.row.roleTypeCd;
@@ -156,7 +156,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       field: 'deptName',
       headerName: '부서명',
       width: 110,
-      align: 'center',
+      align: 'left',
       headerAlign: 'center',
       renderCell: params => {
         return params.value || params.row.deptCd;
@@ -180,14 +180,14 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       field: 'measureType',
       headerName: '조치유형',
       width: 90,
-      align: 'center',
+      align: 'left',
       headerAlign: 'center',
     },
     {
       field: 'periodName',
       headerName: '주기',
       width: 80,
-      align: 'center',
+      align: 'left',
       headerAlign: 'center',
       renderCell: params => {
         return params.value || params.row.periodCd;
@@ -204,7 +204,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       field: 'checkPeriodName',
       headerName: '점검시기',
       width: 90,
-      align: 'center',
+      align: 'left',
       headerAlign: 'center',
       renderCell: params => {
         return params.value || params.row.checkPeriod;

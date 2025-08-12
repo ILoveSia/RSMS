@@ -146,9 +146,15 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
   // 수정 버튼 표시 여부 판단
   const shouldShowEditButton = () => {
-    // appr_stat_cd가 있으면 수정 버튼 숨김
-    const hasApprStat = apprStatCd && apprStatCd !== '';
-    return !hasApprStat;
+    // appr_stat_cd가 "APPROVED" 또는 "승인"이면 수정 버튼 숨김
+    const isApproved = apprStatCd === 'APPROVED' || apprStatCd === '승인';
+    console.log('🔧 수정버튼 표시 여부:', {
+      apprStatCd,
+      isApproved,
+      shouldShow: !isApproved,
+      mode
+    });
+    return !isApproved;
   };
 
   // 결재현황 버튼 표시 여부 판단
@@ -424,7 +430,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
     <>
       <BaseDialog
         open={open}
-        mode={shouldShowEditButton() ? mode : 'view'} // appr_stat_cd가 있으면 view 모드로 강제 변경
+        mode={shouldShowEditButton() ? mode : 'view'} // 결재상태가 "승인"이면 view 모드로 강제 변경
         title={`책무 ${mode === 'create' ? '등록' : mode === 'edit' ? '수정' : '상세 정보'}`}
         onClose={handleClose}
         onSave={handleSave}
@@ -433,6 +439,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         fullWidth
         disableSave={loading}
         loading={loading}
+        showEditButton={shouldShowEditButton()} // 결재상태가 승인이면 수정 버튼 숨김
         customActions={renderCustomActions()}
       >
 
