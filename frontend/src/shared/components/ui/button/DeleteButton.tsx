@@ -1,5 +1,5 @@
 import React from 'react';
-import Button from '@/shared/components/ui/button/Button';
+import Button from './Button';
 import { Delete as DeleteIcon } from '@mui/icons-material';
 
 export interface DeleteButtonProps {
@@ -33,6 +33,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({
         minWidth: '80px',
         fontSize: '0.875rem',
         fontWeight: 600,
+        borderRadius: 1,
         ...sx,
       }}
     >
