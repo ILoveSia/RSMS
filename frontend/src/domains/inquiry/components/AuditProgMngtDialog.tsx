@@ -114,17 +114,17 @@ const useFormValidation = (data: AuditProgramData): ValidationResult => {
     const errors: Record<string, string> = {};
 
     // 점검계획 코드 필수 검증
-    if (!data.planCode?.trim()) {
+    if (!data.planCode || (typeof data.planCode === 'string' && !data.planCode.trim())) {
       errors.planCode = '점검계획 코드는 필수 입력 항목입니다.';
     }
 
-    // 책무번호 필수 검증 (비문자 타입 방지)
-    if (!String(data.ledgerOrdersHod ?? '').trim()) {
+    // 책무번호 필수 검증
+    if (!data.ledgerOrdersHod || (typeof data.ledgerOrdersHod === 'string' && !data.ledgerOrdersHod.trim())) {
       errors.ledgerOrdersHod = '책무번호는 필수 선택 항목입니다.';
     }
 
     // 점검 회차명 필수 검증
-    if (!data.auditTitle?.trim()) {
+    if (!data.auditTitle || (typeof data.auditTitle === 'string' && !data.auditTitle.trim())) {
       errors.auditTitle = '점검 회차명은 필수 입력 항목입니다.';
     }
 

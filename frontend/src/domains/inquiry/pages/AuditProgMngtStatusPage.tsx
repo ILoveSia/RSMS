@@ -6,7 +6,6 @@ import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { ExcelDownloadButton } from '@/shared/components/ui/button';
 import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
-import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { DateRangeSelector, SearchConditionPanel } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -58,7 +57,7 @@ const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditPr
     auditProgMngtCd: response.auditProgMngtCd,
     auditProgName: response.auditProgName || '', // null 방지
     auditTypeName: response.auditTypeName || '', // null 방지
-    ledgerOrdersHod: response.ledgerOrdersHod || '', // null 방지
+    ledgerOrdersHod: String(response.ledgerOrdersHod || ''), // null/undefined 방지 및 문자열 변환
     auditTarget: response.auditTarget || '', // null 방지
     auditPeriod: `${response.auditStartDate || ''} ~ ${response.auditEndDate || ''}`,
     auditTeamLeader: response.auditTeamLeader || '', // null 방지
@@ -98,13 +97,13 @@ const convertToAuditProgramData = (row: AuditProgRow): AuditProgramData => {
 
   return {
     id: 0, // 임시 ID
-    planCode: row.auditProgMngtCd,
-    ledgerOrdersHod: row.ledgerOrdersHod || '', // 빈 문자열로 기본값 설정하여 MUI Select 오류 방지
-    auditTitle: row.auditProgName, // 점검계획명을 점검회차명으로 매핑 (수정)
+    planCode: String(row.auditProgMngtCd || ''),
+    ledgerOrdersHod: String(row.ledgerOrdersHod || ''), // 문자열 변환 및 빈 문자열로 기본값 설정
+    auditTitle: String(row.auditProgName || ''), // 점검계획명을 점검회차명으로 매핑, 문자열 변환
     startDate,
     endDate,
     targetSelection: row.targetItemCount > 0 ? `${row.targetItemCount}개 항목 선정됨` : '', // 기존 선정 정보 표시
-    remarks: row.remarks || '',
+    remarks: String(row.remarks || ''),
     targetItemIds: [], // API에서 상세 정보를 다시 조회해야 함
     targetItemData: [], // API에서 상세 정보를 다시 조회해야 함
   };
@@ -151,7 +150,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditProgMngtCd',
       headerName: '점검계획코드',
-      width: 140,
+      width: 130,
     },
     {
       field: 'auditProgName',
@@ -161,7 +160,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditTypeName',
       headerName: '점검유형',
-      width: 100,
+      width: 110,
     },
     {
       field: 'ledgerOrdersHod',
@@ -171,7 +170,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditTarget',
       headerName: '점검대상',
-      width: 140,
+      width: 130,
     },
     {
       field: 'auditPeriod',
@@ -181,23 +180,23 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditTeamLeader',
       headerName: '점검팀장',
-      width: 100,
+      width: 110,
     },
     {
       field: 'auditTeamMembers',
       headerName: '점검팀원',
-      width: 140,
+      width: 130,
     },
     {
       field: 'targetItemCount',
       headerName: '대상 점검항목수',
-      width: 120,
+      width: 130,
       align: 'center' as const,
     },
     {
       field: 'auditStatusCd',
       headerName: '점검상태',
-      width: 90,
+      width: 130,
       renderCell: ({ value }) => (
         <Chip
           label={
@@ -214,11 +213,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         />
       ),
     },
-    {
-      field: 'remarks',
-      headerName: '비고',
-      width: 150,
-    },
+   
   ];
 
   // 점검계획관리 현황 조회

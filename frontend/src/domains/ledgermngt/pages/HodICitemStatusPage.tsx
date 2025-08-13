@@ -19,6 +19,8 @@ interface IHodICitemStatusPageProps {
 
 const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.Element => {
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
+  const [selectedLedgerOrderId, setSelectedLedgerOrderId] = useState<number | undefined>();
+  const [selectedLedgerOrderStatusCd, setSelectedLedgerOrderStatusCd] = useState<string | undefined>();
   const [selectedFieldType, setSelectedFieldType] = useState<string>('ALL');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -331,6 +333,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const handleCreateClick = useCallback(() => {
     setDialogMode('create');
     setSelectedItemId(undefined);
+    setSelectedRowApprovalStatus('NONE'); // create 모드에서는 항상 NONE으로 설정
     setDialogOpen(true);
   }, []);
 
@@ -435,7 +438,11 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>책무번호</span>
           <LedgerOrdersHodSelect
             value={selectedLedgerOrder}
-            onChange={setSelectedLedgerOrder}
+            onChange={(value, ledgerOrdersHodId, ledgerOrdersHodStatusCd) => {
+              setSelectedLedgerOrder(value);
+              setSelectedLedgerOrderId(ledgerOrdersHodId);
+              setSelectedLedgerOrderStatusCd(ledgerOrdersHodStatusCd);
+            }}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
             refreshTrigger={hodRefreshTrigger}

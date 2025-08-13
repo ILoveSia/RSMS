@@ -136,9 +136,6 @@ const ApprovalDashboardPage: React.FC = () => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-  // 엑셀 다운로드 핸들러
-  const handleExcelDownload = useCallback(async () => {
-  }, []);
 
   // 결재 상세 보기
   const handleViewDetail = async (approvalId: number) => {
@@ -241,14 +238,9 @@ const ApprovalDashboardPage: React.FC = () => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
         const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
         return (
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#1976d2', cursor: 'pointer' }}>
-              {taskTypeName}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {row.taskTypeName}
-            </Typography>
-          </Box>
+          <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#1976d2', cursor: 'pointer' }}>
+            {taskTypeName}
+          </Typography>
         );
       },
       flex: 1,
@@ -331,18 +323,13 @@ const ApprovalDashboardPage: React.FC = () => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
         const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
         return (
-          <Box>
-            <Typography 
-              variant="body2" 
-              sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
-              onClick={() => handleViewDetail(row.approvalId)}
-            >
-              {taskTypeName}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {row.taskTypeName}
-            </Typography>
-          </Box>
+          <Typography 
+            variant="body2" 
+            sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
+            onClick={() => handleViewDetail(row.approvalId)}
+          >
+            {taskTypeName}
+          </Typography>
         );
       },
       flex: 1,
@@ -454,15 +441,6 @@ const ApprovalDashboardPage: React.FC = () => {
           py: 1,
         }}
       >
-        <SearchConditionPanel disabled={loading}>          
-          <ManagementButtonGroup
-            onRefresh={loadDashboardData}
-            onExcelDownload={handleExcelDownload}
-            showExcelDownload={true}
-            filename="approval_dashboard"
-            showRefresh={true}
-          />
-        </SearchConditionPanel>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2, mx: 2 }}>
@@ -486,7 +464,7 @@ const ApprovalDashboardPage: React.FC = () => {
         ) : (
           <>
             {/* 요약 카드 영역 */}
-            <Box sx={{ px: 2, mb: 2 }}>
+            <Box sx={{ px: 2, mb: 3 }}>
               <Grid container spacing={1.5}>
                 {summaryCards.map((card, index) => (
                   <Grid item xs={12} sm={6} md={3} key={index}>
@@ -530,7 +508,7 @@ const ApprovalDashboardPage: React.FC = () => {
             </Box>
 
             {/* 내 결재 대기 목록 */}
-            <Box sx={{ px: 2, mb: 2 }}>
+            <Box sx={{ px: 2, mb: 3 }}>
               <Card sx={{ border: '1px solid var(--bank-border)', borderRadius: 2 }}>
                 <CardContent sx={{ p: 1.5 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>

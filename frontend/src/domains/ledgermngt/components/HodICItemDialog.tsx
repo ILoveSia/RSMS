@@ -121,6 +121,18 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
   const currentUserId = loginData?.userid || null;
   
+  // Redux Store 전체 구조 확인을 위한 디버깅
+  React.useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const store = (window as any).__HOST_STORE__?.main;
+    if (store) {
+      const state = store.getState();
+      console.log('🏪 [HodICItemDialog] 전체 Redux Store 상태:', state);
+      console.log('🔍 [HodICItemDialog] LoginStore 상태:', state?.LoginStore);
+      console.log('🔍 [HodICItemDialog] loginStore 상태:', state?.loginStore);
+    }
+  }, []);
+  
   console.log('🔍 HodICItemDialog - 로그인 사용자 정보:', {
     loginData,
     currentUserId,
@@ -165,12 +177,14 @@ interface ResponsibilityDetail {
 
   // 수정 버튼 표시 여부 판단
   const shouldShowEditButton = () => {
-    return approvalStatus === 'NONE';
+    // view 모드이고 결재상태가 NONE이거나 없는 경우에만 수정 버튼 표시
+    return isViewMode && (approvalStatus === 'NONE' || !approvalStatus);
   };
 
   // 저장 버튼 표시 여부 판단
   const shouldShowSaveButton = () => {
-    return approvalStatus === 'NONE' && isEditMode;
+    // create 모드이거나, edit 모드에서 결재상태가 NONE인 경우 저장 버튼 표시
+    return isCreateMode || (isEditMode && (approvalStatus === 'NONE' || !approvalStatus));
   };
 
 

@@ -538,6 +538,7 @@ const DataGrid = <T extends Record<string, any>>({
               disableRowSelectionOnClick={disableRowSelectionOnClick}
               disableMultipleRowSelection={!multiSelect}
               rowSelectionModel={rowSelectionModel ?? selectedRows}
+              rowSelectionModel={rowSelectionModel || selectedRows}
               onRowClick={handleRowClick}
               onRowDoubleClick={handleRowDoubleClick}
               onRowSelectionModelChange={handleSelectionChange}
