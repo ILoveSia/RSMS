@@ -11,7 +11,7 @@ import { DataGrid } from '@/shared/components/ui/data-display';
 import { Alert } from '@/shared/components/ui/feedback';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Box, CircularProgress } from '@mui/material';
-import SearchBox from '@/shared/components/ui/SearchBox';
+import { SearchBox } from '@/shared/components/ui/form';
 import React, { useEffect, useState } from 'react';
 import { meetingStatusApi } from '../../../ledgermngt/api/meetingStatusApi';
 
@@ -107,7 +107,8 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
 
   // 공통코드 디버깅
   useEffect(() => {
-    const codes = getCodesArray();
+    // codes updated; no-op
+    void getCodesArray();
   }, [allCodes]);
 
   // 회의체 목록 로드
@@ -242,7 +243,7 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
           <Box sx={{ flex: 1 }}>
             <SearchBox
               placeholder='회의체명 또는 코드로 검색'
-              onSearch={(query) => { setSearchKeyword(query); handleSearch(query); }}
+              onSearch={(query: string) => { setSearchKeyword(query); handleSearch(query); }}
               onClear={() => { setSearchKeyword(''); handleSearch(''); }}
             />
           </Box>

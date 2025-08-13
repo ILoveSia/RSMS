@@ -9,11 +9,11 @@ import { Button } from '@/shared/components/ui/button';
 import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
 import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import SearchBox from '@/shared/components/ui/SearchBox';
+import { SearchBox } from '@/shared/components/ui/form';
 import type { DataGridColumn } from '@/shared/types/common';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import type { GridRowParams } from '@mui/x-data-grid';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export interface EmployeeSearchPopupProps {
   open: boolean;

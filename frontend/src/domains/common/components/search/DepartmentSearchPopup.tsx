@@ -12,7 +12,7 @@ import {
   CircularProgress,
   Typography,
 } from '@mui/material';
-import SearchBox from '@/shared/components/ui/SearchBox';
+import { SearchBox } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
@@ -232,7 +232,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
           <Box sx={{ flex: 1, minWidth: 120 }}>
             <SearchBox
               placeholder='부서코드, 부서명'
-              onSearch={(query) => { setSearchKeyword(query); handleSearch(query); }}
+              onSearch={(query: string) => { setSearchKeyword(query); handleSearch(query); }}
               onClear={() => { setSearchKeyword(''); handleSearch(''); }}
             />
           </Box>

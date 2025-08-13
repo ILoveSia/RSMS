@@ -32,14 +32,4 @@ export type { DateRangeSelectorProps } from './DateRangeSelector';
 export { default as RadioGroup } from './RadioGroup';
 export type { RadioGroupProps, RadioOption } from './RadioGroup';
 
-// 타입 exports (기타)
-
-// Server FileUpload 타입 exports (이미 위에서 export됨)
-
-// 향후 추가될 폼 컴포넌트들
-// export { default as TextField } from './TextField';
-// export { default as TimePicker } from './TimePicker';
-// export { default as Checkbox } from './Checkbox';
-// export { default as RadioGroup } from './RadioGroup';
-// export { default as Switch } from './Switch';
-// export { default as Slider } from './Slider';
+export { default as SearchBox } from './SearchBox';

@@ -44,7 +44,7 @@ export * from './navigation';
 
 // 기존 컴포넌트들 (이미 있는 것들)
 export { default as DataList } from './DataList';
-export { default as SearchBox } from './SearchBox';
+export { SearchBox } from './form';
 
 // 타입들 re-export
 export type {

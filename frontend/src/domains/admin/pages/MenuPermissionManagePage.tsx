@@ -1,38 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Checkbox,
-  Button,
-  Alert,
-  CircularProgress,
-  Chip,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  Tooltip,
-  Paper
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-  Refresh as RefreshIcon,
-  Clear as ClearIcon,
-  Security as SecurityIcon,
-  Visibility as ReadIcon,
-  Edit as WriteIcon,
-  Delete as DeleteIcon
-} from '@mui/icons-material';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Button, Alert, CircularProgress, Chip, FormControl, Select, MenuItem, Tooltip, Paper } from '@mui/material';
+import { Save as SaveIcon, Clear as ClearIcon, Security as SecurityIcon, Visibility as ReadIcon, Edit as WriteIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -41,6 +9,7 @@ import { SearchButton, ExcelDownloadButton, RefreshButton } from '@/shared/compo
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import { adminApi } from '../api/adminApi';
+import { SearchBox } from '@/shared/components/ui/form';
 import type { 
   MenuPermissionMatrix, 
   MenuPermissionUpdate, 
@@ -59,7 +28,7 @@ const MenuPermissionManagePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [changes, setChanges] = useState<Map<string, MenuPermissionUpdate>>(new Map());
   const [filter, setFilter] = useState<MenuPermissionFilter>({});
-  const [expandedMenus, setExpandedMenus] = useState<Set<number>>(new Set());
+  // const [expandedMenus, setExpandedMenus] = useState<Set<number>>(new Set());
 
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
@@ -282,13 +251,14 @@ const MenuPermissionManagePage: React.FC = () => {
           }}
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>메뉴명</span>
-          <TextField
-            value={filter.menuName || ''}
-            onChange={(e) => setFilter({ ...filter, menuName: e.target.value })}
-            size="small"
-            sx={{ minWidth: 150, maxWidth: 200 }}
-            placeholder="메뉴명 검색"
-          />
+          <Box sx={{ minWidth: 220, maxWidth: 320 }}>
+            <SearchBox
+              placeholder="메뉴명 검색"
+              value={filter.menuName || ''}
+              onSearch={(q: string) => setFilter({ ...filter, menuName: q })}
+              onClear={() => setFilter({ ...filter, menuName: '' })}
+            />
+          </Box>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>권한레벨</span>
           <FormControl size="small" sx={{ minWidth: 120, maxWidth: 180 }}>
             <Select

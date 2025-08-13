@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
-import { Box, Chip, Divider, Typography } from '@mui/material';
+import { Box, Chip, Divider, Typography, Stack, Paper } from '@mui/material';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import type { QnaDetailResponseDto } from '../api/qnaApi';
 import qnaApi from '../api/qnaApi';
@@ -68,9 +68,10 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
       open={open}
       mode={canEdit ? mode : 'onlyRead'}
       title="Q&A 상세"
-      maxWidth="md"
+      maxWidth="lg"
       onClose={() => { setMode('onlyRead'); onClose(); }}
       onModeChange={(m) => setMode(m as any)}
+      contentSx={{ p: 2 }}
       onSave={async () => {
         if (!detail || mode !== 'edit') return;
         try {
@@ -94,104 +95,113 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
       {loading && <Typography>로딩 중...</Typography>}
       {error && <Typography color="error">{error}</Typography>}
       {detail && !loading && !error && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography variant="h6">{detail.title}</Typography>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Chip label={`부서: ${detail.department || '-'}`} size="small" />
-            <Chip label={`작성자: ${detail.questionerName || '-'}`} size="small" />
-            <Chip label={`상태: ${detail.statusDescription || '-'}`} size="small" color="primary" variant="outlined" />
-            {detail.priorityDescription && <Chip label={`우선순위: ${detail.priorityDescription}`} size="small" variant="outlined" />}
-            <Chip label={`공개여부: ${detail.isPublic ? '공개' : '비공개'}`} size="small" variant="outlined" />
-            <Chip label={`조회수: ${detail.viewCount ?? 0}`} size="small" variant="outlined" />
+        <Stack spacing={2} sx={{ maxHeight: 700, overflowY: 'auto' }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{detail.title}</Typography>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
+              <Chip label={`부서: ${detail.department || '-'}`} size="small" />
+              <Chip label={`작성자: ${detail.questionerName || '-'}`} size="small" />
+              <Chip label={`상태: ${detail.statusDescription || '-'}`} size="small" color="primary" variant="outlined" />
+              {detail.priorityDescription && <Chip label={`우선순위: ${detail.priorityDescription}`} size="small" variant="outlined" />}
+              <Chip label={`공개여부: ${detail.isPublic ? '공개' : '비공개'}`} size="small" variant="outlined" />
+              <Chip label={`조회수: ${detail.viewCount ?? 0}`} size="small" variant="outlined" />
+            </Stack>
+            <Typography variant="caption" color="text.secondary">
+              작성일: {detail.createdAtFormatted}{detail.answeredAtFormatted ? ` · 답변일: ${detail.answeredAtFormatted}` : ''}
+            </Typography>
           </Box>
-          <Typography variant="body2" color="text.secondary">작성일: {detail.createdAtFormatted}</Typography>
-          {detail.answeredAtFormatted && (
-            <Typography variant="body2" color="text.secondary">답변일: {detail.answeredAtFormatted}</Typography>
-          )}
-          <Divider sx={{ my: 1 }} />
-          <Typography variant="subtitle1">질문</Typography>
-          {canEdit && mode === 'edit' ? (
-            <>
-              <TextField
-                size="small"
-                label="담당업무/부서"
-                value={editForm.department}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
-                mode="editable"
-              />
-              <TextField
-                size="small"
-                label="제목"
-                value={editForm.title}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                mode="editable"
-              />
-              <TextField
-                size="small"
-                label="내용"
-                value={editForm.content}
-                multiline minRows={4}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
-                mode="editable"
-              />
-              <TextField
-                size="small"
-                label="카테고리"
-                value={editForm.category}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                mode="editable"
-              />
-            </>
-          ) : (
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{detail.content}</Typography>
-          )}
-
-          <Divider sx={{ my: 1 }} />
-          <Typography variant="subtitle1">답변</Typography>
-          {detail.answerContent && detail.answerContent.trim() ? (
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{detail.answerContent}</Typography>
-          ) : canEdit ? (
-            <>
-              <TextField
-                size="small"
-                label="답변 내용"
-                value={editForm.answerContent}
-                multiline minRows={4}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, answerContent: e.target.value }))}
-                mode="editable"
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="caption" color="text.secondary">등록 시 상태가 ANSWERED로 변경됩니다.</Typography>
-                <Button
-                  size="small"
-                  color="success"
-                  loading={savingAnswer}
-                  onClick={async () => {
-                    if (!detail) return;
-                    try {
-                      setSavingAnswer(true);
-                      const userRaw = localStorage.getItem('user');
-                      const userJson = userRaw ? JSON.parse(userRaw) : {};
-                      const userId = userJson?.userid || 'anonymous';
-                      const userName = userJson?.username || '익명';
-                      await qnaApi.addAnswer(detail.id, { answerContent: editForm.answerContent || '' }, { userId, userName });
-                      showSuccess('답변이 등록되었습니다.');
-                      onSaved?.();
-                      onClose();
-                    } finally {
-                      setSavingAnswer(false);
-                    }
-                  }}
-                  disabled={!editForm.answerContent.trim()}
-                >
-                  답변 저장
-                </Button>
-              </Box>
-            </>
-          ) : (
-            <Typography variant="body2" color="text.secondary">등록된 답변이 없습니다.</Typography>
-          )}
-        </Box>
+          <Divider />
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 1fr' }, gap: 2 }}>
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>질문</Typography>
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                {canEdit && mode === 'edit' ? (
+                  <Stack spacing={1.5}>
+                    <TextField
+                      size="small"
+                      label="담당업무/부서"
+                      value={editForm.department}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, department: e.target.value }))}
+                      mode="editable"
+                    />
+                    <TextField
+                      size="small"
+                      label="제목"
+                      value={editForm.title}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                      mode="editable"
+                    />
+                    <TextField
+                      size="small"
+                      label="내용"
+                      value={editForm.content}
+                      multiline minRows={6}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
+                      mode="editable"
+                    />
+                    <TextField
+                      size="small"
+                      label="카테고리"
+                      value={editForm.category}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                      mode="editable"
+                    />
+                  </Stack>
+                ) : (
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>{detail.content}</Typography>
+                )}
+              </Paper>
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>답변</Typography>
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                {detail.answerContent && detail.answerContent.trim() ? (
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>{detail.answerContent}</Typography>
+                ) : canEdit ? (
+                  <Stack spacing={1.5}>
+                    <TextField
+                      size="small"
+                      label="답변 내용"
+                      value={editForm.answerContent}
+                      multiline minRows={6}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditForm(prev => ({ ...prev, answerContent: e.target.value }))}
+                      mode="editable"
+                    />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.secondary">등록 시 상태가 ANSWERED로 변경됩니다.</Typography>
+                      <Button
+                        size="small"
+                        color="success"
+                        loading={savingAnswer}
+                        onClick={async () => {
+                          if (!detail) return;
+                          try {
+                            setSavingAnswer(true);
+                            const userRaw = localStorage.getItem('user');
+                            const userJson = userRaw ? JSON.parse(userRaw) : {};
+                            const userId = userJson?.userid || 'anonymous';
+                            const userName = userJson?.username || '익명';
+                            await qnaApi.addAnswer(detail.id, { answerContent: editForm.answerContent || '' }, { userId, userName });
+                            showSuccess('답변이 등록되었습니다.');
+                            onSaved?.();
+                            onClose();
+                          } finally {
+                            setSavingAnswer(false);
+                          }
+                        }}
+                        disabled={!editForm.answerContent.trim()}
+                      >
+                        답변 저장
+                      </Button>
+                    </Box>
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary">등록된 답변이 없습니다.</Typography>
+                )}
+              </Paper>
+            </Box>
+          </Box>
+        </Stack>
       )}
     </BaseDialog>
   );
