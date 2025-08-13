@@ -16,7 +16,7 @@ import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import executiveResponsibilityApi from '../api/executiveResponsibilityApi';
 import ExecutiveResponsibilityDialog from '../components/ExecutiveResponsibilityDialog';
-import PositionSelect from '@/shared/components/ui/form/PositionSelect';
+import { PositionSearchBox } from '@/shared/components/ui/form';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 import {
   useCommonCodes,
@@ -328,7 +328,7 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
           alignItems: 'center'
         }}>
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>직책</span>
-          <PositionSelect
+          <PositionSearchBox
             value={selectedPosition}
             onChange={setSelectedPosition}
             size="small"

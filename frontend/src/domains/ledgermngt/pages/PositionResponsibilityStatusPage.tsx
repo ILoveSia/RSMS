@@ -12,7 +12,7 @@ import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import { Button, SearchButton, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { PermissionButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import PositionSelect from '@/shared/components/ui/form/PositionSelect';
+import { PositionSearchBox } from '@/shared/components/ui/form';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 import positionApi from '@/domains/ledgermngt/api/positionApi';
 import { Confirm } from '@/shared/components/modal';
@@ -835,7 +835,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             }, [])}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>직책</span>
-          <PositionSelect
+          <PositionSearchBox
             value={selectedPosition}
             onChange={setSelectedPosition}
             size="small"

@@ -7,8 +7,8 @@ export type { SelectProps } from './Select';
 export { default as ComboBox } from './ComboBox';
 export type { ComboBoxProps } from './ComboBox';
 
-export { default as PositionSelect } from './PositionSelect';
-export type { PositionSelectProps } from './PositionSelect';
+export { default as PositionSearchBox } from './PositionSearchBox';
+export type { PositionSearchBoxProps } from './PositionSearchBox';
 
 export { default as DatePicker } from './DatePicker';
 export type { DatePickerProps } from './DatePicker';
