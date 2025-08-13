@@ -4,6 +4,7 @@ export interface NoticeListResponseDto {
   id: number;
   category?: string;
   title: string;
+  content?: string;
   is_public: boolean;
   pinned?: boolean;
   view_count: number;
@@ -24,6 +25,9 @@ const noticeApi = {
     return apiClient.get<PageResponse<NoticeListResponseDto>>('/notice', {
       params: { page, size, sort, direction, onlyPublic: onlyPublic ? 'true' : 'false' },
     });
+  },
+  getNoticeDetail: async (id: number): Promise<NoticeListResponseDto> => {
+    return apiClient.get<NoticeListResponseDto>(`/notice/${id}`);
   },
 };
 

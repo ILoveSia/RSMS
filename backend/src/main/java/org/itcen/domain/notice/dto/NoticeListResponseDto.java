@@ -17,6 +17,7 @@ public class NoticeListResponseDto {
     private Long id;
     private String category;
     private String title;
+    private String content;
     private Boolean is_public;
     private Boolean pinned;
     private Integer view_count;
@@ -27,6 +28,7 @@ public class NoticeListResponseDto {
             .id(notice.getId())
             .category(notice.getCategory())
             .title(notice.getTitle())
+            .content(notice.getContent())
             .is_public(notice.getIsPublic())
             .pinned(Boolean.TRUE.equals(notice.getPinned()))
             .view_count(notice.getViewCount())

@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Campaign as CampaignIcon } from '@mui/icons-material';
-import { Chip } from '@mui/material';
+import { PushPin as PushPinIcon } from '@mui/icons-material';
+ 
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import DataGrid from '@/shared/components/ui/data-display/DataGrid';
 import TitleSearch from '../components/TitleSearch';
 import noticeApi, { type NoticeListResponseDto } from '../api/noticeApi';
+import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
+import NoticeDetailDialog from '../components/NoticeDetailDialog';
 
 type NoticeRow = NoticeListResponseDto;
 
@@ -15,6 +18,9 @@ const NoticePage: React.FC = () => {
   const [rowsRaw, setRowsRaw] = useState<NoticeRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // const [, setCreateOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selected, setSelected] = useState<NoticeRow | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -35,8 +41,16 @@ const NoticePage: React.FC = () => {
 
   const rows = useMemo(() => {
     const k = keyword.trim().toLowerCase();
-    if (!k) return rowsRaw;
-    return rowsRaw.filter(r => (r.title || '').toLowerCase().includes(k));
+    const filtered = k ? rowsRaw.filter(r => (r.title || '').toLowerCase().includes(k)) : rowsRaw;
+    // pinned 우선 정렬 (true 먼저), 그 다음 created_at 내림차순
+    return [...filtered].sort((a, b) => {
+      const ap = a.pinned ? 1 : 0;
+      const bp = b.pinned ? 1 : 0;
+      if (ap !== bp) return bp - ap; // pinned=true 우선
+      const ad = a.created_at ? new Date(a.created_at as any).getTime() : 0;
+      const bd = b.created_at ? new Date(b.created_at as any).getTime() : 0;
+      return bd - ad;
+    });
   }, [rowsRaw, keyword]);
 
   return (
@@ -59,6 +73,15 @@ const NoticePage: React.FC = () => {
           py: 1,
         }}
       >
+        <ManagementButtonGroup
+          showRegister
+          showRefresh
+          showDelete={false}
+          align='right'
+          onRegister={() => {}}
+          onRefresh={loadData}
+        />
+
         <TitleSearch value={keyword} onChange={setKeyword} onEnter={() => { /* no-op, client filter */ }} />
 
         <DataGrid<NoticeRow>
@@ -73,16 +96,13 @@ const NoticePage: React.FC = () => {
               flex: 1,
               minWidth: 280,
               renderCell: ({ row }) => (
-                <span style={{ color: '#1976d2', cursor: 'default' }}>{row.title}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  {row.pinned ? (
+                    <PushPinIcon fontSize='small' style={{ color: '#ff8f00', marginRight: 6 }} />
+                  ) : null}
+                  <span style={{ color: '#1976d2', cursor: 'default' }}>{row.title}</span>
+                </span>
               ),
-            },
-            {
-              field: 'pinned',
-              headerName: '중요',
-              width: 100,
-              align: 'center',
-              renderCell: ({ row }) =>
-                row.pinned ? <Chip size='small' color='warning' label='상단고정' /> : null,
             },
             { field: 'created_at', headerName: '작성일', width: 140, align: 'center' },
             { field: 'view_count', headerName: '조회수', width: 100, align: 'center' },
@@ -98,6 +118,32 @@ const NoticePage: React.FC = () => {
           serverSide={false}
           sortable
           height={560}
+          getRowClassName={({ row }) => (row.pinned ? 'row-pinned' : '')}
+          disableRowSelectionOnClick
+          rowSelectionModel={[]}
+          sx={{
+            '& .row-pinned': {
+              backgroundColor: 'rgba(255, 193, 7, 0.14)',
+            },
+          }}
+          onRowClick={async (row) => {
+            try {
+              const detail = await noticeApi.getNoticeDetail(Number(row.id));
+              setSelected(detail as any);
+              setDetailOpen(true);
+              // 최신 리스트 반영 (조회수 증가)
+              await loadData();
+            } catch {
+              setSelected(row as any);
+              setDetailOpen(true);
+            }
+          }}
+        />
+
+        <NoticeDetailDialog
+          open={detailOpen}
+          onClose={() => setDetailOpen(false)}
+          data={selected}
         />
       </PageContent>
     </PageContainer>
