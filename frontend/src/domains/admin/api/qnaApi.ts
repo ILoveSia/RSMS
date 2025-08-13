@@ -26,6 +26,15 @@ export interface QnaDetailResponseDto {
   answeredAtFormatted?: string;
 }
 
+export interface QnaCommentDto {
+  id: number;
+  parentId: number | null;
+  content: string;
+  isDeleted: boolean;
+  createdId?: string;
+  createdAt?: string;
+}
+
 export const qnaApi = {
   /**
    * Q&A 목록 조회 (서버 페이지네이션)
@@ -85,6 +94,13 @@ export const qnaApi = {
     });
 
     return response;
+  },
+
+  /**
+   * Q&A 댓글 조회
+   */
+  getComments: async (qnaId: number): Promise<QnaCommentDto[]> => {
+    return apiClient.get<QnaCommentDto[]>(`/qna/${qnaId}/comments`);
   },
   /**
    * Q&A 상세 조회
