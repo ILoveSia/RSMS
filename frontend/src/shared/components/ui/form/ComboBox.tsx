@@ -27,6 +27,8 @@ export interface ComboBoxProps extends FormComponentProps {
   // 설정
   multiple?: boolean;
   freeSolo?: boolean;
+  minWidth?: number | string;
+  maxWidth?: number | string;
   placeholder?: string;
   size?: Size;
 
@@ -160,6 +162,8 @@ const defaultRenderInput = (params: any, props: Partial<ComboBoxProps>) => {
 const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
   (
     {
+      minWidth = 200,
+      maxWidth = 200,
       value,
       options = [],
       multiple = false,
@@ -212,16 +216,16 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
 
     // 변경 핸들러
     const handleChange = (
-      event: React.SyntheticEvent,
+      _event: React.SyntheticEvent,
       newValue: any,
-      reason?: string,
-      details?: any
+      _reason?: string,
+      _details?: any
     ) => {
       onChange?.(newValue);
     };
 
     // 입력 변경 핸들러
-    const handleInputChange = (event: React.SyntheticEvent, value: string, reason: string) => {
+    const handleInputChange = (_event: React.SyntheticEvent, value: string, _reason: string) => {
       onInputChange?.(value);
     };
 
@@ -277,7 +281,7 @@ const ComboBox = React.forwardRef<HTMLDivElement, ComboBoxProps>(
         openOnFocus={openOnFocus}
         selectOnFocus={selectOnFocus}
         className={className}
-        style={style}
+        style={{ minWidth, maxWidth, ...style }}
         id={id}
         sx={sx}
         {...props}

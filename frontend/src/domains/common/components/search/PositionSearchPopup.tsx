@@ -4,13 +4,12 @@
  */
 import { positionApi } from '@/domains/ledgermngt/api/positionApi';
 import { Button } from '@/shared/components/ui/button';
-import SearchIcon from '@mui/icons-material/Search';
-import { Alert, Box, CircularProgress, InputAdornment, Typography } from '@mui/material';
-import { TextField } from '@/shared/components/ui/data-display';
+import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import type { GridRowParams } from '@mui/x-data-grid';
 import type { DataGridColumn } from '@/shared/types/common';
 import { DataGrid } from '@/shared/components/ui/data-display';
+import { SearchBox } from '@/shared/components/ui/form';
 import React, { useCallback, useEffect, useState } from 'react';
 
 // 직책 타입 정의 (검색 결과용)
@@ -153,13 +152,6 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
     }
   };
 
-  // 엔터키 검색
-  const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleSearch();
-    }
-  };
-
   return (
     <BaseDialog
       open={open}
@@ -190,23 +182,11 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
       {/* 검색 영역 */}
       <Box sx={{ p: 3 }}>
         <Box sx={{ mb: 2 }}>
-          <TextField
-            label=''
+          <SearchBox
+            placeholder='직책명, ID 또는 원장차수로 검색'
             value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyPress={handleKeyPress as any}
-            fullWidth
-            size='small'
-            mode='editable'
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position='end'>
-                  <Button onClick={handleSearch} variant='outlined' size='small'>
-                    <SearchIcon />
-                  </Button>
-                </InputAdornment>
-              ),
-            }}
+            onSearch={(q) => setSearchKeyword(q)}
+            onClear={() => setSearchKeyword('')}
           />
         </Box>
 
