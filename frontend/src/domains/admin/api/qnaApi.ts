@@ -102,6 +102,19 @@ export const qnaApi = {
   getComments: async (qnaId: number): Promise<QnaCommentDto[]> => {
     return apiClient.get<QnaCommentDto[]>(`/qna/${qnaId}/comments`);
   },
+
+  /**
+   * Q&A 댓글 등록
+   */
+  addComment: async (
+    qnaId: number,
+    data: { content: string; parentId?: number | null },
+    user: { userId: string }
+  ): Promise<number> => {
+    return apiClient.post<number>(`/qna/${qnaId}/comments`, data, {
+      headers: { 'X-User-Id': user.userId },
+    });
+  },
   /**
    * Q&A 상세 조회
    */

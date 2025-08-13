@@ -198,7 +198,13 @@ const QnaPage: React.FC<QnaPageProps> = () => {
               renderCell: ({ row }) => (
                 <span
                   style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }}
-                  onClick={() => { setSelectedId(Number(row.id)); setDetailOpen(true); }}
+                  onMouseDown={(e) => { e.stopPropagation(); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedId(Number(row.id));
+                    setDetailOpen(true);
+                  }}
                 >
                   {row.title}
                 </span>

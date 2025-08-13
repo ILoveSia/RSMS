@@ -122,16 +122,22 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
                 />
                 <Button
                   size="small"
-                  onClick={() => {
+                  onClick={async () => {
                     const text = replyContent.trim();
                     if (!text) return;
                     const userRaw = localStorage.getItem('user');
                     const userJson = userRaw ? JSON.parse(userRaw) : {};
-                    const author = userJson?.username || '익명';
-                    setComments(prev => [
-                      ...prev,
-                      { id: Date.now(), parentId: c.id, content: text, author, createdAt: new Date().toLocaleString() },
-                    ]);
+                    const userId = userJson?.userid || 'anonymous';
+                    await qnaApi.addComment(detail!.id, { content: text, parentId: c.id }, { userId });
+                    const serverComments = await qnaApi.getComments(detail!.id);
+                    const mapped: LocalComment[] = serverComments.map(sc => ({
+                      id: Number(sc.id),
+                      parentId: sc.parentId ?? null,
+                      content: sc.isDeleted ? '[삭제됨]' : sc.content,
+                      author: sc.createdId || '익명',
+                      createdAt: sc.createdAt ? new Date(sc.createdAt).toLocaleString() : '',
+                    }));
+                    setComments(mapped);
                     setReplyingTo(null);
                     setReplyContent('');
                   }}
@@ -302,16 +308,22 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
               />
               <Button
                 size="small"
-                onClick={() => {
+                onClick={async () => {
                   const text = newComment.trim();
                   if (!text) return;
                   const userRaw = localStorage.getItem('user');
                   const userJson = userRaw ? JSON.parse(userRaw) : {};
-                  const author = userJson?.username || '익명';
-                  setComments(prev => [
-                    ...prev,
-                    { id: Date.now(), parentId: null, content: text, author, createdAt: new Date().toLocaleString() },
-                  ]);
+                  const userId = userJson?.userid || 'anonymous';
+                  await qnaApi.addComment(detail!.id, { content: text, parentId: null }, { userId });
+                  const serverComments = await qnaApi.getComments(detail!.id);
+                  const mapped: LocalComment[] = serverComments.map(sc => ({
+                    id: Number(sc.id),
+                    parentId: sc.parentId ?? null,
+                    content: sc.isDeleted ? '[삭제됨]' : sc.content,
+                    author: sc.createdId || '익명',
+                    createdAt: sc.createdAt ? new Date(sc.createdAt).toLocaleString() : '',
+                  }));
+                  setComments(mapped);
                   setNewComment('');
                 }}
                 disabled={!newComment.trim()}
