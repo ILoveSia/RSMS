@@ -253,6 +253,13 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     icon: 'assessment',
   },
 
+	// 리포트
+	'/report/report': {
+		component: () => import('@/domains/report/pages/ReportPage'),
+		title: '제출 보고서 관리',
+		icon: 'description',
+	},
+
 
 };
 
