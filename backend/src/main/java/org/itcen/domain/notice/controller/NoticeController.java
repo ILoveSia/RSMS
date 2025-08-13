@@ -12,6 +12,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,6 +44,15 @@ public class NoticeController {
     public ResponseEntity<ApiResponse<NoticeDetailResponseDto>> detail(@PathVariable Long id) {
         NoticeDetailResponseDto data = noticeService.getNoticeDetailAndIncreaseView(id);
         return ResponseEntity.ok(ApiResponse.success("공지사항 상세 조회 완료", data));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<Long>> create(
+            @RequestBody org.itcen.domain.notice.dto.NoticeCreateRequestDto req,
+            @RequestHeader(value = "X-User-Id", defaultValue = "system") String userId
+    ) {
+        Long id = noticeService.createNotice(req, userId);
+        return ResponseEntity.ok(ApiResponse.success("공지사항 등록 완료", id));
     }
 }
 

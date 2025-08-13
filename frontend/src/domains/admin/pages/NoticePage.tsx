@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Campaign as CampaignIcon } from '@mui/icons-material';
 import { PushPin as PushPinIcon } from '@mui/icons-material';
+import { Lock as LockIcon } from '@mui/icons-material';
  
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -10,6 +11,7 @@ import TitleSearch from '../components/TitleSearch';
 import noticeApi, { type NoticeListResponseDto } from '../api/noticeApi';
 import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import NoticeDetailDialog from '../components/NoticeDetailDialog';
+import NoticeCreateDialog from '../components/NoticeCreateDialog';
 
 type NoticeRow = NoticeListResponseDto;
 
@@ -18,7 +20,8 @@ const NoticePage: React.FC = () => {
   const [rowsRaw, setRowsRaw] = useState<NoticeRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // const [, setCreateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selected, setSelected] = useState<NoticeRow | null>(null);
 
@@ -26,7 +29,7 @@ const NoticePage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const page = await noticeApi.getNoticeList({ page: 0, size: 200, sort: 'createdAt', direction: 'DESC', onlyPublic: true });
+      const page = await noticeApi.getNoticeList({ page: 0, size: 200, sort: 'createdAt', direction: 'DESC', onlyPublic: false });
       setRowsRaw(page.content || []);
       console.log(page.content);
     } catch (e: any) {
@@ -78,7 +81,7 @@ const NoticePage: React.FC = () => {
           showRefresh
           showDelete={false}
           align='right'
-          onRegister={() => {}}
+          onRegister={() => setCreateOpen(true)}
           onRefresh={loadData}
         />
 
@@ -99,6 +102,9 @@ const NoticePage: React.FC = () => {
                 <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                   {row.pinned ? (
                     <PushPinIcon fontSize='small' style={{ color: '#ff8f00', marginRight: 6 }} />
+                  ) : null}
+                  {row.is_public === false ? (
+                    <LockIcon fontSize='small' style={{ color: '#757575', marginRight: 6 }} />
                   ) : null}
                   <span style={{ color: '#1976d2', cursor: 'default' }}>{row.title}</span>
                 </span>
@@ -130,11 +136,9 @@ const NoticePage: React.FC = () => {
             try {
               const detail = await noticeApi.getNoticeDetail(Number(row.id));
               setSelected(detail as any);
-              setDetailOpen(true);
-              // 최신 리스트 반영 (조회수 증가)
-              await loadData();
             } catch {
               setSelected(row as any);
+            } finally {
               setDetailOpen(true);
             }
           }}
@@ -145,6 +149,27 @@ const NoticePage: React.FC = () => {
           onClose={() => setDetailOpen(false)}
           data={selected}
         />
+
+        {createOpen && (
+          <NoticeCreateDialog
+            open={createOpen}
+            onClose={() => setCreateOpen(false)}
+            loading={creating}
+            onSubmit={async (form) => {
+              try {
+                setCreating(true);
+                const userRaw = localStorage.getItem('user');
+                const userJson = userRaw ? JSON.parse(userRaw) : {};
+                const userId = userJson?.userid || 'system';
+                await noticeApi.createNotice(form, { userId });
+                setCreateOpen(false);
+                await loadData();
+              } finally {
+                setCreating(false);
+              }
+            }}
+          />
+        )}
       </PageContent>
     </PageContainer>
   );

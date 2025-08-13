@@ -29,6 +29,16 @@ const noticeApi = {
   getNoticeDetail: async (id: number): Promise<NoticeListResponseDto> => {
     return apiClient.get<NoticeListResponseDto>(`/notice/${id}`);
   },
+  createNotice: async (
+    data: { category?: string; title: string; content?: string; is_public?: boolean; pinned?: boolean },
+    user: { userId: string }
+  ): Promise<number> => {
+    return apiClient.post<number>(
+      '/notice',
+      data,
+      { headers: { 'X-User-Id': user.userId } }
+    );
+  },
 };
 
 export default noticeApi;

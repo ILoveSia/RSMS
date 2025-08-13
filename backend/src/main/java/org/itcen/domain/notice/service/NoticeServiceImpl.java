@@ -3,6 +3,7 @@ package org.itcen.domain.notice.service;
 import lombok.RequiredArgsConstructor;
 import org.itcen.domain.notice.dto.NoticeListResponseDto;
 import org.itcen.domain.notice.dto.NoticeDetailResponseDto;
+import org.itcen.domain.notice.dto.NoticeCreateRequestDto;
 import org.itcen.domain.notice.entity.Notice;
 import org.itcen.domain.notice.repository.NoticeRepository;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,24 @@ public class NoticeServiceImpl implements NoticeService {
         noticeRepository.incrementViewCount(id);
         Notice notice = noticeRepository.findById(id).orElseThrow();
         return NoticeDetailResponseDto.from(notice);
+    }
+
+    @Override
+    @Transactional
+    public Long createNotice(NoticeCreateRequestDto req, String userId) {
+        Notice notice = Notice.builder()
+                .category(req.getCategory())
+                .title(req.getTitle())
+                .content(req.getContent())
+                .isPublic(Boolean.TRUE.equals(req.getIs_public()))
+                .pinned(Boolean.TRUE.equals(req.getPinned()))
+                .viewCount(0)
+                .build();
+        // BaseEntity의 createdId/updatedId는 Auditing에서 설정되지만, 명시적으로 지정 가능
+        notice.setCreatedId(userId);
+        notice.setUpdatedId(userId);
+        Notice saved = noticeRepository.save(notice);
+        return saved.getId();
     }
 }
 

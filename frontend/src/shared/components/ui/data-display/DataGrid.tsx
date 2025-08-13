@@ -36,6 +36,7 @@ import type {
   GridRowParams,
   GridRowSelectionModel,
   GridSortModel,
+  GridRowClassNameParams,
 } from '@mui/x-data-grid';
 import { DataGrid as MuiDataGrid } from '@mui/x-data-grid';
 // import { koKR } from '@mui/x-data-grid/locales';
@@ -79,6 +80,7 @@ export interface DataGridProps<T = any> extends BaseComponentProps {
   // 커스터마이징
   noDataMessage?: string;
   rowIdField?: keyof T;
+  getRowClassName?: (params: GridRowClassNameParams<any>) => string;
 
   // 가상화
   virtualization?: boolean;
@@ -393,6 +395,7 @@ const DataGrid = <T extends Record<string, any>>({
               rows={processedData}
               columns={muiColumns}
               getRowId={row => row._gridId}
+              getRowClassName={props.getRowClassName as any}
               checkboxSelection={checkboxSelection || selectable}
               disableRowSelectionOnClick={disableRowSelectionOnClick}
               disableMultipleRowSelection={!multiSelect}
