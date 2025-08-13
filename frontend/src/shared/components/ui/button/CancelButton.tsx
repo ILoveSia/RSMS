@@ -33,6 +33,7 @@ const CancelButton: React.FC<CancelButtonProps> = ({
         minWidth: '80px',
         fontSize: '0.875rem',
         fontWeight: 600,
+        borderRadius: 1,
         ...sx,
       }}
     >

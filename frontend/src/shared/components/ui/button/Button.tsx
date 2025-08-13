@@ -1,4 +1,3 @@
-
 import type { BaseComponentProps, Color, Size, Variant } from '@/shared/types/common';
 import { CircularProgress, Button as MuiButton } from '@mui/material';
 import type { ButtonProps as MuiButtonProps } from '@mui/material/Button';
@@ -174,4 +173,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export default Button;
-''

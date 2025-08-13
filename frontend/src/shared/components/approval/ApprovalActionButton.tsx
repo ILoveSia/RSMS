@@ -215,7 +215,7 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
               borderRadius: '4px !important',
             }}
           >
-            결재 송신
+            결재 상신
           </Button>
         );
         

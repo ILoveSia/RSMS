@@ -35,6 +35,7 @@ const EditButton: React.FC<EditButtonProps> = ({
         fontWeight: 600,
         color: 'var(--bank-text-primary)',
         '& .MuiSvgIcon-root': { color: 'var(--bank-text-primary)' },
+        borderRadius: 1,
         ...sx,
       }}
     >

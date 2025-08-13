@@ -138,9 +138,9 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
   // 결재 상신 버튼 표시 여부 판단
   const shouldShowApprovalButton = () => {
-    // appr_stat_cd가 빈 값이고 role_resp_status_id가 있으면 결재 송신 버튼 표시
+    // appr_stat_cd가 빈 값이고 role_resp_status_id가 있으면 결재 상신 버튼 표시
     const isApprStatEmpty = !apprStatCd || apprStatCd === '';
-    const hasRoleRespStatusId = roleRespStatusId !== null && roleRespStatusId !== undefined && roleRespStatusId !== '';
+    const hasRoleRespStatusId = roleRespStatusId !== null && roleRespStatusId !== undefined && roleRespStatusId !== null;
     return isApprStatEmpty && hasRoleRespStatusId;
   };
 
@@ -155,7 +155,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const shouldShowApprovalStatusButton = () => {
     // appr_stat_cd가 있고 role_resp_status_id가 있으면 결재현황 버튼 표시
     const hasApprStat = apprStatCd && apprStatCd !== '';
-    const hasRoleRespStatusId = roleRespStatusId !== null && roleRespStatusId !== undefined && roleRespStatusId !== '';
+    const hasRoleRespStatusId = roleRespStatusId !== null && roleRespStatusId !== undefined && roleRespStatusId !== null;
     return hasApprStat && hasRoleRespStatusId;
   };
 
@@ -509,6 +509,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
               {/* 책무 내용 (고정) */}
               <Box sx={{ display: 'flex' }}>
                 <TextField
+                  label=""
                   fullWidth
                   multiline
                   value={formData.responsibilityContent}
@@ -532,6 +533,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                       {/* 책무 세부내용 */}
                       <Grid item xs={6}>
                         <TextField
+                          label=""
                           fullWidth
                           multiline
                           rows={4}
@@ -551,6 +553,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                       <Grid item xs={6}>
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                           <TextField
+                            label=""
                             fullWidth
                             multiline
                             rows={4}
@@ -615,6 +618,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
               {/* 관련 근거 (고정, 공통) */}
               <Box sx={{ display: 'flex' }}>
                 <TextField
+                  label=""
                   fullWidth
                   multiline
                   value={relatedBasis}

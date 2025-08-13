@@ -2,10 +2,8 @@
  * 직책 등록/수정/조회 다이얼로그 컴포넌트
  */
 import apiClient from '@/app/common/api/client';
-import { useCommonCodes, getCodeNameSync, type CommonCode } from '@/shared/utils/codeUtils';
-import DepartmentApi, {
-  type Department as ApiDepartment,
-} from '@/domains/common/api/departmentApi';
+import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
+import DepartmentApi from '@/domains/common/api/departmentApi';
 import type { EmployeeSearchResult } from '@/domains/common/components/search';
 import { DepartmentSearchPopup, type Department } from '@/domains/common/components/search';
 import EmployeeSearchPopup from '@/domains/common/components/search/EmployeeSearchPopup';
@@ -23,7 +21,6 @@ import {
   CircularProgress,
   FormControl,
   IconButton,
-  InputLabel,
   MenuItem,
   Paper,
   Select,
@@ -37,11 +34,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 // 백엔드 ApiResponse<T> DTO에 대응하는 타입
-interface ApiSuccessResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
+// (removed unused ApiSuccessResponse)
 
 export interface PositionData {
   positionsId: string;
@@ -76,11 +69,7 @@ interface FormData {
   writeDeptName?: string; // Optional field to store the department name
 }
 
-// 부서 드롭다운 옵션 타입
-interface DepartmentOption {
-  value: string; // departmentId
-  label: string; // departmentName
-}
+// (removed unused DepartmentOption)
 
 interface OwnerDept {
   id: string;
@@ -118,8 +107,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
   // 부서 데이터 상태
   const [departments, setDepartments] = useState<Array<{ value: string; label: string }>>([]);
-  const [departmentsLoading, setDepartmentsLoading] = useState<boolean>(false);
-  const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+  
 
   // Hook 결과를 컴포넌트 최상위에서 미리 계산 (조건부 Hook 호출 방지)
   const mebGubunCodes = React.useMemo(() => {
@@ -128,37 +116,17 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }, [allCodes]);
 
-  const deptCodes = React.useMemo(() => {
-    // 부서 API에서 데이터를 가져온 경우 해당 데이터 사용
-    if (departments.length > 0) {
-      return departments.map(dept => ({
-        code: dept.value,
-        codeName: dept.label,
-        groupCode: 'DEPT',
-        useYn: 'Y',
-        sortOrder: 0,
-      }));
-    }
-
-    // 기존 공통코드 로직 (폴백용)
-    return allCodes
-      .filter(code => code.groupCode === 'DEPT' && code.useYn === 'Y')
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  }, [allCodes, departments]);
+  // (removed unused deptCodes)
 
   // 코드명 조회 함수를 useMemo로 안정화
   const getCodeNameStable = React.useCallback((groupCode: string, codeValue: string) => {
     return getCodeNameSync(allCodes, groupCode, codeValue);
   }, [allCodes]);
 
-  // 공통코드 헬퍼 함수 (더 이상 Hook 호출하지 않음)
-  const getMebGubunCodes = () => mebGubunCodes;
+  // (removed unused getMebGubunCodes)
 
   // 부서 데이터 가져오기
   const fetchDepartments = async () => {
-    setDepartmentsLoading(true);
-    setDepartmentsError(null);
-
     try {
       const apiDepartments = await DepartmentApi.getActive();
 
@@ -182,13 +150,9 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         }
       } else {
         console.warn('부서 API 응답이 예상과 다릅니다:', apiDepartments);
-        setDepartmentsError('부서 데이터 형식이 올바르지 않습니다.');
       }
     } catch (err) {
       console.error('부서 목록 조회 실패:', err);
-      setDepartmentsError('부서 목록을 불러오는데 실패했습니다.');
-    } finally {
-      setDepartmentsLoading(false);
     }
   };
 
@@ -234,19 +198,8 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   // 부서 검색 다이얼로그 상태
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
   const [currentOwnerDeptId, setCurrentOwnerDeptId] = useState<string>('');
-  const convertApiDepartmentToComponent = (apiDept: ApiDepartment): Department => {
-    return {
-      id: apiDept.departmentId,
-      deptCode: apiDept.departmentId,
-      deptName: apiDept.departmentName,
-      useYn: apiDept.useYn,
-      isActive: apiDept.isActive,
-      createdId: apiDept.createdId,
-      updatedId: apiDept.updatedId,
-      createdAt: apiDept.createdAt,
-      updatedAt: apiDept.updatedAt,
-    };
-  };
+  const [writeDeptSearchOpen, setWriteDeptSearchOpen] = useState(false);
+  // (removed unused convertApiDepartmentToComponent)
   // 다이얼로그 제목 설정
   const getDialogTitle = () => {
     switch (mode) {
@@ -670,6 +623,26 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     handleDepartmentSearchClose();
   };
 
+  const openWriteDeptSearch = () => {
+    setWriteDeptSearchOpen(true);
+  };
+
+  const closeWriteDeptSearch = () => {
+    setWriteDeptSearchOpen(false);
+  };
+
+  const handleWriteDeptSelect = (selected: Department | Department[]) => {
+    const dept = Array.isArray(selected) ? selected[0] : selected;
+    if (dept) {
+      setFormData(prev => ({
+        ...prev,
+        writeDeptCd: dept.deptCode,
+        writeDeptName: dept.deptName,
+      }));
+    }
+    closeWriteDeptSearch();
+  };
+
   // 폼 검증
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -817,42 +790,31 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
           {/* 책무기술서 작성 부서 */}
           <Box>
-            <FormControl fullWidth error={!!validationErrors.writeDeptCd}>
-              <InputLabel>작성부서 *</InputLabel>
-              <Select
-                value={formData.writeDeptCd}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TextField
                 label='작성부서 *'
-                onChange={handleInputChange('writeDeptCd')}
-                disabled={mode === 'view' || departmentsLoading}
-              >
-                <MenuItem value=''>선택하세요</MenuItem>
-                {departmentsLoading ? (
-                  <MenuItem disabled>로딩 중...</MenuItem>
-                ) : departments.length > 0 ? (
-                  departments.map(dept => (
-                    <MenuItem key={dept.value} value={dept.value}>
-                      {dept.label}
-                    </MenuItem>
-                  ))
-                ) : (
-                  deptCodes.map(code => (
-                    <MenuItem key={code.code} value={code.code}>
-                      {code.codeName}
-                    </MenuItem>
-                  ))
-                )}
-              </Select>
-              {departmentsError && (
-                <Box sx={{ color: 'warning.main', fontSize: '0.75rem', mt: 0.5 }}>
-                  {departmentsError} (공통코드 사용 중)
-                </Box>
+                fullWidth
+                size='small'
+                value={formData.writeDeptName || ''}
+                mode='readonly'
+                readonlyPlaceholder='부서를 선택하세요'
+              />
+              {mode !== 'view' && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={openWriteDeptSearch}
+                  sx={{ minWidth: 80, fontSize: '0.75rem' }}
+                >
+                  검색
+                </Button>
               )}
-              {validationErrors.writeDeptCd && (
-                <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
-                  {validationErrors.writeDeptCd}
-                </Box>
-              )}
-            </FormControl>
+            </Box>
+            {validationErrors.writeDeptCd && (
+              <Box sx={{ color: 'error.main', fontSize: '0.75rem', mt: 0.5 }}>
+                {validationErrors.writeDeptCd}
+              </Box>
+            )}
           </Box>
 
           {/* 소관부서 */}
@@ -1158,6 +1120,15 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         onClose={handleDepartmentSearchClose}
         onSelect={handleDepartmentSelect}
         title='소관부서 검색'
+        multiSelect={false}
+      />
+
+      {/* 작성부서 검색 다이얼로그 */}
+      <DepartmentSearchPopup
+        open={writeDeptSearchOpen}
+        onClose={closeWriteDeptSearch}
+        onSelect={handleWriteDeptSelect}
+        title='작성부서 검색'
         multiSelect={false}
       />
 

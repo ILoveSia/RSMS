@@ -15,6 +15,19 @@ const config: StorybookConfig = {
     name: '@storybook/react-vite',
     options: {}
   },
+  viteFinal: async (cfg) => {
+    cfg.server = {
+      ...cfg.server,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3000', // 백엔드 주소/포트에 맞게 변경
+          changeOrigin: true,
+          secure: false,
+        },
+      },
+    };
+    return cfg;
+  },
 };
 
 export default config;

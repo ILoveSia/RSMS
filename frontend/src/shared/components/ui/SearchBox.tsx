@@ -4,7 +4,7 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { Box, Chip, IconButton, InputAdornment, Stack } from '@mui/material';
-import TextField from '@/shared/components/ui/data-display/textfield';
+import { TextField } from '@/shared/components/ui/data-display';
 import React, { useCallback, useState } from 'react';
 
 interface SearchFilter {
@@ -38,11 +38,9 @@ const SearchBox: React.FC<SearchBoxProps> = ({
   disabled = false,
   filters = [],
   onFiltersChange,
-  showFilterButton = false,
   className,
 }) => {
   const [searchQuery, setSearchQuery] = useState(value);
-  const [showFilters, setShowFilters] = useState(false);
 
   // 검색 실행
   const handleSearch = useCallback(() => {
@@ -50,13 +48,6 @@ const SearchBox: React.FC<SearchBoxProps> = ({
       onSearch(searchQuery.trim(), filters);
     }
   }, [searchQuery, filters, onSearch]);
-
-  // Enter 키 처리
-  const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleSearch();
-    }
-  };
 
   // 검색어 변경
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,12 +74,13 @@ const SearchBox: React.FC<SearchBoxProps> = ({
     <Box className={className} sx={{ width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <TextField
+          label=''
+          mode='editable'
           fullWidth
           variant='outlined'
           placeholder={placeholder}
           value={searchQuery}
           onChange={handleQueryChange}
-          onKeyPress={handleKeyPress}
           disabled={disabled}
           InputProps={{
             startAdornment: (
@@ -110,37 +102,6 @@ const SearchBox: React.FC<SearchBoxProps> = ({
             },
           }}
         />
-
-        {/* 검색 버튼 */}
-        <IconButton
-          color='primary'
-          onClick={handleSearch}
-          disabled={disabled || !searchQuery.trim()}
-          sx={{
-            bgcolor: 'primary.main',
-            color: 'var(--bank-text-primary)',
-            '&:hover': {
-              bgcolor: 'primary.dark',
-            },
-            '&:disabled': {
-              bgcolor: 'action.disabled',
-              color: 'action.disabledBackground',
-            },
-          }}
-        >
-          <SearchIcon />
-        </IconButton>
-
-        {/* 필터 버튼 */}
-        {showFilterButton && (
-          <IconButton
-            color={showFilters ? 'primary' : 'default'}
-            onClick={() => setShowFilters(!showFilters)}
-            disabled={disabled}
-          >
-            <FilterIcon />
-          </IconButton>
-        )}
       </Box>
 
       {/* 활성 필터 표시 */}
