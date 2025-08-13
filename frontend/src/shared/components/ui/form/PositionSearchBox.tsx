@@ -94,7 +94,7 @@ const PositionSearchBox: React.FC<PositionSearchBoxProps> = ({
 									×
 								</IconButton>
 							)}
-							<IconButton onClick={handleSearch} disabled={disabled}>
+						<IconButton size="small" onClick={handleSearch} disabled={disabled}>
 								<SearchIcon />
 							</IconButton>
 						</Box>

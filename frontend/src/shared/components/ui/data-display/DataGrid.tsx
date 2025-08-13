@@ -120,7 +120,7 @@ const convertColumnsToMuiFormat = <T,>(columns: DataGridColumn<T>[]): GridColDef
           })
       : undefined,
     renderHeader: col.renderHeader
-      ? params =>
+      ? _params =>
           col.renderHeader?.({
             field: col.field,
             headerName: col.headerName,
@@ -408,7 +408,13 @@ const DataGrid = <T extends Record<string, any>>({
   );
 
   // 컬럼 변환
-  const muiColumns = useMemo(() => convertColumnsToMuiFormat(columns), [columns]);
+  const muiColumns = useMemo(() => {
+    const base = convertColumnsToMuiFormat(columns);
+    if (disableColumnSort) {
+      return base.map(c => ({ ...c, sortable: false }));
+    }
+    return base;
+  }, [columns, disableColumnSort]);
 
   // 행 데이터에 ID 추가
   const processedData = useMemo(() => 
@@ -426,10 +432,10 @@ const DataGrid = <T extends Record<string, any>>({
   };
 
   const handleSelectionChange = (newSelection: GridRowSelectionModel) => {
-    if (onRowSelectionChange) {
-      const selectedData = processedData.filter(row => newSelection.includes(row._gridId));
-      onRowSelectionChange(newSelection as (string | number)[], selectedData);
-    }
+    if (!onRowSelectionChange) return;
+    const effectiveSelection = (multiSelect ? newSelection : (newSelection.slice(-1))) as (string | number)[];
+    const selectedData = processedData.filter(row => effectiveSelection.includes(row._gridId));
+    onRowSelectionChange(effectiveSelection, selectedData);
   };
 
   const handleSortModelChange = (model: GridSortModel) => {
@@ -536,8 +542,7 @@ const DataGrid = <T extends Record<string, any>>({
               getRowClassName={props.getRowClassName as any}
               checkboxSelection={checkboxSelection || selectable}
               disableRowSelectionOnClick={disableRowSelectionOnClick}
-              disableMultipleRowSelection={!multiSelect}
-              rowSelectionModel={rowSelectionModel ?? selectedRows}
+              // Note: Community DataGrid does not support disableMultipleRowSelection prop
               rowSelectionModel={rowSelectionModel || selectedRows}
               onRowClick={handleRowClick}
               onRowDoubleClick={handleRowDoubleClick}
@@ -549,7 +554,7 @@ const DataGrid = <T extends Record<string, any>>({
               density={density}
               disableColumnMenu={disableColumnMenu}
               disableColumnFilter={disableColumnFilter}
-              disableColumnSorting={disableColumnSort}
+              
               hideFooter
               hideFooterPagination
               sx={{
