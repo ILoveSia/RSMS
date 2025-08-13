@@ -21,8 +21,7 @@ public class NoticeCreateRequestDto {
 
     private String content;
 
-    @Builder.Default
-    private Boolean is_public = true;
+    // 제거됨: 공개여부 컬럼 삭제
 
     @Builder.Default
     private Boolean pinned = false;

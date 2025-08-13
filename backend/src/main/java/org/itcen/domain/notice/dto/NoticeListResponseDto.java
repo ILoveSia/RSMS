@@ -18,7 +18,7 @@ public class NoticeListResponseDto {
     private String category;
     private String title;
     private String content;
-    private Boolean is_public;
+    // 제거됨: 공개여부 컬럼 삭제로 인한 응답 필드 제거
     private Boolean pinned;
     private Integer view_count;
     private LocalDateTime created_at;
@@ -29,7 +29,6 @@ public class NoticeListResponseDto {
             .category(notice.getCategory())
             .title(notice.getTitle())
             .content(notice.getContent())
-            .is_public(notice.getIsPublic())
             .pinned(Boolean.TRUE.equals(notice.getPinned()))
             .view_count(notice.getViewCount())
             .created_at(notice.getCreatedAt())

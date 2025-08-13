@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Campaign as CampaignIcon } from '@mui/icons-material';
 import { PushPin as PushPinIcon } from '@mui/icons-material';
-import { Lock as LockIcon } from '@mui/icons-material';
  
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -29,7 +28,7 @@ const NoticePage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const page = await noticeApi.getNoticeList({ page: 0, size: 200, sort: 'createdAt', direction: 'DESC', onlyPublic: false });
+      const page = await noticeApi.getNoticeList({ page: 0, size: 200, sort: 'createdAt', direction: 'DESC' });
       setRowsRaw(page.content || []);
       console.log(page.content);
     } catch (e: any) {
@@ -76,16 +75,20 @@ const NoticePage: React.FC = () => {
           py: 1,
         }}
       >
-        <ManagementButtonGroup
+          <TitleSearch value={keyword} onChange={setKeyword} onEnter={() => { /* no-op, client filter */ }} 
+          right={
+          <ManagementButtonGroup
           showRegister
           showRefresh
           showDelete={false}
           align='right'
           onRegister={() => setCreateOpen(true)}
           onRefresh={loadData}
+          />
+          }
         />
-
-        <TitleSearch value={keyword} onChange={setKeyword} onEnter={() => { /* no-op, client filter */ }} />
+            
+        
 
         <DataGrid<NoticeRow>
           data={rows}
@@ -103,9 +106,7 @@ const NoticePage: React.FC = () => {
                   {row.pinned ? (
                     <PushPinIcon fontSize='small' style={{ color: '#ff8f00', marginRight: 6 }} />
                   ) : null}
-                  {row.is_public === false ? (
-                    <LockIcon fontSize='small' style={{ color: '#757575', marginRight: 6 }} />
-                  ) : null}
+                  {/* 공개여부 필드 제거로 자물쇠 아이콘 표시 제거 */}
                   <span style={{ color: '#1976d2', cursor: 'default' }}>{row.title}</span>
                 </span>
               ),

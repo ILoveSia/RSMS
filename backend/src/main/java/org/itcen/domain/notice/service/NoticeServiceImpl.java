@@ -18,10 +18,8 @@ public class NoticeServiceImpl implements NoticeService {
     private final NoticeRepository noticeRepository;
 
     @Override
-    public Page<NoticeListResponseDto> getNoticeList(Pageable pageable, Boolean onlyPublic) {
-        Page<Notice> page = Boolean.TRUE.equals(onlyPublic)
-            ? noticeRepository.findByIsPublicTrue(pageable)
-            : noticeRepository.findAll(pageable);
+    public Page<NoticeListResponseDto> getNoticeList(Pageable pageable) {
+        Page<Notice> page = noticeRepository.findAll(pageable);
         return page.map(NoticeListResponseDto::from);
     }
 
@@ -40,7 +38,6 @@ public class NoticeServiceImpl implements NoticeService {
                 .category(req.getCategory())
                 .title(req.getTitle())
                 .content(req.getContent())
-                .isPublic(Boolean.TRUE.equals(req.getIs_public()))
                 .pinned(Boolean.TRUE.equals(req.getPinned()))
                 .viewCount(0)
                 .build();

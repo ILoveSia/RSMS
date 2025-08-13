@@ -10,7 +10,6 @@ CREATE TABLE public.notice (
   category varchar(50) NULL,
   title varchar(500) NOT NULL,
   content text NULL,
-  is_public bool NOT NULL,
   pinned bool NOT NULL DEFAULT false,
   view_count int4 NOT NULL DEFAULT 0,
   CONSTRAINT notice_pkey PRIMARY KEY (id)
@@ -18,5 +17,4 @@ CREATE TABLE public.notice (
 
 -- Optional indexes
 CREATE INDEX idx_notice_created_at ON public.notice (created_at);
-CREATE INDEX idx_notice_is_public ON public.notice (is_public);
 CREATE INDEX idx_notice_pinned_created_at ON public.notice (pinned DESC, created_at DESC);

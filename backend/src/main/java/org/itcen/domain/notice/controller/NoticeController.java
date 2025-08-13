@@ -31,12 +31,11 @@ public class NoticeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sort,
-            @RequestParam(defaultValue = "DESC") String direction,
-            @RequestParam(defaultValue = "true") boolean onlyPublic
+            @RequestParam(defaultValue = "DESC") String direction
     ) {
         Sort sortSpec = Sort.by("DESC".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC, sort);
         Pageable pageable = PageRequest.of(page, size, sortSpec);
-        Page<NoticeListResponseDto> data = noticeService.getNoticeList(pageable, onlyPublic);
+        Page<NoticeListResponseDto> data = noticeService.getNoticeList(pageable);
         return ResponseEntity.ok(ApiResponse.success("공지사항 목록 조회 완료", data));
     }
 

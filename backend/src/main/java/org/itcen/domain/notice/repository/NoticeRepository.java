@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface NoticeRepository extends JpaRepository<Notice, Long> {
-    Page<Notice> findByIsPublicTrue(Pageable pageable);
+    // 제거됨: 공개여부 컬럼 삭제
 
     @Modifying
     @Query("UPDATE Notice n SET n.viewCount = n.viewCount + 1 WHERE n.id = :id")

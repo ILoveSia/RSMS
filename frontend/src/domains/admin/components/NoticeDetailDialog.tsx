@@ -6,7 +6,6 @@ export interface NoticeDetailData {
   id: number;
   category?: string;
   title: string;
-  is_public?: boolean;
   pinned?: boolean;
   view_count?: number;
   created_at?: string;

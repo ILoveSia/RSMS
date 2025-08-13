@@ -27,10 +27,6 @@ public class Notice extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "is_public", nullable = false)
-    @Builder.Default
-    private Boolean isPublic = true;
-
     @Column(nullable = false)
     @Builder.Default
     private Boolean pinned = false;

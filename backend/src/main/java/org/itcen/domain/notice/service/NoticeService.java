@@ -7,7 +7,7 @@ import org.itcen.domain.notice.dto.NoticeDetailResponseDto;
 import org.itcen.domain.notice.dto.NoticeCreateRequestDto;
 
 public interface NoticeService {
-    Page<NoticeListResponseDto> getNoticeList(Pageable pageable, Boolean onlyPublic);
+    Page<NoticeListResponseDto> getNoticeList(Pageable pageable);
     NoticeDetailResponseDto getNoticeDetailAndIncreaseView(Long id);
     Long createNotice(NoticeCreateRequestDto req, String userId);
 }
