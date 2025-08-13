@@ -37,7 +37,8 @@
     "db:status": "powershell -Command \"Get-Service postgresql-x64-17, Redis\"",
     "db:start": "powershell -Command \"Start-Service postgresql-x64-17, Redis\"",
     "db:stop": "powershell -Command \"Stop-Service postgresql-x64-17, Redis\"",
-    "db:restart": "npm run db:stop && npm run db:start"
+    "db:restart": "npm run db:stop && npm run db:start",
+    "storybook": "cd frontend && npm run storybook"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
