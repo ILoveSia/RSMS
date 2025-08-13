@@ -7,9 +7,9 @@ import apiClient from '@/app/common/api/client';
 import DepartmentApi from '@/domains/common/api/departmentApi';
 import { Button } from '@/shared/components/ui/button';
 import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
-import SearchIcon from '@mui/icons-material/Search';
-import { Alert, Box, CircularProgress, InputAdornment, Typography } from '@mui/material';
-import { DataGrid, TextField } from '@/shared/components/ui/data-display';
+import { Alert, Box, CircularProgress, Typography } from '@mui/material';
+import { DataGrid } from '@/shared/components/ui/data-display';
+import SearchBox from '@/shared/components/ui/SearchBox';
 import type { DataGridColumn } from '@/shared/types/common';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import type { GridRowParams } from '@mui/x-data-grid';
@@ -59,11 +59,8 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   const allCodes = useCommonCodes();
 
 
-  // 검색 조건 상태
-  const [searchConditions, setSearchConditions] = useState({
-    username: '',
-    num: '',
-  });
+  // 통합 검색어 상태 (성명/사번)
+  const [searchQuery, setSearchQuery] = useState('');
 
   // 검색 결과 상태
   const [employees, setEmployees] = useState<EmployeeSearchResult[]>([]);
@@ -129,7 +126,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   // 다이얼로그 초기화
   useEffect(() => {
     if (open) {
-      setSearchConditions({ username: '', num: '' });
+      setSearchQuery('');
       setEmployees([]);
       setSelectedEmployee(null);
       setSelectedRows([]);
@@ -140,24 +137,13 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     }
   }, [open]);
 
-  // 사원 목록 검색
+  // 사원 목록 조회 (서버 호출)
   const handleSearch = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const params = new URLSearchParams({
-        limit: '100', // 최대 100명까지 조회
-      });
-
-      // 검색 조건 추가
-      if (searchConditions.username?.trim()) {
-        params.append('username', searchConditions.username.trim());
-      }
-      if (searchConditions.num?.trim()) {
-        params.append('num', searchConditions.num.trim());
-      }
-
+      const params = new URLSearchParams({ limit: '100' });
       const response = await apiClient.get<UserResponse[]>(`/users/employees?${params.toString()}`);
 
       if (response && Array.isArray(response)) {
@@ -191,22 +177,6 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       setEmployees([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 검색 조건 변경
-  const handleSearchConditionChange =
-    (field: keyof typeof searchConditions) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchConditions(prev => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-    };
-
-  // 엔터키 검색
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleSearch();
     }
   };
 
@@ -305,36 +275,16 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
     >
       <Box sx={{ width: '100%', height: 500, p: 3 }}>
         {/* 검색 영역 */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <TextField
-              label=''
-              mode='editable'
-              size='small'
-              placeholder='성명'
-              value={searchConditions.username}
-              onChange={handleSearchConditionChange('username') as any}
-              onKeyDown={handleKeyDown}
-              sx={{ minWidth: 100 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
+        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Box sx={{ flex: 1, minWidth: 200 }}>
+            <SearchBox
+              placeholder='성명 또는 사번으로 검색'
+              onSearch={(q) => setSearchQuery(q)}
+              onClear={() => setSearchQuery('')}
             />
-            <TextField
-              label=''
-              mode='editable'
-              size='small'
-              placeholder='사번'
-              value={searchConditions.num}
-              onChange={handleSearchConditionChange('num') as any}
-              onKeyDown={handleKeyDown}
-              sx={{ minWidth: 100 }}
-            />
+          </Box>
           <Button onClick={handleSearch} variant='contained' color='secondary' size='medium' disabled={loading}>
-            검색
+            새로고침
           </Button>
         </Box>
 
@@ -363,7 +313,14 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
           /* 사원 목록 DataGrid */
           <Box sx={{ height: 350 }}>
             <DataGrid
-              data={employees}
+              data={employees.filter(emp => {
+                const q = searchQuery.trim().toLowerCase();
+                if (!q) return true;
+                return (
+                  (emp.username || '').toLowerCase().includes(q) ||
+                  (emp.num || '').toLowerCase().includes(q)
+                );
+              })}
               columns={columns}
               checkboxSelection={false}
               disableRowSelectionOnClick={false}
@@ -378,7 +335,14 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
         {/* 결과 개수 */}
         <Box sx={{ mt: 1, textAlign: 'right' }}>
           <Typography variant='caption' color='text.secondary'>
-            총 {employees.length}건
+            총 {employees.filter(emp => {
+              const q = searchQuery.trim().toLowerCase();
+              if (!q) return true;
+              return (
+                (emp.username || '').toLowerCase().includes(q) ||
+                (emp.num || '').toLowerCase().includes(q)
+              );
+            }).length}건
           </Typography>
         </Box>
       </Box>

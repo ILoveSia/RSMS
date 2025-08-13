@@ -5,7 +5,7 @@ import {
 } from '@mui/icons-material';
 import { Box, Chip, IconButton, InputAdornment, Stack } from '@mui/material';
 import { TextField } from '@/shared/components/ui/data-display';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 interface SearchFilter {
   key: string;
@@ -47,6 +47,15 @@ const SearchBox: React.FC<SearchBoxProps> = ({
     if (onSearch) {
       onSearch(searchQuery.trim(), filters);
     }
+  }, [searchQuery, filters, onSearch]);
+
+  // 입력 변경 시 자동 검색 (디바운스)
+  useEffect(() => {
+    if (!onSearch) return;
+    const timer = setTimeout(() => {
+      onSearch(searchQuery.trim(), filters);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [searchQuery, filters, onSearch]);
 
   // 검색어 변경

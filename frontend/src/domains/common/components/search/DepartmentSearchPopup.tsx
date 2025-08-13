@@ -6,15 +6,13 @@ import DepartmentApi, {
   type Department as ApiDepartment,
 } from '@/domains/common/api/departmentApi';
 import { Button } from '@/shared/components/ui/button';
-import SearchIcon from '@mui/icons-material/Search';
 import {
   Alert,
   Box,
   CircularProgress,
-  InputAdornment,
-  TextField,
   Typography,
 } from '@mui/material';
+import SearchBox from '@/shared/components/ui/SearchBox';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
@@ -144,16 +142,17 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   }, [availableDepartments]);
 
   // 검색 기능
-  const handleSearch = useCallback(() => {
-    if (!searchKeyword.trim()) {
+  const handleSearch = useCallback((q?: string) => {
+    const keyword = (q ?? searchKeyword).trim().toLowerCase();
+    if (!keyword) {
       setFilteredDepartments(departments);
       return;
     }
 
     const filtered = departments.filter(
       dept =>
-        dept.deptCode.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        dept.deptName.toLowerCase().includes(searchKeyword.toLowerCase())
+        dept.deptCode.toLowerCase().includes(keyword) ||
+        dept.deptName.toLowerCase().includes(keyword)
     );
     setFilteredDepartments(filtered);
   }, [searchKeyword, departments]);
@@ -230,24 +229,13 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
       <Box sx={{ width: '100%', height: 500, p: 2 }}>
         {/* 검색 영역 */}
         <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
-          <TextField
-            size='small'
-            placeholder='부서코드, 부서명'
-            value={searchKeyword}
-            onChange={e => setSearchKeyword(e.target.value)}
-            onKeyPress={e => e.key === 'Enter' && handleSearch()}
-            sx={{ flex: 1, minWidth: 120 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position='start'>
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button onClick={handleSearch} variant='contained' color='secondary' size='small' sx={{ whiteSpace: 'nowrap' }}>
-            검색
-          </Button>
+          <Box sx={{ flex: 1, minWidth: 120 }}>
+            <SearchBox
+              placeholder='부서코드, 부서명'
+              onSearch={(query) => { setSearchKeyword(query); handleSearch(query); }}
+              onClear={() => { setSearchKeyword(''); handleSearch(''); }}
+            />
+          </Box>
         </Box>
 
         {/* 안내 메시지 */}

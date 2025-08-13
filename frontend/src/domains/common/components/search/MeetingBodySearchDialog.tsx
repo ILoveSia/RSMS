@@ -10,11 +10,8 @@ import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { Alert } from '@/shared/components/ui/feedback';
 import type { DataGridColumn } from '@/shared/types/common';
-import {
-  Box,
-  CircularProgress,
-  TextField,
-} from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
+import SearchBox from '@/shared/components/ui/SearchBox';
 import React, { useEffect, useState } from 'react';
 import { meetingStatusApi } from '../../../ledgermngt/api/meetingStatusApi';
 
@@ -155,27 +152,21 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
     }
   };
 
-  // 검색 실행
-  const handleSearch = () => {
-    if (!searchKeyword.trim()) {
+  // 검색 실행 (검색어 인자로도 처리)
+  const handleSearch = (q?: string) => {
+    const keyword = (q ?? searchKeyword).trim().toLowerCase();
+    if (!keyword) {
       setFilteredMeetingBodies(meetingBodies);
       return;
     }
 
     const filtered = meetingBodies.filter(
       meeting =>
-        meeting.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-        meeting.code.toLowerCase().includes(searchKeyword.toLowerCase())
+        meeting.name.toLowerCase().includes(keyword) ||
+        meeting.code.toLowerCase().includes(keyword)
     );
 
     setFilteredMeetingBodies(filtered);
-  };
-
-  // 엔터키 검색
-  const handleKeyPress = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
-      handleSearch();
-    }
   };
 
   // 회의체 선택
@@ -248,23 +239,13 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
         )}
 
         <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-          <TextField
-            size='small'
-            placeholder='회의체명 또는 코드로 검색'
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyPress={handleKeyPress}
-            fullWidth
-          />
-          <Button
-            variant='contained'
-            onClick={handleSearch}
-            disabled={loading}
-            color='primary'
-            sx={{ minWidth: 80 }}
-          >
-            검색
-          </Button>
+          <Box sx={{ flex: 1 }}>
+            <SearchBox
+              placeholder='회의체명 또는 코드로 검색'
+              onSearch={(query) => { setSearchKeyword(query); handleSearch(query); }}
+              onClear={() => { setSearchKeyword(''); handleSearch(''); }}
+            />
+          </Box>
         </Box>
 
           {loading ? (
