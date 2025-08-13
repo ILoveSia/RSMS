@@ -212,13 +212,23 @@ public class LedgerOrdersHodServiceImpl implements LedgerOrdersHodService {
      * LedgerOrdersHod를 LedgerOrdersHodSelectDto로 변환
      */
     private LedgerOrdersHodSelectDto convertToSelectDto(LedgerOrdersHod ledgerOrdersHod) {
-        // ledger_orders_hod_title 컬럼만 표시
-        String label = ledgerOrdersHod.getLedgerOrdersHodTitle() != null ? 
+        // 상태코드로 공통코드에서 상태명 조회
+        String statusName = "";
+        if (ledgerOrdersHod.getLedgerOrdersHodStatusCd() != null) {
+            Optional<CommonCode> statusCode = commonCodeRepository.findByGroupCodeAndCode("ORDER_HOD_STATUS", ledgerOrdersHod.getLedgerOrdersHodStatusCd());
+            statusName = statusCode.map(CommonCode::getCodeName).orElse("");
+        }
+        
+        // 라벨 생성: "2025-002-01(진행중)" 형태
+        String title = ledgerOrdersHod.getLedgerOrdersHodTitle() != null ? 
             ledgerOrdersHod.getLedgerOrdersHodTitle() : "";
+        String label = statusName.isEmpty() ? title : title + "(" + statusName + ")";
         
         return new LedgerOrdersHodSelectDto(
             String.valueOf(ledgerOrdersHod.getLedgerOrdersHodId()),
-            label
+            label,
+            ledgerOrdersHod.getLedgerOrdersHodId(),
+            ledgerOrdersHod.getLedgerOrdersHodStatusCd()
         );
     }
 

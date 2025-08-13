@@ -23,10 +23,11 @@
     "@mui/icons-material": "^5.15.20",
     "@mui/lab": "^5.0.0-alpha.170",
     "@mui/material": "^5.15.20",
-    "@mui/system": "^7.2.0",
-    "@mui/x-data-grid": "^7.7.1",
+    "@mui/system": "^5.15.20",
+    "@mui/x-data-grid": "^6.19.11",
     "@reduxjs/toolkit": "^2.8.2",
     "@types/react-redux": "^7.1.34",
+    "@types/recharts": "^1.8.29",
     "@types/uuid": "^10.0.0",
     "axios": "^1.9.0",
     "dayjs": "^1.11.13",
@@ -36,6 +37,7 @@
     "react-dom": "^18.2.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.26.0",
+    "recharts": "^3.1.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

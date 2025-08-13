@@ -79,36 +79,44 @@ export const useReduxState = <T = unknown>(statePath: string) => {
   const pathArray = statePath.split('/');
 
   const data = useSelector((rootState: unknown) => {
+    console.log('🔍 [useReduxState] 전체 rootState:', rootState);
+    console.log('🔍 [useReduxState] statePath:', statePath, 'pathArray:', pathArray);
 
     let current = rootState;
     for (const key of pathArray) {
+      console.log('🔍 [useReduxState] 현재 key:', key, '현재 current:', current);
       if (current && typeof current === 'object' && key in current) {
         current = (current as Record<string, unknown>)[key];
+        console.log('🔍 [useReduxState] key 찾음, 새로운 current:', current);
       } else {
+        console.log('🔍 [useReduxState] key 못찾음, null 반환');
         return null;
       }
     }
 
+    console.log('🔍 [useReduxState] 최종 current:', current);
 
     // 스토어 구조가 {data, loading, error} 형태인 경우 data 필드만 반환
     if (current && typeof current === 'object' && 'data' in current) {
       const stateObj = current as { data: T; loading: boolean; error: string | null };
+      console.log('🔍 [useReduxState] data 필드 발견, stateObj.data:', stateObj.data);
       return stateObj.data;
     }
 
+    console.log('🔍 [useReduxState] 그대로 반환, current as T:', current);
     return current as T;
   });
 
   const setData = (newData: T) => {
     // 스토어 구조에 맞는 액션 타입으로 dispatch
-    // 예: loginStore/login -> LoginStore/login/setData
+    // 예: LoginStore/login -> LoginStore/login/setData
     const storeName = pathArray[0];
     const actionName = pathArray[1];
 
     // 실제 액션 타입 찾기 (등록된 액션에서)
     let actionType = '';
-    if (storeName === 'loginStore' && actionName === 'login') {
-      actionType = 'LoginStore/login/setData';
+    if ((storeName === 'loginStore' || storeName === 'LoginStore') && actionName === 'login') {
+      actionType = 'loginStore/login/setData';
     } else if (storeName === 'menuStore' && actionName === 'accessibleMenus') {
       actionType = 'MenuStore/accessibleMenus/setData';
     } else if (storeName === 'codeStore' && actionName === 'allCodes') {
@@ -119,6 +127,15 @@ export const useReduxState = <T = unknown>(statePath: string) => {
       // 기본 패턴
       actionType = `${pathArray.join('/')}/setData`;
     }
+
+    console.log('🔄 [useReduxState] setData 호출:', {
+      statePath,
+      pathArray,
+      storeName,
+      actionName,
+      actionType,
+      newData
+    });
 
     dispatch({
       type: actionType,

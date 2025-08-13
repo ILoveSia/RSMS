@@ -533,7 +533,6 @@ const DataGrid = <T extends Record<string, any>>({
               getRowId={row => row._gridId}
               checkboxSelection={checkboxSelection || selectable}
               disableRowSelectionOnClick={disableRowSelectionOnClick}
-              disableMultipleRowSelection={!multiSelect}
               rowSelectionModel={rowSelectionModel || selectedRows}
               onRowClick={handleRowClick}
               onRowDoubleClick={handleRowDoubleClick}

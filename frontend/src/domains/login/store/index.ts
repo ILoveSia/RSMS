@@ -13,7 +13,7 @@ export interface ILoginStore <T = IRootState> {
 // API호출이 아닌 경우에는 url을 입력 하지 않아도 된다. (state만 생성할때)
 // actionType 이름을 [업무스토어]/[state 이름] 조합으로 생성한다.
 const loginAction : ILoginStore<IActionObject> = {
-	login: {actionType: 'LoginStore/login', url: LOGIN_API_URL.LOGIN },    // 사용자 조회 API
+	login: {actionType: 'loginStore/login', url: LOGIN_API_URL.LOGIN },    // 사용자 조회 API
 	// action  추가...
 } as const;
 

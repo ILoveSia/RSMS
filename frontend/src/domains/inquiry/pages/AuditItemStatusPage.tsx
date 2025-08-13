@@ -190,7 +190,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
   const columns: DataGridColumn<AuditItemRow>[] = [
     {
       field: 'hodIcItemId',
-      headerName: '부서장\n내부통제 항목ID',
+      headerName: '항목ID',
       width: 100,
     },
     {

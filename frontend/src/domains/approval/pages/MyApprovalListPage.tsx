@@ -202,18 +202,13 @@ const MyApprovalListPage: React.FC = () => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
         const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
         return (
-          <Box>
-            <Typography 
-              variant="body2" 
-              sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
-              onClick={() => handleViewDetail(row.approvalId)}
-            >
-              {taskTypeName}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {row.taskTypeName}
-            </Typography>
-          </Box>
+          <Typography 
+            variant="body2" 
+            sx={{ fontWeight: 'medium', cursor: 'pointer', color: '#1976d2', textDecoration: 'underline' }}
+            onClick={() => handleViewDetail(row.approvalId)}
+          >
+            {taskTypeName}
+          </Typography>
         );
       },
       flex: 1,

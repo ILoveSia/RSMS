@@ -201,6 +201,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
   // 로그인 데이터 변경 시 console에 출력
   useEffect(() => {
+    console.log('📊 [LoginPage] Redux loginData 변경됨:', loginData);
   }, [loginData]);
 
   // 메뉴 데이터 변경 시 console에 출력
@@ -345,7 +346,13 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         accessibleMenus: userData.accessibleMenus || [],
       };
 
+      console.log('💾 [로그인] Redux Store에 로그인 데이터 저장:', userForStore);
       setLoginData(userForStore);
+      
+      // 저장 후 검증
+      setTimeout(() => {
+        console.log('🔍 [로그인] setLoginData 후 현재 loginData:', loginData);
+      }, 100);
 
       const userForAuth: AuthUser = {
         userid: userForStore.userid,
@@ -355,6 +362,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         roles: userData.authorities?.map(auth => auth.replace('ROLE_', '')) || ['USER'],
       };
 
+      console.log('🔐 [로그인] AuthContext에 사용자 정보 설정:', userForAuth);
       setAuthenticatedUser(userForAuth);
 
       console.log('📊 [로그인] 공통코드 및 메뉴 데이터 로딩 시작');

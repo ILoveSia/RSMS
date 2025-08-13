@@ -14,8 +14,8 @@ import apiClient from '@/app/common/api/client';
 export interface LedgerOrdersHodSelectProps {
   /** 선택된 값 */
   value: string;
-  /** 값 변경 핸들러 - value와 ledgerOrdersHodId를 함께 전달 */
-  onChange: (value: string, ledgerOrdersHodId?: number) => void;
+  /** 값 변경 핸들러 - value, ledgerOrdersHodId, ledgerOrdersHodStatusCd를 함께 전달 */
+  onChange: (value: string, ledgerOrdersHodId?: number, ledgerOrdersHodStatusCd?: string) => void;
   /** 라벨 텍스트 */
   label?: string;
   /** 컴포넌트 크기 */
@@ -52,6 +52,7 @@ export interface LedgerOrdersHodOption {
   value: string;
   label: string;
   ledgerOrdersHodId: number;
+  ledgerOrdersHodStatusCd: string;
 }
 
 // 부서장 원장차수 API 함수
@@ -166,8 +167,11 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
         options.push({
           value: option.value,
           label: option.label,
-          // SelectOption에는 ledgerOrdersHodId 필드가 없으므로 추가 정보로 저장
-          data: { ledgerOrdersHodId: option.ledgerOrdersHodId }
+          // SelectOption에는 추가 필드가 없으므로 data로 저장
+          data: { 
+            ledgerOrdersHodId: option.ledgerOrdersHodId,
+            ledgerOrdersHodStatusCd: option.ledgerOrdersHodStatusCd
+          }
         });
       });
     } else {
@@ -199,17 +203,18 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
         return;
       }
 
-      // "전체" 또는 allValue인 경우 ledgerOrdersHodId 없이 호출
+      // "전체" 또는 allValue인 경우 추가 정보 없이 호출
       if (valueString === allValue) {
         onChange(valueString);
         return;
       }
 
-      // 선택된 값에 해당하는 ledgerOrdersHodId 찾기
+      // 선택된 값에 해당하는 데이터 찾기
       const selectedOption = ledgerOrdersHodOptions.find(option => option.value === valueString);
       const ledgerOrdersHodId = selectedOption?.ledgerOrdersHodId;
+      const ledgerOrdersHodStatusCd = selectedOption?.ledgerOrdersHodStatusCd;
       
-      onChange(valueString, ledgerOrdersHodId);
+      onChange(valueString, ledgerOrdersHodId, ledgerOrdersHodStatusCd);
     },
     [onChange, allValue, ledgerOrdersHodOptions]
   );
