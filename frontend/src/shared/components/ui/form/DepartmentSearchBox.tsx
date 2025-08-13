@@ -23,7 +23,7 @@ export interface DepartmentSearchRequest {
 // 부서 검색 결과 타입 (DepartmentSearchPopup의 Department 타입 사용)
 export type DepartmentSearchResult = Department;
 
-export interface DepartmentSelectProps {
+export interface DepartmentSearchBoxProps {
   /** 선택된 부서 정보 */
   value?: DepartmentSearchResult | null;
   /** 값 변경 핸들러 */
@@ -53,7 +53,7 @@ export interface DepartmentSelectProps {
   availableDepartments?: DepartmentSearchResult[];
 }
 
-const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
+const DepartmentSearchBox: React.FC<DepartmentSearchBoxProps> = ({
   value = null,
   onChange,
   size = 'small',
@@ -128,4 +128,4 @@ const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   );
 };
 
-export default DepartmentSelect;
+export default DepartmentSearchBox;

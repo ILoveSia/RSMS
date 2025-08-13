@@ -7,7 +7,7 @@ import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { ComboBox, SearchConditionPanel } from '@/shared/components/ui/form';
-import DepartmentSelect from '@/shared/components/ui/form/DepartmentSelect';
+import DepartmentSearchBox from '@/shared/components/ui/form/DepartmentSearchBox';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -405,7 +405,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
               sx={{ minWidth: '200px' }}
             />
             <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px', whiteSpace: 'nowrap' }}>부서</span>
-            <DepartmentSelect
+            <DepartmentSearchBox
               value={selectedDepartment}
               onChange={(value) => setSelectedDepartment(value)}
               size="small"

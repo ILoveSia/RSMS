@@ -8,7 +8,7 @@ import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { Modal } from '@/shared/components/ui/feedback';
 import { ComboBox, SearchConditionPanel } from '@/shared/components/ui/form';
-import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
+import DepartmentSearchBox, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSearchBox';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -304,7 +304,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
               sx={{ minWidth: '200px' }}
             />
             <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px', whiteSpace: 'nowrap' }}>부서</span>
-            <DepartmentSelect
+            <DepartmentSearchBox
               value={departmentFilter}
               onChange={setDepartmentFilter}
               size="small"

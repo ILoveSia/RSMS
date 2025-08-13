@@ -6,7 +6,7 @@ import { PersonAddAlt1 as PersonAddAlt1Icon } from '@mui/icons-material';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, ExcelDownloadButton, Button as SharedButton, RefreshButton } from '@/shared/components/ui/button';
+import { SearchButton, Button as SharedButton, RefreshButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 // no-op
@@ -14,7 +14,7 @@ import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
 import { adminApi } from '../api/adminApi';
 // import UserEditDialog from '@/domains/admin/components/UserEditDialog';
 import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
-import DepartmentSelect, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSelect';
+import DepartmentSearchBox, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSearchBox';
 import type { UserWithRoles, Role, UserFilter, UserRoleInfo, EmployeeBasic } from '../types';
 
 /**
@@ -259,7 +259,7 @@ const UserPermissionManagePage: React.FC = () => {
             sx={{ minWidth: 180, maxWidth: 240 }}
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>부서</span>
-          <DepartmentSelect
+          <DepartmentSearchBox
             value={selectedDepartment}
             onChange={(dept) => {
               setSelectedDepartment(dept);
