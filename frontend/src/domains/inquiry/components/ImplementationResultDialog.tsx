@@ -4,8 +4,6 @@
  */
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import { attachmentApi } from '@/shared/api/attachmentApi';
-import type { AttachmentResponse } from '@/shared/api/attachmentApi';
 import { deleteAttachment, downloadAttachment, getAttachments, uploadAttachment, type AttachmentInfo } from '@/domains/common/api/attachmentApi';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import { Box, Typography, Divider, Button, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Chip } from '@mui/material';
@@ -25,7 +23,7 @@ export interface ImplementationResultData {
   auditDoneContent?: string;
   auditDoneDt?: string;
   implementationStatus?: string;
-  attachments?: AttachmentResponse[];
+  attachments?: AttachmentInfo[];
 }
 
 export interface ImplementationResultDialogProps {
