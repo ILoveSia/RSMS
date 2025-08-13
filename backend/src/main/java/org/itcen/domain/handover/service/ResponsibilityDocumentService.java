@@ -83,7 +83,7 @@ public interface ResponsibilityDocumentService {
     /**
      * 상태별 책무기술서 조회
      */
-    List<ResponsibilityDocumentDto> getDocumentsByStatus(ResponsibilityDocument.DocumentStatus status);
+    List<ResponsibilityDocumentDto> getDocumentsByStatus(String status);
 
     /**
      * 작성자별 책무기술서 조회
@@ -169,7 +169,7 @@ public interface ResponsibilityDocumentService {
         String getDocumentTitle();
         String getDocumentVersion();
         String getDocumentContent();
-        ResponsibilityDocument.DocumentStatus getStatus();
+        String getStatus();
         Long getApprovalId();
         LocalDate getEffectiveDate();
         LocalDate getExpiryDate();
@@ -184,7 +184,6 @@ public interface ResponsibilityDocumentService {
 
     interface DocumentSearchDto {
         Long getPositionId();
-        ResponsibilityDocument.DocumentStatus getStatus();
         String getAuthorEmpNo();
         String getDocumentTitle();
         String getPositionName();
@@ -207,7 +206,7 @@ public interface ResponsibilityDocumentService {
     }
 
     interface StatusStatisticsDto {
-        ResponsibilityDocument.DocumentStatus getStatus();
+        String getStatus();
         Long getCount();
         Double getPercentage();
     }
@@ -225,7 +224,7 @@ public interface ResponsibilityDocumentService {
         String getDocumentTitle();
         String getDocumentVersion();
         String getDocumentContent();
-        ResponsibilityDocument.DocumentStatus getStatus();
+        String getStatus(); // status 필드 제거됨, 항상 null 반환
         Long getApprovalId();
         LocalDate getEffectiveDate();
         LocalDate getExpiryDate();

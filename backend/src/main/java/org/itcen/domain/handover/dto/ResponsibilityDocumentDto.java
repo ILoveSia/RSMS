@@ -29,7 +29,7 @@ public class ResponsibilityDocumentDto {
     private String documentTitle;
     private String documentVersion;
     private String documentContent;
-    private ResponsibilityDocument.DocumentStatus status;
+    private String status;
     private Long approvalId;
     private LocalDate effectiveDate;
     private LocalDate expiryDate;

@@ -346,24 +346,22 @@ const UserPermissionManagePage: React.FC = () => {
               color="primary"
               size="small"
               startIcon={<PersonAddAlt1Icon />}
-              sx={{
+              sx={{ 
                 fontWeight: 700,
                 height: '32px',
-                minWidth: '120px',
+                minWidth: '80px',
                 fontSize: '0.875rem',
                 borderRadius: 1,
-                display: 'inline-flex',
-                alignItems: 'center'
               }}
             >
               사용자 등록
             </SharedButton>
-            <ExcelDownloadButton
+            {/* <ExcelDownloadButton
               onDownload={() => {}}
               filename="user_permissions_list"
               disabled={loading}
               loading={loading}
-            />
+            /> */}
           </Box>
         </Box>
 
@@ -374,6 +372,9 @@ const UserPermissionManagePage: React.FC = () => {
             display: 'flex', 
             flexDirection: 'column',
             overflow: 'hidden',
+            border: '1px solid #e0e3e7',
+            borderRadius: '8px',
+            boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
           }}>
             <TableContainer sx={{ 
               flex: 1, 
@@ -394,15 +395,38 @@ const UserPermissionManagePage: React.FC = () => {
             }}>
               <Table stickyHeader size="small" sx={{
                 '& .MuiTableHead-root .MuiTableCell-root': {
-                  backgroundColor: 'var(--bank-bg-secondary) !important',
+                  backgroundColor: '#f4f6f8 !important',
                   fontWeight: 'bold',
                   fontSize: '0.875rem',
+                  borderBottom: '1px solid #e0e3e7',
+                  color: '#1c2025',
+                  padding: '12px 16px',
+                  borderRight: '1px solid #e0e3e7',
+                  '&:last-child': {
+                    borderRight: 'none',
+                  }
                 },
-                '& .MuiTableRow-root': {
+                '& .MuiTableBody-root .MuiTableRow-root': {
                   cursor: 'pointer',
+                  borderBottom: '1px solid #e0e3e7',
                   '&:hover': {
-                    backgroundColor: 'var(--bank-bg-hover)',
+                    backgroundColor: '#f4f6f8',
                   },
+                  '&:last-child': {
+                    borderBottom: 'none',
+                  }
+                },
+                '& .MuiTableBody-root .MuiTableCell-root': {
+                  borderBottom: '1px solid #e0e3e7',
+                  borderRight: '1px solid #e0e3e7',
+                  padding: '12px 16px',
+                  fontSize: '0.875rem',
+                  '&:last-child': {
+                    borderRight: 'none',
+                  },
+                  '&:first-of-type': {
+                    fontWeight: 500,
+                  }
                 },
               }}>
                 <TableHead>

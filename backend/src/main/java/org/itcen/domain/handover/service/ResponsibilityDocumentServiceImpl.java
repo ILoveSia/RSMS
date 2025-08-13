@@ -57,18 +57,14 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         ResponsibilityDocument existingDocument = responsibilityDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException("책무기술서를 찾을 수 없습니다: " + documentId));
 
-        // 수정 가능 여부 확인 (발행된 문서는 수정 불가)
-        if (existingDocument.getStatus() == ResponsibilityDocument.DocumentStatus.PUBLISHED) {
-            throw new BusinessException("발행된 책무기술서는 수정할 수 없습니다.");
-        }
-
+        // status 컬럼 삭제되어 상태 확인 로직 제거
+        
         // 필드 업데이트
         existingDocument.setDocumentTitle(document.getDocumentTitle());
         existingDocument.setDocumentContent(document.getDocumentContent());
         existingDocument.setDocumentVersion(document.getDocumentVersion());
         existingDocument.setEffectiveDate(document.getEffectiveDate());
         existingDocument.setExpiryDate(document.getExpiryDate());
-        existingDocument.setStatus(document.getStatus());
         existingDocument.setUpdatedId(document.getUpdatedId());
 
         ResponsibilityDocument savedDocument = responsibilityDocumentRepository.save(existingDocument);
@@ -91,11 +87,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         ResponsibilityDocument document = responsibilityDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException("책무기술서를 찾을 수 없습니다: " + documentId));
 
-        // 삭제 가능 여부 확인 (승인되었거나 발행된 문서는 삭제 불가)
-        if (document.getStatus() == ResponsibilityDocument.DocumentStatus.APPROVED ||
-            document.getStatus() == ResponsibilityDocument.DocumentStatus.PUBLISHED) {
-            throw new BusinessException("승인되었거나 발행된 책무기술서는 삭제할 수 없습니다.");
-        }
+        // status 컬럼 삭제되어 상태 확인 로직 제거
 
         responsibilityDocumentRepository.delete(document);
         log.debug("책무기술서 삭제 완료 - documentId: {}", documentId);
@@ -115,12 +107,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         ResponsibilityDocument document = responsibilityDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException("책무기술서를 찾을 수 없습니다: " + documentId));
 
-        // 제출 가능 여부 확인
-        if (document.getStatus() != ResponsibilityDocument.DocumentStatus.DRAFT) {
-            throw new BusinessException("초안 상태의 문서만 검토에 제출할 수 있습니다.");
-        }
-
-        document.submitForReview(reviewerEmpNo);
+        // 제출 가능성 기본 확인
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
 
@@ -135,12 +122,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         ResponsibilityDocument document = responsibilityDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException("책무기술서를 찾을 수 없습니다: " + documentId));
 
-        // 승인 가능 여부 확인
-        if (document.getStatus() != ResponsibilityDocument.DocumentStatus.REVIEW) {
-            throw new BusinessException("검토 중인 문서만 승인할 수 있습니다.");
-        }
-
-        document.approve(approverEmpNo);
+        // 승인 처리
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
 
@@ -155,12 +137,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         ResponsibilityDocument document = responsibilityDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException("책무기술서를 찾을 수 없습니다: " + documentId));
 
-        // 발행 가능 여부 확인
-        if (document.getStatus() != ResponsibilityDocument.DocumentStatus.APPROVED) {
-            throw new BusinessException("승인된 문서만 발행할 수 있습니다.");
-        }
-
-        document.publish();
+        // 발행 처리
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
 
@@ -175,12 +152,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         ResponsibilityDocument document = responsibilityDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new BusinessException("책무기술서를 찾을 수 없습니다: " + documentId));
 
-        // 되돌리기 가능 여부 확인
-        if (document.getStatus() == ResponsibilityDocument.DocumentStatus.PUBLISHED) {
-            throw new BusinessException("발행된 문서는 초안으로 되돌릴 수 없습니다.");
-        }
-
-        document.revertToDraft();
+        // 되돌리기 처리
         document.setUpdatedId(actorEmpNo);
         responsibilityDocumentRepository.save(document);
 
@@ -214,9 +186,10 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     // }
 
     @Override
-    public List<ResponsibilityDocumentDto> getDocumentsByStatus(ResponsibilityDocument.DocumentStatus status) {
+    public List<ResponsibilityDocumentDto> getDocumentsByStatus(String status) {
         log.debug("상태별 책무기술서 조회 - status: {}", status);
-        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByStatusWithJoin(status);
+        // status 필드 제거로 인해 전체 문서 조회
+        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findByPositionIdOrderByCreatedAtDesc();
         return convertToDto(documents);
     }
 
@@ -230,7 +203,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     @Override
     public Optional<ResponsibilityDocumentDto> getLatestPublishedDocument(Long positionId) {
         log.debug("최신 발행 문서 조회 - positionId: {}", positionId);
-        Optional<ResponsibilityDocument> document = responsibilityDocumentRepository.findLatestPublishedByPositionId();
+        Optional<ResponsibilityDocument> document = responsibilityDocumentRepository.findLatestByPositionId();
         return document.map(this::convertToDto);
     }
 
@@ -262,7 +235,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
         log.debug("복합 조건 검색 - searchDto: {}", searchDto);
 
         Page<ResponsibilityDocument> results = responsibilityDocumentRepository.findBySearchCriteriaWithJoin(
-                searchDto.getStatus(),
                 searchDto.getAuthorEmpNo(),
                 searchDto.getDocumentTitle(),
                 pageable
@@ -321,9 +293,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
 
         ResponsibilityDocument document = documentOpt.get();
         
-        if (document.getStatus() != ResponsibilityDocument.DocumentStatus.DRAFT) {
-            throw new BusinessException("초안 상태의 문서만 결재 요청할 수 있습니다.");
-        }
+        // 결재 요청 가능성 기본 확인
 
         // TODO: 실제 구현에서는 approval 테이블에 레코드 생성 필요
         // 현재는 로그만 출력
@@ -395,7 +365,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
             public String getDocumentContent() { return document.getDocumentContent(); }
 
             @Override
-            public ResponsibilityDocument.DocumentStatus getStatus() { return document.getStatus(); }
+            public String getStatus() { return null; } // status 컬럼 삭제됨
 
             @Override
             public Long getApprovalId() { return document.getApprovalId(); }
@@ -486,81 +456,75 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
             }
 
             @Override
-            public ResponsibilityDocument.DocumentStatus getStatus() { 
-                String statusStr = safeStringValue(row[4]);
-                if (statusStr != null) {
-                    try {
-                        return ResponsibilityDocument.DocumentStatus.valueOf(statusStr);
-                    } catch (IllegalArgumentException e) {
-                        log.warn("Invalid status value: {}", statusStr);
-                        return null;
-                    }
-                }
+            public String getStatus() { 
+                // status 컬럼이 삭제되었으므로 항상 null 반환
                 return null;
             }
 
             @Override
             public LocalDate getEffectiveDate() { 
-                return safeDateValue(row[5]); 
+                return safeDateValue(row[4]); // rd.effective_date (인덱스 4로 변경)
             }
 
             @Override
             public LocalDate getExpiryDate() { 
-                return safeDateValue(row[6]); 
+                return safeDateValue(row[5]); // rd.expiry_date (인덱스 5로 변경)
             }
 
             @Override
             public String getAuthorEmpNo() { 
-                return safeStringValue(row[7]); 
+                return safeStringValue(row[6]); // rd.author_emp_no (인덱스 6으로 변경)
             }
 
             @Override
             public String getAuthorName() { 
-                return safeStringValue(row[8]); 
+                return safeStringValue(row[7]); // e.emp_name (인덱스 7로 변경)
             }
             
             // 감사 필드
             @Override
             public LocalDate getCreatedAt() {
-                return safeTimestampValue(row[9]); // rd.created_at (인덱스 9)
+                return safeTimestampValue(row[8]); // rd.created_at (인덱스 8로 변경)
             }
 
             @Override
             public LocalDate getUpdatedAt() {
-                return safeTimestampValue(row[10]); // rd.updated_at (인덱스 10)
+                return safeTimestampValue(row[9]); // rd.updated_at (인덱스 9로 변경)
             }
 
             @Override
             public String getCreatedId() {
-                return safeStringValue(row[11]); // rd.created_id (인덱스 11)
+                return safeStringValue(row[10]); // rd.created_id (인덱스 10으로 변경)
             }
 
             @Override
             public String getUpdatedId() {
-                return safeStringValue(row[12]); // rd.updated_id (인덱스 12)
+                return safeStringValue(row[11]); // rd.updated_id (인덱스 11로 변경)
             }
             
             @Override
-            public Long getAttachmentCount() { return 0L; }
+            public Long getAttachmentCount() { 
+                return safeLongValue(row[17]); // attachment_count (인덱스 17)
+            }
 
             @Override
             public List<AttachmentInfo> getAttachments() { return new ArrayList<>(); }
 
-            // 결재 관련 필드 (Native Query에서 조회) - 올바른 인덱스 매핑
+            // 결재 관련 필드 (Native Query에서 조회) - 인덱스 업데이트
             @Override
             public String getApprovalStatus() {
-                String status = safeStringValue(row[13]); // approval_status (인덱스 13)
+                String status = safeStringValue(row[12]); // approval_status (인덱스 12로 변경)
                 return status != null ? status : "NONE";
             }
 
             @Override
             public Long getApprovalId() { 
-                return safeLongValue(row[14]); // ap.approval_id (인덱스 14)
+                return safeLongValue(row[13]); // ap.approval_id (인덱스 13으로 변경)
             }
 
             @Override
             public String getRequesterId() { 
-                return safeStringValue(row[15]); // ap.requester_id (인덱스 15)
+                return safeStringValue(row[14]); // ap.requester_id (인덱스 14로 변경)
             }
 
             @Override
@@ -568,7 +532,7 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
 
             @Override
             public String getCurrentApproverId() { 
-                return safeStringValue(row[16]); // ap.approver_id (인덱스 16)
+                return safeStringValue(row[15]); // ap.approver_id (인덱스 15로 변경)
             }
 
             @Override
@@ -576,13 +540,13 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
 
             @Override
             public LocalDate getApprovedAt() { 
-                return safeTimestampValue(row[17]); // ap.approval_datetime (인덱스 17)
+                return safeTimestampValue(row[16]); // ap.approval_datetime (인덱스 16으로 변경)
             }
 
             @Override
             public LocalDate getRejectedAt() { 
                 if ("REJECTED".equals(getApprovalStatus())) {
-                    return safeTimestampValue(row[17]); // ap.approval_datetime (인덱스 17)
+                    return safeTimestampValue(row[16]); // ap.approval_datetime (인덱스 16으로 변경)
                 }
                 return null; 
             }

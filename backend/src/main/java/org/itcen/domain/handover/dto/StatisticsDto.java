@@ -120,7 +120,7 @@ public class StatisticsDto {
     @AllArgsConstructor
     public static class StatusStatistics {
         private HandoverAssignment.HandoverStatus handoverStatus;
-        private ResponsibilityDocument.DocumentStatus documentStatus;
+        private String documentStatus;
         private BusinessPlanInspection.InspectionStatus inspectionStatus;
         private Long count;
         private Double percentage;

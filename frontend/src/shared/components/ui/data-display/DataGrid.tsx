@@ -218,24 +218,91 @@ const CustomPagination = ({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        p: 2,
-        backgroundColor: 'background.paper',
+        p: 3,
+        backgroundColor: 'rgba(248, 249, 250, 0.95)',
+        borderTop: '1px solid rgba(82, 122, 138, 0.2)',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <FormControl size='small' sx={{ minWidth: 120, '& .MuiOutlinedInput-notchedOutline': { borderWidth: '1px' } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <FormControl 
+          size='small' 
+          sx={{ 
+            minWidth: 140, 
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              '& fieldset': {
+                borderColor: 'rgba(82, 122, 138, 0.3)',
+                borderWidth: '1px',
+              },
+              '&:hover fieldset': {
+                borderColor: 'rgba(82, 122, 138, 0.5)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#527a8a',
+                borderWidth: '2px',
+              },
+            },
+            '& .MuiInputLabel-root': {
+              color: 'rgba(45, 67, 73, 0.7)',
+              fontSize: '0.875rem',
+              '&.Mui-focused': {
+                color: '#527a8a',
+              },
+            },
+          }}
+        >
           <InputLabel>페이지 크기</InputLabel>
-          <Select value={pageSize} label='페이지 크기' onChange={handlePageSizeChange}>
+          <Select 
+            value={pageSize} 
+            label='페이지 크기' 
+            onChange={handlePageSizeChange}
+            sx={{
+              fontSize: '0.875rem',
+              '& .MuiSelect-select': {
+                fontSize: '0.875rem',
+                color: '#2d4349',
+              },
+            }}
+          >
             {pageSizeOptions.map((size: number) => (
-              <MenuItem key={size} value={size}>
+              <MenuItem 
+                key={size} 
+                value={size}
+                sx={{
+                  fontSize: '0.875rem',
+                  '&:hover': {
+                    backgroundColor: 'rgba(82, 122, 138, 0.08)',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(82, 122, 138, 0.15)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(82, 122, 138, 0.2)',
+                    },
+                  },
+                }}
+              >
                 {size}개씩 보기
               </MenuItem>
             ))}
           </Select>
         </FormControl>
-        <Typography variant='body2' color='text.secondary'>
-          총 {totalItems}개 항목
-        </Typography>
+        <Box 
+          sx={{ 
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            px: 2,
+            py: 1,
+            backgroundColor: 'rgba(82, 122, 138, 0.08)',
+            borderRadius: '8px',
+            border: '1px solid rgba(82, 122, 138, 0.15)',
+          }}
+        >
+          <Typography variant='body2' sx={{ color: '#2d4349', fontWeight: 500, fontSize: '0.875rem' }}>
+            총 <span style={{ fontWeight: 700, color: '#527a8a' }}>{totalItems}</span>개 항목
+          </Typography>
+        </Box>
       </Box>
       <Pagination
         count={totalPages}
@@ -243,6 +310,39 @@ const CustomPagination = ({
         onChange={handlePageChange}
         color='primary'
         size='small'
+        sx={{
+          '& .MuiPaginationItem-root': {
+            borderRadius: '8px',
+            border: '1px solid rgba(82, 122, 138, 0.2)',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            color: '#2d4349',
+            fontWeight: 500,
+            fontSize: '0.875rem',
+            margin: '0 2px',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(82, 122, 138, 0.08)',
+              borderColor: 'rgba(82, 122, 138, 0.4)',
+            },
+            '&.Mui-selected': {
+              backgroundColor: '#527a8a',
+              color: 'white',
+              borderColor: '#527a8a',
+              fontWeight: 700,
+              '&:hover': {
+                backgroundColor: '#3e5b66',
+                borderColor: '#3e5b66',
+              },
+            },
+            '&.MuiPaginationItem-ellipsis': {
+              border: 'none',
+              backgroundColor: 'transparent',
+            },
+          },
+          '& .MuiPaginationItem-previousNext': {
+            fontWeight: 600,
+          },
+        }}
       />
     </Box>
   );
@@ -362,9 +462,9 @@ const DataGrid = <T extends Record<string, any>>({
         maxHeight,
         display: 'flex',
         flexDirection: 'column',
-        border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
+        backgroundColor: '#ffffff',
+        borderRadius: '8px',
+        border: '1px solid rgba(0, 0, 0, 0.12)',
         overflow: 'hidden',
         ...sx,
       }}
@@ -374,19 +474,57 @@ const DataGrid = <T extends Record<string, any>>({
       data-testid={dataTestId}
     >
       {error ? (
-        <Alert severity='error' sx={{ m: 2 }}>
+        <Alert 
+          severity='error' 
+          sx={{ 
+            m: 3,
+            borderRadius: '12px',
+            border: '1px solid rgba(244, 67, 54, 0.2)',
+            backgroundColor: 'rgba(255, 235, 238, 0.8)',
+            backdropFilter: 'blur(10px)',
+            '& .MuiAlert-icon': {
+              color: '#d32f2f',
+            },
+            '& .MuiAlert-message': {
+              fontSize: '0.875rem',
+              color: '#d32f2f',
+              fontWeight: 500,
+            },
+          }}
+        >
           {error}
         </Alert>
       ) : loading ? (
         <Box
           sx={{
             display: 'flex',
+            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             height: '100%',
+            gap: 2,
           }}
         >
-          <CircularProgress />
+          <CircularProgress 
+            size={48}
+            thickness={3}
+            sx={{
+              color: '#527a8a',
+              '& .MuiCircularProgress-circle': {
+                strokeLinecap: 'round',
+              },
+            }}
+          />
+          <Typography 
+            variant='body2' 
+            sx={{ 
+              color: 'rgba(45, 67, 73, 0.7)',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+            }}
+          >
+            데이터를 불러오는 중...
+          </Typography>
         </Box>
       ) : (
         <>
@@ -415,15 +553,85 @@ const DataGrid = <T extends Record<string, any>>({
               hideFooterPagination
               sx={{
                 border: 'none',
-                '& .MuiDataGrid-cell': {
-                  borderBottom: '1px solid var(--bank-border)',
+                backgroundColor: 'transparent',
+                '& .MuiDataGrid-root': {
+                  fontSize: '0.875rem',
                 },
                 '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: 'var(--bank-bg-secondary)',
-                  borderBottom: '1px solid var(--bank-border)',
+                  backgroundColor: 'rgba(82, 122, 138, 0.08)',
+                  borderBottom: '1px solid rgba(82, 122, 138, 0.2)',
+                  minHeight: '52px !important',
+                  '& .MuiDataGrid-columnHeader': {
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    color: '#2d4349',
+                    '&:focus': {
+                      outline: 'none',
+                    },
+                    '&:focus-within': {
+                      outline: 'none',
+                    },
+                  },
+                  '& .MuiDataGrid-columnHeaderTitle': {
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                  },
+                  '& .MuiDataGrid-iconSeparator': {
+                    color: 'rgba(82, 122, 138, 0.3)',
+                  },
+                  '& .MuiDataGrid-sortIcon': {
+                    color: '#527a8a',
+                  },
                 },
-                '& .MuiDataGrid-cell:focus': {
-                  outline: 'none',
+                '& .MuiDataGrid-row': {
+                  borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:nth-of-type(even)': {
+                    backgroundColor: 'rgba(248, 249, 250, 0.5)',
+                  },
+                  '&:hover': {
+                    backgroundColor: 'rgba(82, 122, 138, 0.08) !important',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(82, 122, 138, 0.15) !important',
+                    '&:hover': {
+                      backgroundColor: 'rgba(82, 122, 138, 0.2) !important',
+                    },
+                  },
+                },
+                '& .MuiDataGrid-cell': {
+                  borderBottom: 'none',
+                  fontSize: '0.875rem',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  '&:focus': {
+                    outline: 'none',
+                  },
+                  '&:focus-within': {
+                    outline: 'none',
+                  },
+                },
+                '& .MuiDataGrid-cellContent': {
+                  fontSize: '0.875rem',
+                },
+                '& .MuiDataGrid-columnSeparator': {
+                  visibility: 'hidden',
+                },
+                '& .MuiCheckbox-root': {
+                  color: '#527a8a',
+                  '&.Mui-checked': {
+                    color: '#527a8a',
+                  },
+                },
+                '& .MuiDataGrid-footerContainer': {
+                  borderTop: '1px solid rgba(82, 122, 138, 0.2)',
+                  backgroundColor: 'rgba(248, 249, 250, 0.8)',
+                  minHeight: '60px',
+                },
+                '& .MuiDataGrid-virtualScrollerContent .MuiDataGrid-row:last-child .MuiDataGrid-cell': {
+                  borderBottom: 'none',
                 },
               }}
               {...props}

@@ -247,8 +247,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             row.responsibilityDetailContent,
             row.responsibilityMgtSts,
             row.responsibilityRelEvid,
-            dayjs(row.createdAt).format('YYYY.MM.DD'),
-            dayjs(row.updatedAt).format('YYYY.MM.DD'),
+            dayjs(row.createdAt).format('YYYY-MM-DD'),
+            dayjs(row.updatedAt).format('YYYY-MM-DD'),
           ]);
         });
 
@@ -278,7 +278,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           width: 250,
           flex: 1,
           sortable: false,
-          align: 'center',
+          align: 'left',
           cellClassName: 'wrap-text',
           renderCell: params => (
             <span
@@ -319,6 +319,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           headerName: '책무 세부내용',
           width: 300,
           flex: 1,
+          align: 'left',
           cellClassName: 'wrap-text',
           renderCell: params => (
             <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
@@ -331,6 +332,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           headerName: '책무이행을 위한 주요 관리업무',
           width: 300,
           flex: 2,
+          align: 'left',
           cellClassName: 'wrap-text',
           renderCell: params => (
             <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
@@ -343,6 +345,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           headerName: '관련 근거',
           width: 200,
           flex: 1,
+          align: 'left',
           cellClassName: 'wrap-text',
           renderCell: params => (
             <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
@@ -353,18 +356,22 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         {
           field: 'createdAt',
           headerName: '등록일자',
-          width: 90,
-          valueFormatter: (value: any) => dayjs(value).format('YYYY.MM.DD'),
+          width: 110,
           align: 'center',
           cellClassName: 'wrap-text',
+          renderCell: (params) => (
+            <div>{dayjs(params.value).format('YYYY-MM-DD')}</div>
+          ),
         },
         {
           field: 'updatedAt',
           headerName: '최종수정일자',
-          width: 100,
-          valueFormatter: (value: any) => dayjs(value).format('YYYY.MM.DD'),
+          width: 120,
           align: 'center',
           cellClassName: 'wrap-text',
+          renderCell: (params) => (
+            <div>{dayjs(params.value).format('YYYY-MM-DD')}</div>
+          ),
         },
       ],
       [data, setSelectedResponsibilityId, setSelectedRowData, setDialogMode, setDialogOpen]

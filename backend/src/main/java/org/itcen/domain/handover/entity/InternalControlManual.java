@@ -57,19 +57,9 @@ public class InternalControlManual {
     @Column(name = "manual_content", columnDefinition = "TEXT")
     private String manualContent;
 
-    /**
-     * 상태 (DRAFT, REVIEW, APPROVED, PUBLISHED)
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20, nullable = false)
-    @Builder.Default
-    private ManualStatus status = ManualStatus.DRAFT;
+    // status 컴럼 삭제됨
 
-    /**
-     * 승인 ID
-     */
-    @Column(name = "approval_id")
-    private Long approvalId;
+    // approval_id 컴럼 삭제됨
 
     /**
      * 시행일
@@ -90,17 +80,9 @@ public class InternalControlManual {
     @Column(name = "author_emp_no", length = 20)
     private String authorEmpNo;
 
-    /**
-     * 검토자 사번
-     */
-    @Column(name = "reviewer_emp_no", length = 20)
-    private String reviewerEmpNo;
+    // reviewer_emp_no 컴럼 삭제됨
 
-    /**
-     * 승인자 사번
-     */
-    @Column(name = "approver_emp_no", length = 20)
-    private String approverEmpNo;
+    // approver_emp_no 컴럼 삭제됨
 
     /**
      * 생성일시
@@ -128,56 +110,13 @@ public class InternalControlManual {
     @Column(name = "updated_id", length = 100)
     private String updatedId;
 
-    /**
-     * 메뉴얼 상태 열거형
-     */
-    public enum ManualStatus {
-        DRAFT,      // 초안
-        REVIEW,     // 검토중
-        APPROVED,   // 승인완료
-        PUBLISHED   // 발행완료
-    }
-
-    /**
-     * 검토 단계로 진행
-     */
-    public void submitForReview() {
-        this.status = ManualStatus.REVIEW;
-    }
-
-    /**
-     * 부서장 승인 처리
-     */
-    public void approveByHod() {
-        this.status = ManualStatus.APPROVED;
-    }
-
-    /**
-     * 발행 처리
-     */
-    public void publish() {
-        if (this.status == ManualStatus.APPROVED) {
-            this.status = ManualStatus.PUBLISHED;
-            if (this.effectiveDate == null) {
-                this.effectiveDate = LocalDate.now();
-            }
-        }
-    }
-
-    /**
-     * 초안으로 되돌리기
-     */
-    public void revertToDraft() {
-        this.status = ManualStatus.DRAFT;
-    }
+    // ManualStatus enum 삭제됨
 
     /**
      * 버전 업데이트
      */
     public void updateVersion(String newVersion) {
         this.manualVersion = newVersion;
-        // 버전 업데이트시 초안 상태로 변경
-        revertToDraft();
     }
 
     /**

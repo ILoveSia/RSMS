@@ -58,13 +58,6 @@ public class ResponsibilityDocument {
     @Column(name = "document_content", columnDefinition = "TEXT")
     private String documentContent;
 
-    /**
-     * 상태 (DRAFT, REVIEW, APPROVED, PUBLISHED)
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", length = 20, nullable = false)
-    @Builder.Default
-    private DocumentStatus status = DocumentStatus.DRAFT;
 
     /**
      * 승인 ID (approval 테이블 FK)
@@ -136,58 +129,10 @@ public class ResponsibilityDocument {
     private String updatedId;
 
     /**
-     * 문서 상태 열거형
-     */
-    public enum DocumentStatus {
-        DRAFT,      // 초안
-        REVIEW,     // 검토중
-        APPROVED,   // 승인완료
-        PUBLISHED   // 발행완료
-    }
-
-    /**
-     * 검토 단계로 진행
-     */
-    public void submitForReview(String reviewerEmpNo) {
-        this.status = DocumentStatus.REVIEW;
-        // 검토자는 approval 테이블에서 관리
-    }
-
-    /**
-     * 승인 처리
-     */
-    public void approve(String approverEmpNo) {
-        this.status = DocumentStatus.APPROVED;
-        // 승인자는 approval 테이블에서 관리
-    }
-
-    /**
-     * 발행 처리
-     */
-    public void publish() {
-        if (this.status == DocumentStatus.APPROVED) {
-            this.status = DocumentStatus.PUBLISHED;
-            if (this.effectiveDate == null) {
-                this.effectiveDate = LocalDate.now();
-            }
-        }
-    }
-
-    /**
-     * 초안으로 되돌리기
-     */
-    public void revertToDraft() {
-        this.status = DocumentStatus.DRAFT;
-        // 검토자, 승인자는 approval 테이블에서 관리
-    }
-
-    /**
      * 버전 업데이트
      */
     public void updateVersion(String newVersion) {
         this.documentVersion = newVersion;
-        // 버전 업데이트시 초안 상태로 변경
-        revertToDraft();
     }
 
     /**

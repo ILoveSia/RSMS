@@ -12,15 +12,9 @@
 
 import { useReduxState } from '@/app/store/use-store';
 import type { CommonCode } from '@/app/types/common';
-import {
-  DepartmentSearchPopup,
-  EmployeeSearchPopup,
-  type Department,
-  type EmployeeSearchResult,
-} from '@/domains/common/components/search';
+
 import type { SelectOption } from '@/shared/types/common';
 import { Search as SearchIcon } from '@mui/icons-material';
-import { useGetDepartmentName, getEmployeeNameSync } from '@/shared/utils/codeUtils';
 import {
   Alert,
   Box,
@@ -28,67 +22,76 @@ import {
   DialogContent,
   DialogActions,
   Grid,
-  Chip,
-  Typography,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
 import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
+import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
 import { DatePicker } from '@/shared/components/ui/form';
-import React, { useCallback, useEffect, useState } from 'react';
-import { internalControlManualApi, type InternalControlManualDto } from '../api/internalControlManualApi';
+import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
+import DepartmentSearchPopup, { type Department } from '@/domains/common/components/search/DepartmentSearchPopup';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { internalControlManualApi, type InternalControlManualDto, type ApprovalStartRequestDto } from '../api/internalControlManualApi';
+import { useSnackbar } from '@/shared/hooks/useSnackbar';
+import Toast from '@/shared/components/ui/feedback/Toast';
+import { uploadAttachment, getAttachments, downloadAttachment, deleteAttachment, type AttachmentInfo as CommonAttachmentInfo } from '@/domains/common/api/attachmentApi';
 
 interface InternalControlManualDialogProps {
   open: boolean;
   onClose: () => void;
   mode: 'create' | 'edit' | 'view';
   manualId?: number;
-  manualData?: InternalControlManualDto;
+  approvalStatus?: string;
   onSuccess?: () => void;
+  apiResponseData?: any;
 }
+
+// CommonAttachmentInfo를 그대로 사용
+type AttachmentInfo = CommonAttachmentInfo;
 
 interface FormData {
   manualTitle: string;
-  manualContent: string;
   manualVersion: string;
-  status: string;
-  deptCd: string;
-  deptName: string;
-  authorEmpNo: string;
-  authorName: string;
-  reviewerEmpNo: string;
-  reviewerName: string;
-  approverEmpNo: string;
-  approverName: string;
+  manualContent: string;
   effectiveDate: Date | null;
   expiryDate: Date | null;
+  authorEmpNo: string;
+  authorName: string;
+  deptCd: string;
+  deptName: string;
 }
 
 const initialFormData: FormData = {
   manualTitle: '',
-  manualContent: '',
   manualVersion: 'v1.0',
-  status: 'DRAFT',
-  deptCd: '',
-  deptName: '',
-  authorEmpNo: '',
-  authorName: '',
-  reviewerEmpNo: '',
-  reviewerName: '',
-  approverEmpNo: '',
-  approverName: '',
+  manualContent: '',
   effectiveDate: null,
   expiryDate: null,
+  authorEmpNo: '',
+  authorName: '',
+  deptCd: '',
+  deptName: '',
 };
+
+// LoginUser 타입 (loginStore용)
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+}
 
 const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = ({
   open,
   onClose,
   mode: initialMode,
   manualId,
-  manualData,
+  approvalStatus,
   onSuccess,
+  apiResponseData,
 }) => {
   const [mode, setMode] = useState<'create' | 'edit' | 'view'>(initialMode);
   const [formData, setFormData] = useState<FormData>(initialFormData);
@@ -96,23 +99,55 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 팝업 상태들
-  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+  // 로그인 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+  const currentUserId = loginData?.userid || null;
+
+  // 사원 검색 팝업 상태
   const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
-  const [reviewerSearchOpen, setReviewerSearchOpen] = useState(false);
-  const [approverSearchOpen, setApproverSearchOpen] = useState(false);
+  
+  // 부서 검색 팝업 상태
+  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+  
+  // 첨부파일 상태
+  const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<boolean>(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 알림 처리
+  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+
+
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
     'codeStore/allCodes'
   );
 
-  // 부서명 변환 함수
-  const getDepartmentName = useGetDepartmentName();
-
   const isViewMode = mode === 'view';
   const isCreateMode = mode === 'create';
   const isEditMode = mode === 'edit';
+
+  // 결재 상신 버튼 표시 여부 판단
+  const shouldShowApprovalButton = () => {
+    return (approvalStatus === 'NONE' || !approvalStatus) && manualId;
+  };
+
+  // 결재현황 버튼 표시 여부 판단 (결재가 진행중일 때)
+  const shouldShowApprovalStatusButton = () => {
+    return approvalStatus !== 'NONE' && approvalStatus && manualId;
+  };
+
+  // 수정 버튼 표시 여부 판단 - 결재상태가 NONE일 때만 수정 가능
+  const shouldShowEditButton = () => {
+    return approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined;
+  };
+
+  // 저장 버튼 표시 여부 판단 - 결재상태가 NONE이고 편집모드 또는 생성모드일 때 저장 가능
+  const shouldShowSaveButton = () => {
+    return (approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && (isEditMode || isCreateMode);
+  };
 
   // 공통코드 배열 추출 함수
   const getCodesArray = useCallback((): CommonCode[] => {
@@ -147,10 +182,10 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
       );
 
       const options = filteredCodes
-        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
         .map(code => ({
-          value: code.code,
-          label: code.codeName,
+          value: code.detailCode,
+          label: code.detailCodeName,
         }));
 
       return options;
@@ -158,17 +193,13 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     [getCodesArray]
   );
 
-  // 상태 표시 함수
-  const getStatusChip = (status: string) => {
-    const statusConfig = {
-      DRAFT: { label: '초안', color: 'default' as const },
-      REVIEW: { label: '검토중', color: 'warning' as const },
-      APPROVED: { label: '승인됨', color: 'info' as const },
-      PUBLISHED: { label: '발행됨', color: 'success' as const },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, color: 'default' as const };
-    return <Chip label={config.label} color={config.color} size="small" />;
-  };
+  // 폼 데이터 업데이트 함수
+  const updateFormData = useCallback((field: keyof FormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
 
   // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수 (로컬 시간대 유지)
   const parseDate = (dateString: string | null | undefined): Date | null => {
@@ -179,185 +210,171 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     return new Date(year, month - 1, day); // month는 0부터 시작하므로 -1
   };
 
-  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수 (로컬 시간대 유지)
-  const formatDate = (date: Date | null): string => {
-    if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // 데이터 로드 함수
+  // 메뉴얼 데이터 로드
   const loadManualData = useCallback(async () => {
     if (!manualId) return;
 
     setLoading(true);
     setError(null);
     try {
-      // manualData prop이 있으면 사용, 없으면 API 호출
-      if (manualData) {
-        // 직원 사번을 이름으로 변환
-        const [authorName, reviewerName, approverName] = await Promise.all([
-          manualData.authorEmpNo ? getEmployeeNameSync(manualData.authorEmpNo) : '',
-          manualData.reviewerEmpNo ? getEmployeeNameSync(manualData.reviewerEmpNo) : '',
-          manualData.approverEmpNo ? getEmployeeNameSync(manualData.approverEmpNo) : '',
-        ]);
+      let manualData: InternalControlManualDto | null = null;
 
+      // API 응답 데이터에서 해당 메뉴얼 찾기
+      if (apiResponseData?.content && Array.isArray(apiResponseData.content)) {
+        manualData = apiResponseData.content.find(
+          (manual: InternalControlManualDto) => manual.manualId === manualId
+        );
+      }
+
+      // 메뉴얼 데이터를 폼에 매핑
+      if (manualData) {
         setFormData({
-          manualTitle: manualData.manualTitle,
+          manualTitle: manualData.manualTitle || '',
+          manualVersion: manualData.manualVersion || 'v1.0',
           manualContent: manualData.manualContent || '',
-          manualVersion: manualData.manualVersion || '',
-          status: manualData.status,
-          deptCd: manualData.deptCd,
-          deptName: manualData.deptName || getDepartmentName(manualData.deptCd) || '',
-          authorEmpNo: manualData.authorEmpNo || '',
-          authorName: manualData.authorName || authorName,
-          reviewerEmpNo: manualData.reviewerEmpNo || '',
-          reviewerName: manualData.reviewerName || reviewerName,
-          approverEmpNo: manualData.approverEmpNo || '',
-          approverName: manualData.approverName || approverName,
           effectiveDate: parseDate(manualData.effectiveDate),
           expiryDate: parseDate(manualData.expiryDate),
+          authorEmpNo: manualData.authorEmpNo || '',
+          authorName: manualData.authorName || '',
+          deptCd: manualData.deptCd || '',
+          deptName: manualData.deptName || '',
         });
-      } else {
-        // API 호출 로직 (향후 구현)
-        setError('데이터를 불러올 수 없습니다.');
       }
+
     } catch (err) {
-      console.error('Failed to load manual data:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      console.error('메뉴얼 데이터 로드 실패:', err);
+      setError('메뉴얼 데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [manualId, manualData, getDepartmentName]);
+  }, [manualId, apiResponseData]);
+
+  // 첨부파일 로드
+  const loadAttachments = useCallback(async () => {
+    if (!manualId) return;
+
+    try {
+      const attachmentList = await getAttachments('internal_control_manuals', manualId);
+      setAttachments(attachmentList || []);
+    } catch (err) {
+      console.error('첨부파일 로드 실패:', err);
+      // 첨부파일 로드 실패는 무시 (선택사항)
+    }
+  }, [manualId]);
 
   // initialMode이 변경될 때 내부 mode 상태 업데이트
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
 
-  // 데이터 로드
+  // 다이얼로그 열릴 때 데이터 로드
   useEffect(() => {
-    if (open && manualId && (isEditMode || isViewMode)) {
-      loadManualData();
-    } else if (open && isCreateMode) {
-      setFormData(initialFormData);
-      setError(null);
+    if (open) {
+      // 다이얼로그가 열릴 때 mode를 initialMode로 리셋
+      setMode(initialMode);
+      
+      if (manualId && (initialMode === 'edit' || initialMode === 'view')) {
+        loadManualData();
+      } else if (initialMode === 'create') {
+        setFormData(initialFormData);
+        setError(null);
+        setAttachments([]);
+      }
     }
-  }, [
-    open,
-    manualId,
-    mode,
-    isEditMode,
-    isViewMode,
-    isCreateMode,
-    loadManualData,
-  ]);
+  }, [open, manualId, initialMode, loadManualData, apiResponseData]);
 
-  const handleInputChange = (field: keyof FormData, value: string | number | Date | null) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  // 첨부파일 로드 (manualId가 있을 때만)
+  useEffect(() => {
+    if (open && manualId && (mode === 'edit' || mode === 'view')) {
+      loadAttachments();
+    }
+  }, [open, manualId, mode]);
 
-  const validateForm = (): boolean => {
+  // 다이얼로그 닫힐 때 초기화
+  useEffect(() => {
+    if (!open) {
+      setFormData(initialFormData);
+      setMode(initialMode);
+      setError(null);
+      setAttachments([]);
+      setSelectedFile(null);
+    }
+  }, [open, initialMode]);
+
+  // 생성 모드에서 현재 로그인 사용자로 작성자 설정
+  useEffect(() => {
+    if (isCreateMode && currentUserId) {
+      setFormData(prev => ({
+        ...prev,
+        authorEmpNo: currentUserId,
+        // 여기서 사용자명도 설정할 수 있지만, 별도 API 호출이 필요할 수 있음
+      }));
+    }
+  }, [isCreateMode, currentUserId]);
+
+  // 저장 함수
+  const handleSave = useCallback(async () => {
     if (!formData.manualTitle.trim()) {
       setError('메뉴얼 제목을 입력해주세요.');
-      return false;
+      return;
     }
-    if (!formData.manualContent.trim()) {
-      setError('메뉴얼 내용을 입력해주세요.');
-      return false;
-    }
-    if (!formData.deptCd) {
-      setError('부서를 선택해주세요.');
-      return false;
-    }
-    return true;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
 
     setSaving(true);
     setError(null);
 
     try {
-      const requestData = {
-        manualTitle: formData.manualTitle,
-        manualContent: formData.manualContent,
-        manualVersion: formData.manualVersion,
-        status: formData.status as 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED',
+      const saveData: any = {
+        manualTitle: formData.manualTitle.trim(),
+        manualContent: formData.manualContent || '',
+        manualVersion: formData.manualVersion || 'v1.0',
         deptCd: formData.deptCd,
-        authorEmpNo: formData.authorEmpNo,
-        reviewerEmpNo: formData.reviewerEmpNo,
-        approverEmpNo: formData.approverEmpNo,
-        effectiveDate: formatDate(formData.effectiveDate),
-        expiryDate: formatDate(formData.expiryDate),
+        effectiveDate: formData.effectiveDate ? formData.effectiveDate.toISOString().split('T')[0] : null,
+        expiryDate: formData.expiryDate ? formData.expiryDate.toISOString().split('T')[0] : null,
+        authorEmpNo: formData.authorEmpNo || currentUserId,
+        createdId: currentUserId,
+        updatedId: currentUserId,
       };
 
       if (isCreateMode) {
-        await internalControlManualApi.createManual(requestData);
-      } else if (isEditMode && manualId) {
-        await internalControlManualApi.updateManual(manualId, requestData);
+        await internalControlManualApi.createManual(saveData);
+        showSuccess('메뉴얼이 성공적으로 생성되었습니다.');
+      } else {
+        await internalControlManualApi.updateManual(manualId!, saveData);
+        showSuccess('메뉴얼이 성공적으로 수정되었습니다.');
       }
 
       onSuccess?.();
       onClose();
     } catch (err) {
-      console.error('Failed to save manual:', err);
+      console.error('저장 실패:', err);
       setError('저장 중 오류가 발생했습니다.');
+      showError('저장 중 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
-  };
+  }, [formData, isCreateMode, manualId, currentUserId, onSuccess, onClose, showSuccess, showError]);
 
-  // 부서 선택 핸들러
-  const handleDepartmentSelect = (department: Department | Department[]) => {
-    const dept = Array.isArray(department) ? department[0] : department;
-    setFormData(prev => ({
-      ...prev,
-      deptCd: dept.deptCode,
-      deptName: dept.deptName,
-    }));
-    setDepartmentSearchOpen(false);
-  };
+  // 수정 모드로 전환
+  const handleEdit = useCallback(() => {
+    if (!shouldShowEditButton()) {
+      showError('결재 진행 중인 문서는 수정할 수 없습니다.');
+      return;
+    }
+    setMode('edit');
+    setError(null);
+  }, [shouldShowEditButton, showError]);
 
-  // 직원 선택 핸들러들
-  const handleAuthorSelect = (employee: EmployeeSearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      authorEmpNo: employee.num,
-      authorName: employee.username,
-    }));
-    setAuthorSearchOpen(false);
-  };
+  // 취소 함수
+  const handleCancel = useCallback(() => {
+    if (isEditMode && manualId) {
+      setMode('view');
+      loadManualData(); // 원래 데이터로 복원
+    } else {
+      onClose();
+    }
+  }, [isEditMode, manualId, loadManualData, onClose]);
 
-  const handleReviewerSelect = (employee: EmployeeSearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      reviewerEmpNo: employee.num,
-      reviewerName: employee.username,
-    }));
-    setReviewerSearchOpen(false);
-  };
-
-  const handleApproverSelect = (employee: EmployeeSearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      approverEmpNo: employee.num,
-      approverName: employee.username,
-    }));
-    setApproverSearchOpen(false);
-  };
-
-  const handleClose = () => {
-    if (saving) return;
-    onClose();
-  };
-
+  // 모드 변경 핸들러
   const handleModeChange = (newMode: 'create' | 'edit' | 'view' | 'onlyRead') => {
     if (newMode === 'onlyRead') {
       setMode('view');
@@ -366,318 +383,432 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     }
   };
 
+  // 결재 상신 처리
+  const handleApprovalStart = useCallback(async () => {
+    if (!manualId) {
+      showError('메뉴얼 ID가 없습니다.');
+      return;
+    }
+
+    if (!shouldShowApprovalButton()) {
+      showError('결재를 시작할 수 없는 상태입니다.');
+      return;
+    }
+
+    try {
+      const approvalRequest: ApprovalStartRequestDto = {
+        taskTypeCode: 'internal_control_manuals',
+        taskId: manualId,
+        title: `내부통제 업무메뉴얼 결재 - ${formData.manualTitle}`,
+        description: `내부통제 업무메뉴얼 "${formData.manualTitle}" 결재를 요청합니다.`
+      };
+
+      await internalControlManualApi.startApproval(manualId, approvalRequest);
+      showSuccess('결재 요청이 완료되었습니다.');
+      
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      console.error('결재 요청 실패:', error);
+      showError('결재 요청 중 오류가 발생했습니다.');
+    }
+  }, [manualId, formData.manualTitle, shouldShowApprovalButton, showSuccess, showError, onSuccess, onClose]);
+
+  // 사원 선택 핸들러
+  const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
+    updateFormData('authorEmpNo', employee.num);
+    updateFormData('authorName', employee.username);
+    setAuthorSearchOpen(false);
+  }, [updateFormData]);
+
+  // 부서 선택 핸들러
+  const handleDepartmentSelect = useCallback((departments: Department | Department[]) => {
+    const department = Array.isArray(departments) ? departments[0] : departments;
+    if (department) {
+      updateFormData('deptCd', department.deptCode);
+      updateFormData('deptName', department.deptName);
+      setDepartmentSearchOpen(false);
+    }
+  }, [updateFormData]);
+
+  // 첨부파일 업로드 처리
+  const handleFileUpload = useCallback(async (file: File) => {
+    if (!manualId) {
+      showError('메뉴얼을 먼저 저장해주세요.');
+      return;
+    }
+
+    setUploadingFiles(true);
+    try {
+      await uploadAttachment(file, {
+        entityType: 'internal_control_manuals',
+        entityId: manualId,
+        uploadedBy: currentUserId || 'system'
+      });
+      showSuccess('파일이 성공적으로 업로드되었습니다.');
+      await loadAttachments(); // 첨부파일 목록 새로고침
+    } catch (error) {
+      console.error('파일 업로드 실패:', error);
+      showError('파일 업로드 중 오류가 발생했습니다.');
+    } finally {
+      setUploadingFiles(false);
+    }
+  }, [manualId, currentUserId, showSuccess, showError, loadAttachments]);
+
+  // 첨부파일 삭제 처리
+  const handleFileDelete = useCallback(async (attachId: number) => {
+    if (!confirm('첨부파일을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    try {
+      await deleteAttachment(attachId, currentUserId || 'system');
+      showSuccess('첨부파일이 삭제되었습니다.');
+      await loadAttachments(); // 첨부파일 목록 새로고침
+    } catch (error) {
+      console.error('파일 삭제 실패:', error);
+      showError('파일 삭제 중 오류가 발생했습니다.');
+    }
+  }, [currentUserId, showSuccess, showError, loadAttachments]);
+
+  // 첨부파일 다운로드 처리
+  const handleFileDownload = useCallback(async (attachment: AttachmentInfo) => {
+    try {
+      const blob = await downloadAttachment(attachment.attachId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', attachment.originalFilename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('파일 다운로드 실패:', error);
+      showError('파일 다운로드 중 오류가 발생했습니다.');
+    }
+  }, [showError]);
+
+  // 파일 선택 핸들러
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      handleFileUpload(file);
+    }
+    // input value 초기화 (같은 파일 재선택 가능하도록)
+    if (event.target) {
+      event.target.value = '';
+    }
+  }, [handleFileUpload]);
+
+  // 커스텀 액션 버튼들 생성
+  const renderCustomActions = () => {
+    const actions = [];
+
+    // 결재 상신 버튼 (approvalStatus가 NONE이고 manualId가 있을 때)
+    if (shouldShowApprovalButton() && manualId) {
+      actions.push(
+        <ApprovalActionButton
+          key="approval-submit"
+          taskType="internal_control_manuals"
+          taskId={manualId}
+          taskTitle={`내부통제 업무메뉴얼 - ${formData.manualTitle || '메뉴얼명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="medium"
+          variant="contained"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    // 결재현황 버튼 (approvalStatus가 NONE이 아니고 manualId가 있을 때 - 결재가 진행중)
+    if (shouldShowApprovalStatusButton() && manualId) {
+      actions.push(
+        <ApprovalActionButton
+          key="approval-status"
+          taskType="internal_control_manuals"
+          taskId={manualId}
+          taskTitle={`내부통제 업무메뉴얼 - ${formData.manualTitle || '메뉴얼명'}`}
+          currentUserId={currentUserId || ''}
+          onApprovalStateChange={() => {
+            onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
+          }}
+          size="medium"
+          variant="outlined"
+          disabled={loading || !currentUserId}
+        />
+      );
+    }
+
+    return actions.length > 0 ? actions : undefined;
+  };
+
+  if (loading) {
+    return (
+      <BaseDialog
+        open={open}
+        onClose={onClose}
+        title="내부통제 업무메뉴얼"
+        maxWidth="md"
+        showEditButton={false}
+        showSaveButton={false}
+      >
+        <DialogContent>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <CircularProgress />
+          </Box>
+        </DialogContent>
+      </BaseDialog>
+    );
+  }
+
   return (
     <>
       <BaseDialog
         open={open}
-        onClose={handleClose}
+        onClose={onClose}
         onSave={handleSave}
         onModeChange={handleModeChange}
-        maxWidth='lg'
+        maxWidth="md"
         mode={mode}
-        title={mode === 'create' ? '내부통제 업무메뉴얼 등록' : mode === 'edit' ? '내부통제 업무메뉴얼 수정' : '내부통제 업무메뉴얼 조회'}
+        title={(() => {
+          if (mode === 'create') return '내부통제 업무메뉴얼 등록';
+          if (mode === 'edit') return '내부통제 업무메뉴얼 수정';
+          return '내부통제 업무메뉴얼 조회';
+        })()}
+        customActions={renderCustomActions()}
+        showEditButton={shouldShowEditButton()}
+        showSaveButton={shouldShowSaveButton()}
       >
-        <DialogContent sx={{
-          p: 3,
-          // view 모드에서 텍스트 스타일 진하게 통일
-          ...(isViewMode && {
-            '& .MuiInputBase-input[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputBase-input.Mui-disabled': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiTextField-root .MuiInputBase-input': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiSelect-select.Mui-disabled': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiSelect-select[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputBase-inputMultiline[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputBase-inputMultiline.Mui-disabled': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputLabel-root.Mui-disabled': {
-              color: 'var(--bank-text-secondary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiFormHelperText-root': {
-              color: 'var(--bank-text-secondary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiOutlinedInput-input[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputBase-input::placeholder': {
-              color: 'var(--bank-text-secondary) !important',
-              opacity: '1 !important',
-            }
-          })
-        }}>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <>
-              {error && (
-                <Alert severity='error' sx={{ mb: 2 }}>
-                  {error}
-                </Alert>
-              )}
-
-              <Grid container spacing={2}>
-                {/* 메뉴얼 제목 */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='메뉴얼 제목 *'
-                    value={formData.manualTitle}
-                    onChange={e => handleInputChange('manualTitle', e.target.value)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
-                {/* 부서 */}
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField
-                      fullWidth
-                      label='부서 *'
-                      value={formData.deptName}
-                      disabled
-                      placeholder='부서를 선택하세요'
-                      helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
-                      mode="readonly"
-                    />
-                    {!isViewMode && (
-                      <Button
-                        variant='outlined'
-                        onClick={() => setDepartmentSearchOpen(true)}
-                        sx={{ minWidth: 100 }}
-                        startIcon={<SearchIcon />}
-                      >
-                        조회
-                      </Button>
-                    )}
-                  </Box>
-                </Grid>
-                {/* 메뉴얼 버전 */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='메뉴얼 버전'
-                    value={formData.manualVersion}
-                    onChange={e => handleInputChange('manualVersion', e.target.value)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
-
-                {/* 상태 */}
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Select
-                      value={formData.status}
-                      label='상태'
-                      options={[
-                        { value: '', label: '선택하세요' },
-                        ...getCommonCodeOptions('MANUAL_STATUS')
-                      ]}
-                      onChange={(value) => handleInputChange('status', value as string)}
-                      disabled={isViewMode}
-                      sx={{ flex: 1 }}
-                    />
-                  </Box>
-                </Grid>
-
-
-
-                {/* 시행일 */}
-                <Grid item xs={12} sm={6}>
-                  <DatePicker
-                    label='시행일'
-                    fullWidth
-                    value={formData.effectiveDate}
-                    onChange={(date) => handleInputChange('effectiveDate', date)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
-
-                {/* 만료일 */}
-                <Grid item xs={12} sm={6}>
-                  <DatePicker
-                    label='만료일'
-                    fullWidth
-                    value={formData.expiryDate}
-                    onChange={(date) => handleInputChange('expiryDate', date)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
-
-                {/* 메뉴얼 내용 */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='메뉴얼 내용 *'
-                    value={formData.manualContent}
-                    onChange={e => handleInputChange('manualContent', e.target.value)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                    multiline
-                    rows={12}
-                    placeholder='내부통제 업무메뉴얼의 상세 내용을 마크다운 형식으로 작성하세요.'
-                  />
-                </Grid>
-
-                {/* 작성자 */}
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField
-                      fullWidth
-                      label='작성자'
-                      value={formData.authorName || `${formData.authorEmpNo}`}
-                      disabled
-                      placeholder='작성자를 선택하세요'
-                      helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
-                      mode="readonly"
-                    />
-                    {!isViewMode && (
-                      <Button
-                        variant='outlined'
-                        onClick={() => setAuthorSearchOpen(true)}
-                        sx={{ minWidth: 100 }}
-                        startIcon={<SearchIcon />}
-                      >
-                        조회
-                      </Button>
-                    )}
-                  </Box>
-                </Grid>
-
-                {/* 검토자 */}
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField
-                      fullWidth
-                      label='검토자'
-                      value={formData.reviewerName || `${formData.reviewerEmpNo}`}
-                      disabled
-                      placeholder='검토자를 선택하세요'
-                      helperText={formData.reviewerEmpNo ? `사번: ${formData.reviewerEmpNo}` : ''}
-                      mode="readonly"
-                    />
-                    {!isViewMode && (
-                      <Button
-                        variant='outlined'
-                        onClick={() => setReviewerSearchOpen(true)}
-                        sx={{ minWidth: 100 }}
-                        startIcon={<SearchIcon />}
-                      >
-                        조회
-                      </Button>
-                    )}
-                  </Box>
-                </Grid>
-
-                {/* 승인자 */}
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <TextField
-                      fullWidth
-                      label='승인자'
-                      value={formData.approverName || `${formData.approverEmpNo}`}
-                      disabled
-                      placeholder='승인자를 선택하세요'
-                      helperText={formData.approverEmpNo ? `사번: ${formData.approverEmpNo}` : ''}
-                      mode="readonly"
-                    />
-                    {!isViewMode && (
-                      <Button
-                        variant='outlined'
-                        onClick={() => setApproverSearchOpen(true)}
-                        sx={{ minWidth: 100 }}
-                        startIcon={<SearchIcon />}
-                      >
-                        조회
-                      </Button>
-                    )}
-                  </Box>
-                </Grid>
-              </Grid>
-            </>
+        <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
           )}
-        </DialogContent>
 
-        <DialogActions>
-          <Box sx={{ display: 'flex', gap: 1, width: '100%', justifyContent: 'flex-end' }}>
-            {/* 추가 액션 버튼이 필요한 경우 여기에 추가 */}
-          </Box>
-        </DialogActions>
+          <Grid container spacing={2}>
+            {/* 메뉴얼 제목 */}
+            <Grid item xs={12}>
+              <TextField
+                label="메뉴얼 제목"
+                value={formData.manualTitle}
+                onChange={(e) => updateFormData('manualTitle', e.target.value)}
+                fullWidth
+                required
+                disabled={isViewMode}
+                error={!formData.manualTitle.trim() && formData.manualTitle !== ''}
+                helperText={!formData.manualTitle.trim() && formData.manualTitle !== '' ? '메뉴얼 제목을 입력해주세요.' : ''}
+              />
+            </Grid>
+
+            {/* 메뉴얼 버전 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="메뉴얼 버전"
+                value={formData.manualVersion}
+                onChange={(e) => updateFormData('manualVersion', e.target.value)}
+                fullWidth
+                disabled={isViewMode}
+              />
+            </Grid>
+
+            {/* 부서 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='부서'
+                value={formData.deptName}
+                disabled={isViewMode}
+                helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
+                InputProps={{
+                  endAdornment: !isViewMode && (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setDepartmentSearchOpen(true)}
+                        size="small"
+                        edge="end"
+                        title="부서 검색"
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            
+
+            {/* 시행일 */}
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="시행일"
+                fullWidth
+                value={formData.effectiveDate}
+                onChange={(date) => updateFormData('effectiveDate', date)}
+                disabled={isViewMode}
+              />
+            </Grid>
+
+            {/* 만료일 */}
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="만료일"
+                fullWidth
+                value={formData.expiryDate}
+                onChange={(date) => updateFormData('expiryDate', date)}
+                disabled={isViewMode}
+              />
+            </Grid>
+
+            {/* 작성자 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='작성자'
+                value={formData.authorName}
+                disabled={isViewMode}
+                helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
+                InputProps={{
+                  endAdornment: !isViewMode && (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setAuthorSearchOpen(true)}
+                        size="small"
+                        edge="end"
+                        title="사원 검색"
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            {/* 메뉴얼 내용 */}
+            <Grid item xs={12}>
+              <TextField
+                label="메뉴얼 내용"
+                value={formData.manualContent}
+                onChange={(e) => updateFormData('manualContent', e.target.value)}
+                fullWidth
+                multiline
+                rows={6}
+                disabled={isViewMode}
+              />
+            </Grid>
+
+            {/* 첨부파일 영역 */}
+            {manualId && (
+              <Grid item xs={12}>
+                <Box>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <strong>첨부파일 ({attachments.length})</strong>
+                    {!isViewMode && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingFiles}
+                      >
+                        {uploadingFiles ? '업로드 중...' : '파일 첨부'}
+                      </Button>
+                    )}
+                  </Box>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                  />
+
+                  {attachments.length > 0 ? (
+                    <Box sx={{ border: '1px solid #ddd', borderRadius: 1, p: 1, maxHeight: 200, overflow: 'auto' }}>
+                      {attachments.map((attachment) => (
+                        <Box
+                          key={attachment.attachId}
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          py={0.5}
+                          sx={{ borderBottom: '1px solid #eee', '&:last-child': { borderBottom: 'none' } }}
+                        >
+                          <Box>
+                            <strong>{attachment.originalFilename}</strong>
+                            <Box component="span" sx={{ fontSize: '0.875rem', color: 'text.secondary', ml: 1 }}>
+                              ({(attachment.fileSize / 1024).toFixed(1)} KB)
+                            </Box>
+                          </Box>
+                          <Box>
+                            <Button
+                              size="small"
+                              onClick={() => handleFileDownload(attachment)}
+                              sx={{ mr: 1 }}
+                            >
+                              다운로드
+                            </Button>
+                            {!isViewMode && (
+                              <Button
+                                size="small"
+                                color="error"
+                                onClick={() => handleFileDelete(attachment.attachId)}
+                              >
+                                삭제
+                              </Button>
+                            )}
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Box
+                      sx={{
+                        border: '1px dashed #ddd',
+                        borderRadius: 1,
+                        p: 2,
+                        textAlign: 'center',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      첨부된 파일이 없습니다.
+                    </Box>
+                  )}
+                </Box>
+              </Grid>
+            )}
+          </Grid>
+        </DialogContent>
       </BaseDialog>
 
-      {/* 부서 조회 팝업 */}
-      <DepartmentSearchPopup
-        open={departmentSearchOpen}
-        onClose={() => setDepartmentSearchOpen(false)}
-        onSelect={handleDepartmentSelect}
-        title='부서 조회'
-        multiSelect={false}
-      />
-
-      {/* 작성자 조회 팝업 */}
+      {/* 사원 검색 팝업 */}
       <EmployeeSearchPopup
         open={authorSearchOpen}
         onClose={() => setAuthorSearchOpen(false)}
         onSelect={handleAuthorSelect}
-        title='작성자 조회'
+        title="작성자 검색"
+      />
+      
+      {/* 부서 검색 팝업 */}
+      <DepartmentSearchPopup
+        open={departmentSearchOpen}
+        onClose={() => setDepartmentSearchOpen(false)}
+        onSelect={handleDepartmentSelect}
+        title="부서 검색"
       />
 
-      {/* 검토자 조회 팝업 */}
-      <EmployeeSearchPopup
-        open={reviewerSearchOpen}
-        onClose={() => setReviewerSearchOpen(false)}
-        onSelect={handleReviewerSelect}
-        title='검토자 조회'
-      />
-
-      {/* 승인자 조회 팝업 */}
-      <EmployeeSearchPopup
-        open={approverSearchOpen}
-        onClose={() => setApproverSearchOpen(false)}
-        onSelect={handleApproverSelect}
-        title='승인자 조회'
+      {/* 알림 토스트 */}
+      <Toast
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={hideSnackbar}
       />
     </>
   );

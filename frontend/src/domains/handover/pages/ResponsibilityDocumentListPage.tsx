@@ -12,21 +12,19 @@
 
 import { SearchButton, ManagementButtonGroup, ExcelDownloadButton, Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { CommonCodeSelect } from '@/shared/components/ui/form';
 import { TextField } from '@/shared/components/ui/data-display/';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Description as DocumentIcon, Send as SendIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Box, Chip, IconButton, InputAdornment } from '@mui/material';
+import { Box, IconButton, InputAdornment } from '@mui/material';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import React, { useCallback, useEffect, useState } from 'react';
 import { responsibilityDocumentApi, type ResponsibilityDocumentDto } from '../api/responsibilityDocumentApi';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import ResponsibilityDocumentDialog from '../components/ResponsibilityDocumentDialog';
-
 
 interface IResponsibilityDocumentListPageProps {
   className?: string;
@@ -46,45 +44,13 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
   const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
 
   // 알림 처리
-  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+  const { snackbar, hideSnackbar } = useSnackbar();
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | undefined>();
   const [selectedDocumentApprovalStatus, setSelectedDocumentApprovalStatus] = useState<string>('NONE');
-
-
-
-  // 상태 표시 함수 (결재 연동)
-  const getStatusChip = (status: string, approvalStatus?: string) => {
-    // 결재 상태가 있는 경우 결재 상태 우선 표시
-    if (status === 'DRAFT' && approvalStatus) {
-      if (approvalStatus === 'PENDING') {
-        return <Chip label="결재 시작" color="warning" size="small" />;
-      }
-      if (approvalStatus === 'IN_PROGRESS') {
-        return <Chip label="결재 진행중" color="info" size="small" />;
-      }
-      if (approvalStatus === 'COMPLETED') {
-        return <Chip label="결재 완료" color="success" size="small" />;
-      }
-      if (approvalStatus === 'REJECTED') {
-        return <Chip label="결재 반려" color="error" size="small" />;
-      }
-    }
-    
-    const statusConfig = {
-      DRAFT: { label: '초안', color: 'default' as const },
-      REVIEW: { label: '검토중', color: 'warning' as const },
-      APPROVED: { label: '승인됨', color: 'success' as const },
-      PUBLISHED: { label: '발행됨', color: 'success' as const },
-    };
-    const config = statusConfig[status as keyof typeof statusConfig] || { label: status, color: 'default' as const };
-    return <Chip label={config.label} color={config.color} size="small" />;
-  };
-
-
 
   // 컬럼 정의
   const columns: DataGridColumn<ResponsibilityDocumentDto>[] = [
@@ -119,14 +85,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       width: 100,
       align: 'center',
       headerAlign: 'center',
-    },
-    {
-      field: 'status',
-      headerName: '상태',
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: params => getStatusChip(params.value, params.row.status),
     },
     {
       field: 'approvalStatus',
@@ -351,32 +309,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
   const handleDialogSuccess = useCallback(async () => {
     await handleSearch(); // 데이터 새로고침
   }, [handleSearch]);
-
-  // 결재 요청 처리
-  const handleApprovalStart = useCallback(async (document: ResponsibilityDocumentDto) => {
-    if (!document.documentId) {
-      showError('문서 ID가 없습니다.');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await responsibilityDocumentApi.startApproval(document.documentId, {
-        taskTypeCode: 'responsibility_documents',
-        taskId: document.documentId,
-        title: `책무기술서 결재 - ${document.documentTitle}`,
-        description: `책무기술서 "${document.documentTitle}" 결재를 요청합니다.`
-      });
-      
-      showSuccess('결재 요청이 완료되었습니다.');
-      await handleSearch(); // 데이터 새로고침
-    } catch (error) {
-      console.error('결재 요청 실패:', error);
-      showError('결재 요청 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [showSuccess, showError, handleSearch]);
 
   // 사원 선택 핸들러
   const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {

@@ -45,26 +45,55 @@ export interface InternalControlManualDto {
   manualTitle: string;
   manualVersion?: string;
   manualContent?: string;
-  status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'PUBLISHED';
   effectiveDate?: string;
   expiryDate?: string;
   authorEmpNo?: string;
-  reviewerEmpNo?: string;
-  approverEmpNo?: string;
   createdAt?: string;
   updatedAt?: string;
+  createdId?: string;
+  updatedId?: string;
   
   // 조인된 데이터 (백엔드에서 제공하는 경우)
+  deptCd?: string;
   deptName?: string;
   authorName?: string;
-  reviewerName?: string;
-  approverName?: string;
+  
+  // 첨부파일 관련
+  attachmentCount?: number;
+  attachments?: AttachmentInfo[];
+  
+  // 결재 관련 필드
+  approvalStatus?: string;
+  approvalId?: number;
+  requesterId?: string;
+  requesterName?: string;
+  currentApproverId?: string;
+  currentApproverName?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
+}
+
+// 첨부파일 정보 인터페이스
+export interface AttachmentInfo {
+  attachId: number;
+  originalName: string;
+  storedName: string;
+  fileSize: number;
+  mimeType: string;
+}
+
+// 결재 요청 DTO
+export interface ApprovalStartRequestDto {
+  taskTypeCode: string;
+  taskId: number;
+  title: string;
+  description?: string;
 }
 
 // 검색 파라미터
 export interface ManualSearchParams {
   deptCd?: string;
-  status?: string;
   manualTitle?: string;
   authorEmpNo?: string;
   manualVersion?: string;
@@ -99,7 +128,6 @@ export class InternalControlManualApi {
   ): Promise<Page<InternalControlManualDto>> {
     const searchDto = {
       deptCd: searchParams.deptCd,
-      status: searchParams.status,
       manualTitle: searchParams.manualTitle,
       authorEmpNo: searchParams.authorEmpNo,
       manualVersion: searchParams.manualVersion,
@@ -113,6 +141,30 @@ export class InternalControlManualApi {
     if (paginationParams.sort) params.append('sort', paginationParams.sort);
     
     return apiClient.post(`${this.BASE_URL}/search?${params.toString()}`, searchDto);
+  }
+
+  /**
+   * 결재 정보와 함께 내부통제 업무메뉴얼 검색
+   */
+  static async searchManualsWithApproval(
+    searchParams: ManualSearchParams,
+    paginationParams: PaginationParams
+  ): Promise<Page<InternalControlManualDto>> {
+    const searchDto = {
+      deptCd: searchParams.deptCd,
+      manualTitle: searchParams.manualTitle,
+      authorEmpNo: searchParams.authorEmpNo,
+      manualVersion: searchParams.manualVersion,
+      effectiveDate: searchParams.effectiveDate,
+      expiryDate: searchParams.expiryDate,
+    };
+    
+    const params = new URLSearchParams();
+    params.append('page', paginationParams.page.toString());
+    params.append('size', paginationParams.size.toString());
+    if (paginationParams.sort) params.append('sort', paginationParams.sort);
+    
+    return apiClient.post(`${this.BASE_URL}/search-with-approval?${params.toString()}`, searchDto);
   }
 
   /**
@@ -276,6 +328,40 @@ export class InternalControlManualApi {
   static async downloadAttachment(manualId: number, attachmentId: number): Promise<Blob> {
     const response = await apiClient.get(`${this.BASE_URL}/${manualId}/attachments/${attachmentId}`);
     return response as any; // Blob 타입으로 처리
+  }
+
+  // 결재 관련 API
+
+  /**
+   * 결재 요청 시작
+   */
+  static async startApproval(manualId: number, request: ApprovalStartRequestDto): Promise<void> {
+    await apiClient.post(`${this.BASE_URL}/${manualId}/approval/start`, request);
+  }
+
+  /**
+   * 결재 승인
+   */
+  static async approveApproval(manualId: number, comment: string): Promise<void> {
+    const params = new URLSearchParams();
+    params.append('comment', comment);
+    await apiClient.post(`${this.BASE_URL}/${manualId}/approval/approve?${params.toString()}`);
+  }
+
+  /**
+   * 결재 반려
+   */
+  static async rejectApproval(manualId: number, reason: string): Promise<void> {
+    const params = new URLSearchParams();
+    params.append('reason', reason);
+    await apiClient.post(`${this.BASE_URL}/${manualId}/approval/reject?${params.toString()}`);
+  }
+
+  /**
+   * 결재 취소
+   */
+  static async cancelApproval(manualId: number): Promise<void> {
+    await apiClient.post(`${this.BASE_URL}/${manualId}/approval/cancel`);
   }
 }
 

@@ -170,9 +170,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         console.error('❌ [Login] 사용자 목록 조회 실패:', error);
         // API 호출 실패 시 하드코딩된 사용자 목록으로 대체
         const fallbackUsers: UserOption[] = [
-          { userid: 'admin', username: '관리자', email: 'admin@itcen.com', deptNm: 'IT부서', positionNm: '부장' },
           { userid: 'testuser', username: '테스트사용자', email: 'test@itcen.com', deptNm: '기획부서', positionNm: '팀장' },
-          { userid: 'user01', username: '사용자01', email: 'user01@itcen.com', deptNm: '영업부서', positionNm: '대리' },
         ];
         setUsers(fallbackUsers);
         const defaultUser = fallbackUsers.find(user => user.userid === 'testuser');
