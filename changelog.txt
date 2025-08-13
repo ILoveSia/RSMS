@@ -1,5 +1,0 @@
-backend/database/init/23.create_table_users.sql
-backend/database/init/35.create_table_handover_assignments.sql
-backend/database/init/36.create_table_responsibility_documents.sql
-backend/database/init/37.create_table_internal_control_manuals.sql
-backend/database/init/38.create_table_business_plan_inspections.sql
