@@ -7,23 +7,12 @@ import apiClient from '@/app/common/api/client';
 import DepartmentApi from '@/domains/common/api/departmentApi';
 import { Button } from '@/shared/components/ui/button';
 import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
-import { Close as CloseIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  InputAdornment,
-  TextField as MuiTextField,
-  Typography,
-} from '@mui/material';
-import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Box, CircularProgress, InputAdornment, Typography } from '@mui/material';
+import { DataGrid, TextField } from '@/shared/components/ui/data-display';
+import type { DataGridColumn } from '@/shared/types/common';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
+import type { GridRowParams } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
 
 export interface EmployeeSearchPopupProps {
@@ -223,7 +212,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
 
 
   // 컬럼 정의 (부서검색과 동일한 스타일)
-  const columns: GridColDef[] = [
+  const columns: DataGridColumn<EmployeeSearchResult>[] = [
     {
       field: 'num',
       headerName: '사번',
@@ -261,7 +250,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       width: 80,
       renderCell: params => (
         <Typography variant='body2'>
-          {getCodeNameSync(allCodes, 'JOB_RANK', params.value) || params.value}
+          {getCodeNameSync(allCodes, 'JOB_RANK', String(params.value ?? '')) || String(params.value ?? '')}
         </Typography>
       ),
     },
@@ -291,39 +280,39 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   };
 
   return (
-    <Dialog
+    <BaseDialog
       open={open}
-      onClose={onClose}
+      mode='view'
+      title={title}
       maxWidth='md'
       fullWidth
-      aria-labelledby='employee-search-dialog-title'
+      hideDefaultActions
+      onClose={onClose}
+      customActions={
+        <>
+          <Button
+            onClick={handleSelectComplete}
+            variant='contained'
+            color='primary'
+            disabled={selectedRows.length === 0}
+          >
+            선택
+          </Button>
+          <Button onClick={onClose}>취소</Button>
+        </>
+      }
+      contentSx={{ p: 0 }}
     >
-      <DialogTitle id='employee-search-dialog-title'>
-        <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
-          {title}
-        </Typography>
-        <IconButton
-          aria-label='close'
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ width: '100%', height: 500 }}>
-          {/* 검색 영역 */}
-          <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <MuiTextField
+      <Box sx={{ width: '100%', height: 500, p: 3 }}>
+        {/* 검색 영역 */}
+        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+            <TextField
+              label=''
+              mode='editable'
               size='small'
               placeholder='성명'
               value={searchConditions.username}
-              onChange={handleSearchConditionChange('username')}
+              onChange={handleSearchConditionChange('username') as any}
               onKeyDown={handleKeyDown}
               sx={{ minWidth: 100 }}
               InputProps={{
@@ -334,103 +323,66 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
                 ),
               }}
             />
-            <MuiTextField
+            <TextField
+              label=''
+              mode='editable'
               size='small'
               placeholder='사번'
               value={searchConditions.num}
-              onChange={handleSearchConditionChange('num')}
+              onChange={handleSearchConditionChange('num') as any}
               onKeyDown={handleKeyDown}
               sx={{ minWidth: 100 }}
             />
-            <Button onClick={handleSearch} variant='contained' color='secondary' size='medium' disabled={loading}>
-              검색
-            </Button>
-          </Box>
-
-          {/* 안내 메시지 */}
-          <Box sx={{ mb: 1 }}>
-            <Typography variant='body2' color='text.secondary'>
-              행을 더블클릭하거나 선택 후 "선택" 버튼을 클릭하세요.
-            </Typography>
-          </Box>
-
-          {/* 에러 메시지 */}
-          {error && (
-            <Alert severity='error' sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          {/* 로딩 상태 */}
-          {loading ? (
-            <Box
-              sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 350 }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : (
-            /* 사원 목록 DataGrid */
-            <Box sx={{ height: 350 }}>
-              <DataGrid
-                rows={employees}
-                columns={columns}
-                checkboxSelection={false}
-                disableRowSelectionOnClick={false}
-                rowSelectionModel={selectedRows}
-                onRowSelectionModelChange={newSelection => {
-                  setSelectedRows(Array.from(newSelection) as string[]);
-                }}
-                onRowDoubleClick={handleRowDoubleClick}
-                getRowHeight={() => 45}
-                sx={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  '& .MuiDataGrid-cell': {
-                    fontSize: '0.875rem',
-                    borderBottom: '1px solid rgba(224, 224, 224, 0.5)',
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f5f5f5',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                  },
-                  '& .MuiDataGrid-row': {
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: '#f0f7ff',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor: '#e3f2fd',
-                      '&:hover': {
-                        backgroundColor: '#bbdefb',
-                      },
-                    },
-                  },
-                }}
-              />
-            </Box>
-          )}
-
-          {/* 결과 개수 */}
-          <Box sx={{ mt: 1, textAlign: 'right' }}>
-            <Typography variant='caption' color='text.secondary'>
-              총 {employees.length}건
-            </Typography>
-          </Box>
+          <Button onClick={handleSearch} variant='contained' color='secondary' size='medium' disabled={loading}>
+            검색
+          </Button>
         </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          onClick={handleSelectComplete}
-          variant='contained'
-          color='primary'
-          disabled={selectedRows.length === 0}
-        >
-          선택
-        </Button>
-        <Button onClick={onClose}>취소</Button>
-      </DialogActions>
-    </Dialog>
+
+        {/* 안내 메시지 */}
+        <Box sx={{ mb: 1 }}>
+          <Typography variant='body2' color='text.secondary'>
+            행을 더블클릭하거나 선택 후 "선택" 버튼을 클릭하세요.
+          </Typography>
+        </Box>
+
+        {/* 에러 메시지 */}
+        {error && (
+          <Alert severity='error' sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* 로딩 상태 */}
+        {loading ? (
+          <Box
+            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 350 }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          /* 사원 목록 DataGrid */
+          <Box sx={{ height: 350 }}>
+            <DataGrid
+              data={employees}
+              columns={columns}
+              checkboxSelection={false}
+              disableRowSelectionOnClick={false}
+              selectedRows={selectedRows}
+              onRowSelectionChange={(ids) => setSelectedRows(ids.map(String))}
+              onRowDoubleClick={(row) => handleRowDoubleClick({ id: row.id } as GridRowParams)}
+              pagination={{ page: 1, pageSize: 10, totalItems: employees.length, onPageChange: () => {}, onPageSizeChange: () => {} }}
+            />
+          </Box>
+        )}
+
+        {/* 결과 개수 */}
+        <Box sx={{ mt: 1, textAlign: 'right' }}>
+          <Typography variant='caption' color='text.secondary'>
+            총 {employees.length}건
+          </Typography>
+        </Box>
+      </Box>
+    </BaseDialog>
   );
 };
 

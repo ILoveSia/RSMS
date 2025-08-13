@@ -6,21 +6,16 @@ import DepartmentApi, {
   type Department as ApiDepartment,
 } from '@/domains/common/api/departmentApi';
 import { Button } from '@/shared/components/ui/button';
-import { Close as CloseIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import {
   Alert,
   Box,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   InputAdornment,
   TextField,
   Typography,
 } from '@mui/material';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
 import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
 import { DataGrid } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -209,140 +204,126 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   };
 
   return (
-    <Dialog
+    <BaseDialog
       open={open}
-      onClose={onClose}
-      maxWidth='md'
+      mode='view'
+      title={title}
+      maxWidth='sm'
       fullWidth
-      aria-labelledby='department-search-dialog-title'
+      hideDefaultActions
+      onClose={onClose}
+      customActions={
+        <>
+          <Button
+            onClick={handleSelectComplete}
+            variant='contained'
+            color='primary'
+            disabled={selectedRows.length === 0}
+          >
+            선택
+          </Button>
+          <Button onClick={onClose}>취소</Button>
+        </>
+      }
+      contentSx={{ p: 0, px: 2 }}
     >
-      <DialogTitle id='department-search-dialog-title'>
-        <Typography variant='h6' component='div' sx={{ flexGrow: 1 }}>
-          {title}
-        </Typography>
-        <IconButton
-          aria-label='close'
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: theme => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ width: '100%', height: 500 }}>
-          {/* 검색 영역 */}
-          <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
-            <TextField
-              fullWidth
-              size='small'
-              placeholder='부서코드, 부서명으로 검색'
-              value={searchKeyword}
-              onChange={e => setSearchKeyword(e.target.value)}
-              onKeyPress={e => e.key === 'Enter' && handleSearch()}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
+      <Box sx={{ width: '100%', height: 500, p: 2 }}>
+        {/* 검색 영역 */}
+        <Box sx={{ mb: 2, display: 'flex', gap: 1, alignItems: 'center' }}>
+          <TextField
+            size='small'
+            placeholder='부서코드, 부서명'
+            value={searchKeyword}
+            onChange={e => setSearchKeyword(e.target.value)}
+            onKeyPress={e => e.key === 'Enter' && handleSearch()}
+            sx={{ flex: 1, minWidth: 120 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button onClick={handleSearch} variant='contained' color='secondary' size='small' sx={{ whiteSpace: 'nowrap' }}>
+            검색
+          </Button>
+        </Box>
+
+        {/* 안내 메시지 */}
+        <Box sx={{ mb: 1 }}>
+          <Typography variant='body2' color='text.secondary'>
+            {multiSelect
+              ? '체크박스를 선택하여 여러 부서를 선택할 수 있습니다.'
+              : '행을 더블클릭하거나 선택 후 "선택" 버튼을 클릭하세요.'}
+          </Typography>
+        </Box>
+
+        {/* 에러 메시지 */}
+        {error && (
+          <Alert severity='error' sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* 로딩 상태 */}
+        {loading ? (
+          <Box
+            sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : (
+          /* 부서 목록 DataGrid */
+          <Box sx={{ height: 350 }}>
+            <DataGrid
+              rows={filteredDepartments}
+              columns={columns}
+              checkboxSelection={multiSelect}
+              disableRowSelectionOnClick={multiSelect}
+              rowSelectionModel={selectedRows}
+              onRowSelectionModelChange={newSelection => {
+                setSelectedRows(Array.from(newSelection) as string[]);
+              }}
+              onRowDoubleClick={handleRowDoubleClick}
+              getRowHeight={() => 45}
+              sx={{
+                border: '1px solid #e0e0e0',
+                borderRadius: '4px',
+                '& .MuiDataGrid-cell': {
+                  fontSize: '0.875rem',
+                  borderBottom: '1px solid rgba(224, 224, 224, 0.5)',
+                },
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: '#f5f5f5',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                },
+                '& .MuiDataGrid-row': {
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: '#f0f7ff',
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: '#e3f2fd',
+                    '&:hover': {
+                      backgroundColor: '#bbdefb',
+                    },
+                  },
+                },
               }}
             />
-            <Button onClick={handleSearch} variant='contained' color='secondary' size='medium'>
-              검색
-            </Button>
           </Box>
+        )}
 
-          {/* 안내 메시지 */}
-          <Box sx={{ mb: 1 }}>
-            <Typography variant='body2' color='text.secondary'>
-              {multiSelect
-                ? '체크박스를 선택하여 여러 부서를 선택할 수 있습니다.'
-                : '행을 더블클릭하거나 선택 후 "선택" 버튼을 클릭하세요.'}
-            </Typography>
-          </Box>
-
-          {/* 에러 메시지 */}
-          {error && (
-            <Alert severity='error' sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          {/* 로딩 상태 */}
-          {loading ? (
-            <Box
-              sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}
-            >
-              <CircularProgress />
-            </Box>
-          ) : (
-            /* 부서 목록 DataGrid */
-            <Box sx={{ height: 350 }}>
-              <DataGrid
-                rows={filteredDepartments}
-                columns={columns}
-                checkboxSelection={multiSelect}
-                disableRowSelectionOnClick={multiSelect}
-                rowSelectionModel={selectedRows}
-                onRowSelectionModelChange={newSelection => {
-                  setSelectedRows(Array.from(newSelection) as string[]);
-                }}
-                onRowDoubleClick={handleRowDoubleClick}
-                getRowHeight={() => 45}
-                sx={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  '& .MuiDataGrid-cell': {
-                    fontSize: '0.875rem',
-                    borderBottom: '1px solid rgba(224, 224, 224, 0.5)',
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    backgroundColor: '#f5f5f5',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                  },
-                  '& .MuiDataGrid-row': {
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: '#f0f7ff',
-                    },
-                    '&.Mui-selected': {
-                      backgroundColor: '#e3f2fd',
-                      '&:hover': {
-                        backgroundColor: '#bbdefb',
-                      },
-                    },
-                  },
-                }}
-              />
-            </Box>
-          )}
-
-          {/* 결과 개수 */}
-          <Box sx={{ mt: 1, textAlign: 'right' }}>
-            <Typography variant='caption' color='text.secondary'>
-              총 {filteredDepartments.length}건
-            </Typography>
-          </Box>
+        {/* 결과 개수 */}
+        <Box sx={{ mt: 1, textAlign: 'right' }}>
+          <Typography variant='caption' color='text.secondary'>
+            총 {filteredDepartments.length}건
+          </Typography>
         </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          onClick={handleSelectComplete}
-          variant='contained'
-          color='primary'
-          disabled={selectedRows.length === 0}
-        >
-          선택 {/*({selectedRows.length})*/}
-        </Button>
-        <Button onClick={onClose}>취소</Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </BaseDialog>
   );
 };
 

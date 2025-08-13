@@ -4,23 +4,13 @@
  */
 import { positionApi } from '@/domains/ledgermngt/api/positionApi';
 import { Button } from '@/shared/components/ui/button';
-import { Close as CloseIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  Alert,
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  InputAdornment,
-  TextField,
-  Typography,
-} from '@mui/material';
-import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
+import { Alert, Box, CircularProgress, InputAdornment, Typography } from '@mui/material';
+import { TextField } from '@/shared/components/ui/data-display';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
+import type { GridRowParams } from '@mui/x-data-grid';
+import type { DataGridColumn } from '@/shared/types/common';
+import { DataGrid } from '@/shared/components/ui/data-display';
 import React, { useCallback, useEffect, useState } from 'react';
 
 // 직책 타입 정의 (검색 결과용)
@@ -58,7 +48,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // DataGrid 컬럼 정의
-  const columns: GridColDef[] = [
+  const columns: DataGridColumn<PositionSearchResult>[] = [
     {
       field: 'positionsId',
       headerName: '직책ID',
@@ -146,7 +136,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
   };
 
   // 행 선택 핸들러 (다중 선택)
-  const handleRowSelectionModelChange = (newSelection: any[]) => {
+  const handleRowSelectionModelChange = (newSelection: readonly any[]) => {
     if (multiSelect) {
       const selectedRows = newSelection.map(id =>
         filteredPositions.find(position => position.positionsId === id)
@@ -171,60 +161,59 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
   };
 
   return (
-    <Dialog
+    <BaseDialog
       open={open}
-      onClose={onClose}
-      maxWidth="md"
+      mode='view'
+      title={title}
+      maxWidth='md'
       fullWidth
-      PaperProps={{
-        sx: {
-          minHeight: '600px',
-          maxHeight: '80vh',
-        },
-      }}
+      hideDefaultActions
+      onClose={onClose}
+      customActions={
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {multiSelect && (
+            <Button
+              variant='contained'
+              onClick={handleConfirmSelection}
+              disabled={selectedPositions.length === 0}
+            >
+              선택 확인
+            </Button>
+          )}
+          <Button variant='outlined' onClick={onClose}>
+            닫기
+          </Button>
+        </Box>
+      }
+      contentSx={{ p: 0 }}
     >
-      <DialogTitle
-        component="div"
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderBottom: '1px solid var(--bank-border)',
-          pb: 2,
-        }}
-      >
-        <Typography variant="h6">{title}</Typography>
-        <IconButton onClick={onClose} sx={{ minWidth: 'auto', p: 1 }}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent sx={{ p: 3 }}>
-        {/* 검색 영역 */}
+      {/* 검색 영역 */}
+      <Box sx={{ p: 3 }}>
         <Box sx={{ mb: 2 }}>
           <TextField
-            fullWidth
-            placeholder="직책명, 직책ID, 원장차수로 검색"
+            label=''
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyPress={handleKeyPress as any}
+            fullWidth
+            size='small'
+            mode='editable'
             InputProps={{
               endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={handleSearch}>
+                <InputAdornment position='end'>
+                  <Button onClick={handleSearch} variant='outlined' size='small'>
                     <SearchIcon />
-                  </IconButton>
+                  </Button>
                 </InputAdornment>
               ),
             }}
-            size="small"
           />
         </Box>
 
         {/* 결과 영역 */}
         <Box sx={{ height: 400, width: '100%' }}>
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity='error' sx={{ mb: 2 }}>
               {error}
             </Alert>
           )}
@@ -235,61 +224,32 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
             </Box>
           ) : (
             <DataGrid
-              rows={filteredPositions}
+              data={filteredPositions}
               columns={columns}
-              getRowId={(row) => row.positionsId}
-              onRowClick={handleRowClick}
-              onRowSelectionModelChange={handleRowSelectionModelChange}
+              rowIdField={'positionsId'}
+              onRowClick={(row) => handleRowClick({ row } as any)}
+              onRowSelectionChange={(ids) => handleRowSelectionModelChange(ids as any)}
               checkboxSelection={multiSelect}
               disableRowSelectionOnClick={multiSelect}
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
-              localeText={{
-                noRowsLabel: '검색 결과가 없습니다.',
-                footerRowSelected: (count) => `${count}개 행 선택됨`,
-              }}
-              sx={{
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'var(--bank-bg-hover)',
-                  cursor: 'pointer',
-                },
-              }}
+              pagination={{ page: 1, pageSize: 10, totalItems: filteredPositions.length, onPageChange: () => {}, onPageSizeChange: () => {} }}
+              sx={{}}
             />
           )}
         </Box>
 
         {/* 검색 결과 정보 */}
         <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             총 {filteredPositions.length}개의 직책이 검색되었습니다.
           </Typography>
           {multiSelect && selectedPositions.length > 0 && (
-            <Typography variant="body2" color="primary">
+            <Typography variant='body2' color='primary'>
               {selectedPositions.length}개 선택됨
             </Typography>
           )}
         </Box>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 3, borderTop: '1px solid var(--bank-border)' }}>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {multiSelect && (
-            <Button
-              variant="contained"
-              onClick={handleConfirmSelection}
-              disabled={selectedPositions.length === 0}
-            >
-              선택 확인
-            </Button>
-          )}
-          <Button variant="outlined" onClick={onClose}>
-            닫기
-          </Button>
-        </Box>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </BaseDialog>
   );
 };
 

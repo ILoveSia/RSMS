@@ -8,6 +8,8 @@ import {
   DialogTitle,
   IconButton,
   Typography,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
 import type { ReactNode } from 'react';
 import React from 'react';
@@ -17,11 +19,14 @@ export type DialogMode = 'create' | 'edit' | 'view' | 'onlyRead';
 export interface BaseDialogProps {
   open: boolean;
   mode: DialogMode;
-  title: string;
+  title: ReactNode;
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   fullWidth?: boolean;
+  fullScreen?: boolean;
+  keepMounted?: boolean;
   children: ReactNode;
   onClose: () => void;
+  onBeforeClose?: () => boolean | Promise<boolean>;
   onSave?: () => void;
   onModeChange?: (mode: DialogMode) => void;
   disableSave?: boolean;
@@ -29,6 +34,18 @@ export interface BaseDialogProps {
   loading?: boolean;
   showEditButton?: boolean;    // 수정 버튼 표시 여부
   showSaveButton?: boolean;    // 저장 버튼 표시 여부
+  /* Behavior */
+  disableBackdropClick?: boolean;
+  disableEscapeKeyDown?: boolean;
+  /* Styling */
+  paperSx?: SxProps<Theme>;
+  contentSx?: SxProps<Theme>;
+  actionsSx?: SxProps<Theme>;
+  dialogSx?: SxProps<Theme>;
+  dividers?: boolean;
+  hideCloseButton?: boolean;
+  titleActions?: ReactNode;
+  hideDefaultActions?: boolean;
 }
 
 const BaseDialog: React.FC<BaseDialogProps> = ({
@@ -36,8 +53,12 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   mode,
   title,
   maxWidth = 'md',
+  fullWidth = true,
+  fullScreen = false,
+  keepMounted,
   children,
   onClose,
+  onBeforeClose,
   onSave,
   onModeChange,
   disableSave = false,
@@ -45,6 +66,16 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   loading = false,
   showEditButton = true,
   showSaveButton = true,
+  hideDefaultActions = false, 
+  disableBackdropClick,
+  disableEscapeKeyDown,
+  paperSx,
+  contentSx,
+  actionsSx,
+  dialogSx,
+  dividers = true,
+  hideCloseButton,
+  titleActions,
 }) => {
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit';
@@ -52,6 +83,15 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
 
   const handleEdit = () => {
     onModeChange?.('edit');
+  };
+
+  const requestClose = async () => {
+    if (loading) return;
+    if (onBeforeClose) {
+      const allow = await onBeforeClose();
+      if (!allow) return;
+    }
+    onClose();
   };
 
   const handleCancel = () => {
@@ -70,18 +110,22 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
     <Dialog
       open={open}
       maxWidth={maxWidth}
-      fullWidth
+      fullWidth={fullWidth}
+      fullScreen={fullScreen}
+      keepMounted={keepMounted}
       onClose={(_, reason) => {
-        if (reason !== 'backdropClick' && !loading) {
-          onClose();
-        }
+        if (reason === 'backdropClick' && disableBackdropClick) return;
+        if (reason === 'escapeKeyDown' && disableEscapeKeyDown) return;
+        requestClose();
       }}
       PaperProps={{
         sx: {
           height: 'auto',
           maxHeight: '90vh',
+          ...paperSx,
         },
       }}
+      sx={dialogSx}
     >
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -95,23 +139,28 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
           >
             {title}
           </Typography>
-          <IconButton
-            onClick={onClose}
-            size="small"
-            disabled={loading}
-            sx={{
-              color: 'var(--bank-text-secondary)',
-              '&:hover': {
-                color: 'var(--bank-text-primary)',
-              },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
+          <Box display="flex" alignItems="center" gap={1}>
+            {titleActions}
+            {!hideCloseButton && (
+              <IconButton
+                onClick={requestClose}
+                size="small"
+                disabled={loading}
+                sx={{
+                  color: 'var(--bank-text-secondary)',
+                  '&:hover': {
+                    color: 'var(--bank-text-primary)',
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            )}
+          </Box>
         </Box>
       </DialogTitle>
       <DialogContent
-        dividers
+        dividers={dividers}
         sx={{
           p: 3,
           paddingX: 5,
@@ -138,6 +187,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
             color: 'var(--bank-text-primary)',
             fontWeight: 700,
           },
+          ...contentSx,
         }}
       >
         {children}
@@ -150,6 +200,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
           display: 'flex',
           gap: 1,
           justifyContent: 'flex-end',
+          ...actionsSx,
         }}
       >
         {/* CustomActions가 있으면 먼저 표시 */}
@@ -160,55 +211,59 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
         )}
         
         {/* 기본 버튼들 (customActions와 함께 표시 가능) */}
-        {isViewMode && showEditButton && (
-          <Button
-            variant="contained"
-            onClick={handleEdit}
-            disabled={loading}
-            color="warning"
-            sx={{
-              height: '36px !important',
-              minWidth: '80px !important',
-              fontSize: '0.875rem !important',
-              fontWeight: '600 !important',
-              borderRadius: '4px !important',
-            }}
-          >
-            수정
-          </Button>
+        {!hideDefaultActions && (
+          <>
+            {isViewMode && showEditButton && (
+              <Button
+                variant="contained"
+                onClick={handleEdit}
+                disabled={loading}
+                color="warning"
+                sx={{
+                  height: '36px !important',
+                  minWidth: '80px !important',
+                  fontSize: '0.875rem !important',
+                  fontWeight: '600 !important',
+                  borderRadius: '4px !important',
+                }}
+              >
+                수정
+              </Button>
+            )}
+            {(isEditMode || isCreateMode) && showSaveButton && (
+              <Button
+                variant="contained"
+                onClick={onSave}
+                disabled={disableSave || loading}
+                color="success"
+                sx={{
+                  height: '36px !important',
+                  minWidth: '80px !important',
+                  fontSize: '0.875rem !important',
+                  fontWeight: '600 !important',
+                  borderRadius: '4px !important',
+                }}
+              >
+                {isCreateMode ? '등록' : '저장'}
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              onClick={handleCancel}
+              disabled={loading}
+              color="primary"
+              sx={{
+                height: '36px !important',
+                minWidth: '80px !important',
+                fontSize: '0.875rem !important',
+                fontWeight: '600 !important',
+                borderRadius: '4px !important',
+              }}
+            >
+              {isEditMode ? '취소' : '닫기'}
+            </Button>
+          </>
         )}
-        {(isEditMode || isCreateMode) && showSaveButton && (
-          <Button
-            variant="contained"
-            onClick={onSave}
-            disabled={disableSave || loading}
-            color="success"
-            sx={{
-              height: '36px !important',
-              minWidth: '80px !important',
-              fontSize: '0.875rem !important',
-              fontWeight: '600 !important',
-              borderRadius: '4px !important',
-            }}
-          >
-            {isCreateMode ? '등록' : '저장'}
-          </Button>
-        )}
-        <Button
-          variant="outlined"
-          onClick={handleCancel}
-          disabled={loading}
-          color="primary"
-          sx={{
-            height: '36px !important',
-            minWidth: '80px !important',
-            fontSize: '0.875rem !important',
-            fontWeight: '600 !important',
-            borderRadius: '4px !important',
-          }}
-        >
-          {isEditMode ? '취소' : '닫기'}
-        </Button>
       </DialogActions>
     </Dialog>
   );

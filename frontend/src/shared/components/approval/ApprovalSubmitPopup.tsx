@@ -3,10 +3,6 @@
  */
 import React, { useState, useCallback, useMemo } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
   FormControl,
@@ -18,6 +14,7 @@ import {
   Divider,
   Alert,
 } from '@mui/material';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Send as SendIcon } from '@mui/icons-material';
 import approvalApi, { type ApprovalSubmitRequest } from '@/domains/approval/api/approvalApi';
 import ApproverSelector from './ApproverSelector';
@@ -154,45 +151,50 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = React.memo(({
   }, [approvers.step1, loading]);
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose} 
-      maxWidth="sm" 
-      fullWidth
-      disableEscapeKeyDown={loading}
-      PaperProps={{
-        sx: {
-          maxWidth: '720px', // 3차 결재자까지만 표시되도록 폭 조정
-          width: '100%'
-        }
-      }}
-    >
-      <DialogTitle>
+    <BaseDialog
+      open={open}
+      mode='view'
+      title={
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <SendIcon color="primary" />
-          <Typography variant="h6">결재 상신</Typography>
+          <SendIcon color='primary' />
+          <Typography variant='h6'>결재 상신</Typography>
         </Box>
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-          {taskTitle}
-        </Typography>
-      </DialogTitle>
-      
-      <DialogContent>
+      }
+      maxWidth='sm'
+      fullWidth
+      hideDefaultActions
+      disableEscapeKeyDown={loading}
+      onClose={handleClose}
+      contentSx={{ p: 3 }}
+      customActions={
+        <>
+          <Button onClick={handleClose} disabled={loading}>취소</Button>
+          <Button 
+            variant='contained' 
+            onClick={handleSubmit}
+            disabled={!isValid}
+            startIcon={loading ? undefined : <SendIcon />}
+          >
+            {loading ? '상신 중...' : '상신'}
+          </Button>
+        </>
+      }
+    >
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity='error' sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
         {/* 결재자 선택 */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
+          <Typography variant='subtitle1' gutterBottom>
             결재자 선택
           </Typography>
           <ApproverSelector
             value={approvers}
             onChange={handleApproversChange}
-            required={[true, false, false]} // 1차만 필수
+            required={[true, false, false]}
             disabled={loading}
           />
         </Box>
@@ -200,13 +202,13 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = React.memo(({
         {/* 결재 라인 미리보기 */}
         {previewSteps.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant='subtitle1' gutterBottom>
               결재 라인 미리보기
             </Typography>
             <ApprovalStepIndicator
               steps={previewSteps}
               currentStep={1}
-              orientation="horizontal"
+              orientation='horizontal'
               compact
             />
           </Box>
@@ -216,15 +218,15 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = React.memo(({
 
         {/* 긴급도 선택 */}
         <Box sx={{ mb: 2 }}>
-          <FormControl fullWidth size="small">
+          <FormControl fullWidth size='small'>
             <InputLabel>긴급도</InputLabel>
             <Select
               value={urgency}
               onChange={(e) => setUrgency(e.target.value as 'NORMAL' | 'URGENT')}
               disabled={loading}
             >
-              <MenuItem value="NORMAL">일반</MenuItem>
-              <MenuItem value="URGENT">긴급</MenuItem>
+              <MenuItem value='NORMAL'>일반</MenuItem>
+              <MenuItem value='URGENT'>긴급</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -234,8 +236,8 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = React.memo(({
           fullWidth
           multiline
           rows={3}
-          label="결재 요청 사유"
-          placeholder="결재 요청 사유를 입력하세요 (선택사항)"
+          label='결재 요청 사유'
+          placeholder='결재 요청 사유를 입력하세요 (선택사항)'
           value={comments}
           onChange={handleCommentsChange}
           disabled={loading}
@@ -248,22 +250,7 @@ const ApprovalSubmitPopup: React.FC<ApprovalSubmitPopupProps> = React.memo(({
             }
           }}
         />
-      </DialogContent>
-      
-      <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
-          취소
-        </Button>
-        <Button 
-          variant="contained" 
-          onClick={handleSubmit}
-          disabled={!isValid}
-          startIcon={loading ? undefined : <SendIcon />}
-        >
-          {loading ? '상신 중...' : '상신'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    </BaseDialog>
   );
 });
 
