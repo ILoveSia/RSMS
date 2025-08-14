@@ -231,8 +231,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         authorEmpNo: authorEmpNo.trim() || undefined,
       };
 
-      console.log('검색 파라미터:', searchParams);
-      console.log('Pagination 파라미터:', { page: 0, size: 100 });
+      
 
       // 결재 테이블과 조인하여 검색
       const data = await internalControlManualApi.searchManualsWithApproval(
@@ -240,7 +239,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         { page: 0, size: 100 }
       );
 
-      console.log('API 응답 데이터:', data);
+      
       setRows(data.content);
       setApiResponseData(data);
     } catch (err) {

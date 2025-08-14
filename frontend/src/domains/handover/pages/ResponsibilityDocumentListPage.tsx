@@ -17,7 +17,7 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
-import { Description as DocumentIcon, Send as SendIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Box, IconButton, InputAdornment } from '@mui/material';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -227,8 +227,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
         authorEmpNo: authorEmpNo.trim() || undefined,
       };
 
-      console.log('검색 파라미터:', searchParams);
-      console.log('Pagination 파라미터:', { page: 0, size: 100 });
+      
 
       // 결재 테이블과 조인하여 검색
       const data = await responsibilityDocumentApi.searchDocumentsWithApproval(
@@ -236,7 +235,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
         { page: 0, size: 100 }
       );
 
-      console.log('API 응답 데이터:', data);
+      
       setRows(data.content);
       setApiResponseData(data);
     } catch (err) {
@@ -355,6 +354,8 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
         >
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>문서제목</span>
           <TextField
+            label=""
+            mode="editable"
             value={documentTitle}
             onChange={(e) => setDocumentTitle(e.target.value)}
             size="small"
@@ -363,6 +364,8 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
           />
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>작성자</span>
           <TextField
+            label=""
+            mode="editable"
             value={authorName}
             onChange={(e) => setAuthorName(e.target.value)}
             size="small"
