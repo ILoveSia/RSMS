@@ -112,7 +112,7 @@ const UserPermissionManagePage: React.FC = () => {
           department: u.department || emp?.deptCd || u.department,
         };
       });
-      console.log(mergedUsers);
+      
 
       setUsers(mergedUsers);
       setRoles(rolesData);

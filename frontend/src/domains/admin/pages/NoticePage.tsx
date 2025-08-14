@@ -30,7 +30,6 @@ const NoticePage: React.FC = () => {
       setError(null);
       const page = await noticeApi.getNoticeList({ page: 0, size: 200, sort: 'createdAt', direction: 'DESC' });
       setRowsRaw(page.content || []);
-      console.log(page.content);
     } catch (e: any) {
       setError(e?.message || '공지사항 데이터를 불러오는데 실패했습니다.');
       setRowsRaw([]);
