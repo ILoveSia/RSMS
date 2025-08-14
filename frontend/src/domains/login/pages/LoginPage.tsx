@@ -157,14 +157,14 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
             deptNm: user.departmentName || '',
             positionNm: user.positionName || '',
           }));
-        console.log('🔍 [Login] 사용자 목록 조회 성공:', userOptions);
+        
         setUsers(userOptions);
         
         // testuser를 기본값으로 설정
         const defaultUser = userOptions.find(user => user.userid === 'testuser');
         if (defaultUser) {
           setSelectedUser(defaultUser);
-          console.log('✅ [Login] 기본 사용자 설정:', defaultUser);
+          
         }
       } catch (error) {
         console.error('❌ [Login] 사용자 목록 조회 실패:', error);
@@ -201,7 +201,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
 
   // 로그인 데이터 변경 시 console에 출력
   useEffect(() => {
-    console.log('📊 [LoginPage] Redux loginData 변경됨:', loginData);
+  
   }, [loginData]);
 
   // 메뉴 데이터 변경 시 console에 출력
@@ -246,18 +246,17 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
   };
 
   // 메뉴 조회 함수 (새로운 권한 API 사용)
-  const loadAccessibleMenus = async (userId: string, userRole?: string) => {
+  const loadAccessibleMenus = async (_userId: string, userRole?: string) => {
     try {
-      console.log('🔍 [메뉴] 사용자별 메뉴 권한 조회 시작:', userId);
+      
       
       // 전달받은 사용자 역할 또는 기본값 사용
       const role = userRole || 'USER'; // 기본값 USER
       const apiUrl = `/menus/accessible?role=${role}`;
       
-      console.log('🔍 [메뉴] 사용자 역할 기반 API 사용:', apiUrl, '(userId:', userId, ', role:', role, ')');
+      
       const menuResult = await apiClient.get<unknown>(apiUrl);
-      console.log('📋 [메뉴] API 응답:', menuResult);
-      console.log('📋 [메뉴] API 응답 타입:', typeof menuResult, ', 배열 여부:', Array.isArray(menuResult), ', 길이:', Array.isArray(menuResult) ? menuResult.length : 'N/A');
+      
       
       if (Array.isArray(menuResult) && menuResult.length > 0) {
         const convertedMenus = menuResult.map((menu: Menu) => ({
@@ -279,19 +278,18 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
           canDelete: menu.canDelete === true,
         }));
 
-        console.log('✅ [메뉴] 변환된 메뉴 데이터:', convertedMenus.length, '개');
-        console.log('📊 [메뉴] 메뉴 상세 데이터:', convertedMenus);
+        
         
         // Redux store에 메뉴 데이터 설정
         setMenuData(convertedMenus);
-        console.log('💾 [메뉴] Redux store 저장 완료 - setMenuData 호출됨');
+        
         
         // localStorage에도 저장 (새로고침 시 복원용)
         localStorage.setItem('accessibleMenus', JSON.stringify(convertedMenus));
-        console.log('💾 [메뉴] localStorage 저장 완료');
+        
 
       } else {
-        console.log('⚠️ [메뉴] 접근 가능한 메뉴가 없습니다.');
+        
         setMenuData([]);
       }
     } catch (error) {
@@ -346,12 +344,12 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         accessibleMenus: userData.accessibleMenus || [],
       };
 
-      console.log('💾 [로그인] Redux Store에 로그인 데이터 저장:', userForStore);
+      
       setLoginData(userForStore);
       
       // 저장 후 검증
       setTimeout(() => {
-        console.log('🔍 [로그인] setLoginData 후 현재 loginData:', loginData);
+        
       }, 100);
 
       const userForAuth: AuthUser = {
@@ -362,28 +360,20 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         roles: userData.authorities?.map(auth => auth.replace('ROLE_', '')) || ['USER'],
       };
 
-      console.log('🔐 [로그인] AuthContext에 사용자 정보 설정:', userForAuth);
+      
       setAuthenticatedUser(userForAuth);
-
-      console.log('📊 [로그인] 공통코드 및 메뉴 데이터 로딩 시작');
-      console.log('🔍 [로그인] 사용자 권한 정보:', {
-        authorities: userData.authorities,
-        firstAuthority: userData.authorities?.[0],
-        extractedRole: userData.authorities?.[0]?.replace('ROLE_', ''),
-        userId: userData.userId
-      });
       
       // 공통코드 및 메뉴 조회 (사용자 역할 정보 전달)
       const userRole = userData.authorities?.[0]?.replace('ROLE_', '') || 'USER';
-      console.log('🎯 [로그인] 최종 사용할 역할:', userRole);
+      
       await Promise.all([loadCommonCodes(), loadAccessibleMenus(userData.userId, userRole)]);
 
-      console.log('✅ [로그인] 모든 데이터 로딩 완료');
+      
       showSuccess('로그인이 성공했습니다!');
 
       // 충분한 시간을 두고 페이지 이동 (메뉴 데이터 반영 대기)
       setTimeout(() => {
-        console.log('🚀 [로그인] 메인 페이지로 이동');
+        
         router.push('/main');
       }, 1500);
     } catch (error) {
