@@ -10,6 +10,8 @@ export type {
 } from './ServerDataGrid';
 export { default as TextField } from './TextField';
 export type { TextFieldProps } from './TextField';
+export { default as CommentItem } from './CommentItem';
+export type { LocalComment, CommentItemProps } from './CommentItem';
 
 export { default as Badge } from './Badge';
 export { default as Chip } from './Chip';

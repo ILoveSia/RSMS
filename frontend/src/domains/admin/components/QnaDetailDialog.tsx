@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import { Button } from '@/shared/components/ui/button';
+import { Button, RegisterButton } from '@/shared/components/ui/button';
 import { Box, Chip, Divider, Typography } from '@mui/material';
 import TextField from '@/shared/components/ui/data-display/TextField';
+import { CommentItem, type LocalComment } from '@/shared/components/ui/data-display';
+import { CommentInput } from '@/shared/components/ui/form';
 import type { QnaDetailResponseDto } from '../api/qnaApi';
 import qnaApi from '../api/qnaApi';
 import { useToastHelpers } from '@/shared/components/ui/feedback';
-
+// 댓글 항목은 공통 컴포넌트 사용
 interface QnaDetailDialogProps {
   open: boolean;
   qnaId?: number | null;
@@ -30,19 +32,58 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
   const [savingAnswer, setSavingAnswer] = useState(false);
   const { showSuccess } = useToastHelpers();
 
-  // 임시 로컬 댓글 상태 (DB 연동 전)
-  interface LocalComment {
-    id: number;
-    parentId: number | null;
-    content: string;
-    author: string;
-    createdAt: string;
-  }
+  // 댓글 타입/컴포넌트는 최상단 import에서 가져옵니다
 
   const [comments, setComments] = useState<LocalComment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState<string>('');
+  const [commentLoading, setCommentLoading] = useState<boolean>(false);
+
+  const refreshComments = async (qnaId: number) => {
+    const serverComments = await qnaApi.getComments(qnaId);
+    const mapped: LocalComment[] = serverComments.map(sc => ({
+      id: Number(sc.id),
+      parentId: sc.parentId ?? null,
+      content: sc.isDeleted ? '[삭제됨]' : sc.content,
+      author: sc.createdId || '익명',
+      createdAt: sc.createdAt ? new Date(sc.createdAt).toLocaleString() : '',
+    }));
+    setComments(mapped);
+  };
+
+  const handleRegisterTopLevelComment = async () => {
+    const text = newComment.trim();
+    if (!text || !detail) return;
+    try {
+      setCommentLoading(true);
+      const userRaw = localStorage.getItem('user');
+      const userJson = userRaw ? JSON.parse(userRaw) : {};
+      const userId = userJson?.userid || 'anonymous';
+      await qnaApi.addComment(detail.id, { content: text, parentId: null }, { userId });
+      await refreshComments(detail.id);
+      setNewComment('');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const handleRegisterReply = async (parentId: number) => {
+    const text = replyContent.trim();
+    if (!text || !detail) return;
+    try {
+      setCommentLoading(true);
+      const userRaw = localStorage.getItem('user');
+      const userJson = userRaw ? JSON.parse(userRaw) : {};
+      const userId = userJson?.userid || 'anonymous';
+      await qnaApi.addComment(detail.id, { content: text, parentId }, { userId });
+      await refreshComments(detail.id);
+      setReplyingTo(null);
+      setReplyContent('');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -93,66 +134,10 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
     load();
   }, [open, qnaId]);
 
-  // 댓글 렌더링 (계층 구조)
-  const renderComments = (parentId: number | null, depth: number = 0): React.ReactNode => {
-    const items = comments.filter(c => c.parentId === parentId);
-    if (items.length === 0) return null;
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {items.map((c) => (
-          <Box key={c.id} sx={{ ml: depth * 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle2">{c.author}</Typography>
-              <Typography variant="caption" color="text.secondary">{c.createdAt}</Typography>
-            </Box>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{c.content}</Typography>
-            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-              <Button size="small" variant="text" onClick={() => { setReplyingTo(c.id); setReplyContent(''); }}>답글</Button>
-            </Box>
-            {replyingTo === c.id && (
-              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                <TextField
-                  size="small"
-                  label="답글"
-                  placeholder="답글을 입력하세요"
-                  value={replyContent}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReplyContent(e.target.value)}
-                  mode="editable"
-                  fullWidth
-                />
-                <Button
-                  size="small"
-                  onClick={async () => {
-                    const text = replyContent.trim();
-                    if (!text) return;
-                    const userRaw = localStorage.getItem('user');
-                    const userJson = userRaw ? JSON.parse(userRaw) : {};
-                    const userId = userJson?.userid || 'anonymous';
-                    await qnaApi.addComment(detail!.id, { content: text, parentId: c.id }, { userId });
-                    const serverComments = await qnaApi.getComments(detail!.id);
-                    const mapped: LocalComment[] = serverComments.map(sc => ({
-                      id: Number(sc.id),
-                      parentId: sc.parentId ?? null,
-                      content: sc.isDeleted ? '[삭제됨]' : sc.content,
-                      author: sc.createdId || '익명',
-                      createdAt: sc.createdAt ? new Date(sc.createdAt).toLocaleString() : '',
-                    }));
-                    setComments(mapped);
-                    setReplyingTo(null);
-                    setReplyContent('');
-                  }}
-                  disabled={!replyContent.trim()}
-                >등록</Button>
-                <Button size="small" variant="outlined" onClick={() => { setReplyingTo(null); setReplyContent(''); }}>취소</Button>
-              </Box>
-            )}
-            <Box sx={{ mt: 1 }}>
-              {renderComments(c.id, depth + 1)}
-            </Box>
-          </Box>
-        ))}
-      </Box>
-    );
+  // 하위 댓글 등록 핸들러 (컴포넌트에 전달)
+  const onRegisterReply = async (parentId: number, content: string) => {
+    setReplyContent(content);
+    await handleRegisterReply(parentId);
   };
 
   return (
@@ -291,43 +276,35 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
               <Typography variant="body2" color="text.secondary">등록된 댓글이 없습니다.</Typography>
             ) : (
               <Box sx={{ mt: 0.5 }}>
-                {renderComments(null, 0)}
+                {comments
+                  .filter(c => c.parentId === null)
+                  .map(root => (
+                    <CommentItem
+                      key={root.id}
+                      comment={root}
+                      allComments={comments}
+                      depth={0}
+                      onRegisterReply={onRegisterReply}
+                      loading={commentLoading}
+                    />
+                  ))}
               </Box>
             )}
 
             {/* 신규 댓글 입력 (최상위) */}
-            <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <TextField
-                size="small"
+            <Box sx={{ mt: 1 }}>
+              <CommentInput
+                value={newComment}
+                onCancel={false}
+                onChange={setNewComment}
+                onSubmit={handleRegisterTopLevelComment}
+                loading={commentLoading}
                 label="댓글"
                 placeholder="댓글을 입력하세요"
-                value={newComment}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewComment(e.target.value)}
-                mode="editable"
-                fullWidth
-              />
-              <Button
+                minRows={3}
                 size="small"
-                onClick={async () => {
-                  const text = newComment.trim();
-                  if (!text) return;
-                  const userRaw = localStorage.getItem('user');
-                  const userJson = userRaw ? JSON.parse(userRaw) : {};
-                  const userId = userJson?.userid || 'anonymous';
-                  await qnaApi.addComment(detail!.id, { content: text, parentId: null }, { userId });
-                  const serverComments = await qnaApi.getComments(detail!.id);
-                  const mapped: LocalComment[] = serverComments.map(sc => ({
-                    id: Number(sc.id),
-                    parentId: sc.parentId ?? null,
-                    content: sc.isDeleted ? '[삭제됨]' : sc.content,
-                    author: sc.createdId || '익명',
-                    createdAt: sc.createdAt ? new Date(sc.createdAt).toLocaleString() : '',
-                  }));
-                  setComments(mapped);
-                  setNewComment('');
-                }}
-                disabled={!newComment.trim()}
-              >등록</Button>
+                registerLabel="등록"
+              />
             </Box>
           </Box>
         </Box>
