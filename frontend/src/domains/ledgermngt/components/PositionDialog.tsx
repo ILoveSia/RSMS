@@ -8,7 +8,7 @@ import type { EmployeeSearchResult } from '@/domains/common/components/search';
 import { DepartmentSearchPopup, type Department } from '@/domains/common/components/search';
 import EmployeeSearchPopup from '@/domains/common/components/search/EmployeeSearchPopup';
 import {
-  MeetingBodySearchDialog,
+  MeetingBodySearchPopup,
   type MeetingBodySearchResult,
 } from '@/domains/meeting/components';
 import { Dialog } from '@/shared/components/modal';
@@ -1133,7 +1133,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
       />
 
       {/* 회의체 검색 다이얼로그 */}
-      <MeetingBodySearchDialog
+      <MeetingBodySearchPopup
         open={meetingSearchOpen}
         onClose={handleMeetingSearchClose}
         onSelect={handleMeetingBodySelect}

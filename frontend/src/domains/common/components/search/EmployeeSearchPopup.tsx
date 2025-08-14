@@ -3,6 +3,7 @@
  * UserController의 사용자 목록 조회 API를 사용
  * 부서검색 팝업과 통일된 디자인 적용
  */
+import { RefreshButton } from '@/shared/components/ui/button';
 import apiClient from '@/app/common/api/client';
 import DepartmentApi from '@/domains/common/api/departmentApi';
 import { Button } from '@/shared/components/ui/button';
@@ -185,10 +186,11 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   const columns: DataGridColumn<EmployeeSearchResult>[] = [
     {
       field: 'num',
+      align: 'center',
       headerName: '사번',
       width: 100,
       renderCell: params => (
-        <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+        <Typography variant='body2' sx={{ fontFamily: 'monospace'}}>
           {params.value}
         </Typography>
       ),
@@ -197,6 +199,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       field: 'username',
       headerName: '성명',
       width: 120,
+      align: 'center',
       renderCell: params => (
         <Typography variant='body2' sx={{ fontWeight: 'bold' }}>
           {params.value}
@@ -208,6 +211,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       headerName: '부서',
       flex: 1,
       minWidth: 150,
+      align: 'center',
       renderCell: params => (
         <Typography variant='body2'>
           {params.value || params.row.deptCd}
@@ -218,6 +222,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       field: 'jobRankCd',
       headerName: '직급',
       width: 80,
+      align: 'center',
       renderCell: params => (
         <Typography variant='body2'>
           {getCodeNameSync(allCodes, 'JOB_RANK', String(params.value ?? '')) || String(params.value ?? '')}
@@ -283,9 +288,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
               onClear={() => setSearchQuery('')}
             />
           </Box>
-          <Button onClick={handleSearch} variant='contained' color='secondary' size='medium' disabled={loading}>
-            새로고침
-          </Button>
+          <RefreshButton onClick={handleSearch} disabled={loading} />
         </Box>
 
         {/* 안내 메시지 */}
@@ -321,6 +324,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
                   (emp.num || '').toLowerCase().includes(q)
                 );
               })}
+              selectable={true}
               columns={columns}
               checkboxSelection={false}
               disableRowSelectionOnClick={false}
@@ -331,20 +335,6 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
             />
           </Box>
         )}
-
-        {/* 결과 개수 */}
-        <Box sx={{ mt: 1, textAlign: 'right' }}>
-          <Typography variant='caption' color='text.secondary'>
-            총 {employees.filter(emp => {
-              const q = searchQuery.trim().toLowerCase();
-              if (!q) return true;
-              return (
-                (emp.username || '').toLowerCase().includes(q) ||
-                (emp.num || '').toLowerCase().includes(q)
-              );
-            }).length}건
-          </Typography>
-        </Box>
       </Box>
     </BaseDialog>
   );

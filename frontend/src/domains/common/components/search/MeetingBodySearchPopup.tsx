@@ -15,7 +15,7 @@ import { SearchBox } from '@/shared/components/ui/form';
 import React, { useEffect, useState } from 'react';
 import { meetingStatusApi } from '../../../ledgermngt/api/meetingStatusApi';
 
-export interface MeetingBodySearchDialogProps {
+export interface MeetingBodySearchPopupProps {
   open: boolean;
   onClose: () => void;
   onSelect?: (meetingBody: MeetingBodySearchResult) => void;
@@ -32,7 +32,7 @@ export interface MeetingBodySearchResult {
   gubun?: string;
 }
 
-const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
+const MeetingBodySearchPopup: React.FC<MeetingBodySearchPopupProps> = ({
   open,
   onClose,
   onSelect,
@@ -183,12 +183,14 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
   const columns: DataGridColumn<MeetingBodySearchResult>[] = [
     {
       field: 'code' as keyof MeetingBodySearchResult,
+      align: 'center',
       headerName: '회의체 코드',
       width: 120,
     },
     {
       field: 'name' as keyof MeetingBodySearchResult,
       headerName: '회의체명',
+      align: 'center',
       flex: 1,
       minWidth: 200,
     },
@@ -196,10 +198,12 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
       field: 'period' as keyof MeetingBodySearchResult,
       headerName: '주기',
       width: 100,
+      align: 'center',
     },
     {
       field: 'gubun' as keyof MeetingBodySearchResult,
       headerName: '구분',
+      align: 'center',
       width: 120,
     },
   ];
@@ -257,15 +261,10 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
           <DataGrid
             data={filteredMeetingBodies}
             columns={columns}
-            height={300}
             selectable
             multiSelect={false}
             onRowSelectionChange={handleMeetingBodySelect}
             selectedRows={selectedMeetingBody ? [selectedMeetingBody.id] : []}
-            density='compact'
-            hideFooterPagination
-            disableColumnMenu
-            disableColumnFilter
             disableColumnSort
             rowIdField='id'
           />
@@ -275,4 +274,4 @@ const MeetingBodySearchDialog: React.FC<MeetingBodySearchDialogProps> = ({
   );
 };
 
-export default MeetingBodySearchDialog;
+export default MeetingBodySearchPopup;

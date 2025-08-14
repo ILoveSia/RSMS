@@ -14,8 +14,9 @@ import {
 } from '@mui/material';
 import { SearchBox } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import type { GridColDef, GridRowParams } from '@mui/x-data-grid';
-import { DataGrid } from '@mui/x-data-grid';
+import type { GridRowParams } from '@mui/x-data-grid';
+import { DataGrid } from '@/shared/components/ui/data-display';
+import type { DataGridColumn } from '@/shared/types/common';
 import React, { useCallback, useEffect, useState } from 'react';
 
 // 부서 타입 정의 (백엔드 API 응답과 일치)
@@ -74,7 +75,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // 컬럼 정의 (컴팩트 버전)
-  const columns: GridColDef[] = [
+  const columns: DataGridColumn<Department>[] = [
     {
       field: 'deptCode',
       headerName: '부서코드',
@@ -176,13 +177,10 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
   }, [open, availableDepartments, fetchDepartments]);
 
   // 행 더블클릭 핸들러 (단일 선택)
-  const handleRowDoubleClick = (params: GridRowParams) => {
+  const handleRowDoubleClick = (row: Department, _event: GridRowParams) => {
     if (!multiSelect) {
-      const selectedDept = filteredDepartments.find(dept => dept.id === params.id);
-      if (selectedDept) {
-        onSelect(selectedDept);
-        onClose();
-      }
+      onSelect(row);
+      onClose();
     }
   };
 
@@ -265,51 +263,20 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
           /* 부서 목록 DataGrid */
           <Box sx={{ height: 350 }}>
             <DataGrid
-              rows={filteredDepartments}
+              data={filteredDepartments}
               columns={columns}
+              selectable={true}
               checkboxSelection={multiSelect}
               disableRowSelectionOnClick={multiSelect}
               rowSelectionModel={selectedRows}
-              onRowSelectionModelChange={newSelection => {
-                setSelectedRows(Array.from(newSelection) as string[]);
+              onRowSelectionChange={(ids) => {
+                setSelectedRows(ids as string[]);
               }}
               onRowDoubleClick={handleRowDoubleClick}
-              getRowHeight={() => 45}
-              sx={{
-                border: '1px solid #e0e0e0',
-                borderRadius: '4px',
-                '& .MuiDataGrid-cell': {
-                  fontSize: '0.875rem',
-                  borderBottom: '1px solid rgba(224, 224, 224, 0.5)',
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: '#f5f5f5',
-                  fontSize: '0.875rem',
-                  fontWeight: '600',
-                },
-                '& .MuiDataGrid-row': {
-                  cursor: 'pointer',
-                  '&:hover': {
-                    backgroundColor: '#f0f7ff',
-                  },
-                  '&.Mui-selected': {
-                    backgroundColor: '#e3f2fd',
-                    '&:hover': {
-                      backgroundColor: '#bbdefb',
-                    },
-                  },
-                },
-              }}
             />
           </Box>
         )}
 
-        {/* 결과 개수 */}
-        <Box sx={{ mt: 1, textAlign: 'right' }}>
-          <Typography variant='caption' color='text.secondary'>
-            총 {filteredDepartments.length}건
-          </Typography>
-        </Box>
       </Box>
     </BaseDialog>
   );

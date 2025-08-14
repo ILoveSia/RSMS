@@ -11,11 +11,11 @@ export { default as EmployeeSearchPopup } from './EmployeeSearchPopup';
 export type { EmployeeSearchPopupProps, EmployeeSearchResult } from './EmployeeSearchPopup';
 
 // 회의체 검색 팝업
-export { default as MeetingBodySearchDialog } from './MeetingBodySearchDialog';
+export { default as MeetingBodySearchPopup } from './MeetingBodySearchPopup';
 export type {
-  MeetingBodySearchDialogProps,
+  MeetingBodySearchPopupProps,
   MeetingBodySearchResult,
-} from './MeetingBodySearchDialog';
+} from './MeetingBodySearchPopup';
 
 // 책무 검색 팝업
 export { default as ResponsibilitySearchPopup } from './ResponsibilitySearchPopup';

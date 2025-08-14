@@ -2,10 +2,10 @@
  * Meeting 도메인 컴포넌트 Export
  */
 
-export { default as MeetingBodySearchDialog } from '@/domains/common/components/search/MeetingBodySearchDialog';
+export { default as MeetingBodySearchPopup } from '@/domains/common/components/search/MeetingBodySearchPopup';
 
 // 타입 export
 export type {
-  MeetingBodySearchDialogProps,
+  MeetingBodySearchPopupProps,
   MeetingBodySearchResult
-} from '@/domains/common/components/search/MeetingBodySearchDialog';
+} from '@/domains/common/components/search/MeetingBodySearchPopup';

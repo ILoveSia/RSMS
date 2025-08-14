@@ -51,6 +51,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
     {
       field: 'positionsId',
       headerName: '직책ID',
+      align: 'center',
       width: 100,
       sortable: true,
     },
@@ -58,6 +59,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
       field: 'positionsNm',
       headerName: '직책명',
       width: 200,
+      align: 'center',
       sortable: true,
       flex: 1,
     },
@@ -70,6 +72,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
     {
       field: 'confirmGubunCd',
       headerName: '확정구분',
+      align: 'center',
       width: 100,
       sortable: true,
     },
@@ -77,6 +80,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
       field: 'writeDeptCd',
       headerName: '작성부서',
       width: 100,
+      align: 'center',
       sortable: true,
     },
   ];
@@ -205,6 +209,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
           ) : (
             <DataGrid
               data={filteredPositions}
+              selectable={true}
               columns={columns}
               rowIdField={'positionsId'}
               onRowClick={(row) => handleRowClick({ row } as any)}
@@ -214,18 +219,6 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
               pagination={{ page: 1, pageSize: 10, totalItems: filteredPositions.length, onPageChange: () => {}, onPageSizeChange: () => {} }}
               sx={{}}
             />
-          )}
-        </Box>
-
-        {/* 검색 결과 정보 */}
-        <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant='body2' color='text.secondary'>
-            총 {filteredPositions.length}개의 직책이 검색되었습니다.
-          </Typography>
-          {multiSelect && selectedPositions.length > 0 && (
-            <Typography variant='body2' color='primary'>
-              {selectedPositions.length}개 선택됨
-            </Typography>
           )}
         </Box>
       </Box>
