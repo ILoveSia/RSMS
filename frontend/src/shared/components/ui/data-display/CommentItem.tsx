@@ -15,6 +15,7 @@ export interface CommentItemProps {
   comment: LocalComment;
   allComments: LocalComment[];
   depth?: number;
+  parentEffectiveDepth?: number;
   onRegisterReply: (parentId: number, content: string) => Promise<void> | void;
   loading?: boolean;
 }
@@ -23,6 +24,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   comment,
   allComments,
   depth = 0,
+  parentEffectiveDepth = 0,
   onRegisterReply,
   loading = false,
 }) => {
@@ -30,9 +32,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
   const [replyContent, setReplyContent] = useState<string>('');
 
   const children = allComments.filter(c => c.parentId === comment.id);
+  const effectiveDepth = Math.min(depth, 3); // 4단계부터는 동일 들여쓰기 유지
+  const deltaDepth = Math.max(0, effectiveDepth - parentEffectiveDepth);
 
   return (
-    <Box sx={{ ml: depth * 2 }}>
+    <Box sx={{ ml: deltaDepth * 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography variant="subtitle2">{comment.author}</Typography>
         <Typography variant="caption" color="text.secondary">{comment.createdAt}</Typography>
@@ -74,6 +78,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
               comment={child}
               allComments={allComments}
               depth={depth + 1}
+              parentEffectiveDepth={effectiveDepth}
               onRegisterReply={onRegisterReply}
               loading={loading}
             />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import { Button, RegisterButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import { Box, Chip, Divider, Typography } from '@mui/material';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import { CommentItem, type LocalComment } from '@/shared/components/ui/data-display';
@@ -36,8 +36,6 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
 
   const [comments, setComments] = useState<LocalComment[]>([]);
   const [newComment, setNewComment] = useState<string>('');
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [replyContent, setReplyContent] = useState<string>('');
   const [commentLoading, setCommentLoading] = useState<boolean>(false);
 
   const refreshComments = async (qnaId: number) => {
@@ -68,8 +66,8 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
     }
   };
 
-  const handleRegisterReply = async (parentId: number) => {
-    const text = replyContent.trim();
+  const handleRegisterReply = async (parentId: number, content: string) => {
+    const text = content.trim();
     if (!text || !detail) return;
     try {
       setCommentLoading(true);
@@ -78,8 +76,6 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
       const userId = userJson?.userid || 'anonymous';
       await qnaApi.addComment(detail.id, { content: text, parentId }, { userId });
       await refreshComments(detail.id);
-      setReplyingTo(null);
-      setReplyContent('');
     } finally {
       setCommentLoading(false);
     }
@@ -136,8 +132,7 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
 
   // 하위 댓글 등록 핸들러 (컴포넌트에 전달)
   const onRegisterReply = async (parentId: number, content: string) => {
-    setReplyContent(content);
-    await handleRegisterReply(parentId);
+    await handleRegisterReply(parentId, content);
   };
 
   return (
@@ -295,7 +290,6 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
             <Box sx={{ mt: 1 }}>
               <CommentInput
                 value={newComment}
-                onCancel={false}
                 onChange={setNewComment}
                 onSubmit={handleRegisterTopLevelComment}
                 loading={commentLoading}
