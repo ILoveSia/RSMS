@@ -61,11 +61,7 @@ const ApprovalDashboardPage: React.FC = () => {
   // 공통코드 가져오기
   const allCodes = useCommonCodes();
 
-  console.log('🔍 ApprovalDashboardPage - 로그인 사용자 정보:', {
-    loginData,
-    currentUserId,
-    hasLoginData: !!loginData,
-  });
+  
 
   // 상태 관리
   const [summary, setSummary] = useState<ApprovalSummaryResponse | null>(null);
@@ -95,7 +91,7 @@ const ApprovalDashboardPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log('📊 대시보드 데이터 로드 시작 - currentUserId:', currentUserId);
+      
 
       // 병렬로 대시보드 데이터 로드
       const [summaryData, pendingData, allData] = await Promise.all([
@@ -104,12 +100,7 @@ const ApprovalDashboardPage: React.FC = () => {
         approvalApi.getAllApprovals(),
       ]);
 
-      console.log('📊 API 응답 데이터:', {
-        summaryData,
-        pendingDataCount: pendingData?.length || 0,
-        pendingData,
-        allDataCount: allData?.length || 0
-      });
+      
 
       setSummary(summaryData);
       setMyPendingApprovals(pendingData || []);
