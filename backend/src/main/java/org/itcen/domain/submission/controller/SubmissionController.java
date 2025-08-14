@@ -34,6 +34,7 @@ public class SubmissionController {
                 .updateYn(createRequest.getUpdateYn() != null ? createRequest.getUpdateYn() : "N")
                 .rmSubmitRemarks(createRequest.getRmSubmitRemarks())
                 .positionsId(createRequest.getPositionsId())
+                .bankCd(createRequest.getBankCd())
                 .createdId("system") // TODO: 실제 로그인 사용자 ID로 변경
                 .updatedId("system") // TODO: 실제 로그인 사용자 ID로 변경
                 .createdAt(java.time.LocalDateTime.now())

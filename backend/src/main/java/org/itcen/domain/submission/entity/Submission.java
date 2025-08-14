@@ -44,6 +44,9 @@ public class Submission {
     @Column(name = "updated_at")
     private java.time.LocalDateTime updatedAt;
     
+    @Column(name = "bank_cd", length = 100)
+    private String bankCd;
+    
     // positions 테이블과의 연관관계 (LAZY 로딩으로 성능 최적화)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "positions_id", insertable = false, updatable = false)

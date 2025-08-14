@@ -12,6 +12,7 @@ export interface SubmissionHistoryRow {
   modificationDate?: string;
   attachmentFile?: string;
   remarks?: string;
+  bankCd?: string;
   
   // 첨부파일 관련 필드들
   hasAttachment?: boolean;  // 첨부파일 존재 여부
@@ -60,6 +61,7 @@ export async function fetchSubmissionHistory(
       isModified: false, // 기본값 설정
       modificationDate: undefined, // 현재 사용하지 않음
       position: item.positionsNm || item.position || '', // positions 테이블의 직책명 우선 사용
+      bankCd: item.bankCd || item.bank_cd || undefined,
     }));
   } else {
     throw new Error(response.message || '제출 이력 조회에 실패했습니다.');

@@ -12,6 +12,7 @@ public class SubmissionDto {
     private String updateYn;
     private String rmSubmitRemarks;
     private Long positionsId;
+    private String bankCd;
     private String createdId;
     private String updatedId;
     private java.time.LocalDateTime createdAt;

@@ -8,7 +8,6 @@ import org.itcen.domain.submission.repository.SubmissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigInteger;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,6 +38,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             .updateYn(dto.getUpdateYn() != null ? dto.getUpdateYn() : "N")
             .rmSubmitRemarks(dto.getRmSubmitRemarks())
             .positionsId(dto.getPositionsId())
+            .bankCd(dto.getBankCd())
             .createdId(dto.getCreatedId())
             .updatedId(dto.getUpdatedId())
             .createdAt(dto.getCreatedAt())
@@ -100,6 +100,7 @@ public class SubmissionServiceImpl implements SubmissionService {
         entity.setUpdateYn(dto.getUpdateYn());
         entity.setRmSubmitRemarks(dto.getRmSubmitRemarks());
         entity.setPositionsId(dto.getPositionsId());
+        entity.setBankCd(dto.getBankCd());
         entity.setUpdatedId(dto.getUpdatedId());
         entity.setUpdatedAt(java.time.LocalDateTime.now());
         repository.save(entity);
@@ -120,6 +121,7 @@ public class SubmissionServiceImpl implements SubmissionService {
             .updateYn(entity.getUpdateYn())
             .rmSubmitRemarks(entity.getRmSubmitRemarks())
             .positionsId(entity.getPositionsId())
+            .bankCd(entity.getBankCd())
             .createdId(entity.getCreatedId())
             .updatedId(entity.getUpdatedId())
             .createdAt(entity.getCreatedAt())
@@ -174,8 +176,9 @@ public class SubmissionServiceImpl implements SubmissionService {
             .ledgerOrder(row[10] != null ? ((Number) row[10]).longValue() : null)  // ledger_order
             .confirmGubunCd((String) row[11])  // confirm_gubun_cd
             .writeDeptCd((String) row[12])  // write_dept_cd
-            .hasAttachment(row[13] != null ? (Boolean) row[13] : false)  // 첨부파일 존재 여부
-            .attachmentCount(row[14] != null ? ((Number) row[14]).intValue() : 0)  // 첨부파일 개수
+            .bankCd((String) row[13]) // bank_cd
+            .hasAttachment(row[14] != null ? (Boolean) row[14] : false)  // 첨부파일 존재 여부
+            .attachmentCount(row[15] != null ? ((Number) row[15]).intValue() : 0)  // 첨부파일 개수
             // 중복 필드들 (DTO 호환성을 위해)
             .submitHistCd((String) row[1])  // submit_hist_cd
             .rmSubmitDt(row[5] != null ? ((Date) row[5]).toLocalDate() : null)  // rm_submit_dt

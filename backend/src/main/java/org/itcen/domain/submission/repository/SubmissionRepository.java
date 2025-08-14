@@ -30,6 +30,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 p.ledger_order as ledgerOrder,
                 p.confirm_gubun_cd as confirmGubunCd,
                 p.write_dept_cd as writeDeptCd,
+                s.bank_cd as bankCd,
                 CASE WHEN a.attach_id IS NOT NULL THEN true ELSE false END as hasAttachment,
                 COUNT(a.attach_id) as attachmentCount
             FROM rm_submit_mgmt s
@@ -41,7 +42,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND (a.deleted_yn = 'N' OR a.deleted_yn IS NULL)
             GROUP BY s.rm_submit_mgmt_id, s.submit_hist_cd, s.execofficer_id, u.emp_name,
                      p.positions_nm, s.rm_submit_dt, s.rm_submit_remarks, s.positions_id,
-                     p.ledger_order, p.confirm_gubun_cd, p.write_dept_cd, a.original_name, a.attach_id
+                     p.ledger_order, p.confirm_gubun_cd, p.write_dept_cd, s.bank_cd, a.original_name, a.attach_id
             ORDER BY s.rm_submit_dt DESC, s.rm_submit_mgmt_id DESC
             """, nativeQuery = true)
     List<Object[]> findAllSubmissionHistoryWithPositions();

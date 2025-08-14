@@ -19,6 +19,7 @@ public class SubmissionCreateRequest {
     private String updateYn;
     private String rmSubmitRemarks;
     private Long positionsId;
+    private String bankCd;
     
     // 프론트엔드 호환성을 위한 필드들 (deprecated but kept for compatibility)
     @Deprecated

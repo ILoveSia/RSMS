@@ -8,6 +8,7 @@ import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/butt
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { DatePicker, LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn, SelectOption } from '@/shared/types/common';
@@ -56,6 +57,9 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   const [errorMessage, setErrorMessage] = useState('');
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
+  // 코드 변환 함수 (공통코드: BANK_CD)
+  const getCodeName = useGetCodeName();
+
   // 첨부파일 렌더링 컴포넌트
   const renderAttachmentCell = ({ row }: { row: SubmissionHistoryRow }) => {
     if (row.hasAttachment && row.attachmentCount && row.attachmentCount > 0) {
@@ -89,14 +93,22 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<SubmissionHistoryRow>[] = [
-    { field: 'historyCode', headerName: '제출이력 코드', width: 150 },
-    { field: 'position', headerName: '직책', width: 200, renderCell: renderPositionCell },
-    { field: 'executiveName', headerName: '제출 대상 임원', width: 150 },
-    { field: 'submissionDate', headerName: '제출일', width: 150 },
+    { field: 'historyCode', headerName: '제출이력 코드', width: 150, align: 'center' },
+    { field: 'position', headerName: '직책', width: 200, align: 'center', renderCell: renderPositionCell },
+    {
+      field: 'bankCd',
+      headerName: '제출 기관',
+      width: 160,
+      align: 'center',
+      renderCell: ({ value }) => getCodeName('BANK_CD', String(value ?? '')),
+    },
+    { field: 'executiveName', headerName: '제출 대상 임원', width: 150, align: 'center' },
+    { field: 'submissionDate', headerName: '제출일', width: 150, align: 'center' },
     {
       field: 'isModified',
       headerName: '수정여부',
       width: 100,
+      align: 'center',
       renderCell: ({ value }) => (
         <Chip
           label={value ? '수정' : '원본'}
@@ -109,16 +121,18 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       field: 'modificationDate',
       headerName: '수정일',
       width: 150,
+      align: 'center',
       renderCell: ({ row }) => row.submissionDate,
     },
     {
       field: 'attachmentFile',
       headerName: '첨부파일',
       width: 120,
+      align: 'center',
       align: 'center' as const,
       renderCell: renderAttachmentCell,
     },
-    { field: 'remarks', headerName: '비고', width: 200 },
+    { field: 'remarks', headerName: '비고', width: 200, align: 'center' },
   ];
 
   // 에러 처리 헬퍼
