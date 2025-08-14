@@ -1,9 +1,17 @@
 import type { Preview } from '@storybook/react-vite';
 import React from 'react';
 import { CssBaseline, ThemeProvider as MuiThemeProvider } from '@mui/material';
+import { Provider } from 'react-redux';
 import { lightTheme, darkTheme, updateCssVariables } from '../src/app/theme/themeConfig';
+import { configureAppStore, setGlobalStore } from '../src/app/store';
+import createRootReducer from '../src/shared/store';
 
-const withMuiTheme = (Story, context) => {
+// Initialize Redux store for Storybook
+setGlobalStore();
+const reducers = createRootReducer();
+const store = configureAppStore(reducers);
+
+const withProviders = (Story, context) => {
   const isDark = context.globals.theme === 'dark';
   const theme = isDark ? darkTheme : lightTheme;
 
@@ -11,10 +19,12 @@ const withMuiTheme = (Story, context) => {
   updateCssVariables(isDark);
 
   return (
-    <MuiThemeProvider theme={theme}>
-      <CssBaseline />
-      <Story />
-    </MuiThemeProvider>
+    <Provider store={store}>
+      <MuiThemeProvider theme={theme}>
+        <CssBaseline />
+        <Story />
+      </MuiThemeProvider>
+    </Provider>
   );
 };
 
@@ -30,7 +40,7 @@ const preview: Preview = {
       test: 'todo',
     },
   },
-  decorators: [withMuiTheme],
+  decorators: [withProviders],
   globalTypes: {
     theme: {
       name: 'Theme',
