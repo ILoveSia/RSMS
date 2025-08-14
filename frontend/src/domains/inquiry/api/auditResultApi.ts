@@ -143,7 +143,7 @@ export const getAuditResultDetail = async (
     } else if (response && 'data' in response) {
       return (response as any).data;
     } else {
-      console.log('예상하지 못한 응답 구조');
+      
       return [];
     }
   } catch (error) {

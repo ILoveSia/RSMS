@@ -330,14 +330,14 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     if (row.department === '합계') return;
     
     const handlers = {
-      total: () => console.log('전체 항목 클릭:', row.department, row.totalItems),
-      appropriate: () => console.log('적정 항목 클릭:', row.department, row.appropriateItems),
-      deficient: () => console.log('미흡 항목 클릭:', row.department, row.deficientItems),
-      excluded: () => console.log('점검제외 항목 클릭:', row.department, row.excludedItems),
-      deficientForPlan: () => console.log('미흡사항 클릭:', row.department, row.deficientItemsForPlan),
-      registered: () => console.log('등록된 계획 클릭:', row.department, row.registeredPlans),
-      unregistered: () => console.log('미등록 계획 클릭:', row.department, row.unregisteredPlans),
-    };
+      total: () => {},
+      appropriate: () => {},
+      deficient: () => {},
+      excluded: () => {},
+      deficientForPlan: () => {},
+      registered: () => {},
+      unregistered: () => {},
+    } as const;
     
     handlers[type as keyof typeof handlers]?.();
   };
