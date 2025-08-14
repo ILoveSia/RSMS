@@ -76,7 +76,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setLoading(true);
     setError(null);
     try {
-      console.log('📊 임원 현황 조회 - ledgerOrdersId:', ledgerOrdersId);
+      
       const data = await execOfficerApi.getAll(ledgerOrdersId);
       setRows(data);
     } catch (err) {
@@ -311,7 +311,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // LedgerOrderSelect 새로고침 함수
   const refreshLedgerOrderSelect = useCallback(() => {
     setLedgerOrderRefreshTrigger(prev => prev + 1);
-    console.log('📋 LedgerOrderSelect 새로고침 트리거:', ledgerOrderRefreshTrigger + 1);
+    
   }, [ledgerOrderRefreshTrigger]);
 
   // 확정 버튼 클릭 핸들러
@@ -343,10 +343,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       return;
     }
 
-    console.log('📋 임원 확정 조건 검증 통과:', {
-      selectedLedgerOrder,
-      statusInfo
-    });
+    
 
     // 3. 확정 confirm 창 표시
     setConfirmConfirmOpen(true);
@@ -361,9 +358,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
     setLoading(true);
     try {
-      console.log('📋 임원 확정 처리 시작:', {
-        selectedLedgerOrder
-      });
+      
 
       // 임원 확정 전용 API 사용 (P3 → P4)
       const response = await positionApi.confirmExecutive(selectedLedgerOrder);
@@ -421,10 +416,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       return;
     }
 
-    console.log('🔄 임원 확정취소 조건 검증 통과:', {
-      selectedLedgerOrder,
-      statusInfo
-    });
+    
 
     // 3. 확정취소 confirm 창 표시
     setCancelConfirmOpen(true);
@@ -439,9 +431,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
     setLoading(true);
     try {
-      console.log('🔄 임원 확정취소 처리 시작:', {
-        selectedLedgerOrder
-      });
+      
 
       // 임원 확정취소 전용 API 사용 (P4 → P3)
       const response = await positionApi.cancelExecutive(selectedLedgerOrder);
@@ -499,10 +489,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       return;
     }
 
-    console.log('🎯 임원 최종확정 조건 검증 통과:', {
-      selectedLedgerOrder,
-      statusInfo
-    });
+    
 
     // 최종확정 confirm 창 표시
     setFinalConfirmOpen(true);
@@ -517,9 +504,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
     setLoading(true);
     try {
-      console.log('🎯 임원 최종확정 처리 시작:', {
-        selectedLedgerOrder
-      });
+      
 
       // 임원 최종확정 전용 API 사용 (P4 → P5)
       const response = await positionApi.finalConfirmExecutive(selectedLedgerOrder);
@@ -598,19 +583,19 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             onChange={useCallback((value: string, ledgerOrdersId?: number) => {
               setSelectedLedgerOrder(value);
               setLedgerOrdersId(ledgerOrdersId);
-              console.log('LedgerOrder 선택 변경:', { value, ledgerOrdersId });
+              
             }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
             refreshTrigger={ledgerOrderRefreshTrigger}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
               setLedgerOrderOptions(options);
-              console.log('LedgerOrder 옵션 로드 완료:', options);
+              
             }, [])}
           />
           <SearchButton
             onClick={useCallback(() => {
-              console.log('🔍 검색 버튼 클릭 - 선택된 ledgerOrdersId:', ledgerOrdersId);
+              
               fetchExecutiveStatus();
             }, [fetchExecutiveStatus, ledgerOrdersId])}
             loading={loading}

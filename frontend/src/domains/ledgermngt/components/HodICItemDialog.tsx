@@ -127,18 +127,11 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
     const store = (window as any).__HOST_STORE__?.main;
     if (store) {
       const state = store.getState();
-      console.log('🏪 [HodICItemDialog] 전체 Redux Store 상태:', state);
-      console.log('🔍 [HodICItemDialog] LoginStore 상태:', state?.LoginStore);
-      console.log('🔍 [HodICItemDialog] loginStore 상태:', state?.loginStore);
+      void state;
     }
   }, []);
   
-  console.log('🔍 HodICItemDialog - 로그인 사용자 정보:', {
-    loginData,
-    currentUserId,
-    hasLoginData: !!loginData,
-    userid: loginData?.userid
-  });
+  
 
   // 팝업 상태들
   const [responsibilitySearchOpen, setResponsibilitySearchOpen] = useState(false);
@@ -609,15 +602,6 @@ interface ResponsibilityDetail {
 
     // 결재 상신 버튼 (approvalStatus가 NONE이고 itemId가 있을 때)
     if (shouldShowApprovalButton() && itemId) {
-      console.log('🔵 결재 상신 버튼 렌더링:', {
-        taskType: 'hod_ic_item',
-        taskId: itemId,
-        taskIdType: typeof itemId,
-        currentUserId,
-        approvalStatus,
-        loading,
-        disabled: loading || !currentUserId
-      });
       
       actions.push(
         <ApprovalActionButton
@@ -627,7 +611,6 @@ interface ResponsibilityDetail {
           taskTitle={`부서장 내부통제 항목 - ${formData.icTask || '항목명'}`}
           currentUserId={currentUserId || ''}
           onApprovalStateChange={() => {
-            console.log('🔄 결재 상태 변경됨 - taskType: hod_ic_item, taskId:', itemId);
             onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
           }}
           size="medium"
@@ -639,12 +622,6 @@ interface ResponsibilityDetail {
 
     // 결재현황 버튼 (approvalStatus가 NONE이 아니고 itemId가 있을 때 - 결재가 진행중)
     if (shouldShowApprovalStatusButton() && itemId) {
-      console.log('🔍 결재현황 버튼 렌더링:', {
-        taskType: 'hod_ic_item',
-        taskId: itemId,
-        approvalStatus,
-        currentUserId
-      });
       
       actions.push(
         <ApprovalActionButton
@@ -654,7 +631,6 @@ interface ResponsibilityDetail {
           taskTitle={`부서장 내부통제 항목 - ${formData.icTask || '항목명'}`}
           currentUserId={currentUserId || ''}
           onApprovalStateChange={() => {
-            console.log('🔄 결재 상태 변경됨 - taskType: hod_ic_item, taskId:', itemId);
             onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
           }}
           size="medium"

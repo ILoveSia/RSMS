@@ -287,9 +287,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       
     } catch (error: any) {
       console.error('부서장차수 생성 실패:', error);
-      console.log('Error object:', error);
-      console.log('Error response:', error?.response);
-      console.log('Error response data:', error?.response?.data);
+      
       
       // P6 상태 에러 체크 및 커스텀 메시지 표시  
       const responseData = error?.response?.data;
@@ -307,8 +305,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
         originalMessage = error.message;
       }
       
-      console.log('Original message:', originalMessage);
-      console.log('Error details:', errorDetails);
+      
       
       let errorMessage = '부서장차수 생성 중 오류가 발생했습니다.';
       
@@ -323,7 +320,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
         errorMessage = originalMessage; // 기타 에러는 원본 메시지 사용
       }
       
-      console.log('Final error message:', errorMessage);
+      
       showError(errorMessage);
     } finally {
       setHodGenerating(false);

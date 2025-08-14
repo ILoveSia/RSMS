@@ -80,12 +80,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
   const currentUserId = loginData?.userid || null;
   
-  console.log('🔍 PositionResponsibilityDialog - 로그인 사용자 정보:', {
-    loginData,
-    currentUserId,
-    hasLoginData: !!loginData,
-    userid: loginData?.userid
-  });
+  
   
   // 원본 데이터 저장용 상태
   const [originalFormData, setOriginalFormData] = useState<FormData>({
@@ -169,12 +164,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   // 데이터 초기화 및 로드
   useEffect(() => {
     if (open) {
-      console.log('📋 PositionResponsibilityDialog - 받은 데이터:', {
-        ledgerOrdersId,
-        apprStatCd,
-        roleRespStatusId,
-        rowData
-      });
+      // dialog opened
     }
     
     if ((mode === 'edit' || mode === 'view') && rowData && open) {
@@ -372,12 +362,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
     // 결재 상신 버튼 (appr_stat_cd가 없고 role_resp_status_id가 있을 때)
     if (shouldShowApprovalButton()) {
-      console.log('🔵 결재 상신 버튼 표시:', {
-        taskType: 'role_resp_status',
-        originalRoleRespStatusId: roleRespStatusId,
-        convertedTaskId: taskIdNumber,
-        taskIdType: typeof taskIdNumber
-      });
       
       actions.push(
         <ApprovalActionButton
@@ -387,7 +371,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           taskTitle={`직책별 책무현황 - ${rowData?.positionName || '직책명'}`}
           currentUserId={currentUserId || ''}
           onApprovalStateChange={() => {
-            console.log('🔄 결재 상태 변경됨');
             onSave?.(); // 부모 컴포넌트에 상태 변경 알림
           }}
           size="small"
@@ -399,11 +382,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
     // 결재 현황 버튼 (appr_stat_cd가 있고 role_resp_status_id가 있을 때)
     if (shouldShowApprovalStatusButton()) {
-      console.log('🔍 결재 현황 버튼 표시:', {
-        taskType: 'role_resp_status',
-        taskId: taskIdNumber,
-        apprStatCd: apprStatCd
-      });
       
       actions.push(
         <ApprovalActionButton
@@ -413,7 +391,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           taskTitle={`직책별 책무현황 - ${rowData?.positionName || '직책명'}`}
           currentUserId={currentUserId || ''}
           onApprovalStateChange={() => {
-            console.log('🔄 결재 상태 변경됨');
             onSave?.(); // 부모 컴포넌트에 상태 변경 알림
           }}
           size="small"

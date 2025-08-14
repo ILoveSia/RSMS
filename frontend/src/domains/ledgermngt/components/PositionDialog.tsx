@@ -495,7 +495,6 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
   // 사번으로 사원 정보 조회
   const fetchEmployeeInfo = async (managerId: string, empNo: string) => {
-    console.log('사원 정보 조회 시도:', empNo);
     try {
       const response = await apiClient.get(`/users/num/${empNo}`);
       if (response && typeof response === 'object') {
@@ -679,13 +678,11 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
 
       // 신규 등록 시에만 selectedLedgerOrder로 ledger_orders_id 조회하여 추가
       if (mode === 'create' && selectedLedgerOrder && selectedLedgerOrder !== 'ALL') {
-        console.log('📋 신규 등록 - 선택된 원장차수로 ledger_orders_id 조회:', selectedLedgerOrder);
         try {
           // positionApi import 필요
           const { positionApi } = await import('../api/positionApi');
           const ledgerOrdersId = await positionApi.getLedgerOrdersIdByTitle(selectedLedgerOrder);
           positionRequestData.ledgerOrder = ledgerOrdersId; // 백엔드 DTO에 맞춰 ledgerOrder로 변경
-          console.log('✅ ledger_orders_id 조회 성공, positions 테이블에 저장할 값:', ledgerOrdersId);
         } catch (ledgerOrderError) {
           console.error('❌ ledger_orders_id 조회 실패:', ledgerOrderError);
           setError(`원장차수 정보 조회에 실패했습니다: ${selectedLedgerOrder}`);

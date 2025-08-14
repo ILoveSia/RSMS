@@ -21,12 +21,11 @@ export const meetingStatusApi = {
     if (params.sortDirection) queryParams.append('sortDirection', params.sortDirection);
 
     const requestUrl = `/meeting-bodies/search?${queryParams.toString()}`;
-    console.log('🚀 [meetingStatusApi] API 호출 URL:', requestUrl);
-    console.log('🚀 [meetingStatusApi] 요청 파라미터:', params);
+    
 
     const response = await apiClient.get<PageableResponse<MeetingBody>>(requestUrl);
     
-    console.log('📥 [meetingStatusApi] API 응답:', response);
+    
     return response;
   },
 

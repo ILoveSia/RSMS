@@ -101,7 +101,7 @@ const routes: DomainRoute[] = [
     },
   },
   {
-    path: '/ledgermngt/structure-submission',
+    path: '/report/structure-submission',
     element: StructureSubmissionStatusPage,
     meta: {
       title: '적부구조도 제출 관리',

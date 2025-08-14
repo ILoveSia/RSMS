@@ -265,12 +265,12 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
       // 신규 등록시에만 원장차수 값 처리
       if (mode === 'create' && selectedLedgerOrder && selectedLedgerOrder !== 'ALL') {
-        console.log('🔄 신규 등록: 원장차수 ID 조회 중...', selectedLedgerOrder);
+        
         
         try {
           // 원장차수 제목으로 ledger_orders_id 조회
           const ledgerOrdersId = await positionApi.getLedgerOrdersIdByTitle(selectedLedgerOrder);
-          console.log('✅ 원장차수 ID 조회 성공:', selectedLedgerOrder, '->', ledgerOrdersId);
+          
           
           // 백엔드 요청 데이터에 ledgerOrder 추가
           responsibilityRequestData.ledgerOrder = ledgerOrdersId;
@@ -282,7 +282,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         }
       }
 
-      console.log('📤 책무 저장 요청 데이터:', responsibilityRequestData);
+      
 
       // 백엔드 API 호출
       if (responsibilityId) {
