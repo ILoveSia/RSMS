@@ -60,7 +60,7 @@ export const usePermission = (): UsePermissionReturn => {
       // 권한 데이터 캐싱 (세션 스토리지에 저장)
       sessionStorage.setItem('userPermissions', JSON.stringify(response || []));
       
-      console.log('사용자 권한 데이터 로드 완료:', response?.length, '개 메뉴');
+      
     } catch (error) {
       console.error('권한 데이터 로드 실패:', error);
       
@@ -70,7 +70,7 @@ export const usePermission = (): UsePermissionReturn => {
         try {
           const cachedPermissions = JSON.parse(cached);
           setPermissions(cachedPermissions);
-          console.log('캐시된 권한 데이터 사용:', cachedPermissions.length, '개 메뉴');
+          
         } catch (parseError) {
           console.error('캐시된 권한 데이터 파싱 실패:', parseError);
           setPermissions([]);
@@ -162,7 +162,7 @@ export const usePermission = (): UsePermissionReturn => {
    * 권한 데이터 새로고침
    */
   const refreshPermissions = useCallback(async () => {
-    console.log('권한 데이터 새로고침 요청');
+    
     await loadPermissions();
   }, [loadPermissions]);
 

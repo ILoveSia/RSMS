@@ -13,7 +13,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ style }) => {
 
   const handleLogout = () => {
     try {
-      console.log('🚪 [TopHeader] 로그아웃 버튼 클릭');
+      
       
       // AuthContext의 logout 함수 호출 (모든 데이터 정리 포함)
       logout();

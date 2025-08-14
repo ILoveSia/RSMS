@@ -53,7 +53,7 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
   // TabContext 디버깅
 
   // loginStore에서 사용자 데이터 가져오기
-  const { data: loginData } = useReduxState<User>('loginStore/login');
+  const { data: _loginData } = useReduxState<User>('loginStore/login');
   // menuStore에서 메뉴 데이터 가져오기
   const { data: menuData } = useReduxState<Menu[]>('menuStore/accessibleMenus');
   const [menuItems, setMenuItems] = useState<MenuItemProps[]>([]);
@@ -181,15 +181,9 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
 
   // menuStore의 accessibleMenus 데이터를 메뉴 아이템으로 변환
   useEffect(() => {
-    console.log('🔍 [LeftMenu] menuData 변경:', {
-      menuData,
-      isArray: Array.isArray(menuData),
-      length: Array.isArray(menuData) ? menuData.length : 'N/A',
-      type: typeof menuData,
-      hasData: !!menuData
-    });
+    
     if (menuData && Array.isArray(menuData) && menuData.length > 0) {
-      console.log('✅ [LeftMenu] 메뉴 데이터 처리 시작:', menuData.length, '개');
+      
       
       // 계층형 구조 구성: 부모-자식 관계 설정
       const menuMap = new Map<number, Menu>();
@@ -220,21 +214,17 @@ const LeftMenu: React.FC<LeftMenuProps> = ({ className = '' }) => {
         .sort((a, b) => a.sortOrder - b.sortOrder) // 정렬 순서 적용
         .map(menu => convertMenuToMenuItem(menu));
 
-      console.log('📋 [LeftMenu] 변환된 메뉴 아이템:', convertedMenus);
+      
       setMenuItems(convertedMenus);
       setIsMenuLoaded(true);
 
       // 첫 번째 메뉴를 기본으로 확장
       if (convertedMenus.length > 0) {
         setExpandedItems([convertedMenus[0].title]);
-        console.log('🔧 [LeftMenu] 첫 번째 메뉴 확장:', convertedMenus[0].title);
+        
       }
     } else {
-      console.log('⚠️ [LeftMenu] 메뉴 데이터가 없음 또는 비어있음:', {
-        menuData,
-        isArray: Array.isArray(menuData),
-        length: Array.isArray(menuData) ? menuData.length : 'N/A'
-      });
+      
     }
   }, [menuData]);
 

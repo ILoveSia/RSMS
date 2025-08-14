@@ -59,18 +59,13 @@ interface AuthProviderProps {
 // Redux store dispatch 함수 (window 객체를 통해 접근)
 const dispatchToStore = (action: { type: string; payload: unknown }) => {
   try {
-    console.log('🔄 [AuthContext] Redux dispatch 시도:', action);
+    
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const store = (window as any).__HOST_STORE__?.main;
-    console.log('🏪 [AuthContext] Store 상태:', {
-      hasStore: !!store,
-      hasDispatch: !!(store && store.dispatch),
-      storeKeys: store ? Object.keys(store) : [],
-    });
+    
     
     if (store && store.dispatch) {
       store.dispatch(action);
-      console.log('✅ [AuthContext] Redux dispatch 성공');
     } else {
       console.warn('⚠️ [AuthContext] Redux store에 접근할 수 없음');
     }
@@ -139,7 +134,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
 
         // Redux store에 로그인 데이터 복원
-        console.log('🔄 [AuthContext] Redux store에 로그인 데이터 복원:', userData);
+        
         dispatchToStore({
           type: 'loginStore/login/setData',
           payload: userData,
@@ -184,7 +179,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
 
     // Redux store에 로그인 데이터 저장
-    console.log('💾 [AuthContext] setAuthenticatedUser - Redux Store에 저장할 데이터:', userData);
+    
     dispatchToStore({
       type: 'loginStore/login/setData',
       payload: userData,
@@ -196,14 +191,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const store = (window as any).__HOST_STORE__?.main;
       if (store) {
         const state = store.getState();
-        console.log('✅ [AuthContext] Redux Store 저장 검증:', {
-          전체스토어: state,
-          hasLoginStore: !!state?.LoginStore,
-          loginStoreData: state?.LoginStore?.login?.data,
-          hasloginStore: !!state?.loginStore,
-          loginStoreDataLower: state?.loginStore?.login?.data,
-          모든키: Object.keys(state || {}),
-        });
+        void state;
       }
     }, 100);
 
@@ -252,7 +240,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 로그아웃 함수
   const logout = () => {
-    console.log('🚪 [AuthContext] 로그아웃 시작');
+    
 
     // localStorage에서 사용자 정보와 메뉴 정보 모두 제거
     localStorage.removeItem('user');
@@ -271,7 +259,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       payload: null,
     });
 
-    console.log('🧹 [AuthContext] 모든 데이터 초기화 완료');
+    
 
     setAuthState({
       isAuthenticated: false,

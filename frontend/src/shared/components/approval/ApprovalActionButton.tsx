@@ -67,12 +67,6 @@ const ApprovalActionButton: React.FC<ApprovalActionButtonProps> = ({
   const checkApprovalStatus = async () => {
     try {
       setLoading(true);
-      console.log('🔍 ApprovalActionButton API 호출:', {
-        taskType,
-        taskId,
-        taskIdType: typeof taskId,
-        apiUrl: `/api/approval/status/${taskType}/${taskId}`
-      });
       const status = await approvalApi.getApprovalStatus(taskType, taskId);
       
       if (!status || status.status === 'NOT_SUBMITTED') {

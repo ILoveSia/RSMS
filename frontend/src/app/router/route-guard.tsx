@@ -72,14 +72,14 @@ const RouteGuard: React.FC<RouteGuardProps> = ({ children, meta }) => {
 
     // 인증되지 않은 사용자는 로그인 페이지로
     if (!authState.isAuthenticated) {
-      console.log('❌ [RouteGuard] 역할 권한 필요하지만 미인증 상태 -> 로그인 페이지로 리다이렉트');
+      
       return <Navigate to='/login' state={{ from: location }} replace />;
     }
 
     const hasRequiredRole = hasAnyRole(meta.roles);
 
     if (!hasRequiredRole) {
-      console.log('❌ [RouteGuard] 필요한 역할 권한 없음 -> 접근 거부 페이지 표시');
+      
       return (
         <Box
           display='flex'

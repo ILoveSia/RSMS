@@ -259,8 +259,11 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
 		title: '제출 보고서 관리',
 		icon: 'description',
 	},
-
-
+  '/report/structure-submission':{
+    component: () => import('@/domains/ledgermngt/pages/StructureSubmissionStatusPage'),
+    title: '적부구조도 제출 관리',
+    icon: 'Upload',
+  },
 };
 
 /**
