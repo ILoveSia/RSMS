@@ -294,23 +294,20 @@ public class PositionServiceImpl implements PositionService {
                 positionAdminRepository.findByPosition_PositionsId(id).stream().map(pa -> {
                     try {
                         // UserService를 통해 employee 테이블에서 조회
-                        var userResponse = userService.getUserByNum(pa.getPositionsAdminId());
+                        var userResponse = userService.getUserByEmpNo(pa.getPositionsAdminId());
                         
                         String positionName = "직급정보 없음";
-                        if (userResponse.getJobRankCd() != null && !userResponse.getJobRankCd().isBlank()) {
-                            positionName = commonCodeRepository
-                                    .findByGroupCodeAndCode("JOB_RANK", userResponse.getJobRankCd())
-                                    .map(CommonCode::getCodeName).orElseGet(() -> {
-                                        log.warn("공통코드에 해당 직급코드가 없습니다: group=JOB_RANK, code={}",
-                                                userResponse.getJobRankCd());
-                                        return "직급명(코드미등록)";
-                                    });
+                        if (userResponse.getPositionName() != null && !userResponse.getPositionName().isBlank()) {
+                            positionName = userResponse.getPositionName(); // Employee에서 직접 조회한 직급명 사용
                         } else {
-                            log.warn("사용자에게 직급코드가 지정되지 않았습니다: {}", userResponse.getUsername());
+                            log.warn("직급명이 없습니다: empNo={}", userResponse.getEmpNo());
                         }
 
-                        return PositionDetailDto.ManagerInfo.builder().empNo(userResponse.getNum())
-                                .empName(userResponse.getUsername()).position(positionName).build();
+                        return PositionDetailDto.ManagerInfo.builder()
+                                .empNo(userResponse.getEmpNo())
+                                .empName(userResponse.getUsername())
+                                .position(positionName)
+                                .build();
                     } catch (Exception e) {
                         log.warn("사번으로 사용자를 찾을 수 없습니다: {}", pa.getPositionsAdminId());
                         return PositionDetailDto.ManagerInfo.builder()

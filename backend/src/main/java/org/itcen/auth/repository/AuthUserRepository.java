@@ -21,12 +21,13 @@ import java.util.Optional;
 public interface AuthUserRepository extends JpaRepository<User, String> {
     
     /**
-     * 사용자명으로 사용자 조회 (로그인용)
+     * 사번으로 사용자 조회 (로그인용) - Employee JOIN
      * 
-     * @param username 사용자명
+     * @param empNo 사번
      * @return 사용자 정보
      */
-    Optional<User> findByUsername(String username);
+    @Query("SELECT u FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo WHERE u.empNo = :empNo")
+    Optional<User> findByEmpNo(@Param("empNo") String empNo);
     
     /**
      * 이메일로 사용자 조회 (로그인용)
@@ -37,21 +38,21 @@ public interface AuthUserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
     
     /**
-     * 사용자명 또는 이메일로 사용자 조회 (로그인용)
+     * 사용자 ID로 사용자 조회 (로그인용)
      * 
-     * @param usernameOrEmail 사용자명 또는 이메일
+     * @param userId 사용자 ID
      * @return 사용자 정보
      */
-    @Query("SELECT u FROM User u WHERE u.id = :userid")
-    Optional<User> findByUsernameOrEmail(@Param("userid") String userid);
+    @Query("SELECT u FROM User u WHERE u.id = :userId")
+    Optional<User> findByUserId(@Param("userId") String userId);
     
     /**
-     * 사용자명 존재 여부 확인
+     * 사번 존재 여부 확인
      * 
-     * @param username 사용자명
+     * @param empNo 사번
      * @return 존재 여부
      */
-    boolean existsByUsername(String username);
+    boolean existsByEmpNo(String empNo);
     
     /**
      * 이메일 존재 여부 확인

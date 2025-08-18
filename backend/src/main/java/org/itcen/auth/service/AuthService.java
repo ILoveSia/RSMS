@@ -6,6 +6,7 @@ import org.itcen.auth.domain.AuthRequestDto;
 import org.itcen.auth.domain.AuthResponseDto;
 import org.itcen.auth.repository.AuthUserRepository;
 import org.itcen.auth.repository.UserRoleRepository;
+import org.itcen.auth.domain.permission.UserRole;
 import org.itcen.domain.menu.dto.MenuDto;
 import org.itcen.domain.menu.service.MenuService;
 import org.itcen.domain.user.entity.User;
@@ -19,7 +20,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,25 +58,6 @@ public class AuthService {
         this.menuService = menuService;
     }
     
-    /**
-     * 사용자명 또는 이메일로 사용자 정보 조회 (내부 사용용)
-     * Spring Security의 자동 호출을 방지하기 위해 private으로 변경
-     * 
-     * @param usernameOrEmail 사용자명 또는 이메일
-     * @return UserDetails 구현체
-     * @throws UsernameNotFoundException 사용자를 찾을 수 없는 경우
-     */
-    private UserDetails loadUserByUsernameInternal(String usernameOrEmail) throws UsernameNotFoundException {
-        if (usernameOrEmail == null || usernameOrEmail.trim().isEmpty()) {
-            log.error("usernameOrEmail이 비어있습니다!");
-            throw new UsernameNotFoundException("사용자명 또는 이메일이 비어있습니다.");
-        }
-        
-        User user = authUserRepository.findByUsernameOrEmail(usernameOrEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + usernameOrEmail));
-        
-        return createUserDetails(user);
-    }
     
     /**
      * 로그인 처리
@@ -89,9 +70,9 @@ public class AuthService {
     @Transactional
     public AuthResponseDto.LoginResponse login(AuthRequestDto.LoginRequest request, HttpServletRequest httpRequest) {
         try {
-            // 1. 사용자 조회
-            User user = authUserRepository.findByUsernameOrEmail(request.getUserid())
-                    .orElseThrow(() -> new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다."));
+            // 1. 사용자 조회 (사용자 ID)
+            User user = authUserRepository.findByUserId(request.getUserid())
+                    .orElseThrow(() -> new BadCredentialsException("사용자 ID 또는 비밀번호가 올바르지 않습니다."));
 
             // 2. 비밀번호 검증
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -114,7 +95,7 @@ public class AuthService {
             // 새 세션 생성
             HttpSession session = httpRequest.getSession(true);
             session.setAttribute("userId", user.getId());
-            session.setAttribute("username", user.getUsername());
+            session.setAttribute("username", user.getEmpNo()); // empNo를 username으로 사용
             session.setAttribute("authorities", userDetails.getAuthorities());
             
             // Remember Me 처리
@@ -150,7 +131,7 @@ public class AuthService {
             
             // 메뉴가 없는 경우 디버깅 정보 출력
             if (accessibleMenus.isEmpty()) {
-                log.warn("메뉴가 조회되지 않았습니다. 역할: {}, 사용자: {}", userRole, user.getUsername());
+                log.warn("메뉴가 조회되지 않았습니다. 역할: {}, 사용자: {}", userRole, user.getEmpNo());
                 // 전체 메뉴 개수 확인
                 List<MenuDto> allMenus = menuService.getAllActiveMenus();
                 log.warn("전체 활성 메뉴 개수: {}", allMenus.size());
@@ -158,7 +139,7 @@ public class AuthService {
             
             return AuthResponseDto.LoginResponse.builder()
                     .userId(user.getId())
-                    .username(user.getUsername())
+                    .username(user.getEmpNo()) // empNo를 username으로 사용
                     .email(user.getEmail())
                     .authorities(authorities)
                     .sessionId(session.getId())
@@ -191,7 +172,6 @@ public class AuthService {
         }
         
         String userId = (String) session.getAttribute("userId");
-        String username = (String) session.getAttribute("username");
         
         // 기본 HTTP 세션 사용
         
@@ -224,18 +204,18 @@ public class AuthService {
         // 사용자 생성
         User user = User.builder()
                 .id(request.getId())
-                .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .address(request.getAddress())
                 .mobile(request.getMobile())
+                .empNo(request.getEmpNo()) // empNo 필드 사용
                 .build();
         
         User savedUser = authUserRepository.save(user);
         
         return AuthResponseDto.SignupResponse.builder()
                 .userId(savedUser.getId())
-                .username(savedUser.getUsername())
+                .username(savedUser.getEmpNo()) // empNo를 username으로 사용
                 .email(savedUser.getEmail())
                 .signupTime(savedUser.getCreatedAt())
                 .authorities(List.of("ROLE_USER")) // 기본 권한
@@ -297,7 +277,7 @@ public class AuthService {
         
         return AuthResponseDto.UserInfoResponse.builder()
                 .userId(user.getId())
-                .username(user.getUsername())
+                .username(user.getEmpNo()) // empNo를 username으로 사용
                 .email(user.getEmail())
                 .address(user.getAddress())
                 .mobile(user.getMobile())
@@ -319,7 +299,7 @@ public class AuthService {
         // user_roles 테이블에서 활성화된 역할 조회
         List<String> roleIds = userRoleRepository.findActiveRolesByUserId(user.getId())
                 .stream()
-                .map(userRole -> userRole.getRoleId())
+                .map(UserRole::getRoleId)
                 .toList();
         
         // 역할이 없으면 기본적으로 USER 역할 부여
@@ -336,7 +316,7 @@ public class AuthService {
         log.info("사용자 {} 역할 조회 완료: {}", user.getId(), roleIds);
         
         return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
+                .username(user.getEmpNo()) // empNo를 username으로 사용
                 .password(user.getPassword())
                 .authorities(authorities)
                 .accountExpired(false)
@@ -356,8 +336,8 @@ public class AuthService {
             throw new IllegalArgumentException("이미 사용 중인 사용자 ID입니다.");
         }
         
-        if (authUserRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("이미 사용 중인 사용자명입니다.");
+        if (authUserRepository.existsByEmpNo(request.getEmpNo())) {
+            throw new IllegalArgumentException("이미 사용 중인 사번입니다.");
         }
         
         if (authUserRepository.existsByEmail(request.getEmail())) {

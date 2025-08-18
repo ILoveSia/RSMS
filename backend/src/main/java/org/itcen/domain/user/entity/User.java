@@ -35,11 +35,6 @@ public class User {
     @Column(length = 100)
     private String id;
 
-    /**
-     * 사용자명 (로그인 ID)
-     */
-    @Column(unique = true, nullable = false, length = 50)
-    private String username;
 
     /**
      * 이메일
@@ -65,23 +60,6 @@ public class User {
     @Column(nullable = false, length = 255)
     private String password;
 
-    /**
-     * 부서코드
-     */
-    @Column(name = "dept_cd", length = 100)
-    private String deptCd;
-
-    /**
-     * 사번
-     */
-    @Column(name = "num", length = 100)
-    private String num;
-
-    /**
-     * 직급코드
-     */
-    @Column(name = "job_rank_cd", length = 100)
-    private String jobRankCd;
 
     // 직책코드(job_title_cd) 컬럼은 DB에서 제거됨. 엔티티에서도 제거하여 스키마에 맞춤
 
