@@ -313,8 +313,8 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       let errorMessage = '부서장차수 생성 중 오류가 발생했습니다.';
       
       // P6 상태 관련 에러인지 체크
-      if (originalMessage.includes('P6') && originalMessage.includes('P8')) {
-        errorMessage = '부서장차수를 생성할 수 없습니다. 최신 부서장차수가 최종확정 상태여야 생성 가능합니다.';
+      if (originalMessage.includes('P6') && originalMessage.includes('P7')) {
+        errorMessage = '부서장차수를 생성할 수 없습니다. 최신 부서장차수가 부서장확정 상태여야 생성 가능합니다.';
       } else if (originalMessage.includes('P5') && originalMessage.includes('최종확정')) {
         errorMessage = '부서장차수를 생성할 수 없습니다. 원장차수가 최종확정(P5) 상태여야 생성 가능합니다.';
       } else if (originalMessage.includes('이미 존재합니다')) {
@@ -331,11 +331,23 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   }, [hodGenerating, showSuccess, showError]);
 
   const handleCreateClick = useCallback(() => {
+    // P7 상태(부서장확정) 검증
+    if (selectedLedgerOrderStatusCd === 'P7') {
+      showError('부서장확정 상태에서는 등록할 수 없습니다.');
+      return;
+    }
+    
+    // 부서장차수가 선택되지 않은 경우 검증
+    if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
+      showError('부서장차수를 선택해주세요.');
+      return;
+    }
+    
     setDialogMode('create');
     setSelectedItemId(undefined);
     setSelectedRowApprovalStatus('NONE'); // create 모드에서는 항상 NONE으로 설정
     setDialogOpen(true);
-  }, []);
+  }, [selectedLedgerOrderStatusCd, selectedLedgerOrder, showError]);
 
   const handleRowDoubleClick = useCallback((row: HodICItemRow) => {
     setDialogMode('view');
@@ -389,6 +401,60 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   const handleDialogSuccess = useCallback(async () => {
     await handleSearch(); // 데이터 새로고침
   }, [handleSearch]);
+
+  // 확정 가능 여부 확인
+  const canConfirm = useCallback(() => {
+    // 1. LedgerOrdersHodSelect에서 선택된 부서장차수의 status가 P6인지 확인
+    if (selectedLedgerOrderStatusCd !== 'P6') {
+      return false;
+    }
+    
+    // 2. DataGrid의 모든 행에서 approvalStatus가 APPROVED인지 확인
+    if (rows.length === 0) {
+      return false;
+    }
+    
+    const allApproved = rows.every(row => row.approvalStatus === 'APPROVED');
+    return allApproved;
+  }, [selectedLedgerOrderStatusCd, rows]);
+
+  // 확정 처리
+  const handleConfirm = useCallback(async () => {
+    if (!selectedLedgerOrderId) {
+      showError('선택된 부서장차수가 없습니다.');
+      return;
+    }
+
+    if (!canConfirm()) {
+      showError('확정 조건을 만족하지 않습니다. 부서장차수 상태가 P6이고 모든 항목이 승인되어야 합니다.');
+      return;
+    }
+
+    if (!confirm('선택된 부서장차수를 확정하시겠습니까?\n확정 후에는 수정할 수 없습니다.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      await hodICItemApi.confirmHodLedgerOrder(selectedLedgerOrderId);
+      
+      showSuccess('부서장차수가 성공적으로 확정되었습니다.');
+      
+      // LedgerOrdersHodSelect 컴포넌트 새로고침 트리거
+      setHodRefreshTrigger(prev => prev + 1);
+      
+      // 데이터 새로고침
+      await handleSearch();
+      
+    } catch (error: any) {
+      console.error('부서장차수 확정 실패:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || '부서장차수 확정 중 오류가 발생했습니다.';
+      showError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedLedgerOrderId, canConfirm, showSuccess, showError, handleSearch]);
 
   return (
     <PageContainer
@@ -482,9 +548,8 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
               variant='contained'
               size='small'
               color='success'
-              onClick={() => {
-                /* 확정 로직 미구현 */
-              }}
+              onClick={handleConfirm}
+              disabled={!canConfirm() || loading}
               sx={{
                 height: '32px',
                 minWidth: '80px',
@@ -495,23 +560,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             >
               확정
             </Button>
-            <Button
-              variant='contained'
-              size='small'
-              color='error'
-              onClick={() => {
-                /* 확정취소 로직 미구현 */
-              }}
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
-            >
-              확정취소
-            </Button>
+            
           </Box>
         </Box>
         <Box sx={{ 
@@ -535,7 +584,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             showDelete={true}
             showEdit={false}
             showRefresh={false}
-            registerDisabled={loading}
+            registerDisabled={loading || selectedLedgerOrderStatusCd === 'P7' || !selectedLedgerOrder || selectedLedgerOrder === 'ALL'}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"
             sx={{

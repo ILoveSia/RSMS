@@ -1,0 +1,187 @@
+erDiagram
+    handover_assignments {
+        bigint assignment_id PK "인수인계지정 고유 식별자 (Assignment ID)"
+        bigint position_id FK "직책 ID (Position ID)"
+        varchar handover_type "인수인계유형 (Handover Type)"
+        varchar handover_from_emp_no "인계자사번 (Handover From Employee)"
+        varchar handover_to_emp_no "인수자사번 (Handover To Employee)"
+        date planned_start_date "시작예정일 (Planned Start Date)"
+        date planned_end_date "완료예정일 (Planned End Date)"
+        varchar status "상태 (Status)"
+        int progress_rate "진행률 (Progress Rate)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    responsibility_documents {
+        bigint document_id PK "책무기술서 고유 식별자 (Document ID)"
+        bigint position_id FK "직책 ID (Position ID)"
+        bigint responsibility_id FK "책무 ID (Responsibility ID)"
+        varchar document_title "문서제목 (Document Title)"
+        varchar document_version "문서버전 (Document Version)"
+        text document_content "문서내용 (Document Content)"
+        varchar status "상태 (Status)"
+        bigint approval_id FK "승인 ID (Approval ID)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    internal_control_manuals {
+        bigint manual_id PK "내부통제메뉴얼 고유 식별자 (Manual ID)"
+        varchar dept_cd "부서코드 (Department Code)"
+        bigint hod_ic_item_id FK "부서장내부통제항목 ID (HOD IC Item ID)"
+        varchar manual_title "메뉴얼제목 (Manual Title)"
+        varchar manual_version "메뉴얼버전 (Manual Version)"
+        text manual_content "메뉴얼내용 (Manual Content)"
+        varchar status "상태 (Status)"
+        bigint approval_id FK "승인 ID (Approval ID)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    business_plan_inspections {
+        bigint inspection_id PK "사업계획점검 고유 식별자 (Inspection ID)"
+        varchar dept_cd "부서코드 (Department Code)"
+        int inspection_year "점검연도 (Inspection Year)"
+        int inspection_quarter "점검분기 (Inspection Quarter)"
+        varchar inspection_title "점검제목 (Inspection Title)"
+        varchar inspection_type "점검유형 (Inspection Type)"
+        varchar status "상태 (Status)"
+        varchar overall_grade "종합등급 (Overall Grade)"
+        text inspection_findings "점검발견사항 (Inspection Findings)"
+        text improvement_plan "개선계획 (Improvement Plan)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    handover_histories {
+        bigint history_id PK "인수인계이력 고유 식별자 (History ID)"
+        bigint assignment_id FK "인수인계지정 ID (Assignment ID)"
+        varchar activity_type "활동유형 (Activity Type)"
+        text activity_description "활동설명 (Activity Description)"
+        timestamp activity_date "활동일시 (Activity DateTime)"
+        varchar actor_emp_no "작업자사번 (Actor Employee Number)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    positions {
+        bigint positions_id PK "직책 고유 식별자 (Position ID)"
+        bigint ledger_orders_id FK "원장차수 ID (Ledger Order ID)"
+        varchar position_name "직책명 (Position Name)"
+        varchar dept_cd "부서코드 (Department Code)"
+        varchar position_type_cd "직책유형코드 (Position Type Code)"
+        varchar status_cd "상태코드 (Status Code)"
+        varchar emp_no "담당자사번 (Employee Number)"
+        date start_date "시작일 (Start Date)"
+        date end_date "종료일 (End Date)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    responsibility {
+        bigint responsibility_id PK "책무 고유 식별자 (Responsibility ID)"
+        varchar responsibility_content "책무내용 (Responsibility Content)"
+        varchar responsibility_type_cd "책무유형코드 (Responsibility Type Code)"
+        boolean is_active "활성상태 (Active Status)"
+        int sort_order "정렬순서 (Sort Order)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    hod_ic_item {
+        bigint hod_ic_item_id PK "부서장내부통제항목 ID (HOD IC Item ID)"
+        bigint responsibility_id FK "책무 ID (Responsibility ID)"
+        bigint responsibility_detail_id FK "책무상세 ID (Detail ID)"
+        bigint ledger_orders "원장차수 (Ledger Order)"
+        bigint ledger_orders_hod "부서장차수 (HOD Order)"
+        varchar field_type_cd "항목구분코드 (Field Type Code)"
+        varchar role_type_cd "직무구분코드 (Role Type Code)"
+        varchar dept_cd "부서코드 (Department Code)"
+        varchar ic_task "내부통제업무 (Internal Control Task)"
+        varchar measure_desc "조치활동내용 (Measure Description)"
+        varchar measure_type "조치유형 (Measure Type)"
+        varchar period_cd "주기코드 (Period Code)"
+        varchar support_doc "관련근거 (Supporting Document)"
+        varchar check_period "점검시기 (Check Period)"
+        varchar check_way "점검방법 (Check Method)"
+        varchar proof_doc "증빙자료 (Proof Document)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    attachments {
+        bigint attachment_id PK "첨부파일 고유 식별자 (Attachment ID)"
+        varchar entity_type "엔티티유형 (Entity Type)"
+        bigint entity_id "엔티티 ID (Entity ID)"
+        varchar original_filename "원본파일명 (Original Filename)"
+        varchar stored_filename "저장파일명 (Stored Filename)"
+        varchar file_path "파일경로 (File Path)"
+        varchar content_type "콘텐츠유형 (Content Type)"
+        bigint file_size "파일크기 (File Size)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    approval {
+        int approval_id PK "결재 고유 식별자 (Approval ID)"
+        varchar task_type_cd "업무유형코드 (Task Type Code)"
+        bigint task_id "업무 ID (Task ID)"
+        varchar requester_id "결재요청자 ID (Requester ID)"
+        varchar approver_id "결재자 ID (Approver ID)"
+        varchar appr_stat_cd "결재상태코드 (Approval Status Code)"
+        timestamp request_datetime "결재요청일시 (Request DateTime)"
+        timestamp approval_datetime "결재완료일시 (Approval DateTime)"
+        text comments "결재메모 (Approval Comments)"
+        varchar urgency_cd "긴급도코드 (Urgency Code)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    departments {
+        varchar department_id PK "부서 고유 식별자 (Department ID)"
+        varchar department_name "부서명 (Department Name)"
+        varchar parent_department_id FK "상위부서 ID (Parent Department)"
+        int depth "계층깊이 (Hierarchy Depth)"
+        boolean is_active "활성상태 (Active Status)"
+        int sort_order "정렬순서 (Sort Order)"
+    }
+    
+    employee {
+        varchar emp_no PK "사번 (Employee Number)"
+        varchar emp_name "직원명 (Employee Name)"
+        varchar dept_name "부서명 (Department Name)"
+        varchar position_name "직책명 (Position Title)"
+        varchar job_rank_name "직급명 (Job Rank Name)"
+        varchar email "이메일주소 (Email Address)"
+        varchar phone "전화번호 (Phone Number)"
+    }
+    
+    positions ||--o{ handover_assignments : "position_id"
+    handover_assignments ||--o{ handover_histories : "assignment_id"
+    positions ||--o{ responsibility_documents : "position_id"
+    responsibility ||--o{ responsibility_documents : "responsibility_id"
+    responsibility_documents }o--|| approval : "approval_id"
+    responsibility_documents ||--o{ attachments : "entity_id (responsibility_documents)"
+    hod_ic_item ||--o{ internal_control_manuals : "hod_ic_item_id"
+    internal_control_manuals }o--|| approval : "approval_id"
+    internal_control_manuals ||--o{ attachments : "entity_id (internal_control_manuals)"
+    departments ||--o{ business_plan_inspections : "dept_cd"
+    employee ||--o{ handover_assignments : "handover_from_emp_no"
+    employee ||--o{ handover_assignments : "handover_to_emp_no"
+    employee ||--o{ handover_histories : "actor_emp_no"
+    departments ||--o{ positions : "dept_cd"
+    departments ||--o{ hod_ic_item : "dept_cd"
+    departments ||--o{ internal_control_manuals : "dept_cd"

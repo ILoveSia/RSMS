@@ -18,8 +18,8 @@ const TopHeader: React.FC<TopHeaderProps> = ({ style }) => {
       // AuthContext의 logout 함수 호출 (모든 데이터 정리 포함)
       logout();
 
-      // 완전한 상태 초기화를 위해 페이지 새로고침과 함께 로그인 페이지로 이동
-      window.location.href = '/login';
+      // React Router를 사용한 네비게이션 (리프레시 없이)
+      navigate('/login', { replace: true });
 
     } catch (error) {
       console.error('❌ [TopHeader] 로그아웃 처리 실패:', error);

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITCEN Solution - DB 다이어그램 뷰어</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .navigation {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .nav-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+        
+        .nav-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+        }
+        
+        .nav-btn.active {
+            background: #28a745;
+            box-shadow: 0 4px 8px rgba(40,167,69,0.3);
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .diagram-section {
+            display: none;
+            text-align: center;
+        }
+        
+        .diagram-section.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .diagram-title {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 400;
+        }
+        
+        .diagram-description {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #007bff;
+            text-align: left;
+            color: #495057;
+        }
+        
+        .diagram-container {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: auto;
+        }
+        
+        .diagram-container svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .format-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .format-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .format-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .stats {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 2em; }
+            .content { padding: 20px; }
+            .nav-buttons { flex-direction: column; align-items: stretch; }
+            .nav-btn { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 ITCEN Solution</h1>
+            <p>데이터베이스 ER 다이어그램 인터랙티브 뷰어</p>
+        </div>
+        
+        <div class="navigation">
+            <div class="nav-buttons">
+                <button class="nav-btn active" onclick="showDiagram('overview')">🏗️ 시스템 전체 구조</button>
+                <button class="nav-btn" onclick="showDiagram('auth')">👤 사용자 인증 & 권한</button>
+                <button class="nav-btn" onclick="showDiagram('ledger')">📊 원장 관리 & 결재</button>
+                <button class="nav-btn" onclick="showDiagram('audit')">🔍 점검 관리</button>
+                <button class="nav-btn" onclick="showDiagram('handover')">🔄 인수인계 관리</button>
+                <button class="nav-btn" onclick="showDiagram('common')">🔧 공통 시스템</button>
+            </div>
+        </div>
+        
+        <div class="content">
+            <!-- 시스템 전체 구조 -->
+            <div id="overview" class="diagram-section active">
+                <h2 class="diagram-title">🏗️ 시스템 전체 아키텍처</h2>
+                <div class="diagram-description">
+                    <strong>ITCEN Solution의 전체 시스템 구조</strong><br>
+                    7개 주요 도메인 간의 관계와 데이터 흐름을 보여주는 고수준 아키텍처 다이어그램입니다.
+                    사용자 인증부터 원장 관리, 점검, 인수인계까지 모든 업무 프로세스가 연결된 구조를 확인할 수 있습니다.
+                </div>
+                <div class="diagram-container">
+                    <object data="01_system_overview.svg" type="image/svg+xml" width="100%" height="500">
+                        <img src="01_system_overview.png" alt="시스템 전체 구조" style="max-width: 100%;">
+                    </object>
+                </div>
+                <div class="format-buttons">
+                    <button class="format-btn" onclick="downloadFile('01_system_overview.svg')">📥 SVG 다운로드</button>
+                    <button class="format-btn" onclick="downloadFile('01_system_overview.mmd')">📝 Mermaid 코드</button>
+                </div>
+            </div>
+            
+            <!-- 사용자 인증 & 권한 -->
+            <div id="auth" class="diagram-section">
+                <h2 class="diagram-title">👤 사용자 인증 & 권한 관리</h2>
+                <div class="diagram-description">
+                    <strong>RBAC (Role-Based Access Control) 시스템</strong><br>
+                    사용자, 직원, 부서, 역할, 메뉴 권한의 관계를 보여줍니다.
+                    users ↔ employee ↔ departments 구조와 역할별 메뉴 권한 매트릭스 시스템을 확인할 수 있습니다.
+                </div>
+                <div class="diagram-container">
+                    <object data="02_user_auth_domain.svg" type="image/svg+xml" width="100%" height="500">
+                        <img src="02_user_auth_domain.png" alt="사용자 인증 & 권한" style="max-width: 100%;">
+                    </object>
+                </div>
+                <div class="format-buttons">
+                    <button class="format-btn" onclick="downloadFile('02_user_auth_domain.svg')">📥 SVG 다운로드</button>
+                    <button class="format-btn" onclick="downloadFile('02_user_auth_domain.mmd')">📝 Mermaid 코드</button>
+                </div>
+            </div>
+            
+            <!-- 원장 관리 & 결재 -->
+            <div id="ledger" class="diagram-section">
+                <h2 class="diagram-title">📊 원장 관리 & 결재 시스템</h2>
+                <div class="diagram-description">
+                    <strong>핵심 업무 프로세스</strong><br>
+                    원장차수, 직책, 책무, 부서장 내부통제 항목, 다단계 결재 시스템의 관계를 보여줍니다.
+                    가장 복잡하고 중요한 도메인으로 7개 화면에서 hod_ic_item 테이블을 참조합니다.
+                </div>
+                <div class="diagram-container">
+                    <object data="03_ledger_approval_domain.svg" type="image/svg+xml" width="100%" height="500">
+                        <img src="03_ledger_approval_domain.png" alt="원장 관리 & 결재" style="max-width: 100%;">
+                    </object>
+                </div>
+                <div class="format-buttons">
+                    <button class="format-btn" onclick="downloadFile('03_ledger_approval_domain.svg')">📥 SVG 다운로드</button>
+                    <button class="format-btn" onclick="downloadFile('03_ledger_approval_domain.mmd')">📝 Mermaid 코드</button>
+                </div>
+            </div>
+            
+            <!-- 점검 관리 -->
+            <div id="audit" class="diagram-section">
+                <h2 class="diagram-title">🔍 점검 관리 시스템</h2>
+                <div class="diagram-description">
+                    <strong>감사 및 점검 프로세스</strong><br>
+                    점검 계획 수립, 점검자 지정, 점검 실행, 결과 관리, 미흡사항 개선까지의 전체 점검 생명주기를 관리합니다.
+                    임원, 점검자, 점검 대상 항목 간의 관계를 확인할 수 있습니다.
+                </div>
+                <div class="diagram-container">
+                    <object data="04_audit_domain.svg" type="image/svg+xml" width="100%" height="500">
+                        <img src="04_audit_domain.png" alt="점검 관리" style="max-width: 100%;">
+                    </object>
+                </div>
+                <div class="format-buttons">
+                    <button class="format-btn" onclick="downloadFile('04_audit_domain.svg')">📥 SVG 다운로드</button>
+                    <button class="format-btn" onclick="downloadFile('04_audit_domain.mmd')">📝 Mermaid 코드</button>
+                </div>
+            </div>
+            
+            <!-- 인수인계 관리 -->
+            <div id="handover" class="diagram-section">
+                <h2 class="diagram-title">🔄 인수인계 관리 시스템</h2>
+                <div class="diagram-description">
+                    <strong>업무 인수인계 및 문서 관리</strong><br>
+                    직책별 인수인계 지정, 책무기술서, 내부통제 업무메뉴얼, 사업계획 점검의 관계를 보여줍니다.
+                    첨부파일 시스템과 결재 시스템이 통합된 문서 중심의 인수인계 프로세스입니다.
+                </div>
+                <div class="diagram-container">
+                    <object data="05_handover_domain.svg" type="image/svg+xml" width="100%" height="500">
+                        <img src="05_handover_domain.png" alt="인수인계 관리" style="max-width: 100%;">
+                    </object>
+                </div>
+                <div class="format-buttons">
+                    <button class="format-btn" onclick="downloadFile('05_handover_domain.svg')">📥 SVG 다운로드</button>
+                    <button class="format-btn" onclick="downloadFile('05_handover_domain.mmd')">📝 Mermaid 코드</button>
+                </div>
+            </div>
+            
+            <!-- 공통 시스템 -->
+            <div id="common" class="diagram-section">
+                <h2 class="diagram-title">🔧 공통 시스템</h2>
+                <div class="diagram-description">
+                    <strong>시스템 인프라 및 공통 기능</strong><br>
+                    공통 코드, 첨부파일, 메타데이터, 시스템 설정, 감사 로그, 알림, 예약 작업 등
+                    모든 도메인에서 공통으로 사용하는 기반 시스템들의 구조입니다.
+                </div>
+                <div class="diagram-container">
+                    <object data="06_common_systems.svg" type="image/svg+xml" width="100%" height="500">
+                        <img src="06_common_systems.png" alt="공통 시스템" style="max-width: 100%;">
+                    </object>
+                </div>
+                <div class="format-buttons">
+                    <button class="format-btn" onclick="downloadFile('06_common_systems.svg')">📥 SVG 다운로드</button>
+                    <button class="format-btn" onclick="downloadFile('06_common_systems.mmd')">📝 Mermaid 코드</button>
+                </div>
+            </div>
+            
+            <!-- 통계 정보 -->
+            <div class="stats">
+                <h3 style="margin-top: 0; color: #333;">📊 프로젝트 통계</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">39</div>
+                        <div class="stat-label">총 데이터베이스 테이블</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">6</div>
+                        <div class="stat-label">주요 도메인</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">25</div>
+                        <div class="stat-label">화면 수</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">18</div>
+                        <div class="stat-label">백엔드 도메인 모듈</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">프론트엔드 도메인 모듈</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">8</div>
+                        <div class="stat-label">approval 테이블 사용 화면</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showDiagram(diagramId) {
+            // 모든 다이어그램 숨기기
+            const diagrams = document.querySelectorAll('.diagram-section');
+            diagrams.forEach(diagram => diagram.classList.remove('active'));
+            
+            // 모든 버튼 비활성화
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            // 선택된 다이어그램 보이기
+            document.getElementById(diagramId).classList.add('active');
+            
+            // 선택된 버튼 활성화
+            event.target.classList.add('active');
+        }
+        
+        function downloadFile(filename) {
+            const link = document.createElement('a');
+            link.href = filename;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 페이지 로드 시 첫 번째 다이어그램 활성화
+        document.addEventListener('DOMContentLoaded', function() {
+            // SVG가 로드되지 않으면 PNG 폴백
+            const objects = document.querySelectorAll('object[data$=".svg"]');
+            objects.forEach(obj => {
+                obj.addEventListener('error', function() {
+                    const img = this.querySelector('img');
+                    if (img) {
+                        img.style.display = 'block';
+                        this.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

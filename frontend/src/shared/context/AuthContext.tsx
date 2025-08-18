@@ -265,10 +265,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       payload: { data: [] },
     });
 
-    // 로그인 데이터 초기화
+    // 로그인 데이터 초기화 (대소문자 구분하여 모든 경우 처리)
     dispatchToStore({
       type: 'loginStore/login/setData',
-      payload: null,
+      payload: { data: null },
+    });
+
+    // LoginStore (대문자 L)도 함께 초기화
+    dispatchToStore({
+      type: 'LoginStore/login/setData',
+      payload: { data: null },
+    });
+
+    // 공통코드 스토어도 초기화
+    dispatchToStore({
+      type: 'codeStore/allCodes/setData',
+      payload: { data: [] },
     });
 
     console.log('🧹 [AuthContext] 모든 데이터 초기화 완료');

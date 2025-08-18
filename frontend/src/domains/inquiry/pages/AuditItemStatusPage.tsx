@@ -388,11 +388,43 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
 
   // 점검자 지정 핸들러
   const handleAssignAuditor = () => {
+    // 1. 선택된 행이 없는 경우
     if (!selectedItemIds.length) {
       setErrorMessage('점검자를 지정할 항목을 선택해주세요.');
       setErrorDialogOpen(true);
       return;
     }
+
+    // 2. 선택된 행이 1개가 아닌 경우
+    if (selectedItemIds.length !== 1) {
+      setErrorMessage('점검자 지정은 한 번에 하나의 항목만 선택할 수 있습니다.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 선택된 행 데이터 가져오기
+    const selectedRow = auditItemRows.find(row => selectedItemIds.includes(row.id));
+    if (!selectedRow) {
+      setErrorMessage('선택된 항목을 찾을 수 없습니다.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 3. 점검자가 "미지정"이 아닌 경우
+    if (selectedRow.auditMenId && selectedRow.auditMenId.trim() !== '' && selectedRow.auditMenId !== '미지정') {
+      setErrorMessage('이미 점검자가 지정된 항목입니다.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 4. 점검결과가 이미 있는 경우
+    if (selectedRow.auditResultStatusCd && selectedRow.auditResultStatusCd.trim() !== '') {
+      setErrorMessage('점검결과가 이미 있는 항목은 점검자를 지정할 수 없습니다.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 모든 조건을 만족하는 경우 점검자 지정 다이얼로그 열기
     setAuditorDialogOpen(true);
   };
 
@@ -401,13 +433,20 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
     try {
       setIsLoading(true);
 
-      // 선택된 항목들의 모든 auditProgMngtDetailIds 수집
+      // 선택된 항목의 hodIcItemId 가져오기 (그룹화된 행에서)
       const selectedRows = auditItemRows.filter(row => selectedItemIds.includes(row.id));
-      const allDetailIds = selectedRows.flatMap(row => row.auditProgMngtDetailIds);
+      const hodIcItemIds = selectedRows.map(row => row.hodIcItemId);
 
-      // API 요청 데이터 구성 (실제로는 detail ID들을 사용)
+      console.log('점검자 지정 요청 데이터:', {
+        hodIcItemIds,
+        auditorEmpNo,
+        auditorName,
+        selectedRows: selectedRows.map(r => ({ id: r.id, hodIcItemId: r.hodIcItemId, detailCount: r.detailCount }))
+      });
+
+      // API 요청 데이터 구성 (hodIcItemId 사용)
       const assignmentRequest: AuditorAssignmentRequest = {
-        hodIcItemIds: allDetailIds.map(id => id.toString()), // detail ID를 문자열로 변환
+        hodIcItemIds: hodIcItemIds.map(id => id.toString()), // hod_ic_item_id를 문자열로 변환
         auditorEmpNo,
         auditorName
       };

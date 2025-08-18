@@ -1,0 +1,128 @@
+erDiagram
+    ledger_orders {
+        bigint ledger_orders_id PK "원장차수 고유 식별자 (Ledger Order ID)"
+        varchar ledger_orders_title "원장차수 제목 (Ledger Order Title)"
+        varchar ledger_orders_status_cd "상태코드 (Status Code)"
+        varchar ledger_orders_conf_cd "확정코드 (Confirmation Code)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_id "생성자 ID (Creator ID)"
+        varchar updated_id "수정자 ID (Updater ID)"
+    }
+    
+    ledger_orders_hod {
+        bigint ledger_orders_hod_id PK "부서장차수 고유 식별자 (HOD Order ID)"
+        bigint ledger_orders_id FK "원장차수 ID (Ledger Order ID)"
+        varchar ledger_orders_hod_title "부서장차수 제목 (HOD Order Title)"
+        varchar ledger_orders_hod_status_cd "상태코드 (Status Code)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    positions {
+        bigint positions_id PK "직책 고유 식별자 (Position ID)"
+        bigint ledger_orders_id FK "원장차수 ID (Ledger Order ID)"
+        varchar position_name "직책명 (Position Name)"
+        varchar dept_cd "부서코드 (Department Code)"
+        varchar position_type_cd "직책유형코드 (Position Type Code)"
+        varchar status_cd "상태코드 (Status Code)"
+        varchar emp_no "담당자 사번 (Employee Number)"
+        date start_date "시작일 (Start Date)"
+        date end_date "종료일 (End Date)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    responsibility {
+        bigint responsibility_id PK "책무 고유 식별자 (Responsibility ID)"
+        varchar responsibility_content "책무내용 (Responsibility Content)"
+        varchar responsibility_type_cd "책무유형코드 (Responsibility Type Code)"
+        boolean is_active "활성상태 (Active Status)"
+        int sort_order "정렬순서 (Sort Order)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    responsibility_detail {
+        bigint responsibility_detail_id PK "책무상세 고유 식별자 (Detail ID)"
+        bigint responsibility_id FK "책무 ID (Responsibility ID)"
+        varchar responsibility_detail_content "책무상세내용 (Detail Content)"
+        varchar responsibility_rel_evid "책무관련근거 (Related Evidence)"
+        int sort_order "정렬순서 (Sort Order)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    hod_ic_item {
+        bigint hod_ic_item_id PK "부서장내부통제항목 ID (HOD IC Item ID)"
+        bigint responsibility_id FK "책무 ID (Responsibility ID)"
+        bigint responsibility_detail_id FK "책무상세 ID (Detail ID)"
+        bigint ledger_orders "원장차수 (Ledger Order)"
+        bigint ledger_orders_hod "부서장차수 (HOD Order)"
+        varchar field_type_cd "항목구분코드 (Field Type Code)"
+        varchar role_type_cd "직무구분코드 (Role Type Code)"
+        varchar dept_cd "부서코드 (Department Code)"
+        varchar ic_task "내부통제업무 (Internal Control Task)"
+        varchar measure_desc "조치활동내용 (Measure Description)"
+        varchar measure_type "조치유형 (Measure Type)"
+        varchar period_cd "주기코드 (Period Code)"
+        varchar support_doc "관련근거 (Supporting Document)"
+        varchar check_period "점검시기 (Check Period)"
+        varchar check_way "점검방법 (Check Method)"
+        varchar proof_doc "증빙자료 (Proof Document)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    approval {
+        int approval_id PK "결재 고유 식별자 (Approval ID)"
+        varchar task_type_cd "업무유형코드 (Task Type Code)"
+        bigint task_id "업무 ID (Task ID)"
+        varchar requester_id "결재요청자 ID (Requester ID)"
+        varchar approver_id "결재자 ID (Approver ID)"
+        varchar appr_stat_cd "결재상태코드 (Approval Status Code)"
+        timestamp request_datetime "결재요청일시 (Request DateTime)"
+        timestamp approval_datetime "결재완료일시 (Approval DateTime)"
+        text comments "결재메모 (Approval Comments)"
+        varchar urgency_cd "긴급도코드 (Urgency Code)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    approval_steps {
+        bigint step_id PK "단계 고유 식별자 (Step ID)"
+        int approval_id FK "결재 ID (Approval ID)"
+        int step_order "단계순서 (Step Order)"
+        varchar approver_id "결재자 ID (Approver ID)"
+        varchar step_status "단계상태 (Step Status)"
+        timestamp step_datetime "단계처리일시 (Step DateTime)"
+        text step_comments "단계메모 (Step Comments)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    common_code {
+        varchar group_code PK "그룹코드 (Group Code)"
+        varchar code PK "코드 (Code)"
+        varchar code_name "코드명 (Code Name)"
+        varchar code_description "코드설명 (Code Description)"
+        int sort_order "정렬순서 (Sort Order)"
+        varchar use_yn "사용여부 (Use YN)"
+        varchar parent_code "상위코드 (Parent Code)"
+        int code_level "코드레벨 (Code Level)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    ledger_orders ||--o{ ledger_orders_hod : "ledger_orders_id"
+    ledger_orders ||--o{ positions : "ledger_orders_id"
+    positions ||--o{ hod_ic_item : "ledger_orders"
+    responsibility ||--o{ responsibility_detail : "responsibility_id"
+    responsibility_detail ||--o{ hod_ic_item : "responsibility_detail_id"
+    responsibility ||--o{ hod_ic_item : "responsibility_id"
+    approval ||--o{ approval_steps : "approval_id"
+    hod_ic_item ||--o{ approval : "task_id"
+    common_code ||--o{ hod_ic_item : "field_type_cd"
+    common_code ||--o{ hod_ic_item : "role_type_cd"
+    common_code ||--o{ hod_ic_item : "period_cd"
+    common_code ||--o{ positions : "position_type_cd"

@@ -102,6 +102,29 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     }
 
     /**
+     * 점검자 ID 설정
+     */
+    public void setAuditMenId(String auditMenId) {
+        this.auditMenId = auditMenId;
+    }
+
+    /**
+     * 점검결과상태코드 설정
+     */
+    public void setAuditResultStatusCd(String auditResultStatusCd) {
+        this.auditResultStatusCd = auditResultStatusCd;
+    }
+
+    /**
+     * 점검자 지정
+     * 점검자 지정 시 상태코드도 함께 업데이트
+     */
+    public void assignAuditor(String auditMenId) {
+        this.auditMenId = auditMenId;
+        this.auditResultStatusCd = "INS01"; // 점검 진행 중으로 상태 변경
+    }
+
+    /**
      * 점검결과 업데이트
      * 점검결과작성 팝업에서 사용
      */

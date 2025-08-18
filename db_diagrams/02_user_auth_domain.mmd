@@ -1,0 +1,75 @@
+erDiagram
+    users {
+        varchar id PK "사용자 고유 식별자 (User Primary Key)"
+        varchar emp_no UK "사원번호 (Employee Number)"
+        varchar username UK "사용자명 (Username)"
+        varchar email UK "이메일 주소 (Email Address)"
+        varchar password "비밀번호 해시 (Password Hash)"
+        varchar dept_cd FK "부서코드 (Department Code)"
+        varchar job_rank_cd "직급코드 (Job Rank Code)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    employee {
+        varchar emp_no PK "사원번호 (Employee Number)"
+        varchar emp_name "직원명 (Employee Name)"
+        varchar dept_name "부서명 (Department Name)"
+        varchar position_name "직책명 (Position Title)"
+        varchar job_rank_name "직급명 (Job Rank Name)"
+        varchar email "이메일 주소 (Email Address)"
+        varchar phone "전화번호 (Phone Number)"
+    }
+    
+    departments {
+        varchar department_id PK "부서 고유 식별자 (Department ID)"
+        varchar department_name "부서명 (Department Name)"
+        varchar parent_department_id FK "상위부서 ID (Parent Department)"
+        int depth "계층 깊이 (Hierarchy Depth)"
+        boolean is_active "활성 상태 (Active Status)"
+        int sort_order "정렬 순서 (Sort Order)"
+    }
+    
+    user_roles {
+        bigint id PK "사용자 역할 고유 식별자 (User Role ID)"
+        varchar user_id FK "사용자 ID (User ID)"
+        varchar role_name FK "역할명 (Role Name)"
+        timestamp assigned_at "역할 할당 일시 (Assigned DateTime)"
+        varchar assigned_by "역할 할당자 (Assigned By User)"
+    }
+    
+    roles {
+        varchar role_name PK "역할명 (Role Name)"
+        varchar role_description "역할 설명 (Role Description)"
+        boolean is_active "활성 상태 (Active Status)"
+    }
+    
+    menus {
+        bigint menu_id PK "메뉴 고유 식별자 (Menu ID)"
+        varchar menu_name "메뉴명 (Menu Name)"
+        varchar menu_url "메뉴 URL (Menu URL Path)"
+        bigint parent_menu_id FK "상위 메뉴 ID (Parent Menu ID)"
+        int sort_order "정렬 순서 (Sort Order)"
+        varchar icon_name "아이콘명 (Icon Name)"
+        boolean is_active "활성 상태 (Active Status)"
+    }
+    
+    menu_permissions {
+        bigint id PK "메뉴 권한 고유 식별자 (Permission ID)"
+        bigint menu_id FK "메뉴 ID (Menu ID)"
+        varchar role_name FK "역할명 (Role Name)"
+        boolean can_read "읽기 권한 (Read Permission)"
+        boolean can_write "쓰기 권한 (Write Permission)"
+        boolean can_delete "삭제 권한 (Delete Permission)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    users ||--|| employee : "emp_no"
+    employee }|--|| departments : "dept_name"
+    users ||--o{ user_roles : "user_id"
+    user_roles }o--|| roles : "role_name"
+    roles ||--o{ menu_permissions : "role_name"
+    menus ||--o{ menu_permissions : "menu_id"
+    menus ||--o{ menus : "parent_menu_id"
+    departments ||--o{ departments : "parent_department_id"

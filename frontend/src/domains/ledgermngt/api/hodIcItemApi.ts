@@ -38,7 +38,6 @@ export interface HodICItemRow {
   updatedAt: string;
   approvalStatus: string;
   ledgerOrders: number;
-  auditResultStatusCd?: string; // 점검결과상태코드
 }
 
 // 부서장차수생성 응답 타입
@@ -175,5 +174,16 @@ export const hodICItemApi = {
    */
   async generateHodLedgerOrder(): Promise<LedgerOrdersHodGenerateResponse> {
     return apiClient.post('/positions/ledger-orders-hod/generate');
+  },
+
+  /**
+   * 부서장차수 확정
+   * 
+   * 확정 조건:
+   * 1. 해당 부서장차수의 status가 P6이어야 함
+   * 2. 해당 부서장차수에 속한 모든 HodICItem의 approvalStatus가 APPROVED이어야 함
+   */
+  async confirmHodLedgerOrder(hodLedgerOrderId: number): Promise<void> {
+    return apiClient.put(`/positions/ledger-orders-hod/${hodLedgerOrderId}/confirm`);
   },
 };

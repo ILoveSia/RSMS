@@ -40,7 +40,7 @@ import {
 import { useReduxState } from '@/app/store/use-store';
 import approvalApi from '@/domains/approval/api/approvalApi';
 import mainDashboardApi from '@/domains/main/api/mainDashboardApi';
-import type { WorkStats } from '@/domains/main/api/mainDashboardApi';
+import type { WorkStats, RecentTask } from '@/domains/main/api/mainDashboardApi';
 
 // 로그인 사용자 타입
 interface LoginUser {
@@ -65,6 +65,49 @@ interface TrendData {
   pending: number;
   total: number;
 }
+
+// 최근 완료 업무 목록 컴포넌트
+interface RecentTasksListProps {
+  userId: string | undefined;
+}
+
+const RecentTasksList: React.FC<RecentTasksListProps> = ({ userId }) => {
+  const [recentTasks, setRecentTasks] = useState<RecentTask[]>([
+    // 기본 목업 데이터
+    { taskName: '책무기술서 승인', completedAt: '2시간 전', category: '결재' },
+    { taskName: '내부통제 점검 완료', completedAt: '1일 전', category: '점검' },
+    { taskName: '임원 책무 변경 승인', completedAt: '3일 전', category: '결재' },
+  ]);
+
+  useEffect(() => {
+    const loadRecentTasks = async () => {
+      if (!userId) return;
+      
+      try {
+        const realRecentTasks = await mainDashboardApi.getRecentTasks(userId);
+        setRecentTasks(realRecentTasks);
+        console.log('✅ 실시간 최근 완료 업무 데이터 로드 성공');
+      } catch (error) {
+        console.warn('⚠️ 최근 완료 업무 API 호출 실패, 목업 데이터 유지:', error);
+      }
+    };
+
+    loadRecentTasks();
+  }, [userId]);
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {recentTasks.map((task, index) => (
+        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="body1">{task.taskName}</Typography>
+          <Typography variant="caption" color="text.secondary">
+            {task.completedAt}
+          </Typography>
+        </Box>
+      ))}
+    </Box>
+  );
+};
 
 const WorkDashboard: React.FC = () => {
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
@@ -91,29 +134,41 @@ const WorkDashboard: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // 실제 API가 구현되면 주석 해제
-        // const realStats = await mainDashboardApi.getWorkStats(currentUserId);
-        // setWorkStats(realStats);
-
-        // 현재는 실제 결재 데이터와 목업 데이터 조합
+        // 실시간 API 호출 활성화
         try {
-          const pendingApprovals = await approvalApi.getMyPendingApprovals(currentUserId);
+          // 메인 대시보드 통계 API 호출 시도
+          const realStats = await mainDashboardApi.getWorkStats(currentUserId);
+          setWorkStats(realStats);
+          console.log('✅ 실시간 대시보드 데이터 로드 성공');
+          return;
+        } catch (mainApiError) {
+          console.warn('⚠️ 메인 대시보드 API 호출 실패, 개별 API 조합 시도:', mainApiError);
+        }
+
+        // 메인 API 실패 시 개별 API 조합
+        try {
+          const [pendingApprovals, monthlyTrends, recentTasks] = await Promise.all([
+            approvalApi.getMyPendingApprovals(currentUserId).catch(() => null),
+            mainDashboardApi.getMonthlyTrends(currentUserId).catch(() => null),
+            mainDashboardApi.getRecentTasks(currentUserId).catch(() => null),
+          ]);
           
-          // 실제 결재 데이터와 목업 데이터 조합
-          const mixedStats: WorkStats = {
-            totalTasks: 45,
-            completedTasks: 32,
-            pendingTasks: 8,
-            overdueTasks: 5,
+          // 실제 데이터 조합
+          const combinedStats: WorkStats = {
+            totalTasks: 45, // 향후 실제 계산 로직 추가
+            completedTasks: 32, // 향후 실제 계산 로직 추가
+            pendingTasks: 8, // 향후 실제 계산 로직 추가
+            overdueTasks: 5, // 향후 실제 계산 로직 추가
             approvalPending: pendingApprovals?.length || 0, // 실제 결재 대기 수
-            auditTasks: 12,
+            auditTasks: 12, // 향후 실제 계산 로직 추가
           };
 
-          setWorkStats(mixedStats);
-        } catch (approvalError) {
-          console.warn('결재 API 호출 실패, 목업 데이터 사용:', approvalError);
+          setWorkStats(combinedStats);
+          console.log('✅ 개별 API 조합 데이터 로드 성공', { approvalCount: pendingApprovals?.length });
+        } catch (combinedApiError) {
+          console.warn('⚠️ 개별 API 조합 실패, 목업 데이터 사용:', combinedApiError);
           
-          // API 실패 시 전체 목업 데이터 사용
+          // 완전한 API 실패 시 목업 데이터 폴백
           const fallbackStats: WorkStats = {
             totalTasks: 45,
             completedTasks: 32,
@@ -124,6 +179,7 @@ const WorkDashboard: React.FC = () => {
           };
           
           setWorkStats(fallbackStats);
+          console.log('📊 목업 데이터로 폴백');
         }
       } catch (err) {
         console.error('업무 통계 로드 실패:', err);
@@ -159,15 +215,40 @@ const WorkDashboard: React.FC = () => {
     { name: '기타', value: workStats.totalTasks - workStats.approvalPending - workStats.auditTasks, fill: '#607d8b' },
   ];
 
-  // 월별 트렌드 데이터 (목업)
-  const trendData: TrendData[] = [
+  // 트렌드 데이터 상태 관리
+  const [trendData, setTrendData] = useState<TrendData[]>([
+    // 기본 목업 데이터
     { month: '7월', completed: 28, pending: 12, total: 40 },
     { month: '8월', completed: 32, pending: 8, total: 45 },
     { month: '9월', completed: 35, pending: 10, total: 50 },
     { month: '10월', completed: 30, pending: 15, total: 48 },
     { month: '11월', completed: 38, pending: 7, total: 52 },
     { month: '12월', completed: 42, pending: 8, total: 55 },
-  ];
+  ]);
+
+  // 트렌드 데이터 로드 함수
+  const loadTrendData = async () => {
+    if (!currentUserId) return;
+    
+    try {
+      const realTrendData = await mainDashboardApi.getMonthlyTrends(currentUserId);
+      const convertedTrend = realTrendData.map(trend => ({
+        month: trend.month,
+        completed: trend.completed,
+        pending: trend.pending,
+        total: trend.total,
+      }));
+      setTrendData(convertedTrend);
+      console.log('✅ 실시간 트렌드 데이터 로드 성공');
+    } catch (error) {
+      console.warn('⚠️ 트렌드 데이터 API 호출 실패, 목업 데이터 유지:', error);
+    }
+  };
+
+  // 트렌드 데이터 로드
+  useEffect(() => {
+    loadTrendData();
+  }, [currentUserId]);
 
   const completionRate = workStats.totalTasks > 0 ? 
     Math.round((workStats.completedTasks / workStats.totalTasks) * 100) : 0;
@@ -407,26 +488,7 @@ const WorkDashboard: React.FC = () => {
               <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
                 최근 완료 업무
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1">책무기술서 승인</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    2시간 전
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1">내부통제 점검 완료</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    1일 전
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="body1">임원 책무 변경 승인</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    3일 전
-                  </Typography>
-                </Box>
-              </Box>
+              <RecentTasksList userId={currentUserId} />
             </CardContent>
           </Card>
         </Grid>

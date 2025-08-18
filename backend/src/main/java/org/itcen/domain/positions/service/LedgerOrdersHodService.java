@@ -87,4 +87,19 @@ public interface LedgerOrdersHodService {
      * @throws RuntimeException P5 상태가 아니거나 생성 실패 시
      */
     LedgerOrdersHodGenerateResponseDto generateHodLedgerOrder();
+
+    /**
+     * 부서장차수 확정
+     * 
+     * 확정 조건:
+     * 1. 해당 부서장차수의 ledger_orders_hod_status_cd가 P6이어야 함
+     * 2. 해당 부서장차수(ledger_orders)에 속한 모든 HodICItem의 approvalStatus가 APPROVED이어야 함
+     * 
+     * 확정 처리:
+     * - ledger_orders_hod_status_cd를 P6에서 P7로 업데이트
+     * 
+     * @param id 확정할 부서장차수 ID
+     * @throws RuntimeException 확정 조건을 만족하지 않거나 처리 실패 시
+     */
+    void confirmHodLedgerOrder(Long id);
 }

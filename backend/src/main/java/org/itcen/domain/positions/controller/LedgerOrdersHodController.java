@@ -136,4 +136,32 @@ public class LedgerOrdersHodController {
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
+
+    /**
+     * 부서장차수 확정
+     * 
+     * PUT /api/positions/ledger-orders-hod/{id}/confirm
+     * 
+     * 확정 조건:
+     * 1. 해당 부서장차수의 status가 P6이어야 함
+     * 2. 해당 부서장차수에 속한 모든 HodICItem의 approvalStatus가 APPROVED이어야 함
+     * 
+     * @param id 확정할 부서장차수 ID
+     * @return 확정 완료 응답
+     */
+    @PutMapping("/{id}/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirmHodLedgerOrder(@PathVariable("id") Long id) {
+        log.info("부서장차수 확정 API 요청: id={}", id);
+        
+        try {
+            ledgerOrdersHodService.confirmHodLedgerOrder(id);
+            log.info("부서장차수 확정 완료: id={}", id);
+            
+            return ResponseEntity.ok(ApiResponse.success("부서장차수가 성공적으로 확정되었습니다."));
+        } catch (Exception e) {
+            log.error("부서장차수 확정 실패", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }
