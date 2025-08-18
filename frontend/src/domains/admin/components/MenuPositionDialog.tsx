@@ -92,57 +92,60 @@ const SortableMenuItem: React.FC<SortableMenuItemProps> = ({
 
   const hasChildren = menu.children && menu.children.length > 0;
 
-  return (
-    <Paper
-      ref={setNodeRef}
-      style={style}
-      sx={{
-        mb: 1,
-        p: 2,
-        pl: 2 + level * 3,
-        border: '1px solid',
-        borderColor: isOver ? 'primary.main' : 'divider',
-        backgroundColor: isOver ? 'primary.light' : (isDragging ? 'action.hover' : 'background.paper'),
-        cursor: 'grab',
-        '&:active': {
-          cursor: 'grabbing',
-        },
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        transition: 'all 0.2s ease'
-      }}
-      {...attributes}
-      {...listeners}
-    >
-      <DragIcon color="action" sx={{ cursor: 'grab' }} />
-      
-      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-          {menu.menuName}
-        </Typography>
-        {hasChildren && (
-          <Chip
-            label={`${menu.children!.length}개 하위메뉴`}
-            size="small"
-            color="primary"
-            variant="outlined"
-          />
-        )}
-      </Box>
+    return (
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+      <Paper
+        ref={setNodeRef}
+        style={style}
+        sx={{
+          flexGrow: 1,
+          p: 2,
+          pl: 2 + level * 3,
+          border: '1px solid',
+          borderColor: isOver ? 'primary.main' : 'divider',
+          backgroundColor: isOver ? 'primary.light' : (isDragging ? 'action.hover' : 'background.paper'),
+          cursor: 'grab',
+          '&:active': {
+            cursor: 'grabbing',
+          },
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          transition: 'all 0.2s ease'
+        }}
+        {...attributes}
+        {...listeners}
+      >
+        <DragIcon color="action" sx={{ cursor: 'grab' }} />
+        
+        <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+            {menu.menuName}
+          </Typography>
+          {hasChildren && (
+            <Chip
+              label={`${menu.children!.length}개 하위메뉴`}
+              size="small"
+              color="primary"
+              variant="outlined"
+            />
+          )}
+        </Box>
+      </Paper>
 
       {hasChildren && (
         <IconButton
           size="small"
-          onClick={(e) => {
-            e.stopPropagation();
+          sx={{ ml: 1 }}
+          onClick={() => {
+            console.log('IconButton clicked for menu:', menu.id);
             onToggleExpand(menu.id);
           }}
         >
           {isExpanded ? <CollapseIcon /> : <ExpandIcon />}
         </IconButton>
       )}
-    </Paper>
+    </Box>
   );
 };
 
