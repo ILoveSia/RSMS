@@ -41,10 +41,10 @@ public interface AuditProgMngtDetailRepository extends JpaRepository<AuditProgMn
     void deleteByAuditProgMngtId(@Param("auditProgMngtId") Long auditProgMngtId);
     
     /**
-     * 부서장 내부통제 항목 ID로 점검자 업데이트
+     * 부서장 내부통제 항목 ID로 점검자 업데이트 (상태코드도 함께 변경)
      */
     @Modifying
-    @Query("UPDATE AuditProgMngtDetail d SET d.auditMenId = :auditorEmpNo WHERE d.hodIcItemId = :hodIcItemId")
+    @Query("UPDATE AuditProgMngtDetail d SET d.auditMenId = :auditorEmpNo, d.auditResultStatusCd = 'INS01' WHERE d.hodIcItemId = :hodIcItemId")
     int updateAuditorByHodIcItemId(@Param("hodIcItemId") Long hodIcItemId, @Param("auditorEmpNo") String auditorEmpNo);
     
     /**

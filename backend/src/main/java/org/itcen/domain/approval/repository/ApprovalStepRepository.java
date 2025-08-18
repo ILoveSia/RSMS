@@ -151,4 +151,51 @@ public interface ApprovalStepRepository extends JpaRepository<ApprovalStep, Long
         @Param("approverId") String approverId,
         @Param("taskTypeCd") String taskTypeCd,
         @Param("taskId") Long taskId);
+
+    // ====== 메인 대시보드용 쿼리 메서드들 ======
+    
+    /**
+     * 사용자별 결재 대기 건수 조회
+     */
+    @Query("SELECT COUNT(s) FROM ApprovalStep s " +
+           "JOIN s.approval a " +
+           "WHERE s.approverId = :userId " +
+           "AND s.stepStatus = 'PENDING'")
+    Integer countPendingApprovalsByUserId(@Param("userId") String userId);
+
+    /**
+     * 사용자별 월별 결재 처리 트렌드 (최근 6개월)
+     */
+    @Query(value = "SELECT DATE_FORMAT(s.approved_datetime, '%Y-%m') as month, " +
+                   "COUNT(CASE WHEN s.step_status = 'APPROVED' THEN 1 END) as completed, " +
+                   "COUNT(CASE WHEN s.step_status = 'PENDING' THEN 1 END) as pending, " +
+                   "COUNT(s.step_id) as total " +
+                   "FROM approval_steps s " +
+                   "JOIN approval a ON s.approval_id = a.approval_id " +
+                   "WHERE s.approver_id = :userId " +
+                   "AND s.created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) " +
+                   "GROUP BY DATE_FORMAT(s.approved_datetime, '%Y-%m') " +
+                   "ORDER BY month DESC " +
+                   "LIMIT 6", nativeQuery = true)
+    List<Object[]> getMonthlyApprovalTrendsByUserId(@Param("userId") String userId);
+
+    /**
+     * 사용자별 최근 완료한 결재 목록 (최근 10건)
+     */
+    @Query("SELECT s FROM ApprovalStep s " +
+           "JOIN FETCH s.approval a " +
+           "WHERE s.approverId = :userId " +
+           "AND s.stepStatus = 'APPROVED' " +
+           "ORDER BY s.approvedDatetime DESC")
+    List<ApprovalStep> getRecentApprovedTasksByUserId(@Param("userId") String userId);
+
+    /**
+     * 사용자별 현재 진행 중인 결재 프로세스 정보
+     */
+    @Query("SELECT a FROM Approval a " +
+           "JOIN ApprovalStep s ON a.approvalId = s.approvalId " +
+           "WHERE s.approverId = :userId " +
+           "AND s.stepStatus = 'PENDING' " +
+           "ORDER BY a.requestDatetime ASC")
+    List<org.itcen.domain.approval.entity.Approval> getCurrentApprovalProcessesByUserId(@Param("userId") String userId);
 }

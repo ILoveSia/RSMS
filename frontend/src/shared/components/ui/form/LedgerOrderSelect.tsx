@@ -20,7 +20,7 @@ export interface LedgerOrderSelectProps {
   size?: 'small' | 'medium';
   /** 커스텀 스타일 */
   sx?: SxProps<Theme>;
-  /** "전체" 옵션 포함 여부 (기본값: true) */
+  /** "전체" 옵션 포함 여부 (기본값: false - 최대값 자동 선택) */
   includeAll?: boolean;
   /** "전체" 옵션 라벨 (기본값: "전체") */
   allLabel?: string;
@@ -57,7 +57,7 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
   onChange,
   size = 'small',
   sx,
-  includeAll = true,
+  includeAll = false,
   allLabel = '전체',
   allValue = 'ALL',
   placeholder,
@@ -84,6 +84,15 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
       const data = await positionApi.getLedgerOrderSelectList();
       setLedgerOrderOptions(data);
 
+      // 데이터가 있고 현재 값이 기본값인 경우 최대값으로 설정
+      if (data.length > 0 && (value === allValue || !value)) {
+        // ledgerOrdersId의 최대값을 찾기
+        const maxOption = data.reduce((max, current) => 
+          current.ledgerOrdersId > max.ledgerOrdersId ? current : max
+        );
+        onChange(maxOption.value, maxOption.ledgerOrdersId);
+      }
+
       // 로딩 완료 콜백 호출
       if (onLoadComplete) {
         onLoadComplete(data);
@@ -100,7 +109,7 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [onLoadComplete, onError]);
+  }, [onLoadComplete, onError, value, allValue, onChange]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {

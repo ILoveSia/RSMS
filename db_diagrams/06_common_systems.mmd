@@ -1,0 +1,170 @@
+erDiagram
+    common_code {
+        varchar group_code PK "그룹코드 (Group Code)"
+        varchar code PK "코드 (Code)"
+        varchar code_name "코드명 (Code Name)"
+        varchar code_description "코드설명 (Code Description)"
+        int sort_order "정렬순서 (Sort Order)"
+        varchar use_yn "사용여부 (Use YN)"
+        varchar parent_code "상위코드 (Parent Code)"
+        int code_level "코드레벨 (Code Level)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    attachments {
+        bigint attachment_id PK "첨부파일 고유 식별자 (Attachment ID)"
+        varchar entity_type "엔티티유형 (Entity Type)"
+        bigint entity_id "엔티티 ID (Entity ID)"
+        varchar original_filename "원본파일명 (Original Filename)"
+        varchar stored_filename "저장파일명 (Stored Filename)"
+        varchar file_path "파일경로 (File Path)"
+        varchar content_type "콘텐츠유형 (Content Type)"
+        bigint file_size "파일크기 (File Size)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    meta_datas {
+        bigint meta_data_id PK "메타데이터 고유 식별자 (Meta Data ID)"
+        varchar table_name "테이블명 (Table Name)"
+        varchar column_name "컬럼명 (Column Name)"
+        varchar data_type "데이터타입 (Data Type)"
+        varchar column_comment "컬럼설명 (Column Comment)"
+        boolean is_nullable "널허용여부 (Is Nullable)"
+        varchar default_value "기본값 (Default Value)"
+        int column_order "컬럼순서 (Column Order)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    system_config {
+        bigint config_id PK "시스템설정 고유 식별자 (Config ID)"
+        varchar config_group "설정그룹 (Config Group)"
+        varchar config_key "설정키 (Config Key)"
+        varchar config_value "설정값 (Config Value)"
+        varchar config_description "설정설명 (Config Description)"
+        varchar data_type "데이터타입 (Data Type)"
+        boolean is_active "활성상태 (Active Status)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    audit_logs {
+        bigint log_id PK "감사로그 고유 식별자 (Audit Log ID)"
+        varchar table_name "테이블명 (Table Name)"
+        bigint record_id "레코드 ID (Record ID)"
+        varchar action_type "액션유형 (Action Type)"
+        text old_values "이전값 (Old Values)"
+        text new_values "변경값 (New Values)"
+        varchar user_id "사용자 ID (User ID)"
+        varchar ip_address "IP주소 (IP Address)"
+        varchar user_agent "사용자에이전트 (User Agent)"
+        timestamp action_timestamp "액션일시 (Action Timestamp)"
+        timestamp created_at "생성일시 (Created DateTime)"
+    }
+    
+    file_storage {
+        bigint storage_id PK "파일저장소 고유 식별자 (Storage ID)"
+        varchar storage_type "저장소유형 (Storage Type)"
+        varchar storage_path "저장소경로 (Storage Path)"
+        varchar access_key "액세스키 (Access Key)"
+        varchar secret_key "시크릿키 (Secret Key)"
+        varchar bucket_name "버킷명 (Bucket Name)"
+        varchar region "리전 (Region)"
+        boolean is_default "기본저장소여부 (Is Default)"
+        boolean is_active "활성상태 (Active Status)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    notification_templates {
+        bigint template_id PK "알림템플릿 고유 식별자 (Template ID)"
+        varchar template_name "템플릿명 (Template Name)"
+        varchar template_type "템플릿유형 (Template Type)"
+        varchar subject "제목 (Subject)"
+        text content "내용 (Content)"
+        varchar variables "변수목록 (Variables)"
+        varchar channel "발송채널 (Channel)"
+        boolean is_active "활성상태 (Active Status)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+        varchar created_by "생성자 (Created By)"
+        varchar updated_by "수정자 (Updated By)"
+    }
+    
+    scheduled_jobs {
+        bigint job_id PK "예약작업 고유 식별자 (Job ID)"
+        varchar job_name "작업명 (Job Name)"
+        varchar job_class "작업클래스 (Job Class)"
+        varchar cron_expression "크론표현식 (Cron Expression)"
+        varchar job_group "작업그룹 (Job Group)"
+        varchar description "설명 (Description)"
+        varchar job_status "작업상태 (Job Status)"
+        timestamp last_run_time "마지막실행시간 (Last Run Time)"
+        timestamp next_run_time "다음실행시간 (Next Run Time)"
+        text job_data "작업데이터 (Job Data)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    code_generation_history {
+        bigint generation_id PK "코드생성이력 고유 식별자 (Generation ID)"
+        varchar table_name "테이블명 (Table Name)"
+        varchar code_type "코드유형 (Code Type)"
+        varchar prefix "접두사 (Prefix)"
+        bigint last_number "마지막번호 (Last Number)"
+        varchar last_generated_code "마지막생성코드 (Last Generated Code)"
+        timestamp generated_at "생성일시 (Generated DateTime)"
+        varchar generated_by "생성자 (Generated By)"
+    }
+    
+    session_storage {
+        varchar session_id PK "세션 고유 식별자 (Session ID)"
+        varchar user_id "사용자 ID (User ID)"
+        text session_data "세션데이터 (Session Data)"
+        varchar ip_address "IP주소 (IP Address)"
+        varchar user_agent "사용자에이전트 (User Agent)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp last_accessed_at "마지막접근일시 (Last Accessed DateTime)"
+        timestamp expires_at "만료일시 (Expires DateTime)"
+        boolean is_active "활성상태 (Active Status)"
+    }
+    
+    %% 공통 코드 참조 관계들 (주요 테이블들만 표시)
+    common_code ||--o{ hod_ic_item_usage : "field_type_cd, role_type_cd, period_cd"
+    common_code ||--o{ position_usage : "position_type_cd, status_cd"
+    common_code ||--o{ approval_usage : "task_type_cd, appr_stat_cd, urgency_cd"
+    common_code ||--o{ audit_usage : "audit_type_cd, audit_status_cd"
+    
+    %% 첨부파일 참조 관계들
+    attachments ||--o{ responsibility_documents_usage : "entity_type='responsibility_documents'"
+    attachments ||--o{ internal_control_manuals_usage : "entity_type='internal_control_manuals'"
+    attachments ||--o{ business_plan_inspections_usage : "entity_type='business_plan_inspections'"
+    
+    %% 파일 저장소 관계
+    file_storage ||--o{ attachments : "저장소참조 (Storage Reference)"
+    
+    %% 감사 로그 관계
+    audit_logs ||--o{ all_table_changes : "테이블변경이력 (Table Change History)"
+    
+    %% 시스템 설정 관계
+    system_config ||--o{ application_settings : "애플리케이션설정 (Application Settings)"
+    
+    %% 알림 템플릿 관계
+    notification_templates ||--o{ approval_notifications : "결재알림 (Approval Notifications)"
+    notification_templates ||--o{ audit_notifications : "점검알림 (Audit Notifications)"
+    
+    %% 예약 작업 관계
+    scheduled_jobs ||--o{ data_cleanup_jobs : "데이터정리작업 (Data Cleanup Jobs)"
+    scheduled_jobs ||--o{ report_generation_jobs : "보고서생성작업 (Report Generation Jobs)"
+    
+    %% 코드 생성 이력
+    code_generation_history ||--o{ auto_generated_codes : "자동생성코드 (Auto Generated Codes)"
+    
+    %% 세션 저장소
+    session_storage ||--o{ user_sessions : "사용자세션 (User Sessions)"

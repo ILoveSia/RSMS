@@ -36,8 +36,6 @@ interface AuditProgRow {
   ledgerOrdersHod: string;    // 책무번호
   auditTarget: string;        // 점검대상
   auditPeriod: string;        // 점검기간
-  auditTeamLeader: string;    // 점검팀장
-  auditTeamMembers: string;   // 점검팀원
   targetItemCount: number;    // 대상 점검항목수
   auditStatusCd: string;    // 점검상태명
   remarks?: string;           // 비고
@@ -60,8 +58,6 @@ const convertApiResponseToRow = (response: AuditProgMngtStatusResponse): AuditPr
     ledgerOrdersHod: String(response.ledgerOrdersHod || ''), // null/undefined 방지 및 문자열 변환
     auditTarget: response.auditTarget || '', // null 방지
     auditPeriod: `${response.auditStartDate || ''} ~ ${response.auditEndDate || ''}`,
-    auditTeamLeader: response.auditTeamLeader || '', // null 방지
-    auditTeamMembers: response.auditTeamMembers || '', // null 방지
     targetItemCount: response.targetItemCount || 0,
     auditStatusCd: response.auditStatusCd || '', // null 방지
     remarks: response.remarks || '',
@@ -150,17 +146,17 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditProgMngtCd',
       headerName: '점검계획코드',
-      width: 130,
+      width: 140,
     },
     {
       field: 'auditProgName',
       headerName: '점검계획명',
-      width: 180,
+      width: 200,
     },
     {
       field: 'auditTypeName',
       headerName: '점검유형',
-      width: 110,
+      width: 100,
     },
     {
       field: 'ledgerOrdersHod',
@@ -170,22 +166,12 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditTarget',
       headerName: '점검대상',
-      width: 130,
+      width: 150,
     },
     {
       field: 'auditPeriod',
       headerName: '점검기간',
-      width: 180,
-    },
-    {
-      field: 'auditTeamLeader',
-      headerName: '점검팀장',
-      width: 110,
-    },
-    {
-      field: 'auditTeamMembers',
-      headerName: '점검팀원',
-      width: 130,
+      width: 200,
     },
     {
       field: 'targetItemCount',
@@ -196,7 +182,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditStatusCd',
       headerName: '점검상태',
-      width: 130,
+      width: 100,
       renderCell: ({ value }) => (
         <Chip
           label={
@@ -213,7 +199,17 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         />
       ),
     },
-   
+    {
+      field: 'remarks',
+      headerName: '비고',
+      width: 150,
+    },
+    {
+      field: 'createdAt',
+      headerName: '등록일자',
+      width: 110,
+      align: 'center' as const,
+    },
   ];
 
   // 점검계획관리 현황 조회
@@ -408,8 +404,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       '책무번호': row.ledgerOrdersHod,
       '점검대상': row.auditTarget,
       '점검기간': row.auditPeriod,
-      '점검팀장': row.auditTeamLeader,
-      '점검팀원': row.auditTeamMembers,
       '대상점검항목수': row.targetItemCount,
       '점검상태': row.auditStatusCd,
       '비고': row.remarks,

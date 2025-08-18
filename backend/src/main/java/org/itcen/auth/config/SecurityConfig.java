@@ -128,6 +128,8 @@ public class SecurityConfig {
                     "/submissions/**",
                     // 결재 API (개발 편의를 위해 임시 허용)
                     "/approval-system/**",
+                    // 메인 대시보드 API (개발 편의를 위해 임시 허용)
+                    "/main/**",
                     // 관리자 API 중 로그인 페이지에서 사용하는 사용자 목록 조회 허용
                     "/admin/users"
             ).permitAll()

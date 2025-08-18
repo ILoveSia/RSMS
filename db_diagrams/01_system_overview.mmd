@@ -1,0 +1,78 @@
+graph TB
+    subgraph "👤 사용자 & 인증"
+        A[users]
+        B[employee] 
+        C[departments]
+        D[user_roles]
+    end
+    
+    subgraph "🔐 권한 관리"
+        E[menus]
+        F[menu_permissions]
+        G[roles]
+    end
+    
+    subgraph "📊 원장 관리"
+        H[ledger_orders]
+        I[ledger_orders_hod]
+        J[positions]
+        K[responsibility]
+        L[responsibility_detail]
+        M[hod_ic_item]
+    end
+    
+    subgraph "📋 결재 시스템"
+        N[approval]
+        O[approval_steps]
+    end
+    
+    subgraph "🔍 점검 관리"
+        P[audit_prog_mngt]
+        Q[audit_prog_mngt_detail]
+        R[execofficer]
+    end
+    
+    subgraph "📁 인수인계 관리"
+        S[handover_assignments]
+        T[responsibility_documents]
+        U[internal_control_manuals]
+        V[business_plan_inspections]
+        W[handover_histories]
+    end
+    
+    subgraph "🔧 공통 시스템"
+        X[common_code]
+        Y[attachments]
+        Z[meta_datas]
+    end
+    
+    %% 주요 관계
+    A --> B
+    A --> D
+    B --> C
+    D --> G
+    G --> F
+    E --> F
+    
+    H --> I
+    H --> J
+    J --> M
+    K --> L
+    L --> M
+    
+    N --> O
+    N --> M
+    N --> T
+    N --> U
+    
+    P --> Q
+    Q --> M
+    R --> P
+    
+    J --> S
+    S --> W
+    T --> Y
+    U --> Y
+    
+    X --> M
+    X --> J

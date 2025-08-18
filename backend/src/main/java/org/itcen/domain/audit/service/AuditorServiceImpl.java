@@ -90,14 +90,25 @@ public class AuditorServiceImpl implements AuditorService {
         for (String hodIcItemId : assignmentRequest.getHodIcItemIds()) {
             try {
                 Long itemId = Long.parseLong(hodIcItemId);
+                
+                log.debug("점검자 지정 시도 - 항목 ID: {}, 점검자: {}", itemId, assignmentRequest.getAuditorEmpNo());
+                
                 int result = auditProgMngtDetailRepository.updateAuditorByHodIcItemId(
                     itemId, 
                     assignmentRequest.getAuditorEmpNo()
                 );
+                
                 updatedCount += result;
-                log.debug("항목 ID {} 점검자 지정 완료: {}", itemId, assignmentRequest.getAuditorEmpNo());
+                
+                log.info("점검자 지정 성공 - 항목 ID: {}, 점검자: {}, 업데이트된 행: {}", 
+                    itemId, assignmentRequest.getAuditorEmpNo(), result);
+                
+                if (result == 0) {
+                    log.warn("업데이트된 행이 없습니다. 항목 ID {} 확인 필요", itemId);
+                }
+                
             } catch (NumberFormatException e) {
-                log.warn("잘못된 항목 ID 형식: {}", hodIcItemId);
+                log.error("잘못된 항목 ID 형식: {}", hodIcItemId, e);
             }
         }
         

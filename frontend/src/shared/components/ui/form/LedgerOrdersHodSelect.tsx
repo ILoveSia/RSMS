@@ -22,7 +22,7 @@ export interface LedgerOrdersHodSelectProps {
   size?: 'small' | 'medium';
   /** 커스텀 스타일 */
   sx?: SxProps<Theme>;
-  /** "전체" 옵션 포함 여부 (기본값: true) */
+  /** "전체" 옵션 포함 여부 (기본값: false - 최대값 자동 선택) */
   includeAll?: boolean;
   /** "전체" 옵션 라벨 (기본값: "전체") */
   allLabel?: string;
@@ -67,7 +67,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
   label,
   size = 'small',
   sx,
-  includeAll = true,
+  includeAll = false,
   allLabel = '전체',
   allValue = 'ALL',
   refreshTrigger,
@@ -94,6 +94,15 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
       const data = await fetchLedgerOrdersHodSelectList();
       setLedgerOrdersHodOptions(data);
 
+      // 데이터가 있고 현재 값이 기본값인 경우 최대값으로 설정
+      if (data.length > 0 && (value === allValue || !value)) {
+        // ledgerOrdersHodId의 최대값을 찾기
+        const maxOption = data.reduce((max, current) => 
+          current.ledgerOrdersHodId > max.ledgerOrdersHodId ? current : max
+        );
+        onChange(maxOption.value, maxOption.ledgerOrdersHodId, maxOption.ledgerOrdersHodStatusCd);
+      }
+
       // 로딩 완료 콜백 호출
       if (onLoadComplete) {
         onLoadComplete(data);
@@ -110,7 +119,7 @@ const LedgerOrdersHodSelect: React.FC<LedgerOrdersHodSelectProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [onLoadComplete, onError]);
+  }, [onLoadComplete, onError, value, allValue, onChange]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {

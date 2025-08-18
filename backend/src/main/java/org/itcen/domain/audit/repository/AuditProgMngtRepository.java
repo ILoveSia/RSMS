@@ -110,4 +110,58 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
             ORDER BY r.responsibility_content
             """, nativeQuery = true)
     List<String> findResponsibilityContentsByAuditProgMngtId(@Param("auditProgMngtId") Long auditProgMngtId);
+
+    // ====== 메인 대시보드용 쿼리 메서드들 ======
+    
+    /**
+     * 사용자별 점검 업무 건수 조회 (점검자로 배정된 건)
+     */
+    @Query("SELECT COUNT(apd) FROM AuditProgMngtDetail apd " +
+           "WHERE apd.auditMenId = :userId")
+    Integer countAuditTasksByUserId(@Param("userId") String userId);
+
+    /**
+     * 사용자별 현재 진행 중인 점검 프로세스 정보
+     * PLAN_IMP 코드그룹 기반으로 단계 매핑
+     */
+    @Query(value = """
+            SELECT apm.audit_prog_mngt_cd as processId,
+                   apm.audit_prog_name as processName,
+                   CASE 
+                       WHEN apd.imp_pl_status_cd = 'PI01' THEN '계획작성'
+                       WHEN apd.imp_pl_status_cd = 'PI02' THEN '계획결재요청'
+                       WHEN apd.imp_pl_status_cd = 'PI03' THEN '계획결재완료'
+                       WHEN apd.imp_pl_status_cd = 'PI04' THEN '이행작성'
+                       WHEN apd.imp_pl_status_cd = 'PI05' THEN '이행결재요청'
+                       WHEN apd.imp_pl_status_cd = 'PI06' THEN '이행결재완료'
+                       ELSE apd.imp_pl_status_cd
+                   END as currentStepTitle,
+                   CASE 
+                       WHEN apd.imp_pl_status_cd = 'PI01' THEN 0
+                       WHEN apd.imp_pl_status_cd = 'PI02' THEN 1
+                       WHEN apd.imp_pl_status_cd = 'PI03' THEN 2
+                       WHEN apd.imp_pl_status_cd = 'PI04' THEN 3
+                       WHEN apd.imp_pl_status_cd = 'PI05' THEN 4
+                       WHEN apd.imp_pl_status_cd = 'PI06' THEN 5
+                       ELSE 0
+                   END as currentStep,
+                   6 as totalSteps,
+                   CASE 
+                       WHEN apd.imp_pl_status_cd = 'PI01' THEN 17
+                       WHEN apd.imp_pl_status_cd = 'PI02' THEN 33
+                       WHEN apd.imp_pl_status_cd = 'PI03' THEN 50
+                       WHEN apd.imp_pl_status_cd = 'PI04' THEN 67
+                       WHEN apd.imp_pl_status_cd = 'PI05' THEN 83
+                       WHEN apd.imp_pl_status_cd = 'PI06' THEN 100
+                       ELSE 0
+                   END as progress,
+                   apd.audit_men_id as assignee
+            FROM audit_prog_mngt apm
+            INNER JOIN audit_prog_mngt_detail apd ON apm.audit_prog_mngt_id = apd.audit_prog_mngt_id
+            WHERE apd.audit_men_id = :userId
+            AND apd.inspect_result_cd = 'INS03'
+            ORDER BY apm.created_at DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> getCurrentAuditProcessByUserId(@Param("userId") String userId);
 }

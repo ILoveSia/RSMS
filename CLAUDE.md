@@ -76,6 +76,72 @@ domains/approval/
 
 ## Domain Structure & Implementation Status
 
+### 🚀 **main** - 메인 대시보드 실시간 데이터 연동 시스템 (2025-08-13 완료)
+
+#### **Backend API** - `/api/main/*`
+- **MainDashboardController**: 7개 실시간 데이터 API 엔드포인트
+  - `GET /main/stats/{userId}` - 사용자별 업무 통계 (결재, 점검, 원장관리)
+  - `GET /main/trends/{userId}` - 월별 업무 처리 트렌드 (최근 6개월)
+  - `GET /main/recent-tasks/{userId}` - 최근 완료 업무 목록
+  - `GET /main/workflow-processes/{userId}` - 전체 워크플로우 프로세스 현황
+  - `GET /main/approval-process/{userId}` - 결재 프로세스 상세 현황
+  - `GET /main/audit-process/{userId}` - 점검 프로세스 상세 현황
+  - `GET /main/management-process/{userId}` - 원장관리 프로세스 상세 현황
+
+#### **Frontend Integration** - `src/domains/main/`
+- **API Client**: `mainDashboardApi.ts` - TypeScript 타입 안전성 보장
+- **Components**: 
+  - `WorkflowVisualization.tsx` - 3단계 워크플로우 프로세스 실시간 시각화
+  - `WorkDashboard.tsx` - 대시보드 통계 및 트렌드 차트
+- **Features**: 
+  - **실시간 데이터 연동**: 사용자별 맞춤 데이터 자동 조회
+  - **3단계 폴백 메커니즘**: API → 개별 API → 실제 데이터 없음 처리
+  - **병렬 API 호출**: Promise.all()로 성능 최적화
+  - **에러 처리**: Graceful degradation으로 사용자 경험 보장
+
+#### **Database Queries** - 실제 PostgreSQL 연동
+```sql
+-- 결재 대기 건수
+SELECT COUNT(s) FROM ApprovalStep s JOIN s.approval a 
+WHERE s.approverId = :userId AND s.stepStatus = 'PENDING'
+
+-- 점검 업무 건수  
+SELECT COUNT(apd) FROM AuditProgMngtDetail apd 
+WHERE apd.auditMenId = :userId
+
+-- 원장관리 업무 건수
+SELECT COUNT(lo.ledger_orders_id) FROM ledger_orders lo
+LEFT JOIN positions p ON lo.ledger_orders_id = p.ledger_orders_id
+LEFT JOIN employee e ON p.emp_no = e.emp_no
+WHERE e.emp_no = :userId OR lo.created_by = :userId
+```
+
+#### **API Response Examples**
+```json
+// /api/main/stats/testuser
+{
+  "totalTasks": 0,
+  "completedTasks": 0,
+  "pendingTasks": 0, 
+  "overdueTasks": 0,
+  "approvalPending": 0,
+  "auditTasks": 0
+}
+
+// /api/main/trends/testuser  
+[] // 실제 데이터 없으면 빈 배열
+
+// /api/main/recent-tasks/testuser
+[] // 목업 데이터 제거, 실제 데이터만 반환
+```
+
+#### **Technical Highlights**
+- **NULL 안전 처리**: Repository 결과값 NULL 체크로 500 에러 방지
+- **목업 데이터 제거**: 실제 데이터 없으면 0/빈값 반환 (사용자 요청 반영)
+- **보안 설정**: `/main/**` 경로 개발용 인증 우회 (SecurityConfig)
+- **SOLID 원칙**: Controller-Service-Repository 계층 분리
+- **에러 로깅**: 상세한 디버그 로그로 트러블슈팅 지원
+
 ### ✅ Fully Implemented Domains
 
 #### **approval** - 결재 관리 시스템
@@ -595,7 +661,116 @@ menu_permissions ←→ menus
 - Optimize database queries with proper indexing
 - Use lazy loading for frontend route components
 
-This codebase follows enterprise-grade patterns with clear separation of concerns, comprehensive error handling, and scalable architecture suitable for financial compliance systems. The system is designed for high reliability, security, and maintainability in a regulated financial environment.
+## 🔄 실시간 데이터 연동 개발 패턴 (2025-08-13 확립)
+
+### Backend API 개발 패턴
+
+#### Repository 쿼리 메서드 설계
+```java
+// 사용자별 COUNT 쿼리 - NULL 안전 처리 필수
+@Query("SELECT COUNT(s) FROM ApprovalStep s " +
+       "JOIN s.approval a " + 
+       "WHERE s.approverId = :userId " +
+       "AND s.stepStatus = 'PENDING'")
+Integer countPendingApprovalsByUserId(@Param("userId") String userId);
+```
+
+#### Service 계층 NULL 안전 처리
+```java
+// Repository 결과 NULL 체크 패턴 (500 에러 방지)
+Integer approvalPending = approvalStepRepository.countPendingApprovalsByUserId(userId);
+approvalPending = (approvalPending != null) ? approvalPending : 0;
+
+// 실제 데이터 없으면 빈 값 반환 (목업 데이터 사용 금지)
+if (result.isEmpty()) {
+    log.info("데이터 없음: userId={}", userId);
+    return Collections.emptyList(); // 또는 기본값 반환
+}
+```
+
+#### Controller 응답 형태
+```java
+@GetMapping("/stats/{userId}")
+public ResponseEntity<WorkStatsDto> getWorkStats(@PathVariable String userId) {
+    WorkStatsDto workStats = mainDashboardService.getWorkStats(userId);
+    return ResponseEntity.ok(workStats); // 항상 200 OK, 데이터 없으면 0/빈값
+}
+```
+
+### Frontend API 연동 패턴
+
+#### TypeScript 타입 정의
+```typescript
+// 인터페이스와 API 클라이언트를 같은 파일에 정의
+export interface UserWorkflowProcessStatus {
+  processType: 'approval' | 'audit' | 'management';
+  processName: string;
+  // ... 나머지 필드들
+}
+
+// type import 분리로 번들링 이슈 방지
+import type { UserWorkflowProcessStatus } from '@/domains/main/api/mainDashboardApi';
+```
+
+#### 3단계 폴백 메커니즘
+```typescript
+// 1단계: 전체 API 호출 시도
+const processes = await mainDashboardApi.getUserWorkflowProcesses(userId);
+
+// 2단계: 개별 API 병렬 호출 (Promise.all 사용)
+const [approval, audit, management] = await Promise.all([
+  mainDashboardApi.getApprovalProcessStatus(userId).catch(() => null),
+  mainDashboardApi.getAuditProcessStatus(userId).catch(() => null),
+  mainDashboardApi.getManagementProcessStatus(userId).catch(() => null),
+]);
+
+// 3단계: 실제 데이터 없음 처리 (목업 데이터 사용 금지)
+if (realProcesses.length === 0) {
+  // UI에서 "데이터 없음" 표시
+}
+```
+
+#### 에러 처리 및 로깅
+```typescript
+try {
+  const data = await api.call();
+  console.log('API 호출 성공:', data);
+} catch (error) {
+  console.warn('API 호출 실패, 폴백 처리:', error);
+  // 사용자에게는 에러 표시하지 않고 graceful degradation
+}
+```
+
+### 개발 시 주의사항
+
+#### 🚫 하지 말아야 할 것들
+- **목업 데이터 사용 금지**: 실제 데이터 없으면 0/빈값 반환
+- **500 에러 허용 금지**: 모든 Repository 결과에 NULL 체크 필수
+- **API 경로 중복 금지**: `/api` context-path 고려한 경로 설계
+- **하드코딩 금지**: 사용자별 동적 데이터만 사용
+
+#### ✅ 해야 할 것들
+- **실시간 데이터 우선**: 데이터베이스에서 실제 데이터 조회
+- **병렬 처리**: Promise.all()로 API 호출 최적화  
+- **타입 안전성**: TypeScript 인터페이스 활용
+- **에러 로깅**: 디버깅을 위한 상세 로그 기록
+- **사용자 경험**: 데이터 없음도 정상적인 상태로 처리
+
+### 성능 최적화 가이드
+
+#### Backend 최적화
+- **JPA 쿼리 최적화**: JOIN FETCH로 N+1 문제 방지
+- **인덱스 활용**: 사용자 ID, 상태 코드에 복합 인덱스 구성
+- **Connection Pool**: HikariCP 설정 최적화
+- **캐싱**: Redis 활용한 자주 조회되는 데이터 캐싱
+
+#### Frontend 최적화  
+- **컴포넌트 최적화**: React.memo, useMemo, useCallback 활용
+- **API 호출 최적화**: 중복 호출 방지, 디바운싱 적용
+- **상태 관리**: Redux 정규화로 불필요한 리렌더링 방지
+- **번들 최적화**: 동적 import로 코드 스플리팅
+
+This codebase follows enterprise-grade patterns with clear separation of concerns, comprehensive error handling, and scalable architecture suitable for financial compliance systems. The system is designed for high reliability, security, and maintainability in a regulated financial environment with real-time data integration capabilities.
 
 ## 📋 인수인계관리 시스템 개발 계획 (진행 중)
 

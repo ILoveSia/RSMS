@@ -1,0 +1,129 @@
+erDiagram
+    audit_prog_mngt {
+        bigint audit_prog_mngt_id PK "점검계획 고유 식별자 (Audit Program ID)"
+        varchar audit_prog_mngt_title "점검계획 제목 (Audit Program Title)"
+        varchar audit_type_cd "점검유형코드 (Audit Type Code)"
+        date audit_start_date "점검시작일 (Audit Start Date)"
+        date audit_end_date "점검종료일 (Audit End Date)"
+        varchar audit_status_cd "점검상태코드 (Audit Status Code)"
+        varchar audit_manager_id "점검관리자 ID (Audit Manager ID)"
+        text audit_purpose "점검목적 (Audit Purpose)"
+        text audit_scope "점검범위 (Audit Scope)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    audit_prog_mngt_detail {
+        bigint audit_prog_mngt_detail_id PK "점검상세 고유 식별자 (Detail ID)"
+        bigint audit_prog_mngt_id FK "점검계획 ID (Audit Program ID)"
+        bigint hod_ic_item_id FK "부서장내부통제항목 ID (HOD IC Item ID)"
+        varchar audit_men_id "점검자 ID (Auditor ID)"
+        varchar audit_result_status_cd "점검결과상태코드 (Result Status Code)"
+        text audit_comments "점검의견 (Audit Comments)"
+        text improvement_plan "개선계획 (Improvement Plan)"
+        date audit_due_date "점검예정일 (Audit Due Date)"
+        date audit_completed_date "점검완료일 (Audit Completed Date)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    execofficer {
+        bigint exec_id PK "임원 고유 식별자 (Executive ID)"
+        varchar exec_name "임원명 (Executive Name)"
+        varchar exec_position "임원직책 (Executive Position)"
+        varchar dept_cd "부서코드 (Department Code)"
+        varchar exec_type_cd "임원유형코드 (Executive Type Code)"
+        date start_date "시작일 (Start Date)"
+        date end_date "종료일 (End Date)"
+        varchar status_cd "상태코드 (Status Code)"
+        varchar emp_no "사번 (Employee Number)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    hod_ic_item {
+        bigint hod_ic_item_id PK "부서장내부통제항목 ID (HOD IC Item ID)"
+        bigint responsibility_id FK "책무 ID (Responsibility ID)"
+        bigint responsibility_detail_id FK "책무상세 ID (Detail ID)"
+        bigint ledger_orders "원장차수 (Ledger Order)"
+        bigint ledger_orders_hod "부서장차수 (HOD Order)"
+        varchar field_type_cd "항목구분코드 (Field Type Code)"
+        varchar role_type_cd "직무구분코드 (Role Type Code)"
+        varchar dept_cd "부서코드 (Department Code)"
+        varchar ic_task "내부통제업무 (Internal Control Task)"
+        varchar measure_desc "조치활동내용 (Measure Description)"
+        varchar measure_type "조치유형 (Measure Type)"
+        varchar period_cd "주기코드 (Period Code)"
+        varchar support_doc "관련근거 (Supporting Document)"
+        varchar check_period "점검시기 (Check Period)"
+        varchar check_way "점검방법 (Check Method)"
+        varchar proof_doc "증빙자료 (Proof Document)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    deficiency_status {
+        bigint deficiency_id PK "미흡상황 고유 식별자 (Deficiency ID)"
+        bigint audit_prog_mngt_detail_id FK "점검상세 ID (Audit Detail ID)"
+        varchar deficiency_type_cd "미흡유형코드 (Deficiency Type Code)"
+        text deficiency_description "미흡내용 (Deficiency Description)"
+        varchar severity_level "심각도수준 (Severity Level)"
+        text improvement_action "개선조치 (Improvement Action)"
+        date target_completion_date "완료예정일 (Target Completion Date)"
+        date actual_completion_date "실제완료일 (Actual Completion Date)"
+        varchar responsible_person "담당자 (Responsible Person)"
+        varchar status_cd "상태코드 (Status Code)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    audit_results {
+        bigint audit_result_id PK "점검결과 고유 식별자 (Audit Result ID)"
+        bigint audit_prog_mngt_detail_id FK "점검상세 ID (Audit Detail ID)"
+        varchar audit_grade "점검등급 (Audit Grade)"
+        text audit_findings "점검발견사항 (Audit Findings)"
+        text recommendations "권고사항 (Recommendations)"
+        text management_response "경영진응답 (Management Response)"
+        date response_due_date "응답예정일 (Response Due Date)"
+        varchar reviewer_id "검토자 ID (Reviewer ID)"
+        timestamp reviewed_at "검토일시 (Reviewed DateTime)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    auditors {
+        bigint auditor_id PK "점검자 고유 식별자 (Auditor ID)"
+        varchar emp_no FK "사번 (Employee Number)"
+        varchar auditor_type_cd "점검자유형코드 (Auditor Type Code)"
+        varchar specialization "전문분야 (Specialization)"
+        varchar certification "자격증 (Certification)"
+        date certification_date "자격취득일 (Certification Date)"
+        varchar status_cd "상태코드 (Status Code)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    common_code {
+        varchar group_code PK "그룹코드 (Group Code)"
+        varchar code PK "코드 (Code)"
+        varchar code_name "코드명 (Code Name)"
+        varchar code_description "코드설명 (Code Description)"
+        int sort_order "정렬순서 (Sort Order)"
+        varchar use_yn "사용여부 (Use YN)"
+        varchar parent_code "상위코드 (Parent Code)"
+        int code_level "코드레벨 (Code Level)"
+        timestamp created_at "생성일시 (Created DateTime)"
+        timestamp updated_at "수정일시 (Updated DateTime)"
+    }
+    
+    audit_prog_mngt ||--o{ audit_prog_mngt_detail : "audit_prog_mngt_id"
+    audit_prog_mngt_detail }o--|| hod_ic_item : "hod_ic_item_id"
+    audit_prog_mngt_detail ||--o{ deficiency_status : "audit_prog_mngt_detail_id"
+    audit_prog_mngt_detail ||--o{ audit_results : "audit_prog_mngt_detail_id"
+    execofficer ||--o{ audit_prog_mngt : "audit_manager_id"
+    auditors ||--o{ audit_prog_mngt_detail : "audit_men_id"
+    common_code ||--o{ audit_prog_mngt : "audit_type_cd"
+    common_code ||--o{ audit_prog_mngt : "audit_status_cd"
+    common_code ||--o{ audit_prog_mngt_detail : "audit_result_status_cd"
+    common_code ||--o{ deficiency_status : "deficiency_type_cd"
+    common_code ||--o{ auditors : "auditor_type_cd"

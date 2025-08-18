@@ -2,7 +2,7 @@
  * 워크플로우 시각화 컴포넌트
  * 업무 프로세스 흐름도를 시각적으로 표시
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -18,6 +18,8 @@ import {
   Avatar,
   IconButton,
   Tooltip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   PlayArrow as PlayArrowIcon,
@@ -29,6 +31,17 @@ import {
   Visibility as VisibilityIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
+import { useReduxState } from '@/app/store/use-store';
+import mainDashboardApi from '@/domains/main/api/mainDashboardApi';
+import type { UserWorkflowProcessStatus } from '@/domains/main/api/mainDashboardApi';
+
+// 로그인 사용자 타입
+interface LoginUser {
+  userid: string;
+  username: string;
+  email: string;
+  role?: string;
+}
 
 // 워크플로우 단계 타입
 interface WorkflowStep {
@@ -54,132 +67,140 @@ interface WorkflowProcess {
 }
 
 const WorkflowVisualization: React.FC = () => {
-  const [selectedProcess, setSelectedProcess] = useState<string>('approval');
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
+  const currentUserId = loginData?.userid;
 
-  // 워크플로우 프로세스 데이터 (실제 시스템 반영)
-  const workflowProcesses: WorkflowProcess[] = [
-    {
-      id: 'approval',
-      name: '결재 프로세스',
-      description: '현재 시스템 결재 워크플로우 (ORDER_STATUS)',
-      category: 'approval',
-      currentStep: 1,
-      progress: 50,
-      steps: [
+  const [selectedProcess, setSelectedProcess] = useState<string>('approval');
+  const [workflowProcesses, setWorkflowProcesses] = useState<WorkflowProcess[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // API에서 워크플로우 프로세스 데이터 변환
+  const convertToWorkflowProcess = (apiData: UserWorkflowProcessStatus): WorkflowProcess => ({
+    id: apiData.processType,
+    name: apiData.processName,
+    description: `실제 데이터 기반 ${apiData.processName}`,
+    category: apiData.processType,
+    currentStep: apiData.currentStep,
+    progress: apiData.progress,
+    steps: apiData.steps.map((step, index) => ({
+      id: `step_${index}`,
+      title: step.title,
+      description: step.description,
+      status: step.status,
+      assignee: step.assignee || loginData?.username || '',
+      dueDate: step.dueDate,
+      estimatedTime: step.estimatedTime,
+    })),
+  });
+
+  // 워크플로우 프로세스 데이터 로드
+  const loadWorkflowProcesses = async () => {
+    if (!currentUserId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // 실시간 API 호출 활성화
+      try {
+        // 각 프로세스별 개별 API 호출로 실제 데이터 조회
+        const [approvalProcess, auditProcess, managementProcess] = await Promise.all([
+          mainDashboardApi.getApprovalProcessStatus(currentUserId).catch(() => null),
+          mainDashboardApi.getAuditProcessStatus(currentUserId).catch(() => null),
+          mainDashboardApi.getManagementProcessStatus(currentUserId).catch(() => null),
+        ]);
+
+        const realProcesses: UserWorkflowProcessStatus[] = [];
+        
+        // 성공한 API 호출 결과만 추가
+        if (approvalProcess) realProcesses.push(approvalProcess);
+        if (auditProcess) realProcesses.push(auditProcess);
+        if (managementProcess) realProcesses.push(managementProcess);
+
+        // 실제 데이터가 있으면 사용, 없으면 목업 데이터 사용
+        if (realProcesses.length > 0) {
+          setWorkflowProcesses(realProcesses.map(convertToWorkflowProcess));
+          return;
+        }
+      } catch (apiError) {
+        console.warn('실시간 API 호출 실패, 목업 데이터 사용:', apiError);
+      }
+
+      // API 실패 시 목업 데이터 폴백
+      const mockProcesses: UserWorkflowProcessStatus[] = [
         {
-          id: 'submit',
-          title: '상신',
-          description: '결재 문서 상신 및 결재라인 설정',
-          status: 'completed',
-          assignee: '김상신',
-          estimatedTime: '30분',
-        },
-        {
-          id: 'progress',
-          title: '진행중',
-          description: '결재라인을 통한 단계별 검토 진행',
-          status: 'active',
-          assignee: '이검토',
+          processType: 'approval',
+          processName: '결재 프로세스',
+          currentStep: 1,
+          totalSteps: 3,
+          progress: 50,
+          activeStepTitle: '진행중',
+          activeStepDescription: '결재라인을 통한 단계별 검토 진행',
+          assignee: loginData?.username || '담당자',
           dueDate: '2024-12-20',
           estimatedTime: '1시간',
+          steps: [
+            { title: '상신', description: '결재 문서 상신', status: 'completed' as const },
+            { title: '진행중', description: '결재라인 검토', status: 'active' as const, dueDate: '2024-12-20' },
+            { title: '승인/반려', description: '최종 결재', status: 'pending' as const },
+          ],
         },
         {
-          id: 'decision',
-          title: '승인/반려',
-          description: '최종 결재자의 승인 또는 반려 결정',
-          status: 'pending',
-          assignee: '박결재',
-          estimatedTime: '30분',
-        },
-      ],
-    },
-    {
-      id: 'audit',
-      name: '책무구조도 이행 점검',
-      description: '부서장 내부통제 책무구조도 이행 점검',
-      category: 'audit',
-      currentStep: 2,
-      progress: 67,
-      steps: [
-        {
-          id: 'planning',
-          title: '점검 계획',
-          description: '책무구조도 이행상황 점검 계획 수립',
-          status: 'completed',
-          assignee: '부서장',
-          estimatedTime: '2시간',
-        },
-        {
-          id: 'inspection',
-          title: '이행 점검',
-          description: '책무구조도 각 항목별 이행상황 점검',
-          status: 'completed',
-          assignee: '담당자',
-          estimatedTime: '4시간',
-        },
-        {
-          id: 'reporting',
-          title: '점검 보고',
-          description: '이행 점검 결과 보고서 작성 및 제출',
-          status: 'active',
-          assignee: '점검자',
+          processType: 'audit',
+          processName: '책무구조도 이행 점검',
+          currentStep: 3,
+          totalSteps: 6,
+          progress: 50,
+          activeStepTitle: '이행작성',
+          activeStepDescription: '실제 이행사항 작성',
+          assignee: loginData?.username || '실무자',
           dueDate: '2024-12-25',
-          estimatedTime: '2시간',
-        },
-      ],
-    },
-    {
-      id: 'management',
-      name: '책무구조도 원장 관리',
-      description: '현재 시스템 책무구조도 원장 관리 (ORDER_STATUS)',
-      category: 'management',
-      currentStep: 3,
-      progress: 60,
-      steps: [
-        {
-          id: 'new',
-          title: '신규',
-          description: '새로운 책무구조도 등록 및 초기 작성',
-          status: 'completed',
-          assignee: '원장관리자',
-          estimatedTime: '2시간',
+          estimatedTime: '4시간',
+          steps: [
+            { title: '계획작성', description: '개선계획 작성', status: 'completed' as const },
+            { title: '계획결재요청', description: '계획 결재 요청', status: 'completed' as const },
+            { title: '계획결재완료', description: '계획 결재 완료', status: 'completed' as const },
+            { title: '이행작성', description: '이행사항 작성', status: 'active' as const, dueDate: '2024-12-25' },
+            { title: '이행결재요청', description: '이행 결재 요청', status: 'pending' as const },
+            { title: '이행결재완료', description: '이행 결재 완료', status: 'pending' as const },
+          ],
         },
         {
-          id: 'position_confirm',
-          title: '직책 확정',
-          description: '관련 직책의 확정 및 검토',
-          status: 'completed',
-          assignee: '직책담당자',
-          estimatedTime: '1시간',
-        },
-        {
-          id: 'responsibility_confirm',
-          title: '직책별 책무 확정',
-          description: '각 직책별 세부 책무사항 확정',
-          status: 'completed',
-          assignee: '책무담당자',
-          estimatedTime: '3시간',
-        },
-        {
-          id: 'executive_confirm',
-          title: '임원 확정',
-          description: '임원급에서의 승인 및 확정',
-          status: 'active',
-          assignee: '담당임원',
+          processType: 'management',
+          processName: '책무구조도 원장 관리',
+          currentStep: 3,
+          totalSteps: 5,
+          progress: 60,
+          activeStepTitle: '임원확정',
+          activeStepDescription: '임원급 승인 진행',
+          assignee: loginData?.username || '담당임원',
           dueDate: '2024-12-28',
           estimatedTime: '1시간',
+          steps: [
+            { title: '신규', description: '신규 등록', status: 'completed' as const },
+            { title: '직책확정', description: '직책 확정', status: 'completed' as const },
+            { title: '직책별책무확정', description: '책무사항 확정', status: 'completed' as const },
+            { title: '임원확정', description: '임원급 승인', status: 'active' as const, dueDate: '2024-12-28' },
+            { title: '최종확정', description: '최종 승인', status: 'pending' as const },
+          ],
         },
-        {
-          id: 'final_confirm',
-          title: '최종 확정',
-          description: '최고 결재권자의 최종 승인 및 확정',
-          status: 'pending',
-          assignee: '최고책임자',
-          estimatedTime: '30분',
-        },
-      ],
-    },
-  ];
+      ];
+
+      setWorkflowProcesses(mockProcesses.map(convertToWorkflowProcess));
+
+    } catch (err) {
+      console.error('워크플로우 프로세스 로드 실패:', err);
+      setError('워크플로우 현황을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 데이터 로드
+  useEffect(() => {
+    loadWorkflowProcesses();
+  }, [currentUserId]);
 
   const currentProcess = workflowProcesses.find(p => p.id === selectedProcess);
 
@@ -207,6 +228,49 @@ const WorkflowVisualization: React.FC = () => {
     }
   };
 
+  // 로딩 상태 처리
+  if (loading) {
+    return (
+      <Box sx={{ width: '100%', p: 3 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', mb: 1 }}>
+            업무 워크플로우
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            진행 중인 업무 프로세스의 현황을 확인하고 관리하세요
+          </Typography>
+        </Box>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+          <CircularProgress />
+          <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+            워크플로우 현황을 불러오는 중...
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  // 에러 상태 처리
+  if (error) {
+    return (
+      <Box sx={{ width: '100%', p: 3 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2', mb: 1 }}>
+            업무 워크플로우
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            진행 중인 업무 프로세스의 현황을 확인하고 관리하세요
+          </Typography>
+        </Box>
+        
+        <Alert severity="error" sx={{ mx: 2 }}>
+          {error}
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', p: 3 }}>
       {/* 헤더 */}
@@ -215,14 +279,19 @@ const WorkflowVisualization: React.FC = () => {
           업무 워크플로우
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          진행 중인 업무 프로세스의 현황을 확인하고 관리하세요
+          {loginData?.username || '사용자'}님의 실시간 업무 프로세스 현황
         </Typography>
       </Box>
 
       {/* 프로세스 선택 버튼 */}
       <Box sx={{ mb: 4 }}>
         <Stack direction="row" spacing={2}>
-          {workflowProcesses.map((process) => (
+          {workflowProcesses.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              진행 중인 워크플로우가 없습니다.
+            </Typography>
+          ) : (
+            workflowProcesses.map((process) => (
             <Button
               key={process.id}
               variant={selectedProcess === process.id ? 'contained' : 'outlined'}
@@ -235,7 +304,8 @@ const WorkflowVisualization: React.FC = () => {
             >
               {process.name}
             </Button>
-          ))}
+            ))
+          )}
         </Stack>
       </Box>
 

@@ -16,6 +16,6 @@ CREATE TABLE public.rm_submit_mgmt (
 	updated_id varchar(100) NULL,
 	created_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
 	updated_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
-	bank_cd varchar(100) NULL,
+	bank_cd varchar(100)  NULL,
   CONSTRAINT rm_submit_mgmt_pkey PRIMARY KEY (rm_submit_mgmt_id)
 );
