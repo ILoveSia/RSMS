@@ -24,18 +24,11 @@ public class AuthRequestDto {
     public static class LoginRequest {
         
         /**
-         * 사용자 ID 또는 이메일
+         * 사용자 ID
          */
-        @NotBlank(message = "사용자 ID 또는 이메일은 필수입니다.")
-        @Size(min = 3, max = 100, message = "사용자 ID 또는 이메일은 3-100자 사이여야 합니다.")
+        @NotBlank(message = "사용자 ID는 필수입니다.")
+        @Size(min = 3, max = 100, message = "사용자 ID는 3-100자 사이여야 합니다.")
         private String userid;
-
-        /**
-         * 사용자 이름
-         */
-        @NotBlank(message = "사용자 이름 또는 이메일은 필수입니다.")
-        @Size(min = 3, max = 100, message = "사용자 이름 또는 이메일은 3-100자 사이여야 합니다.")
-        private String username;
 
         /**
          * 비밀번호
@@ -69,11 +62,11 @@ public class AuthRequestDto {
         private String id;
         
         /**
-         * 사용자명
+         * 사번
          */
-        @NotBlank(message = "사용자명은 필수입니다.")
-        @Size(min = 2, max = 50, message = "사용자명은 2-50자 사이여야 합니다.")
-        private String username;
+        @NotBlank(message = "사번은 필수입니다.")
+        @Size(min = 2, max = 100, message = "사번은 2-100자 사이여야 합니다.")
+        private String empNo;
         
         /**
          * 이메일

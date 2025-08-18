@@ -52,13 +52,13 @@ public class UserController {
             @RequestParam(defaultValue = "desc") String direction) {
 
         UserDto.SearchRequest request = UserDto.SearchRequest.builder()
-                .username(username)
+                .username(username) // empName으로 검색
                 .email(email)
                 .address(address)
                 .mobile(mobile)
-                .deptCd(deptCd)
-                .num(num)
-                .jobRankCd(jobRankCd)
+                .empNo(num) // empNo 필드 사용
+                .departmentName(deptCd) // departmentName으로 변경
+                .positionName(jobRankCd) // positionName으로 변경
                 .page(page)
                 .size(size)
                 .sort(sort)
@@ -80,12 +80,12 @@ public class UserController {
     }
 
     /**
-     * 사용자명으로 사용자 조회
-     * GET /api/users/username/{username}
+     * 사원명으로 사용자 조회
+     * GET /api/users/empName/{empName}
      */
-    @GetMapping("/username/{username}")
-    public ResponseEntity<ApiResponse<UserDto.Response>> getUserByUsername(@PathVariable String username) {
-        UserDto.Response user = userService.getUserByUsername(username);
+    @GetMapping("/empName/{empName}")
+    public ResponseEntity<ApiResponse<UserDto.Response>> getUserByEmpName(@PathVariable String empName) {
+        UserDto.Response user = userService.getUserByEmployeeName(empName);
         return ResponseEntity.ok(ApiResponse.success("사용자 정보를 성공적으로 조회했습니다.", user));
     }
 
@@ -101,11 +101,11 @@ public class UserController {
 
     /**
      * 사번으로 사용자 조회
-     * GET /api/users/num/{num}
+     * GET /api/users/empNo/{empNo}
      */
-    @GetMapping("/num/{num}")
-    public ResponseEntity<ApiResponse<UserDto.Response>> getUserByNum(@PathVariable String num) {
-        UserDto.Response user = userService.getUserByNum(num);
+    @GetMapping("/empNo/{empNo}")
+    public ResponseEntity<ApiResponse<UserDto.Response>> getUserByEmpNo(@PathVariable String empNo) {
+        UserDto.Response user = userService.getUserByEmpNo(empNo);
         return ResponseEntity.ok(ApiResponse.success("사용자 정보를 성공적으로 조회했습니다.", user));
     }
 
@@ -159,10 +159,10 @@ public class UserController {
             @RequestParam(defaultValue = "100") int limit) {
 
         UserDto.EmployeeSearchRequest request = UserDto.EmployeeSearchRequest.builder()
-                .username(username)
-                .num(num)
-                .deptCd(deptCd)
-                .jobRankCd(jobRankCd)
+                .username(username) // empName으로 사용
+                .empNo(num) // empNo 필드 사용
+                .departmentName(deptCd) // departmentName으로 변경
+                .positionName(jobRankCd) // positionName으로 변경
                 .limit(limit)
                 .build();
 

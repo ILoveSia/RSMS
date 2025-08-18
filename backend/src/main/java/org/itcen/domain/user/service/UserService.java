@@ -37,7 +37,7 @@ public class UserService {
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     /**
-     * 사용자 목록 조회
+     * 사용자 목록 조회 (Employee JOIN 포함)
      */
     public Page<UserDto.Response> getUsers(UserDto.SearchRequest request) {
         // 정렬 방향 설정
@@ -51,19 +51,30 @@ public class UserService {
                 Sort.by(direction, request.getSort())
         );
 
-        // 검색 조건에 따른 조회
-        Page<User> users = userRepository.findBySearchCriteria(
-                request.getUsername(),
+        // Employee JOIN을 통한 검색 조건 조회
+        Page<Object[]> results = userRepository.findBySearchCriteria(
+                request.getUsername(), // empName으로 검색
                 request.getEmail(),
                 request.getAddress(),
                 request.getMobile(),
-                request.getDeptCd(),
-                request.getNum(),
-                request.getJobRankCd(),
+                request.getEmpNo(),
+                request.getDepartmentName(),
+                request.getPositionName(),
                 pageable
         );
 
-        return users.map(UserDto.Response::from);
+        return results.map(result -> {
+            User user = (User) result[0];
+            Employee employee = (Employee) result[1];
+            
+            return UserDto.Response.from(
+                user,
+                employee != null ? employee.getDeptName() : null,
+                employee != null ? employee.getPositionName() : null
+            ).toBuilder()
+                .username(employee != null ? employee.getEmpName() : null) // empName을 username으로 설정
+                .build();
+        });
     }
 
     /**
@@ -75,7 +86,7 @@ public class UserService {
         // 검색 조건에 따른 조회
         List<Employee> employees = employeeRepository.searchEmployees(
                 request.getUsername(),
-                request.getDeptCd()
+                request.getDepartmentName()
         );
 
         // limit 적용
@@ -87,9 +98,9 @@ public class UserService {
                         .email(employee.getEmail())
                         .address("")
                         .mobile(employee.getPhoneNo())
-                        .deptCd(employee.getDeptCode())
-                        .num(employee.getEmpNo())
-                        .jobRankCd(employee.getPositionCode())
+                        .empNo(employee.getEmpNo())
+                        .departmentName(employee.getDeptName())
+                        .positionName(employee.getPositionName())
                         .createdAt(employee.getCreatedAt())
                         .updatedAt(employee.getUpdatedAt())
                         .build())
@@ -107,13 +118,13 @@ public class UserService {
     }
 
     /**
-     * 사용자명으로 사용자 조회
+     * 사원명으로 사용자 조회
      * employee 테이블 사용
      */
-    public UserDto.Response getUserByUsername(String username) {
-        log.info("사용자명으로 사용자 조회 시도: {}", username);
-        Employee employee = employeeRepository.findByEmpName(username)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Username: " + username));
+    public UserDto.Response getUserByEmployeeName(String empName) {
+        log.info("사원명으로 사용자 조회 시도: {}", empName);
+        Employee employee = employeeRepository.findByEmpName(empName)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. EmpName: " + empName));
         
         return UserDto.Response.builder()
                 .id(employee.getEmpNo())
@@ -121,9 +132,9 @@ public class UserService {
                 .email(employee.getEmail())
                 .address("")
                 .mobile(employee.getPhoneNo())
-                .deptCd(employee.getDeptCode())
-                .num(employee.getEmpNo())
-                .jobRankCd(employee.getPositionCode())
+                .empNo(employee.getEmpNo())
+                .departmentName(employee.getDeptName())
+                .positionName(employee.getPositionName())
                 .createdAt(employee.getCreatedAt())
                 .updatedAt(employee.getUpdatedAt())
                 .build();
@@ -140,9 +151,8 @@ public class UserService {
             throw new IllegalArgumentException("이미 존재하는 ID입니다: " + request.getId());
         }
 
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("이미 존재하는 사용자명입니다: " + request.getUsername());
-        }
+        // Employee 이름 중복 검사는 Employee 테이블에서 처리
+        // 필요시 별도 검증 로직 추가
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다: " + request.getEmail());
@@ -153,9 +163,9 @@ public class UserService {
         }
 
         // 사번 중복 검사 (사번이 있는 경우에만)
-        if (request.getNum() != null && !request.getNum().trim().isEmpty()) {
-            if (userRepository.existsByNum(request.getNum())) {
-                throw new IllegalArgumentException("이미 존재하는 사번입니다: " + request.getNum());
+        if (request.getEmpNo() != null && !request.getEmpNo().trim().isEmpty()) {
+            if (userRepository.existsByEmpNo(request.getEmpNo())) {
+                throw new IllegalArgumentException("이미 존재하는 사번입니다: " + request.getEmpNo());
             }
         }
 
@@ -200,25 +210,9 @@ public class UserService {
             user.setMobile(request.getMobile());
         }
 
-        // 사번 중복 검사 (자신 제외)
-        if (request.getNum() != null && !request.getNum().equals(user.getNum())) {
-            if (userRepository.existsByNum(request.getNum())) {
-                throw new IllegalArgumentException("이미 존재하는 사번입니다: " + request.getNum());
-            }
-            user.setNum(request.getNum());
-        }
-
         // 필드 업데이트
         if (request.getAddress() != null) {
             user.setAddress(request.getAddress());
-        }
-
-        if (request.getDeptCd() != null) {
-            user.setDeptCd(request.getDeptCd());
-        }
-
-        if (request.getJobRankCd() != null) {
-            user.setJobRankCd(request.getJobRankCd());
         }
 
         // 직책코드 제거 반영: jobTitleCd 관련 업데이트 제거
@@ -259,9 +253,9 @@ public class UserService {
                 .email(employee.getEmail())
                 .address("")
                 .mobile(employee.getPhoneNo())
-                .deptCd(employee.getDeptCode())
-                .num(employee.getEmpNo())
-                .jobRankCd(employee.getPositionCode())
+                .empNo(employee.getEmpNo())
+                .departmentName(employee.getDeptName())
+                .positionName(employee.getPositionName())
                 .createdAt(employee.getCreatedAt())
                 .updatedAt(employee.getUpdatedAt())
                 .build();
@@ -271,10 +265,10 @@ public class UserService {
      * 사번으로 사용자 조회
      * employee 테이블 사용
      */
-    public UserDto.Response getUserByNum(String num) {
-        log.info("사번으로 사용자 조회 시도: {}", num);
-        Employee employee = employeeRepository.findByEmpNo(num)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Num: " + num));
+    public UserDto.Response getUserByEmpNo(String empNo) {
+        log.info("사번으로 사용자 조회 시도: {}", empNo);
+        Employee employee = employeeRepository.findByEmpNo(empNo)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. EmpNo: " + empNo));
         
         return UserDto.Response.builder()
                 .id(employee.getEmpNo())
@@ -282,9 +276,9 @@ public class UserService {
                 .email(employee.getEmail())
                 .address("")
                 .mobile(employee.getPhoneNo())
-                .deptCd(employee.getDeptCode())
-                .num(employee.getEmpNo())
-                .jobRankCd(employee.getPositionCode())
+                .empNo(employee.getEmpNo())
+                .departmentName(employee.getDeptName())
+                .positionName(employee.getPositionName())
                 .createdAt(employee.getCreatedAt())
                 .updatedAt(employee.getUpdatedAt())
                 .build();

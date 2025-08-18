@@ -26,7 +26,7 @@ public class UserDto {
      * 사용자 응답 DTO
      */
     @Data
-    @Builder
+    @Builder(toBuilder = true)
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Response {
@@ -35,10 +35,11 @@ public class UserDto {
         private String email;
         private String address;
         private String mobile;
-        private String deptCd;
-        private String num;
-        private String jobRankCd;
-        // private String jobTitleCd; // 제거: DB에서 해당 컬럼 삭제됨
+        private String empNo;
+        
+        // Employee 테이블에서 조회되는 추가 정보
+        private String departmentName;
+        private String positionName;
         
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createdAt;
@@ -47,21 +48,28 @@ public class UserDto {
         private LocalDateTime updatedAt;
 
         /**
-         * Entity를 Response DTO로 변환
+         * Entity를 Response DTO로 변환 (Employee 정보 포함)
          */
-        public static Response from(User user) {
+        public static Response from(User user, String departmentName, String positionName) {
             return Response.builder()
                     .id(user.getId())
-                    .username(user.getUsername())
+                    .username(null) // username은 별도로 설정 (Employee empName 사용)
                     .email(user.getEmail())
                     .address(user.getAddress())
                     .mobile(user.getMobile())
-                    .deptCd(user.getDeptCd())
-                    .num(user.getNum())
-                    .jobRankCd(user.getJobRankCd())
+                    .empNo(user.getEmpNo())
+                    .departmentName(departmentName)
+                    .positionName(positionName)
                     .createdAt(user.getCreatedAt())
                     .updatedAt(user.getUpdatedAt())
                     .build();
+        }
+        
+        /**
+         * Entity를 Response DTO로 변환 (Employee 정보 없는 경우)
+         */
+        public static Response from(User user) {
+            return from(user, null, null);
         }
     }
 
@@ -77,10 +85,6 @@ public class UserDto {
         @NotBlank(message = "ID는 필수입니다.")
         @Size(min = 3, max = 100, message = "ID는 3-100자 사이여야 합니다.")
         private String id;
-        
-        @NotBlank(message = "사용자명은 필수입니다.")
-        @Size(min = 3, max = 50, message = "사용자명은 3-50자 사이여야 합니다.")
-        private String username;
 
         @NotBlank(message = "이메일은 필수입니다.")
         @Email(message = "올바른 이메일 형식이 아닙니다.")
@@ -100,14 +104,8 @@ public class UserDto {
         @Size(min = 8, max = 255, message = "비밀번호는 8-255자 사이여야 합니다.")
         private String password;
 
-        @Size(max = 100, message = "부서코드는 100자를 초과할 수 없습니다.")
-        private String deptCd;
-
         @Size(max = 100, message = "사번은 100자를 초과할 수 없습니다.")
-        private String num;
-
-        @Size(max = 100, message = "직급코드는 100자를 초과할 수 없습니다.")
-        private String jobRankCd;
+        private String empNo;
 
         // @Size(max = 100, message = "직책코드는 100자를 초과할 수 없습니다.")
         // private String jobTitleCd;
@@ -118,16 +116,11 @@ public class UserDto {
         public User toEntity() {
             return User.builder()
                     .id(this.id)
-                    .username(this.username)
                     .email(this.email)
                     .address(this.address)
                     .mobile(this.mobile)
                     .password(this.password) // 서비스에서 암호화 처리
-                    .empNo(this.num) // empNo 저장 (num을 사번으로 사용)
-                    .deptCd(this.deptCd)
-                    .num(this.num)
-                    .jobRankCd(this.jobRankCd)
-                    // .jobTitleCd(this.jobTitleCd)
+                    .empNo(this.empNo)
                     .build();
         }
     }
@@ -154,14 +147,8 @@ public class UserDto {
         @Size(max = 20, message = "휴대폰 번호는 20자를 초과할 수 없습니다.")
         private String mobile;
 
-        @Size(max = 100, message = "부서코드는 100자를 초과할 수 없습니다.")
-        private String deptCd;
-
         @Size(max = 100, message = "사번은 100자를 초과할 수 없습니다.")
-        private String num;
-
-        @Size(max = 100, message = "직급코드는 100자를 초과할 수 없습니다.")
-        private String jobRankCd;
+        private String empNo;
 
         // @Size(max = 100, message = "직책코드는 100자를 초과할 수 없습니다.")
         // private String jobTitleCd;
@@ -179,10 +166,9 @@ public class UserDto {
         private String email;
         private String address;
         private String mobile;
-        private String deptCd;
-        private String num;
-        private String jobRankCd;
-        // private String jobTitleCd;
+        private String empNo;
+        private String departmentName;
+        private String positionName;
         
         @Builder.Default
         private int page = 0;
@@ -206,9 +192,9 @@ public class UserDto {
     @AllArgsConstructor
     public static class EmployeeSearchRequest {
         private String username;
-        private String num;
-        private String deptCd;
-        private String jobRankCd;
+        private String empNo;
+        private String departmentName;
+        private String positionName;
         
         @Builder.Default
         private int limit = 100;

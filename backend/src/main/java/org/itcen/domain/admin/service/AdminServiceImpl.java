@@ -403,10 +403,10 @@ public class AdminServiceImpl implements AdminService {
         
         return UserWithRolesDto.builder()
                 .userId(user.getId())
-                .userName(user.getUsername())
+                .userName(employee != null ? employee.getEmpName() : null) // Employee empName 사용
                 .email(user.getEmail())
                 .empNo(user.getEmpNo())
-                .department(user.getDeptCd())
+                .department(employee != null ? employee.getDeptCode() : null)
                 .departmentName(employee != null ? employee.getDeptName() : null)
                 // .position(user.getJobTitleCd()) // job_title_cd 제거로 사용자 엔티티에서 제공하지 않음
                 .positionName(employee != null ? employee.getPositionName() : null)

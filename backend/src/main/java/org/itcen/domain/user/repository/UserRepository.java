@@ -1,7 +1,7 @@
 package org.itcen.domain.user.repository;
 
-// import org.itcen.domain.departments.entity.Department;
-// import org.itcen.domain.employee.entity.Employee;
+import org.itcen.domain.departments.entity.Department;
+import org.itcen.domain.employee.entity.Employee;
 import org.itcen.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,9 +25,10 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, String> {
 
     /**
-     * 사용자명으로 사용자 조회
+     * 사번으로 사용자 조회 (Employee JOIN)
      */
-    Optional<User> findByUsername(String username);
+    @Query("SELECT u FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo WHERE e.empName = :empName")
+    Optional<User> findByEmployeeName(@Param("empName") String empName);
 
     /**
      * 이메일로 사용자 조회
@@ -35,9 +36,10 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String email);
 
     /**
-     * 사용자명 존재 여부 확인
+     * Employee 이름으로 사용자 존재 여부 확인
      */
-    boolean existsByUsername(String username);
+    @Query("SELECT COUNT(u) > 0 FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo WHERE e.empName = :empName")
+    boolean existsByEmployeeName(@Param("empName") String empName);
 
     /**
      * 이메일 존재 여부 확인
@@ -57,32 +59,33 @@ public interface UserRepository extends JpaRepository<User, String> {
     /**
      * 사번으로 사용자 조회
      */
-    Optional<User> findByNum(String num);
+    Optional<User> findByEmpNo(String empNo);
 
     /**
      * 사번 존재 여부 확인
      */
-    boolean existsByNum(String num);
+    boolean existsByEmpNo(String empNo);
 
     /**
-     * 사용자명, 이메일, 주소, 휴대폰, 부서코드, 사번, 직급코드로 검색
+     * Employee 테이블과 조인하여 검색 (부서명, 직급명 포함)
      */
-    @Query("SELECT u FROM User u WHERE " +
-           "(:username IS NULL OR u.username LIKE %:username%) AND " +
+    @Query("SELECT u, e FROM User u " +
+           "LEFT JOIN Employee e ON u.empNo = e.empNo " +
+           "WHERE (:empName IS NULL OR e.empName LIKE %:empName%) AND " +
            "(:email IS NULL OR u.email LIKE %:email%) AND " +
            "(:address IS NULL OR u.address LIKE %:address%) AND " +
            "(:mobile IS NULL OR u.mobile LIKE %:mobile%) AND " +
-           "(:deptCd IS NULL OR u.deptCd LIKE %:deptCd%) AND " +
-           "(:num IS NULL OR u.num LIKE %:num%) AND " +
-           "(:jobRankCd IS NULL OR u.jobRankCd LIKE %:jobRankCd%)")
-    Page<User> findBySearchCriteria(
-            @Param("username") String username,
+           "(:empNo IS NULL OR u.empNo LIKE %:empNo%) AND " +
+           "(:departmentName IS NULL OR e.deptName LIKE %:departmentName%) AND " +
+           "(:positionName IS NULL OR e.positionName LIKE %:positionName%)")
+    Page<Object[]> findBySearchCriteria(
+            @Param("empName") String empName,
             @Param("email") String email,
             @Param("address") String address,
             @Param("mobile") String mobile,
-            @Param("deptCd") String deptCd,
-            @Param("num") String num,
-            @Param("jobRankCd") String jobRankCd,
+            @Param("empNo") String empNo,
+            @Param("departmentName") String departmentName,
+            @Param("positionName") String positionName,
             Pageable pageable
     );
 
@@ -100,6 +103,6 @@ public interface UserRepository extends JpaRepository<User, String> {
      */
     @Query("SELECT u, e FROM User u " +
            "LEFT JOIN Employee e ON u.empNo = e.empNo " +
-           "ORDER BY u.username")
+           "ORDER BY u.empNo")
     List<Object[]> findUsersWithEmployee();
 } 

@@ -261,7 +261,7 @@ public class ApprovalServiceImpl implements ApprovalService {
         
         return ApprovalDto.ApproverInfo.builder()
                 .userId(user.getId())
-                .userName(user.getUsername())
+                .userName(employee != null ? employee.getEmpName() : user.getEmpNo())
                 .departmentName(employee != null ? employee.getDeptName() : "미지정")
                 .positionName(employee != null ? employee.getPositionName() : "미지정")
                 .isAvailable(employee == null || employee.isUsable()) // employee가 null이거나 사용가능한 경우
@@ -472,7 +472,25 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     // TODO: 실제 구현 시 사용자 서비스와 연동
     private String getUserName(String userId) {
-        return userId; // 임시로 ID 반환
+        try {
+            // User를 조회하여 Employee 정보에서 이름 가져오기
+            User user = userRepository.findByEmpNo(userId).orElse(null);
+            if (user != null) {
+                // UserRepository에서 Employee JOIN 쿼리로 이름 조회
+                Object[] userEmployee = userRepository.findUsersWithEmployee().stream()
+                    .filter(data -> ((User) data[0]).getId().equals(user.getId()))
+                    .findFirst()
+                    .orElse(null);
+                    
+                if (userEmployee != null && userEmployee[1] != null) {
+                    return ((org.itcen.domain.employee.entity.Employee) userEmployee[1]).getEmpName();
+                }
+            }
+            return userId; // fallback으로 ID 반환
+        } catch (Exception e) {
+            log.warn("사용자명 조회 실패: {}", userId, e);
+            return userId; // 에러 시 ID 반환
+        }
     }
 
     // TODO: 실제 구현 시 업무 타입별 제목 조회 로직
