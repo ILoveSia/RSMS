@@ -65,6 +65,8 @@ interface SortableMenuItemProps {
   onToggleExpand: (menuId: number) => void;
   isDragging?: boolean;
   isOver?: boolean;
+  isDropTarget?: boolean;
+  dropPosition?: 'before' | 'after' | 'inside';
 }
 
 const SortableMenuItem: React.FC<SortableMenuItemProps> = ({
@@ -73,7 +75,9 @@ const SortableMenuItem: React.FC<SortableMenuItemProps> = ({
   isExpanded,
   onToggleExpand,
   isDragging = false,
-  isOver = false
+  isOver = false,
+  isDropTarget = false,
+  dropPosition
 }) => {
   const {
     attributes,
@@ -93,17 +97,43 @@ const SortableMenuItem: React.FC<SortableMenuItemProps> = ({
   const hasChildren = menu.children && menu.children.length > 0;
 
     return (
-    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, position: 'relative' }}>
+      {/* 드롭 인디케이터 - 위쪽 */}
+      {isDropTarget && dropPosition === 'before' && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -2,
+            left: 0,
+            right: 0,
+            height: 4,
+            backgroundColor: 'primary.main',
+            borderRadius: 1,
+            zIndex: 10,
+            boxShadow: 2
+          }}
+        />
+      )}
+      
       <Paper
         ref={setNodeRef}
         style={style}
+        data-menu-id={menu.id}
         sx={{
           flexGrow: 1,
           p: 2,
           pl: 2 + level * 3,
-          border: '1px solid',
-          borderColor: isOver ? 'primary.main' : 'divider',
-          backgroundColor: isOver ? 'primary.light' : (isDragging ? 'action.hover' : 'background.paper'),
+          border: '2px solid',
+          borderColor: isDropTarget && dropPosition === 'inside' 
+            ? 'primary.main' 
+            : isOver 
+              ? 'primary.light' 
+              : 'divider',
+          backgroundColor: isDropTarget && dropPosition === 'inside'
+            ? 'primary.light'
+            : isOver 
+              ? 'action.hover' 
+              : (isDragging ? 'action.hover' : 'background.paper'),
           cursor: 'grab',
           '&:active': {
             cursor: 'grabbing',
@@ -111,7 +141,8 @@ const SortableMenuItem: React.FC<SortableMenuItemProps> = ({
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s ease',
+          boxShadow: isDropTarget ? 3 : 1
         }}
         {...attributes}
         {...listeners}
@@ -145,6 +176,23 @@ const SortableMenuItem: React.FC<SortableMenuItemProps> = ({
           {isExpanded ? <CollapseIcon /> : <ExpandIcon />}
         </IconButton>
       )}
+      
+      {/* 드롭 인디케이터 - 아래쪽 */}
+      {isDropTarget && dropPosition === 'after' && (
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: -2,
+            left: 0,
+            right: 0,
+            height: 4,
+            backgroundColor: 'primary.main',
+            borderRadius: 1,
+            zIndex: 10,
+            boxShadow: 2
+          }}
+        />
+      )}
     </Box>
   );
 };
@@ -159,6 +207,8 @@ const MenuPositionDialog: React.FC<MenuPositionDialogProps> = ({
   const [flatMenuList, setFlatMenuList] = useState<Menu[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [overId, setOverId] = useState<number | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ id: number; position: 'before' | 'after' | 'inside' } | null>(null);
+  const [currentMenus, setCurrentMenus] = useState<Menu[]>(menus);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -180,12 +230,16 @@ const MenuPositionDialog: React.FC<MenuPositionDialogProps> = ({
   };
 
   useEffect(() => {
+    setCurrentMenus(menus);
+  }, [menus]);
+
+  useEffect(() => {
     console.log('expandedMenus:', expandedMenus);
     console.log('menus:', menus);
-    const flattened = flattenMenus(menus);
+    const flattened = flattenMenus(currentMenus);
     console.log('flattened menus:', flattened);
     setFlatMenuList(flattened);
-  }, [menus, expandedMenus]);
+  }, [currentMenus, expandedMenus]);
 
   const handleToggleExpand = (menuId: number) => {
     console.log('Toggle expand for menu ID:', menuId);
@@ -205,81 +259,130 @@ const MenuPositionDialog: React.FC<MenuPositionDialogProps> = ({
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as number);
+    setDropTarget(null);
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    setOverId(event.over?.id as number || null);
+    const { active, over } = event;
+    setOverId(over?.id as number || null);
+    
+    if (over && active.id !== over.id) {
+      const activeMenu = flatMenuList.find(item => item.id === active.id);
+      const overMenu = flatMenuList.find(item => item.id === over.id);
+      
+      if (activeMenu && overMenu) {
+        // 마우스 위치 기반으로 드롭 위치 결정
+        const overElement = document.querySelector(`[data-menu-id="${overMenu.id}"]`) as HTMLElement;
+        if (overElement && event.activatorEvent) {
+          const rect = overElement.getBoundingClientRect();
+          const mouseY = (event.activatorEvent as MouseEvent).clientY;
+          const relativeY = mouseY - rect.top;
+          const threshold = rect.height / 3; // 상단 1/3, 하단 1/3, 중간 1/3
+          
+          let position: 'before' | 'after' | 'inside';
+          
+          if (relativeY < threshold) {
+            position = 'before';
+          } else if (relativeY > rect.height - threshold) {
+            position = 'after';
+          } else {
+            position = 'inside';
+          }
+          
+          // 하위메뉴가 상위메뉴로 올라가는 것을 방지
+          if (activeMenu.menuLevel > overMenu.menuLevel && position === 'before') {
+            position = 'after'; // 같은 레벨로 유지
+          }
+          
+          setDropTarget({ id: overMenu.id, position });
+        }
+      }
+    } else {
+      setDropTarget(null);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
     setOverId(null);
+    setDropTarget(null);
 
-    if (over && active.id !== over.id) {
+    if (over && active.id !== over.id && dropTarget) {
       const activeMenu = flatMenuList.find(item => item.id === active.id);
       const overMenu = flatMenuList.find(item => item.id === over.id);
       
       if (activeMenu && overMenu) {
-        // 같은 레벨에서의 순서 변경
-        if (activeMenu.menuLevel === overMenu.menuLevel) {
-          const oldIndex = flatMenuList.findIndex(item => item.id === active.id);
-          const newIndex = flatMenuList.findIndex(item => item.id === over.id);
-          const newFlatList = arrayMove(flatMenuList, oldIndex, newIndex);
-          setFlatMenuList(newFlatList);
-        } else {
-          // 다른 레벨로 이동 (부모-자식 관계 변경)
-          const newFlatList = flatMenuList.map(item => {
+        // 평면화된 리스트를 업데이트
+        let updatedFlatList = [...flatMenuList];
+        
+        if (dropTarget.position === 'inside') {
+          // 다른 메뉴의 하위로 이동
+          updatedFlatList = updatedFlatList.map(item => {
             if (item.id === active.id) {
-              // 드롭된 메뉴의 레벨에 따라 parentId 설정
-              if (overMenu.menuLevel === 0) {
-                // 최상위 레벨로 이동
-                return { ...item, parentId: null, menuLevel: 0 };
-              } else {
-                // 다른 메뉴의 하위로 이동
-                return { ...item, parentId: overMenu.id, menuLevel: overMenu.menuLevel + 1 };
-              }
+              return { ...item, parentId: overMenu.id, menuLevel: overMenu.menuLevel + 1 };
             }
             return item;
           });
-          setFlatMenuList(newFlatList);
+        } else {
+          // 같은 레벨에서 순서 변경 (before/after)
+          // overMenu의 parentId를 activeMenu의 parentId로 설정하여 같은 레벨 유지
+          updatedFlatList = updatedFlatList.map(item => {
+            if (item.id === active.id) {
+              return { ...item, parentId: overMenu.parentId, menuLevel: overMenu.menuLevel };
+            }
+            return item;
+          });
+          
+          // 순서 변경
+          const oldIndex = updatedFlatList.findIndex(item => item.id === active.id);
+          const newIndex = updatedFlatList.findIndex(item => item.id === over.id);
+          
+          let targetIndex = newIndex;
+          if (dropTarget.position === 'before') {
+            targetIndex = newIndex;
+          } else if (dropTarget.position === 'after') {
+            targetIndex = newIndex + 1;
+          }
+          
+          updatedFlatList = arrayMove(updatedFlatList, oldIndex, targetIndex);
         }
+        
+        // 평면화된 리스트를 다시 계층 구조로 변환하여 currentMenus 업데이트
+        const rebuildHierarchy = (menuList: Menu[]): Menu[] => {
+          const menuMap = new Map<number, Menu>();
+          const rootMenus: Menu[] = [];
+
+          menuList.forEach(menu => {
+            menuMap.set(menu.id, { ...menu, children: [] });
+          });
+
+          menuList.forEach(menu => {
+            const currentMenu = menuMap.get(menu.id)!;
+            if (menu.parentId === null || menu.parentId === undefined || menu.parentId === 0) {
+              rootMenus.push(currentMenu);
+            } else {
+              const parentMenu = menuMap.get(menu.parentId);
+              if (parentMenu) {
+                parentMenu.children = parentMenu.children || [];
+                parentMenu.children.push(currentMenu);
+              } else {
+                rootMenus.push(currentMenu);
+              }
+            }
+          });
+
+          return rootMenus;
+        };
+
+        const updatedMenus = rebuildHierarchy(updatedFlatList);
+        setCurrentMenus(updatedMenus);
       }
     }
   };
 
   const handleSave = () => {
-    // 평면화된 리스트를 다시 계층 구조로 변환
-    const rebuildHierarchy = (menuList: Menu[]): Menu[] => {
-      const menuMap = new Map<number, Menu>();
-      const rootMenus: Menu[] = [];
-
-      // 모든 메뉴를 Map에 추가
-      menuList.forEach(menu => {
-        menuMap.set(menu.id, { ...menu, children: [] });
-      });
-
-      // 계층 구조 구성
-      menuList.forEach(menu => {
-        const currentMenu = menuMap.get(menu.id)!;
-        if (menu.parentId === null || menu.parentId === undefined || menu.parentId === 0) {
-          rootMenus.push(currentMenu);
-        } else {
-          const parentMenu = menuMap.get(menu.parentId);
-          if (parentMenu) {
-            parentMenu.children = parentMenu.children || [];
-            parentMenu.children.push(currentMenu);
-          } else {
-            rootMenus.push(currentMenu);
-          }
-        }
-      });
-
-      return rootMenus;
-    };
-
-    const updatedMenus = rebuildHierarchy(flatMenuList);
-    onSave(updatedMenus);
+    onSave(currentMenus);
     onClose();
   };
 
@@ -315,6 +418,8 @@ const MenuPositionDialog: React.FC<MenuPositionDialogProps> = ({
                    isExpanded={expandedMenus.has(menu.id)}
                    onToggleExpand={handleToggleExpand}
                    isOver={overId === menu.id}
+                   isDropTarget={dropTarget?.id === menu.id}
+                   dropPosition={dropTarget?.id === menu.id ? dropTarget.position : undefined}
                  />
                ))}
             </SortableContext>

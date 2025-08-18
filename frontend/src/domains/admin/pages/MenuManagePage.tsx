@@ -241,10 +241,6 @@ const MenuManagePage: React.FC = () => {
       />
 
       <PageContent>
-        <Alert severity="info" sx={{ mb: 2 }}>
-          메뉴 관리 페이지입니다. 데이터베이스에서 실시간으로 메뉴 정보를 가져옵니다.
-        </Alert>
-
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
           <TableContainer>
             <Table stickyHeader>
