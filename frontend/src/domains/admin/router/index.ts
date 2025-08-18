@@ -8,6 +8,7 @@ import React from 'react';
 // Lazy loading을 위한 컴포넌트 import
 const MenuPermissionManagePage = React.lazy(() => import('../pages/MenuPermissionManagePage'));
 const UserPermissionManagePage = React.lazy(() => import('../pages/UserPermissionManagePage'));
+const MenuManagePage = React.lazy(() => import('../pages/MenuManagePage'));
 
 // 권한 관리 도메인 라우트 정의
 const routes: DomainRoute[] = [
@@ -33,6 +34,18 @@ const routes: DomainRoute[] = [
       breadcrumb: ['권한 관리', '사용자 권한 관리'],
       icon: 'Person',
       description: '사용자별 역할 할당 및 해제 관리',
+    },
+  },
+  {
+    path: '/system/menu_manage',
+    element: MenuManagePage,
+    meta: {
+      title: '메뉴 관리',
+      requiresAuth: true,
+      roles: ['ADMIN', 'MANAGER'], // 관리자 전용 페이지
+      breadcrumb: ['시스템 관리', '메뉴 관리'],
+      icon: 'Menu',
+      description: '시스템 메뉴 관리',
     },
   },
 ];

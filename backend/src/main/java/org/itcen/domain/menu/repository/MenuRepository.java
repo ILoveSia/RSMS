@@ -115,6 +115,28 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
         """)
     List<Menu> findAccessibleMenusByRole(@Param("roleName") String roleName);
     
+        /**
+     * 모든 메뉴와 부모 메뉴 정보 조회 (관리용)
+     */
+    @Query(value = """
+        SELECT
+            m1.id,
+            m1.menu_name,
+            m1.menu_name_en,
+            m1.parent_id,
+            m1.menu_level,
+            m1.sort_order,
+            m1.description,
+            m2.menu_name AS parent_name
+        FROM
+            menus m1
+        LEFT JOIN
+            menus m2 ON m1.parent_id = m2.id
+        ORDER BY
+            m1.menu_level ASC, m1.sort_order ASC
+        """, nativeQuery = true)
+    List<Object[]> findAllWithParentSimple();
+    
     /**
      * 특정 부모 메뉴의 하위 메뉴 개수 조회
      */

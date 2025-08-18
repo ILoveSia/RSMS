@@ -1,6 +1,7 @@
 package org.itcen.domain.menu.service;
 
 import org.itcen.domain.menu.dto.MenuDto;
+import org.itcen.domain.menu.dto.MenuWithParentDto;
 import org.itcen.domain.menu.entity.Menu;
 import org.itcen.domain.menu.entity.MenuPermission;
 import org.itcen.domain.menu.repository.MenuRepository;
@@ -207,6 +208,25 @@ public class MenuService {
     public List<MenuDto> getAllVisibleMenus() {
         List<Menu> menus = menuRepository.findByIsActiveTrueAndIsVisibleTrueOrderByMenuLevelAscSortOrderAsc();
         return MenuDto.fromList(menus);
+    }
+    
+    /**
+     * 모든 메뉴와 부모 메뉴 정보 조회 (관리용)
+     */
+    public List<MenuWithParentDto> getAllMenusWithParent() {
+        List<Object[]> results = menuRepository.findAllWithParentSimple();
+        return results.stream()
+                .map(row -> MenuWithParentDto.builder()
+                        .id((Long) row[0])
+                        .menuName((String) row[1])
+                        .menuNameEn((String) row[2])
+                        .parentId((Long) row[3])
+                        .menuLevel((Integer) row[4])
+                        .sortOrder((Integer) row[5])
+                        .description((String) row[6])
+                        .parentName((String) row[7])
+                        .build())
+                .collect(Collectors.toList());
     }
     
     /**

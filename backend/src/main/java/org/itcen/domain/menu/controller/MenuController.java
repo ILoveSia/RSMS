@@ -1,6 +1,7 @@
 package org.itcen.domain.menu.controller;
 
 import org.itcen.domain.menu.dto.MenuDto;
+import org.itcen.domain.menu.dto.MenuWithParentDto;
 import org.itcen.domain.menu.service.MenuService;
 import org.itcen.domain.menu.service.MenuInitializationService;
 import org.slf4j.Logger;
@@ -131,6 +132,21 @@ public class MenuController {
             return ResponseEntity.ok(menus);
         } catch (Exception e) {
             logger.error("메뉴 검색 실패", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+    
+    /**
+     * 모든 메뉴와 부모 메뉴 정보 조회 (관리용)
+     */
+    @GetMapping("/all-with-parent")
+    public ResponseEntity<List<MenuWithParentDto>> getAllMenusWithParent() {
+        
+        try {
+            List<MenuWithParentDto> menus = menuService.getAllMenusWithParent();
+            return ResponseEntity.ok(menus);
+        } catch (Exception e) {
+            logger.error("메뉴 조회 실패", e);
             return ResponseEntity.internalServerError().build();
         }
     }

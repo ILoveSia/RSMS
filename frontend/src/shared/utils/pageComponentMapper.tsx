@@ -209,6 +209,11 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '사용자 권한 관리',
     icon: 'business_center',
   },
+  '/system/menu_manage': {
+    component: () => import('@/domains/admin/pages/MenuManagePage'),
+    title: '메뉴 관리',
+    icon: 'menu',
+  },
 
   // 커뮤니티 (최상위 탭)
   '/community': {

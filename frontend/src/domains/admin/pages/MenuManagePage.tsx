@@ -13,62 +13,41 @@ import {
   CircularProgress,
   Chip,
   Paper,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Switch,
-  FormControlLabel
+  TextField
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
-} from '@mui/icons-material';
+import { Add as AddIcon } from '@mui/icons-material';
+import { Edit as EditIcon } from '@mui/icons-material';
+import { IconButton } from '@mui/material';
 
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, ExcelDownloadButton, RefreshButton } from '@/shared/components/ui/button';
+import { RefreshButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
-import { SearchBox } from '@/shared/components/ui/form';
+import { menuApi } from '../api/menuApi';
+import MenuPositionDialog from '../components/MenuPositionDialog';
 
 interface Menu {
   id: number;
-  menuCode: string;
   menuName: string;
   menuNameEn: string;
   parentId: number | null;
   menuLevel: number;
   sortOrder: number;
-  menuUrl: string | null;
-  iconClass: string | null;
-  isActive: boolean;
-  isVisible: boolean;
   description: string | null;
   children?: Menu[];
+  iconClass?: string | null;
 }
 
 interface MenuFormData {
-  menuCode: string;
   menuName: string;
   menuNameEn: string;
-  parentId: number | null;
-  menuLevel: number;
-  sortOrder: number;
-  menuUrl: string;
   iconClass: string;
-  isActive: boolean;
-  isVisible: boolean;
   description: string;
 }
 
@@ -80,79 +59,70 @@ const MenuManagePage: React.FC = () => {
   const [menus, setMenus] = useState<Menu[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [positionDialogOpen, setPositionDialogOpen] = useState(false);
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
   const [formData, setFormData] = useState<MenuFormData>({
-    menuCode: '',
     menuName: '',
     menuNameEn: '',
-    parentId: null,
-    menuLevel: 1,
-    sortOrder: 1,
-    menuUrl: '',
     iconClass: '',
-    isActive: true,
-    isVisible: true,
     description: ''
   });
 
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
-  // 메뉴 데이터 로드 (임시 데이터)
   const loadMenus = useCallback(async () => {
     try {
       setLoading(true);
-      // 임시 데이터 - 실제로는 API 호출
-      const tempMenus: Menu[] = [
-        {
-          id: 1,
-          menuCode: 'SYSTEM_MGMT',
-          menuName: '시스템 관리',
-          menuNameEn: 'System Management',
-          parentId: null,
-          menuLevel: 1,
-          sortOrder: 7,
-          menuUrl: null,
-          iconClass: 'fas fa-cogs',
-          isActive: true,
-          isVisible: true,
-          description: '시스템 관리 메뉴',
-          children: [
-            {
-              id: 2,
-              menuCode: 'SYSTEM_MENU_MGMT',
-              menuName: '화면별 권한 관리',
-              menuNameEn: 'Menu Permission Management',
-              parentId: 1,
-              menuLevel: 2,
-              sortOrder: 1,
-              menuUrl: '/system/menu-permission',
-              iconClass: 'fas fa-shield-alt',
-              isActive: true,
-              isVisible: true,
-              description: '화면별 권한 관리'
-            },
-            {
-              id: 3,
-              menuCode: 'SYSTEM_USER_MGMT',
-              menuName: '사용자 권한 관리',
-              menuNameEn: 'User Permission Management',
-              parentId: 1,
-              menuLevel: 2,
-              sortOrder: 2,
-              menuUrl: '/system/user-permission',
-              iconClass: 'fas fa-users',
-              isActive: true,
-              isVisible: true,
-              description: '사용자 권한 관리'
-            }
-          ]
+      const apiMenuData = await menuApi.getAllMenusWithParent();
+      if (!apiMenuData || !Array.isArray(apiMenuData)) {
+        showError('메뉴 데이터 형식이 올바르지 않습니다.');
+        return;
+      }
+
+      const menuMap = new Map<number, Menu>();
+      const rootMenus: Menu[] = [];
+
+      apiMenuData.forEach(item => {
+        const menu: Menu = {
+          id: item.id,
+          menuName: item.menuName,
+          menuNameEn: item.menuNameEn,
+          parentId: item.parentId,
+          menuLevel: item.menuLevel,
+          sortOrder: item.sortOrder,
+          description: item.description,
+          children: []
+        };
+        menuMap.set(item.id, menu);
+      });
+
+      apiMenuData.forEach(item => {
+        const menu = menuMap.get(item.id)!;
+        if (item.parentId === null || item.parentId === undefined || item.parentId === 0) {
+          rootMenus.push(menu);
+        } else {
+          const parentMenu = menuMap.get(item.parentId);
+          if (parentMenu) {
+            parentMenu.children = parentMenu.children || [];
+            parentMenu.children.push(menu);
+          } else {
+            rootMenus.push(menu);
+          }
         }
-      ];
-      
-      setMenus(tempMenus);
-    } catch (error) {
+      });
+
+      const sortMenus = (menus: Menu[]) => {
+        menus.sort((a, b) => a.sortOrder - b.sortOrder);
+        menus.forEach(menu => {
+          if (menu.children && menu.children.length > 0) {
+            sortMenus(menu.children);
+          }
+        });
+      };
+      sortMenus(rootMenus);
+      setMenus(rootMenus);
+    } catch (error: any) {
       showError('메뉴 정보를 불러오는데 실패했습니다.');
-      console.error('메뉴 로드 실패:', error);
     } finally {
       setLoading(false);
     }
@@ -162,107 +132,68 @@ const MenuManagePage: React.FC = () => {
     loadMenus();
   }, [loadMenus]);
 
-  // 메뉴 추가/수정 다이얼로그 열기
   const handleOpenDialog = (menu?: Menu) => {
     if (menu) {
       setEditingMenu(menu);
       setFormData({
-        menuCode: menu.menuCode,
         menuName: menu.menuName,
         menuNameEn: menu.menuNameEn,
-        parentId: menu.parentId,
-        menuLevel: menu.menuLevel,
-        sortOrder: menu.sortOrder,
-        menuUrl: menu.menuUrl || '',
         iconClass: menu.iconClass || '',
-        isActive: menu.isActive,
-        isVisible: menu.isVisible,
         description: menu.description || ''
       });
     } else {
       setEditingMenu(null);
       setFormData({
-        menuCode: '',
         menuName: '',
         menuNameEn: '',
-        parentId: null,
-        menuLevel: 1,
-        sortOrder: 1,
-        menuUrl: '',
         iconClass: '',
-        isActive: true,
-        isVisible: true,
         description: ''
       });
     }
     setDialogOpen(true);
   };
 
-  // 메뉴 저장
   const handleSaveMenu = () => {
     try {
       if (editingMenu) {
-        // 수정 로직
         showSuccess('메뉴가 수정되었습니다.');
       } else {
-        // 추가 로직
         showSuccess('메뉴가 추가되었습니다.');
       }
       setDialogOpen(false);
-      loadMenus(); // 목록 새로고침
+      loadMenus();
     } catch (error) {
       showError('메뉴 저장에 실패했습니다.');
     }
   };
 
-  // 메뉴 삭제
-  const handleDeleteMenu = (menuId: number) => {
-    if (window.confirm('정말로 이 메뉴를 삭제하시겠습니까?')) {
-      try {
-        // 삭제 로직
-        showSuccess('메뉴가 삭제되었습니다.');
-        loadMenus(); // 목록 새로고침
-      } catch (error) {
-        showError('메뉴 삭제에 실패했습니다.');
-      }
+  const handleSavePosition = (updatedMenus: Menu[]) => {
+    try {
+      // TODO: API 호출하여 서버에 변경사항 저장
+      console.log('메뉴 위치 변경:', updatedMenus);
+      setMenus(updatedMenus);
+      showSuccess('메뉴 위치가 수정되었습니다.');
+    } catch (error) {
+      showError('메뉴 위치 수정에 실패했습니다.');
     }
   };
 
-  // 메뉴 렌더링 (계층 구조)
   const renderMenuRow = (menu: Menu, level: number = 0) => (
     <React.Fragment key={menu.id}>
       <TableRow>
         <TableCell>
-          <Box sx={{ display: 'flex', alignItems: 'center', pl: level * 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', pl: level * 4 }}>
             <Typography variant="body2">{menu.menuName}</Typography>
             {menu.children && menu.children.length > 0 && (
-              <Chip 
-                label={`${menu.children.length}개 하위메뉴`} 
-                size="small" 
-                color="primary" 
+              <Chip
+                label={`${menu.children.length}개 하위메뉴`}
+                size="small"
+                color="primary"
                 variant="outlined"
                 sx={{ ml: 1 }}
               />
             )}
           </Box>
-        </TableCell>
-        <TableCell>{menu.menuCode}</TableCell>
-        <TableCell>{menu.menuLevel}</TableCell>
-        <TableCell>{menu.sortOrder}</TableCell>
-        <TableCell>{menu.menuUrl || '-'}</TableCell>
-        <TableCell>
-          <Chip
-            label={menu.isActive ? '활성' : '비활성'}
-            color={menu.isActive ? 'success' : 'default'}
-            size="small"
-          />
-        </TableCell>
-        <TableCell>
-          <Chip
-            label={menu.isVisible ? '표시' : '숨김'}
-            color={menu.isVisible ? 'primary' : 'default'}
-            size="small"
-          />
         </TableCell>
         <TableCell>
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -272,13 +203,6 @@ const MenuManagePage: React.FC = () => {
               color="primary"
             >
               <EditIcon />
-            </IconButton>
-            <IconButton
-              size="small"
-              onClick={() => handleDeleteMenu(menu.id)}
-              color="error"
-            >
-              <DeleteIcon />
             </IconButton>
           </Box>
         </TableCell>
@@ -307,9 +231,9 @@ const MenuManagePage: React.FC = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => handleOpenDialog()}
+              onClick={() => setPositionDialogOpen(true)}
             >
-              메뉴 추가
+              메뉴 위치 수정
             </Button>
             <RefreshButton onClick={loadMenus} />
           </Box>
@@ -318,7 +242,7 @@ const MenuManagePage: React.FC = () => {
 
       <PageContent>
         <Alert severity="info" sx={{ mb: 2 }}>
-          이 페이지는 임시 메뉴 관리 페이지입니다. 실제 기능 구현이 필요합니다.
+          메뉴 관리 페이지입니다. 데이터베이스에서 실시간으로 메뉴 정보를 가져옵니다.
         </Alert>
 
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -327,37 +251,32 @@ const MenuManagePage: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>메뉴명</TableCell>
-                  <TableCell>메뉴 코드</TableCell>
-                  <TableCell>레벨</TableCell>
-                  <TableCell>정렬순서</TableCell>
-                  <TableCell>URL</TableCell>
-                  <TableCell>활성화</TableCell>
-                  <TableCell>표시</TableCell>
-                  <TableCell>작업</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {menus.map(menu => renderMenuRow(menu))}
+                {menus.length > 0 ? (
+                  menus.map(menu => renderMenuRow(menu))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={1} align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        메뉴 데이터가 없습니다.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
         </Paper>
       </PageContent>
 
-      {/* 메뉴 추가/수정 다이얼로그 */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>
           {editingMenu ? '메뉴 수정' : '메뉴 추가'}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mt: 1 }}>
-            <TextField
-              label="메뉴 코드"
-              value={formData.menuCode}
-              onChange={(e) => setFormData({ ...formData, menuCode: e.target.value })}
-              fullWidth
-              required
-            />
             <TextField
               label="메뉴명"
               value={formData.menuName}
@@ -369,26 +288,6 @@ const MenuManagePage: React.FC = () => {
               label="영문 메뉴명"
               value={formData.menuNameEn}
               onChange={(e) => setFormData({ ...formData, menuNameEn: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label="메뉴 레벨"
-              type="number"
-              value={formData.menuLevel}
-              onChange={(e) => setFormData({ ...formData, menuLevel: parseInt(e.target.value) })}
-              fullWidth
-            />
-            <TextField
-              label="정렬순서"
-              type="number"
-              value={formData.sortOrder}
-              onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) })}
-              fullWidth
-            />
-            <TextField
-              label="URL"
-              value={formData.menuUrl}
-              onChange={(e) => setFormData({ ...formData, menuUrl: e.target.value })}
               fullWidth
             />
             <TextField
@@ -405,24 +304,6 @@ const MenuManagePage: React.FC = () => {
               multiline
               rows={2}
             />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                />
-              }
-              label="활성화"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.isVisible}
-                  onChange={(e) => setFormData({ ...formData, isVisible: e.target.checked })}
-                />
-              }
-              label="표시"
-            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -432,6 +313,13 @@ const MenuManagePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <MenuPositionDialog
+        open={positionDialogOpen}
+        onClose={() => setPositionDialogOpen(false)}
+        menus={menus}
+        onSave={handleSavePosition}
+      />
 
       <Toast {...snackbar} onClose={hideSnackbar} />
     </PageContainer>
