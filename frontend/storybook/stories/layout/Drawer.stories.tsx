@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Drawer from '../../../src/shared/components/ui/layout/Drawer';
 
 const meta: Meta = {
-  title: 'Shared/UI/Layout/Drawer'
+  title: 'Shared/components/ui/layout/Drawer'
 };
 export default meta;
 

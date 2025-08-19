@@ -5,7 +5,7 @@ import PageHeader from '../../../src/shared/components/ui/layout/PageHeader';
 import PageContent from '../../../src/shared/components/ui/layout/PageContent';
 
 const meta: Meta = {
-  title: 'Shared/UI/Layout/PageLayout'
+  title: 'Shared/components/ui/layout/PageLayout'
 };
 export default meta;
 

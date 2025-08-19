@@ -12,7 +12,7 @@ import ActionButtonGroup from '../../src/shared/components/ui/button/ActionButto
 import ManagementButtonGroup from '../../src/shared/components/ui/button/ManagementButtonGroup';
 
 const meta: Meta = {
-  title: 'Shared/UI/Buttons',
+  title: 'Shared/components/ui/button',
   parameters: { layout: 'padded' },
 };
 export default meta;

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import CommentItem, { type LocalComment } from '../../../src/shared/components/ui/data-display/CommentItem';
 
 const meta: Meta = {
-  title: 'Shared/UI/DataDisplay/CommentItem'
+    title: 'Shared/components/ui/data-display/CommentItem'
 };
 export default meta;
 

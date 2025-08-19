@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { DataGrid,TextField } from '../../src/shared/components/ui/data-display';
 
 const meta: Meta = {
-  title: 'Shared/UI/DataDisplay',
+  title: 'Shared/components/ui/data-display',
   parameters: { layout: 'padded' },
 };
 export default meta;

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ComboBox, CommonCodeSelect, LedgerOrderSelect} from '../../src/shared/components/ui/form';
 
 const meta: Meta = {
-  title: 'Shared/UI/Form/ComboBox',
+  title: 'Shared/components/ui/form/ComboBox',
   parameters: { layout: 'padded' },
 };
 export default meta;

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { PageContainer, PageHeader, PageContent } from '../../src/shared/components/ui/layout';
 
 const meta: Meta = {
-  title: 'Shared/UI/Layout',
+  title: 'Shared/components/ui/layout',
   parameters: { layout: 'padded' },
 };
 export default meta;

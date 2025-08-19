@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Loading from '../../../src/shared/components/ui/feedback/Loading';
 
 const meta: Meta = {
-  title: 'Shared/UI/Feedback/Loading'
+    title: 'Shared/components/ui/feedback/Loading'
 };
 export default meta;
 
@@ -11,7 +11,7 @@ type Story = StoryObj;
 
 export const Basic: Story = {
   render: () => (
-    <Loading open message="불러오는 중" />
+    <Loading message="불러오는 중" />
   )
 };
 

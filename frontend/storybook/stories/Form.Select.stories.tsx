@@ -5,7 +5,7 @@ import type { DepartmentSearchResult } from '../../src/shared/components/ui/form
 import type { PositionSearchResult } from '../../src/domains/ledgermngt/api/positionApi';
 
 const meta: Meta = {
-  title: 'Shared/UI/Form/SearchBox',
+  title: 'Shared/components/ui/form/SearchBox',
   parameters: { layout: 'padded' },
 };
 export default meta;

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Card from '../../../src/shared/components/ui/layout/Card';
 
 const meta: Meta = {
-  title: 'Shared/UI/Layout/Card'
+  title: 'Shared/components/ui/layout/Card'
 };
 export default meta;
 

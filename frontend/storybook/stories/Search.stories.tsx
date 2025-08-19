@@ -3,7 +3,7 @@ import {EmployeeSearchPopup,PositionSearchPopup,MeetingBodySearchPopup,Departmen
 import type { Meta, StoryObj } from '@storybook/react';
 
 const meta: Meta = {
-    title: 'Shared/UI/Search',
+    title: 'domains/common/components/search',
     parameters: { layout: 'padded' },
   };
   export default meta;

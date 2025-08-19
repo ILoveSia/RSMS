@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Tabs from '../../../src/shared/components/ui/layout/Tabs';
 
 const meta: Meta = {
-  title: 'Shared/UI/Layout/Tabs'
+  title: 'Shared/components/ui/layout/Tabs'
 };
 export default meta;
 

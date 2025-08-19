@@ -11,7 +11,9 @@ type Story = StoryObj;
 
 export const Basic: Story = {
   render: () => (
-    <Alert open severity="info" message="알림 메시지" onClose={() => {}} />
+    <Alert severity="info" title="알림 메시지" onClose={() => {}} >
+      <p>알림 메시지</p>
+    </Alert>
   )
 };
 

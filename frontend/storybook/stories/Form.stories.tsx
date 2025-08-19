@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ComboBox,DatePicker,FileUpload,ServerFileUpload ,CommonCodeSelect} from '../../src/shared/components/ui/form';
 
 const meta: Meta = {
-  title: 'Shared/UI/Form',
+  title: 'Shared/components/ui/form',
   parameters: { layout: 'padded' },
 };
 export default meta;

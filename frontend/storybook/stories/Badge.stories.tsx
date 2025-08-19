@@ -3,7 +3,7 @@ import Badge from '../../src/shared/components/ui/data-display/Badge';
 import MailIcon from '@mui/icons-material/Mail';
 
 const meta: Meta<typeof Badge> = {
-  title: 'Shared/UI/Badge',
+  title: 'Shared/components/ui/data-display/Badge',
   component: Badge,
   args: {
     color: 'primary',

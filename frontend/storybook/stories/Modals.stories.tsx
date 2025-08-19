@@ -8,7 +8,7 @@ import Drawer from '../../src/shared/components/ui/layout/Drawer';
 import { Button } from '../../src/shared/components/ui/button';
 
 const meta: Meta = {
-  title: 'Shared/components/modal',
+    title: 'Shared/components/modal',
   parameters: { layout: 'padded' },
 };
 export default meta;

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Chip from '../../../src/shared/components/ui/data-display/Chip';
 
 const meta: Meta = {
-  title: 'Shared/UI/DataDisplay/Chip'
+    title: 'Shared/components/ui/data-display/Chip'
 };
 export default meta;
 

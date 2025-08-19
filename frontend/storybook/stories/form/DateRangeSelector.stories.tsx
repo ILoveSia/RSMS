@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import DateRangeSelector from '../../../src/shared/components/ui/form/DateRangeSelector';
 
 const meta: Meta = {
-  title: 'Shared/UI/Form/DateRangeSelector'
+    title: 'Shared/components/ui/form/DateRangeSelector'
 };
 export default meta;
 
