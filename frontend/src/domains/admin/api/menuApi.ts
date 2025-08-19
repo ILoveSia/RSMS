@@ -26,25 +26,33 @@ export interface MenuUpdateResponse {
   success: boolean;
   errorMessage?: string;
 }
-
+export interface MenuDto {
+  id: number;
+  menuCode: string;
+  menuName: string;
+  menuNameEn: string;
+  parentId: number | null;
+  menuLevel: number;
+  sortOrder: number;
+  menuUrl: string;
+  iconClass: string;
+  isActive: boolean;
+  isVisible: boolean;
+  description: string;
+  children?: MenuDto[];
+  canRead?: boolean;
+  canWrite?: boolean;
+  canDelete?: boolean;
+}
 /**
  * 메뉴 관리 API
  */
 export const menuApi = {
-  /**
-   * 모든 메뉴와 부모 메뉴 정보 조회 (관리용)
-   */
-  getAllMenusWithParent: async (): Promise<MenuWithParent[]> => {
-    try {
-      const response = await apiClient.get('/menus/all-with-parent');
-      return response as MenuWithParent[];
-    } catch (error) {
-      console.error('메뉴 조회 실패:', error);
-      throw error;
-    }
-  },
 
-  /**
+  getMenuHierarchy: async (): Promise<MenuDto[]> => {
+    const response = await apiClient.get('/menus/hierarchy');
+    return response as MenuDto[];
+  },  /**
    * 메뉴 추가
    */
   createMenu: async (menuData: Partial<MenuWithParent>): Promise<MenuWithParent> => {

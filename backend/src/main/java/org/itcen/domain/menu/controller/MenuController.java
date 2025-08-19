@@ -5,7 +5,6 @@ import org.itcen.domain.menu.dto.MenuWithParentDto;
 import org.itcen.domain.menu.dto.MenuUpdateDto;
 import org.itcen.domain.menu.dto.MenuUpdateResponseDto;
 import org.itcen.domain.menu.service.MenuService;
-import org.itcen.domain.menu.service.MenuInitializationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -31,11 +30,9 @@ public class MenuController {
     private static final Logger logger = LoggerFactory.getLogger(MenuController.class);
     
     private final MenuService menuService;
-    private final MenuInitializationService menuInitializationService;
     
-    public MenuController(MenuService menuService, MenuInitializationService menuInitializationService) {
+    public MenuController(MenuService menuService) {
         this.menuService = menuService;
-        this.menuInitializationService = menuInitializationService;
     }
     
     /**
@@ -99,75 +96,7 @@ public class MenuController {
         }
     }
     
-    /**
-     * 메뉴 코드로 메뉴 조회
-     */
-    @GetMapping("/code/{menuCode}")
-    public ResponseEntity<MenuDto> getMenuByCode(@PathVariable String menuCode) {
-        
-        try {
-            MenuDto menu = menuService.getMenuByCode(menuCode);
-            if (menu != null) {
-                return ResponseEntity.ok(menu);
-            } else {
-                logger.warn("메뉴를 찾을 수 없음 - 코드: {}", menuCode);
-                // 메뉴가 없을 경우 빈 객체로 응답 (404 대신)
-                MenuDto emptyMenu = new MenuDto();
-                emptyMenu.setMenuCode(menuCode);
-                emptyMenu.setMenuName("메뉴 없음");
-                return ResponseEntity.ok(emptyMenu);
-            }
-        } catch (Exception e) {
-            logger.error("메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-    
-    /**
-     * 메뉴 검색
-     */
-    @GetMapping("/search")
-    public ResponseEntity<List<MenuDto>> searchMenus(@RequestParam String keyword) {
-        
-        try {
-            List<MenuDto> menus = menuService.searchMenus(keyword);
-            return ResponseEntity.ok(menus);
-        } catch (Exception e) {
-            logger.error("메뉴 검색 실패", e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-    
-    /**
-     * 모든 메뉴와 부모 메뉴 정보 조회 (관리용)
-     */
-    @GetMapping("/all-with-parent")
-    public ResponseEntity<List<MenuWithParentDto>> getAllMenusWithParent() {
-        
-        try {
-            List<MenuWithParentDto> menus = menuService.getAllMenusWithParent();
-            return ResponseEntity.ok(menus);
-        } catch (Exception e) {
-            logger.error("메뉴 조회 실패", e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-    
-    /**
-     * 메뉴 강제 재초기화 (개발용)
-     */
-    @PostMapping("/reinitialize")
-    public ResponseEntity<String> reinitializeMenus() {
-        
-        try {
-            menuInitializationService.forceReinitializeMenus();
-            return ResponseEntity.ok("메뉴가 성공적으로 재초기화되었습니다.");
-        } catch (Exception e) {
-            logger.error("메뉴 강제 재초기화 실패", e);
-            return ResponseEntity.internalServerError().body("메뉴 재초기화 중 오류가 발생했습니다: " + e.getMessage());
-        }
-    }
-    
+
     /**
      * 메뉴 업데이트 (정보 수정 및 순서 변경)
      */

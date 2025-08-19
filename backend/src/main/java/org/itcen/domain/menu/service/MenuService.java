@@ -155,23 +155,7 @@ public class MenuService {
         List<Menu> childMenus = menuRepository.findByParentIdAndIsActiveTrueOrderBySortOrderAsc(parentId);
         return MenuDto.fromList(childMenus);
     }
-    
-    /**
-     * 메뉴 코드로 메뉴 조회
-     */
-    public MenuDto getMenuByCode(String menuCode) {
-        Optional<Menu> menu = menuRepository.findByMenuCode(menuCode);
-        return menu.map(MenuDto::from).orElse(null);
-    }
-    
-    /**
-     * 메뉴 검색
-     */
-    public List<MenuDto> searchMenus(String keyword) {
-        List<Menu> menus = menuRepository.searchMenusByKeyword(keyword);
-        return MenuDto.fromList(menus);
-    }
-    
+  
     /**
      * 메뉴 ID로 메뉴 조회
      */
@@ -210,24 +194,6 @@ public class MenuService {
     public List<MenuDto> getAllVisibleMenus() {
         List<Menu> menus = menuRepository.findByIsActiveTrueAndIsVisibleTrueOrderByMenuLevelAscSortOrderAsc();
         return MenuDto.fromList(menus);
-    }
-    
-    /**
-     * 모든 메뉴와 부모 메뉴 정보 조회 (관리용)
-     */
-    public List<MenuWithParentDto> getAllMenusWithParent() {
-        List<Object[]> results = menuRepository.findAllWithParentSimple();
-        return results.stream()
-                .map(row -> MenuWithParentDto.builder()
-                        .id((Long) row[0])
-                        .menuName((String) row[1])
-                        .menuNameEn((String) row[2])
-                        .parentId((Long) row[3])
-                        .sortOrder((Integer) row[4])
-                        .description((String) row[5])
-                        .parentName((String) row[6])
-                        .build())
-                .collect(Collectors.toList());
     }
     
     /**

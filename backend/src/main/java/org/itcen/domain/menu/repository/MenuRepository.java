@@ -171,19 +171,7 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
         SELECT * FROM menu_children WHERE id != :menuId ORDER BY menu_level, sort_order
         """, nativeQuery = true)
     List<Object[]> findAllChildrenByMenuId(@Param("menuId") Long menuId);
-    
-    /**
-     * 메뉴명으로 검색 (부분 일치)
-     */
-    @Query("""
-        SELECT m FROM Menu m 
-        WHERE m.isActive = true 
-        AND (LOWER(m.menuName) LIKE LOWER(CONCAT('%', :keyword, '%')) 
-             OR LOWER(m.menuNameEn) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        ORDER BY m.menuLevel ASC, m.sortOrder ASC
-        """)
-    List<Menu> searchMenusByKeyword(@Param("keyword") String keyword);
-    
+
     /**
      * 특정 레벨의 메뉴 삭제
      */

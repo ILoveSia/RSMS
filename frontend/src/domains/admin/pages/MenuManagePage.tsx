@@ -21,21 +21,11 @@ import { Button, RefreshButton } from '@/shared/components/ui/button';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { useSnackbar } from '@/shared/hooks/useSnackbar';
-import Toast from '@/shared/components/ui/feedback/Toast';
+import { useApiWithNotification } from '@/shared/hooks';
 import { menuApi } from '../api/menuApi';
 import MenuEditDialog from '../components/MenuEditDialog';
 
-interface Menu {
-  id: number;
-  menuName: string;
-  menuNameEn: string;
-  parentId: number | null;
-  sortOrder: number;
-  description: string | null;
-  children?: Menu[];
-  iconClass?: string | null;
-}
+import type { MenuDto } from '../api/menuApi';
 
 interface MenuFormData {
   menuName: string;
@@ -49,11 +39,11 @@ interface MenuFormData {
  * 시스템의 모든 메뉴를 관리하는 임시 페이지입니다.
  */
 const MenuManagePage: React.FC = () => {
-  const [menus, setMenus] = useState<Menu[]>([]);
-  const [allMenus, setAllMenus] = useState<Menu[]>([]);
+  const [menus, setMenus] = useState<MenuDto[]>([]);
+  const [allMenus, setAllMenus] = useState<MenuDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
+  const [editingMenu, setEditingMenu] = useState<MenuDto | null>(null);
   const [formData, setFormData] = useState<MenuFormData>({
     menuName: '',
     menuNameEn: '',
@@ -61,73 +51,46 @@ const MenuManagePage: React.FC = () => {
     description: ''
   });
 
-  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '메뉴 정보를 불러오는데 실패했습니다.'
+  });
 
   const loadMenus = useCallback(async () => {
-    try {
-      setLoading(true);
-      const apiMenuData = await menuApi.getAllMenusWithParent();
-      if (!apiMenuData || !Array.isArray(apiMenuData)) {
-        showError('메뉴 데이터 형식이 올바르지 않습니다.');
-        return;
-      }
-
-      const menuMap = new Map<number, Menu>();
-      const rootMenus: Menu[] = [];
-      const flatMenus: Menu[] = [];
-
-      apiMenuData.forEach(item => {
-        const menu: Menu = {
-          id: item.id,
-          menuName: item.menuName,
-          menuNameEn: item.menuNameEn,
-          parentId: item.parentId,
-          sortOrder: item.sortOrder,
-          description: item.description,
-          children: []
-        };
-        menuMap.set(item.id, menu);
-        flatMenus.push(menu);
-      });
-
-      apiMenuData.forEach(item => {
-        const menu = menuMap.get(item.id)!;
-        if (item.parentId === null || item.parentId === undefined || item.parentId === 0) {
-          rootMenus.push(menu);
-        } else {
-          const parentMenu = menuMap.get(item.parentId);
-          if (parentMenu) {
-            parentMenu.children = parentMenu.children || [];
-            parentMenu.children.push(menu);
-          } else {
-            rootMenus.push(menu);
-          }
-        }
-      });
-
-      const sortMenus = (menus: Menu[]) => {
-        menus.sort((a, b) => a.sortOrder - b.sortOrder);
+    setLoading(true);
+    
+    // getMenuHierarchy로 계층 구조 데이터 직접 가져오기
+    const hierarchyData = await callApiWithNotification(() => menuApi.getMenuHierarchy());
+    
+    if (hierarchyData) {
+      // 백엔드에서 이미 계층 구조로 제공하므로 변환 작업 불필요
+      setMenus(hierarchyData);
+      
+      // flatMenus는 기존 로직 유지 (다이얼로그에서 사용)
+      const flatMenus: MenuDto[] = [];
+      const flattenMenus = (menus: MenuDto[]) => {
         menus.forEach(menu => {
+          flatMenus.push({
+            ...menu,
+            children: []
+          });
           if (menu.children && menu.children.length > 0) {
-            sortMenus(menu.children);
+            flattenMenus(menu.children);
           }
         });
       };
-      sortMenus(rootMenus);
-      setMenus(rootMenus);
+      flattenMenus(hierarchyData);
       setAllMenus(flatMenus);
-    } catch (error: any) {
-      showError('메뉴 정보를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
     }
-  }, [showError]);
+    
+    setLoading(false);
+  }, [callApiWithNotification]);
 
   useEffect(() => {
     loadMenus();
   }, [loadMenus]);
 
-  const handleOpenDialog = (menu?: Menu) => {
+  const handleOpenDialog = (menu?: MenuDto) => {
     if (menu) {
       setEditingMenu(menu);
       setFormData({
@@ -149,37 +112,39 @@ const MenuManagePage: React.FC = () => {
   };
 
   const handleSaveMenu = async () => {
-    try {
-      if (editingMenu) {
-        // 메뉴 정보 업데이트를 위한 데이터 준비
-        const updateData = {
-          id: editingMenu.id,
-          menuName: formData.menuName,
-          menuNameEn: formData.menuNameEn,
-          description: formData.description,
-          parentId: editingMenu.parentId,
-          sortOrder: editingMenu.sortOrder
-        };
-        await menuApi.updateMenu(updateData);
-        showSuccess('메뉴가 수정되었습니다.');
-      } else {
-        // TODO: 메뉴 추가 API 구현 필요
-        showSuccess('메뉴가 추가되었습니다.');
+    if (editingMenu) {
+      // 메뉴 정보 업데이트를 위한 데이터 준비
+      const updateData = {
+        id: editingMenu.id,
+        menuName: formData.menuName,
+        menuNameEn: formData.menuNameEn,
+        description: formData.description,
+        parentId: editingMenu.parentId,
+        sortOrder: editingMenu.sortOrder
+      };
+      
+      const result = await callApiWithNotification(
+        () => menuApi.updateMenu(updateData),
+        'custom'
+      );
+      
+      if (result) {
+        setDialogOpen(false);
+        loadMenus();
       }
-      setDialogOpen(false);
-      loadMenus();
-    } catch (error) {
-      showError('메뉴 저장에 실패했습니다.');
+    } else {
+      // TODO: 메뉴 추가 API 구현 필요
+      console.log('메뉴 추가 기능은 아직 구현되지 않았습니다.');
     }
   };
 
-  const handleOrderChange = (updatedMenus: Menu[]) => {
+  const handleOrderChange = (updatedMenus: MenuDto[]) => {
     // 메뉴 변경이 있었을 때만 메뉴 목록을 다시 로드 (메뉴 탭 새로고침)
     console.log('메뉴 변경 감지 - 메뉴 탭 새로고침 실행');
     loadMenus();
   };
 
-  const renderMenuRow = (menu: Menu, level: number = 0) => (
+  const renderMenuRow = (menu: MenuDto, level: number = 0) => (
     <React.Fragment key={menu.id}>
       <TableRow>
         <TableCell>
@@ -273,7 +238,7 @@ const MenuManagePage: React.FC = () => {
         onOrderChange={handleOrderChange}
       />
 
-      <Toast {...snackbar} onClose={hideSnackbar} />
+
     </PageContainer>
   );
 };
