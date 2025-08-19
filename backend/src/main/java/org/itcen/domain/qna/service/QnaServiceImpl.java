@@ -257,24 +257,6 @@ public class QnaServiceImpl implements QnaService {
     }
 
     @Override
-    @Transactional
-    public void closeQna(Long id, String currentUserId) {
-        
-        // Q&A 조회 및 권한 확인 (질문자 또는 답변자만 종료 가능)
-        Qna qna = qnaRepository.findById(id)
-            .orElseThrow(() -> new BusinessException("존재하지 않는 Q&A입니다."));
-        
-        if (!qna.getQuestionerId().equals(currentUserId) && 
-            (qna.getAnswererId() == null || !qna.getAnswererId().equals(currentUserId))) {
-            throw new BusinessException("Q&A 종료 권한이 없습니다.");
-        }
-        
-        // Q&A 종료
-        qna.close();
-        
-    }
-
-    @Override
     public Page<QnaListResponseDto> getMyQnaList(String currentUserId, QnaSearchRequestDto searchRequest) {
         
         searchRequest.sanitize();
@@ -297,51 +279,10 @@ public class QnaServiceImpl implements QnaService {
         return qnaPage.map(QnaListResponseDto::from);
     }
 
-    @Override
-    public List<QnaListResponseDto> getRecentQnaList(int limit) {        
-        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Qna> qnaPage = qnaRepository.findByIsPublicTrue(pageable);
-        
-        return qnaPage.getContent().stream()
-            .map(QnaListResponseDto::from)
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<QnaListResponseDto> getPopularQnaList(int limit) {
-        Pageable pageable = PageRequest.of(0, limit, 
-            Sort.by(Sort.Direction.DESC, "viewCount", "createdAt"));
-        Page<Qna> qnaPage = qnaRepository.findByIsPublicTrue(pageable);
-        
-        return qnaPage.getContent().stream()
-            .map(QnaListResponseDto::from)
-            .collect(Collectors.toList());
-    }
 
     @Override
     public Long getPendingQnaCount() {
         return qnaRepository.countByStatus(QnaStatus.PENDING);
-    }
-
-    @Override
-    public List<QnaStatisticsDto> getDepartmentStatistics() {
-        return qnaRepository.findDepartmentStatistics();
-    }
-
-    @Override
-    public List<QnaMonthlyStatisticsDto> getMonthlyStatistics(int months) {
-        LocalDateTime startDate = LocalDateTime.now().minusMonths(months);
-        List<Object[]> rawResults = qnaRepository.findMonthlyStatisticsRaw(startDate);
-        
-        return rawResults.stream()
-            .map(row -> new QnaMonthlyStatisticsDto(
-                (String) row[0],  // month
-                (String) row[1],  // department
-                ((Number) row[2]).longValue(),  // question_count
-                ((Number) row[3]).longValue(),  // answer_count
-                ((Number) row[4]).longValue()   // pending_count
-            ))
-            .collect(Collectors.toList());
     }
 
     @Override
@@ -361,33 +302,6 @@ public class QnaServiceImpl implements QnaService {
             .map(qna -> !qna.getQuestionerId().equals(currentUserId))
             .orElse(false);
     }
-
-    @Override
-    public Long getTotalQnaCount() {
-        return qnaRepository.count();
-    }
-
-    @Override
-    @Transactional
-    public String createTestData() {
-        // 테스트 데이터 생성 (실제 운영에서는 제거 필요)
-        // 테스트 Q&A 생성
-        Qna testQna = Qna.builder()
-            .department("IT지원팀")
-            .title("테스트 Q&A")
-            .content("테스트용 질문입니다.")
-            .questionerId("testuser")
-            .questionerName("테스트사용자")
-            .priority(QnaPriority.NORMAL)
-            .category("테스트")
-            .isPublic(true)
-            .build();
-        
-        qnaRepository.save(testQna);
-        
-        return "테스트 데이터 생성 완료";
-    }
-
     /**
      * 정렬 조건 생성
      */

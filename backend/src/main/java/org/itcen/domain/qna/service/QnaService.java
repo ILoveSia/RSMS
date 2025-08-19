@@ -81,14 +81,6 @@ public interface QnaService {
     void updateAnswer(Long id, QnaAnswerRequestDto answerRequest, String currentUserId);
 
     /**
-     * Q&A 상태 변경 (종료)
-     * 
-     * @param id Q&A ID
-     * @param currentUserId 현재 사용자 ID
-     */
-    void closeQna(Long id, String currentUserId);
-
-    /**
      * 내가 작성한 Q&A 목록 조회
      * 
      * @param currentUserId 현재 사용자 ID
@@ -107,42 +99,12 @@ public interface QnaService {
     Page<QnaListResponseDto> getMyAnsweredQnaList(String currentUserId, QnaSearchRequestDto searchRequest);
 
     /**
-     * 최근 Q&A 목록 조회
-     * 
-     * @param limit 조회 개수
-     * @return Q&A 목록
-     */
-    List<QnaListResponseDto> getRecentQnaList(int limit);
-
-    /**
-     * 인기 Q&A 목록 조회
-     * 
-     * @param limit 조회 개수
-     * @return Q&A 목록
-     */
-    List<QnaListResponseDto> getPopularQnaList(int limit);
-
-    /**
      * 미답변 Q&A 개수 조회
      * 
      * @return 미답변 Q&A 개수
      */
     Long getPendingQnaCount();
 
-    /**
-     * 부서별 Q&A 통계 조회
-     * 
-     * @return 부서별 통계 목록
-     */
-    List<QnaStatisticsDto> getDepartmentStatistics();
-
-    /**
-     * 월별 Q&A 통계 조회
-     * 
-     * @param months 조회할 개월 수
-     * @return 월별 통계 목록
-     */
-    List<QnaMonthlyStatisticsDto> getMonthlyStatistics(int months);
 
     /**
      * Q&A 존재 여부 확인
@@ -170,17 +132,4 @@ public interface QnaService {
      */
     boolean canAnswerQna(Long id, String currentUserId);
 
-    /**
-     * 전체 Q&A 개수 조회 (디버깅용)
-     * 
-     * @return 전체 Q&A 개수
-     */
-    Long getTotalQnaCount();
-
-    /**
-     * 테스트 Q&A 데이터 생성 (디버깅용)
-     * 
-     * @return 생성 결과 메시지
-     */
-    String createTestData();
 }

@@ -174,25 +174,6 @@ public class QnaController {
     }
 
     /**
-     * Q&A 종료
-     * 
-     * @param id Q&A ID
-     * @param currentUserId 현재 사용자 ID (헤더에서 추출)
-     * @return 성공 메시지
-     */
-    @PatchMapping("/{id}/close")
-    public ResponseEntity<ApiResponse<Void>> closeQna(
-            @PathVariable Long id,
-            @RequestHeader(value = "X-User-Id", defaultValue = "anonymous") String currentUserId) {
-        
-        qnaService.closeQna(id, currentUserId);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("Q&A가 성공적으로 종료되었습니다.", null)
-        );
-    }
-
-    /**
      * 내가 작성한 Q&A 목록 조회
      * 
      * @param searchRequest 검색 조건
@@ -231,40 +212,6 @@ public class QnaController {
     }
 
     /**
-     * 최근 Q&A 목록 조회
-     * 
-     * @param limit 조회 개수 (기본값: 10)
-     * @return 최근 Q&A 목록
-     */
-    @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<QnaListResponseDto>>> getRecentQnaList(
-            @RequestParam(defaultValue = "10") int limit) {
-        
-        List<QnaListResponseDto> recentQnaList = qnaService.getRecentQnaList(limit);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("최근 Q&A 목록 조회가 완료되었습니다.", recentQnaList)
-        );
-    }
-
-    /**
-     * 인기 Q&A 목록 조회
-     * 
-     * @param limit 조회 개수 (기본값: 10)
-     * @return 인기 Q&A 목록
-     */
-    @GetMapping("/popular")
-    public ResponseEntity<ApiResponse<List<QnaListResponseDto>>> getPopularQnaList(
-            @RequestParam(defaultValue = "10") int limit) {
-        
-        List<QnaListResponseDto> popularQnaList = qnaService.getPopularQnaList(limit);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("인기 Q&A 목록 조회가 완료되었습니다.", popularQnaList)
-        );
-    }
-
-    /**
      * 미답변 Q&A 개수 조회
      * 
      * @return 미답변 Q&A 개수
@@ -278,39 +225,6 @@ public class QnaController {
             ApiResponse.success("미답변 Q&A 개수 조회가 완료되었습니다.", pendingCount)
         );
     }
-
-    /**
-     * 부서별 Q&A 통계 조회
-     * 
-     * @return 부서별 통계 목록
-     */
-    @GetMapping("/statistics/department")
-    public ResponseEntity<ApiResponse<List<QnaStatisticsDto>>> getDepartmentStatistics() {
-        
-        List<QnaStatisticsDto> statistics = qnaService.getDepartmentStatistics();
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("부서별 Q&A 통계 조회가 완료되었습니다.", statistics)
-        );
-    }
-
-    /**
-     * 월별 Q&A 통계 조회
-     * 
-     * @param months 조회할 개월 수 (기본값: 6)
-     * @return 월별 통계 목록
-     */
-    @GetMapping("/statistics/monthly")
-    public ResponseEntity<ApiResponse<List<QnaMonthlyStatisticsDto>>> getMonthlyStatistics(
-            @RequestParam(defaultValue = "6") int months) {
-        
-        List<QnaMonthlyStatisticsDto> statistics = qnaService.getMonthlyStatistics(months);
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("월별 Q&A 통계 조회가 완료되었습니다.", statistics)
-        );
-    }
-
     /**
      * Q&A 존재 여부 확인
      * 
@@ -362,37 +276,6 @@ public class QnaController {
         
         return ResponseEntity.ok(
             ApiResponse.success("Q&A 답변 권한 확인이 완료되었습니다.", canAnswer)
-        );
-    }
-
-    /**
-     * 전체 Q&A 개수 조회 (디버깅용)
-     * 
-     * @return 전체 Q&A 개수
-     */
-    @GetMapping("/debug/count")
-    public ResponseEntity<ApiResponse<Long>> getTotalQnaCount() {
-        
-        Long totalCount = qnaService.getTotalQnaCount();
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("전체 Q&A 개수 조회가 완료되었습니다.", totalCount)
-        );
-    }
-
-    /**
-     * 테스트 Q&A 데이터 생성 (디버깅용)
-     * 
-     * @return 생성 결과
-     */
-    @PostMapping("/debug/create-test-data")
-    public ResponseEntity<ApiResponse<String>> createTestData() {
-        
-        
-        String result = qnaService.createTestData();
-        
-        return ResponseEntity.ok(
-            ApiResponse.success("테스트 데이터 생성이 완료되었습니다.", result)
         );
     }
 }

@@ -30,47 +30,6 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
 
   const { showError, showSuccess } = useToastHelpers();
 
-  // Q&A ServerDataGrid API 구현 (성능 최적화)
-  const qaApi: ServerDataGridApi<QnaListResponseDto> = useMemo(
-    () => ({
-      fetchData: async (request: ServerRequest) => {
-        try {
-          const qnaList = await mainApi.getRecentQnaList(request.size || 4);
-          const content = qnaList || [];
-
-
-          const response = {
-            content,
-            totalElements: content.length,
-            totalPages: 1,
-            number: 0,
-            size: request.size || 4,
-            first: true,
-            last: true,
-            numberOfElements: content.length,
-            empty: content.length === 0,
-          };
-
-          return response;
-        } catch (err) {
-          console.error('[MainContent] Q&A fetchData 에러:', err);
-          const errorMessage =
-            err instanceof Error ? err.message : 'Q&A 데이터를 불러오는데 실패했습니다.';
-          showError(errorMessage);
-          throw err;
-        }
-      },
-      exportData: async (request: ServerRequest) => {
-        const data = await mainApi.getRecentQnaList(request.size || 4);
-        return new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      },
-      deleteRows: async (ids: (string | number)[]) => {
-        showSuccess(`${ids.length}개 항목이 선택되었습니다.`);
-      },
-    }),
-    [showError, showSuccess]
-  );
-
   // Case Study ServerDataGrid API 구현 (성능 최적화)
   const caseStudyApi: ServerDataGridApi<CaseStudyDto> = useMemo(
     () => ({
@@ -113,31 +72,6 @@ const MainContent: React.FC<MainContentProps> = React.memo(({ className = '' }) 
     [showError, showSuccess]
   );
 
-
-
-  // Q&A 데이터 로드
-  useEffect(() => {
-    const loadQnaData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // 최근 Q&A 목록 조회 (메인 화면용으로 4개만)
-        const qnaList = await mainApi.getRecentQnaList(4);
-        setQaData(qnaList || []);
-      } catch (err: unknown) {
-        console.error('[MainContent] Q&A 데이터 로드 실패:', err);
-        const errorMessage =
-          err instanceof Error ? err.message : 'Q&A 데이터를 불러오는데 실패했습니다.';
-        setError(errorMessage);
-        setQaData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadQnaData();
-  }, []);
 
   // Q&A 컬럼 정의 (성능 최적화)
   const qaColumns: DataGridColumn<QnaListResponseDto>[] = useMemo(

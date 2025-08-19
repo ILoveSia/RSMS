@@ -120,7 +120,14 @@ export const adminApi = {
   updateUserRoles: async (userId: string, roleIds: string[]): Promise<void> => {
     await apiClient.put(`/admin/users/${userId}/roles`, roleIds);
   },
-
+  getAllUsers: async (): Promise<[UserWithRoles[], Role[], EmployeeBasic[]]> => {
+    const response = await Promise.all([
+      adminApi.getUsers(),
+      adminApi.getRoles(),
+      adminApi.getEmployeesBasic(),
+    ]);
+    return response;
+  },
   // 역할 관리
 
   /**

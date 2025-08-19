@@ -16,7 +16,7 @@ import { adminApi } from '../api/adminApi';
 import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
 import DepartmentSearchBox, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSearchBox';
 import type { UserWithRoles, Role, UserFilter, UserRoleInfo, EmployeeBasic } from '../types';
-
+import { useApiWithNotification } from '@/shared/hooks';
 /**
  * 사용자 권한 컬러 매핑 함수
  * - SRP: 역할 ID → 칩 컬러 결정만 담당
@@ -65,6 +65,9 @@ const getPermissionLevel = (roles: UserRoleInfo[]): string => {
  * - DIP: 데이터 요청은 `adminApi`(추상화)에 의존하여 구체 네트워크 구현에서 분리합니다.
  */
 const UserPermissionManagePage: React.FC = () => {
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+  });
   // 상태 관리
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -87,18 +90,18 @@ const UserPermissionManagePage: React.FC = () => {
 
   // 데이터 로드
   const loadData = useCallback(async () => {
-    try {
       setLoading(true);
-      const [usersData, rolesData, employees] = await Promise.all([
-        adminApi.getUsers(),
-        adminApi.getRoles(),
-        adminApi.getEmployeesBasic(),
-      ]);
+      const result=await callApiWithNotification(() => adminApi.getAllUsers());
+      if(result){
+        const usersData=result[0];
+        const rolesData=result[1];
+        const employees=result[2];
+        const numToEmployee: Record<string, EmployeeBasic> = Object.fromEntries(
+          employees.filter(e => e.num).map(e => [e.num, e])
+        );
 
       // emp_no(사번)로 사용자와 직원정보 매칭
-      const numToEmployee: Record<string, EmployeeBasic> = Object.fromEntries(
-        employees.filter(e => e.num).map(e => [e.num, e])
-      );
+      
 
       const mergedUsers: UserWithRoles[] = usersData.map(u => {
         const emp = u.empNo ? numToEmployee[u.empNo] : undefined;
@@ -112,17 +115,12 @@ const UserPermissionManagePage: React.FC = () => {
           department: u.department || emp?.deptCd || u.department,
         };
       });
-      
 
-      setUsers(mergedUsers);
-      setRoles(rolesData);
-    } catch (error) {
-      showError('사용자 권한 정보를 불러오는데 실패했습니다.');
-      console.error('사용자 권한 정보 로드 실패:', error);
-    } finally {
-      setLoading(false);
+        setUsers(mergedUsers);
+        setRoles(rolesData);
     }
-  }, [showError]);
+    setLoading(false);
+  }, [callApiWithNotification]);
 
   useEffect(() => {
     loadData();
@@ -545,9 +543,6 @@ const UserPermissionManagePage: React.FC = () => {
         onCreated={handleCreated}
       />
 
-
-
-      {/* 부서 검색 팝업 제거: DepartmentSelect 사용으로 대체 */}
 
       {/* Toast 컴포넌트 */}
       <Toast
