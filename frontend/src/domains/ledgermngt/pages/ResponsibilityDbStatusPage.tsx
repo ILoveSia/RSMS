@@ -2,8 +2,8 @@
  * 책무 DB 현황 페이지 컴포넌트
  */
 import '@/assets/scss/style.css';
-import { DataGrid } from '@/shared/components/ui';
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
+import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
@@ -21,6 +21,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
 import responsibilityApi from '../api/responsibilityApi';
+import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 
 // 그룹핑된 책무 데이터 타입 정의
 interface GroupedResponsibility {
@@ -56,9 +57,10 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
   (): React.JSX.Element => {
     // Toast 알림을 위한 snackbar hook
     const { snackbar, showError, showSuccess, hideSnackbar } = useSnackbar();
+    const { callApiWithNotification } = useApiWithNotification({
+      showSuccessOnLoad: true,
+    });
     
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
     const [rows, setRows] = useState<GroupedResponsibilityRow[]>([]);
     const [selectedResponsibilityId, setSelectedResponsibilityId] = useState<number | null>(null);
     const [selectedRowData, setSelectedRowData] = useState<any>(null);
@@ -141,12 +143,12 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     // 모든 데이터 로드 (한 번만)
     const loadAllData = useCallback(async () => {
-      setLoading(true);
-      setError(null);
+      const data = await callApiWithNotification(
+        () => responsibilityApi.getStatusList(),
+        'success_load'
+      );
 
-      try {
-        const data = await responsibilityApi.getStatusList();
-
+      if (data) {
         setAllResponsibilityData(data);
         setData(data);
 
@@ -157,31 +159,24 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         // 그룹핑된 데이터를 DataGrid용으로 변환
         const gridRows = convertToGridRows(grouped);
         setRows(gridRows);
-        
-      } catch (err) {
-        console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
-        const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';
-        setError(errorMessage);
-        showError(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    }, [groupDataByResponsibilityId, convertToGridRows, showError]);
+      } 
+      
+    }, [groupDataByResponsibilityId, convertToGridRows, callApiWithNotification]);
 
     // 책무 현황 조회 (ledgerOrdersId와 responsibilityId 모두 지원)
     const fetchResponsibilityData = useCallback(async () => {
-      setLoading(true);
-      setError(null);
+      // responsibilityId 파라미터 처리
+      const responsibilityIdParam = selectedResponsibility?.responsibilityId 
+        ? selectedResponsibility.responsibilityId.toString()
+        : undefined;
 
-      try {
-        // responsibilityId 파라미터 처리
-        const responsibilityIdParam = selectedResponsibility?.responsibilityId 
-          ? selectedResponsibility.responsibilityId.toString()
-          : undefined;
+      // API 호출: responsibilityId와 ledgerOrdersId 모두 전달
+      const data = await callApiWithNotification(
+        () => responsibilityApi.getStatusList(responsibilityIdParam, ledgerOrdersId),
+        'success_load'
+      );
 
-        // API 호출: responsibilityId와 ledgerOrdersId 모두 전달
-        const data = await responsibilityApi.getStatusList(responsibilityIdParam, ledgerOrdersId);
-
+      if (data) {
         setAllResponsibilityData(data);
         setData(data);
 
@@ -192,15 +187,13 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         // 그룹핑된 데이터를 DataGrid용으로 변환
         const gridRows = convertToGridRows(grouped);
         setRows(gridRows);
-      } catch (err) {
-        console.error('[ResponsibilityDbStatusPage] 책무 데이터 로드 실패:', err);
-        const errorMessage = '책무 DB 현황 데이터를 불러오는 데 실패했습니다.';
-        setError(errorMessage);
-        showError(errorMessage);
-      } finally {
-        setLoading(false);
+      } else {
+        setAllResponsibilityData([]);
+        setData([]);
+        setGroupedData([]);
+        setRows([]);
       }
-    }, [ledgerOrdersId, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows, showError]);
+    }, [ledgerOrdersId, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows, callApiWithNotification]);
 
 
     useEffect(() => {
@@ -265,9 +258,9 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         saveAs(blob, `책무_DB_현황_그룹핑_${new Date().toISOString().slice(0, 10)}.xlsx`);
       } catch (error) {
         console.error('엑셀 다운로드 실패:', error);
-        setError('엑셀 다운로드 중 오류가 발생했습니다.');
+        showError('엑셀 다운로드 중 오류가 발생했습니다.');
       }
-    }, [rows]);
+    }, [rows, showError]);
 
     // 컬럼 정의 (성능 최적화)
     const columns: GridColDef<GroupedResponsibilityRow>[] = useMemo(
@@ -440,23 +433,20 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
     const handleDelete = useCallback(async () => {
       if (selectedIds.length > 0) {
-        try {
-          setLoading(true);
-          // 선택된 행의 responsibilityId를 찾기
-          const selectedRow = rows.find((_, index) => selectedIds.includes(index));
-          if (selectedRow) {
-            await responsibilityApi.delete(selectedRow.responsibilityId);
+        // 선택된 행의 responsibilityId를 찾기
+        const selectedRow = rows.find((_, index) => selectedIds.includes(index));
+        if (selectedRow) {
+          const success = await callApiWithNotification(
+            () => responsibilityApi.delete(selectedRow.responsibilityId),
+            'custom'
+          );
+          if (success) {
             await fetchResponsibilityData(); // 삭제 완료 후 데이터 새로고침
             setSelectedIds([]); // 선택 해제
           }
-        } catch (error) {
-          console.error('책무 삭제 실패:', error);
-          setError('책무 삭제 중 오류가 발생했습니다.');
-        } finally {
-          setLoading(false);
         }
       }
-    }, [selectedIds, rows, fetchResponsibilityData]);
+    }, [selectedIds, rows, fetchResponsibilityData, callApiWithNotification]);
 
     return (
       <PageContainer
@@ -523,8 +513,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             />
             <SearchButton
               onClick={handleSearch}
-              loading={loading}
-              disabled={loading}
             />
           </Box>
 
@@ -547,8 +535,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               showDelete={true}
               showEdit={false}
               showRefresh={false}
-              registerDisabled={loading}
-              deleteDisabled={loading || selectedIds.length === 0}
               align="right"
               sx={{
                 mb: 0,
@@ -560,21 +546,19 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           {/* 데이터 그리드 */}
           <Box
             sx={{
+              flex: 1,
               width: '100%',
               display: 'flex',
-              flexDirection: 'column',
-              flex: 1,
+              // pb: 2,
             }}
           >
-            {error && <p style={{ color: 'red' }}>{error}</p>}
             <DataGrid
-              className='responsibility-grid'
               data={rows}
               columns={columns as any}
-              loading={loading}
-              height={600} 
+              outline={false}
               selectable={true}
-              multiSelect={false}
+              height={600} 
+              multiSelect
               selectedRows={selectedIds}
               onRowSelectionChange={selectedRows => {
                 setSelectedIds(selectedRows.map(id => Number(id)));

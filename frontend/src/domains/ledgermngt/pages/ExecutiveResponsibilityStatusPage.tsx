@@ -10,6 +10,7 @@ import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
+import { useApiWithNotification } from '@/shared/hooks';
 
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
@@ -60,6 +61,11 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [dialogData, setDialogData] = useState<any>(null);
+
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+  });
 
   // 그룹화 함수
   const groupDataByPosition = (data: ExecutiveResponsibilityItem[]): ExecutiveResponsibilityRow[] => {
@@ -218,26 +224,19 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     });
   }, [allCodes]);
 
-  // 에러 처리 함수
-  const handleError = useCallback((error: any, message: string) => {
-    console.error('데이터 조회 실패:', error);
-    setErrorMessage(message);
-    setErrorDialogOpen(true);
-  }, []);
-
   // 모든 데이터 로드
   const loadAllData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await executiveResponsibilityApi.getAll();
+    setIsLoading(true);
+    
+    const data = await callApiWithNotification(() => executiveResponsibilityApi.getAll());
+    
+    if (data) {
       const transformedItems = transformApiData(data);
       setAllExecutiveData(transformedItems);
-    } catch (err) {
-      handleError(err, '임원별 책무 현황 데이터를 불러오는데 실패했습니다.');
-    } finally {
-      setIsLoading(false);
     }
-  }, [transformApiData, handleError]);
+    
+    setIsLoading(false);
+  }, [transformApiData, callApiWithNotification]);
 
   // 데이터 그룹핑 및 표시 함수
   const updateDisplayData = useCallback((data: ExecutiveResponsibilityItem[]) => {

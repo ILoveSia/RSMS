@@ -10,7 +10,7 @@ import {
 } from '@/domains/common/components/search';
 import { Confirm } from '@/shared/components/modal';
 import { DataGrid } from '@/shared/components/ui';
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton, PermissionButton } from '@/shared/components/ui/button';
+import { Button, SearchButton, ManagementButtonGroup, PermissionButton } from '@/shared/components/ui/button';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -35,6 +35,7 @@ import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import '../../../assets/scss/style.css';
 import { positionApi, type PositionStatusRow, type LedgerOrdersGenerateResponse, type LedgerOrdersStatusCheckResponse } from '../api/positionApi';
+import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 import PositionDialog from '../components/PositionDialog';
 
 type DialogMode = 'create' | 'edit' | 'view';
@@ -46,14 +47,13 @@ interface IPositionStatusPageProps {
 const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): React.JSX.Element => {
   // Toast 알림을 위한 snackbar hook
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+
   
   // 권한 체크 훅
   const { hasMenuPermission, permissions, loading: permissionLoading } = usePermission();
 
   // 기존 상태 관리 방식
   const [rows, setRows] = useState<PositionStatusRow[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // 로컬 UI 상태
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -87,7 +87,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   
   // 확정취소 confirm 상태
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
-
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   // 공통코드 훅 사용
   const getCodeNameFn = useGetCodeName();
 
@@ -98,30 +98,23 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
     }
     setEmployeeSearchOpen(false);
   };
-
+   const { callApiWithNotification } = useApiWithNotification({
+     showSuccessOnLoad: true,
+     errorMessage: '데이터 로드 중 오류가 발생했습니다.'
+  });
   // 직책 현황 조회
   const fetchPositionStatus = useCallback(async (ledgerOrdersId?: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const searchLedgerOrdersId = ledgerOrdersId || selectedLedgerOrderId;
-      const data = await positionApi.getStatusList(searchLedgerOrdersId);
+    const searchLedgerOrdersId = ledgerOrdersId || selectedLedgerOrderId;
+    const data = await callApiWithNotification(
+      () => positionApi.getStatusList(searchLedgerOrdersId),
+      'success_load'
+    );
+    if (data) {
       setRows(data);
-    } catch (err: unknown) {
-      if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message?: string }).message === 'string'
-      ) {
-        setError((err as { message: string }).message);
-      } else {
-        setError('직책 현황을 불러오는 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setLoading(false);
+    } else {
+      setRows([]);
     }
-  }, [selectedLedgerOrderId]);
+  }, [selectedLedgerOrderId, callApiWithNotification]);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -142,44 +135,37 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
 
   // 책무번호 생성 핸들러
   const handleGenerateLedgerOrder = useCallback(async () => {
-    setLoading(true);
-    try {
-      // 1. 먼저 상태 확인
-      const statusCheck: LedgerOrdersStatusCheckResponse = await positionApi.checkLedgerOrderStatus();
-      
-      // 2. P5 상태가 아니면 Alert 표시
-      if (!statusCheck.canGenerate) {
-        setStatusAlertMessage(statusCheck.message);
-        setStatusAlertOpen(true);
-        return;
-      }
-      
-      // 3. P5 상태이면 생성 진행
-      const response: LedgerOrdersGenerateResponse = await positionApi.generateLedgerOrder();
-      
+    // 1. 먼저 상태 확인
+    const statusCheck: LedgerOrdersStatusCheckResponse | null = await callApiWithNotification(
+      () => positionApi.checkLedgerOrderStatus(),
+      'custom'
+    );
+
+    if (!statusCheck) {
+      return;
+    }
+
+    // 2. P5 상태가 아니면 Alert 표시
+    if (!statusCheck.canGenerate) {
+      setStatusAlertMessage(statusCheck.message);
+      setStatusAlertOpen(true);
+      return;
+    }
+
+    // 3. P5 상태이면 생성 진행
+    const response: LedgerOrdersGenerateResponse | null = await callApiWithNotification(
+      () => positionApi.generateLedgerOrder(),
+      'custom'
+    );
+
+    if (response) {
       showSuccess(`${response.message}`);
-      
       // 생성 후 데이터 새로고침
       await fetchPositionStatus();
-      
       // LedgerOrderSelect 새로고침 트리거
       setLedgerOrderRefreshTrigger(prev => prev + 1);
-      
-    } catch (err: unknown) {
-      let errorMessage = '책무번호 생성 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('책무번호 생성 실패:', err);
-    } finally {
-      setLoading(false);
     }
-  }, [showSuccess, showError, fetchPositionStatus]);
+  }, [showSuccess, fetchPositionStatus, callApiWithNotification]);
 
   // 확정 버튼 클릭 핸들러
   const handleConfirmClick = useCallback(() => {
@@ -221,33 +207,21 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await positionApi.confirmLedgerOrder(selectedLedgerOrder);
+    const response = await callApiWithNotification(
+      () => positionApi.confirmLedgerOrder(selectedLedgerOrder),
+      'custom'
+    );
+
+    if (response) {
       showSuccess(response.message || '확정되었습니다.');
-      
       // 데이터 새로고침
       await fetchPositionStatus();
-      
       // LedgerOrderSelect 새로고침 트리거
       setLedgerOrderRefreshTrigger(prev => prev + 1);
-      
-    } catch (err: unknown) {
-      let errorMessage = '확정 처리 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('확정 처리 실패:', err);
-    } finally {
-      setLoading(false);
-      setConfirmConfirmOpen(false);
+      setSnackbarOpen(true);
     }
-  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionStatus]);
+    setConfirmConfirmOpen(false);
+  }, [selectedLedgerOrder, showSuccess, fetchPositionStatus, callApiWithNotification]);
 
   // 확정취소 버튼 클릭 핸들러
   const handleCancelConfirmClick = useCallback(() => {
@@ -289,33 +263,20 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await positionApi.cancelConfirmLedgerOrder(selectedLedgerOrder);
+    const response = await callApiWithNotification(
+      () => positionApi.cancelConfirmLedgerOrder(selectedLedgerOrder),
+      'custom'
+    );
+
+    if (response) {
       showSuccess(response.message || '확정취소되었습니다.');
-      
       // 데이터 새로고침
       await fetchPositionStatus();
-      
       // LedgerOrderSelect 새로고침 트리거
       setLedgerOrderRefreshTrigger(prev => prev + 1);
-      
-    } catch (err: unknown) {
-      let errorMessage = '확정취소 처리 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('확정취소 처리 실패:', err);
-    } finally {
-      setLoading(false);
-      setCancelConfirmOpen(false);
     }
-  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionStatus]);
+    setCancelConfirmOpen(false);
+  }, [selectedLedgerOrder, showSuccess, fetchPositionStatus, callApiWithNotification]);
 
   // 부서 선택 핸들러
   const handleDepartmentSelect = (departments: Department | Department[]) => {
@@ -476,7 +437,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   // 삭제 버튼 클릭 시: 모달만 띄움
   const handleDelete = () => {
     if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
-      setError('삭제할 항목을 선택하세요.');
+      showError('삭제할 항목을 선택하세요.');
       return;
     }
     setPendingDelete(selectedIds);
@@ -489,28 +450,17 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       setConfirmOpen(false);
       return;
     }
-    setLoading(true);
-    setError(null);
-    try {
-      await positionApi.deleteBulk(pendingDelete);
+    const success = await callApiWithNotification(
+      () => positionApi.deleteBulk(pendingDelete),
+      'custom'
+    );
+
+    if (success) {
       setSelectedIds([]); // 선택 초기화
       fetchPositionStatus(); // 목록 새로고침
-    } catch (err: unknown) {
-      if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message?: string }).message === 'string'
-      ) {
-        setError((err as { message: string }).message);
-      } else {
-        setError('삭제 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setLoading(false);
-      setConfirmOpen(false);
-      setPendingDelete(null);
     }
+    setConfirmOpen(false);
+    setPendingDelete(null);
   };
 
   const handleRowClick = (positionsId: number) => {
@@ -522,7 +472,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   // 엑셀 다운로드 핸들러 (ExcelJS 사용)
   const handleExcelDownload = async () => {
     if (!rows || rows.length === 0) {
-      setError('엑셀로 내보낼 데이터가 없습니다.');
+      showError('엑셀로 내보낼 데이터가 없습니다.');
       return;
     }
 
@@ -569,7 +519,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       saveAs(blob, `직책_현황_${new Date().toISOString().slice(0, 10)}.xlsx`);
     } catch (error) {
       console.error('엑셀 다운로드 실패:', error);
-      setError('엑셀 다운로드 중 오류가 발생했습니다.');
+      showError('엑셀 다운로드 중 오류가 발생했습니다.');
     }
   };
 
@@ -626,8 +576,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           />
           <SearchButton
             onClick={handleSearch}
-            loading={loading}
-            disabled={loading}
           />
           <PermissionButton
             menuCode="LEDGER_MGMT_POSITION"
@@ -636,7 +584,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             size='small'
             color='success'
             onClick={handleGenerateLedgerOrder}
-            disabled={loading}
             hideWhenNoPermission={true}
             noPermissionTooltip="책무번호 생성 권한이 없습니다"
             sx={{
@@ -657,7 +604,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               size='small'
               color='success'
               onClick={handleConfirmClick}
-              disabled={loading}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정 권한이 없습니다"
               sx={{
@@ -677,7 +623,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               size='small'
               color='error'
               onClick={handleCancelConfirmClick}
-              disabled={loading}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정취소 권한이 없습니다"
               sx={{
@@ -709,8 +654,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             showExcelDownload={true}
             showRegister={true}
             showDelete={true}
-            registerDisabled={loading}
-            deleteDisabled={loading || selectedIds.length === 0}
             align="right"
             sx={{
               mb: 0,
@@ -719,7 +662,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           />
         </Box>
         <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
             data={rows}
             columns={positionColumns.map(col => ({
@@ -731,7 +673,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               align: col.align,
               renderCell: col.renderCell,
             }))}
-            loading={loading}
             height={600}
             selectable={true}
             multiSelect={true}
@@ -740,16 +681,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               setSelectedIds(selectedRows.map(id => Number(id)));
             }}
             rowIdField='positionsId'
-          // sx={{
-          //   width: '100%',
-          //   '& .MuiDataGrid-columnHeaders': {
-          //     backgroundColor: 'var(--bank-bg-secondary) !important',
-          //     fontWeight: 'bold',
-          //   },
-          //   '& .MuiDataGrid-row': {
-          //     cursor: 'pointer',
-          //   },
-          // }}
           />
         </Box>
       </PageContent>

@@ -37,7 +37,6 @@ export const menuApi = {
   getAllMenusWithParent: async (): Promise<MenuWithParent[]> => {
     try {
       const response = await apiClient.get('/menus/all-with-parent');
-      console.log('API 응답:', response);
       return response as MenuWithParent[];
     } catch (error) {
       console.error('메뉴 조회 실패:', error);

@@ -3,17 +3,18 @@
  * MainContent.tsx
  */
 import type { MeetingBody } from '@/app/types';
-import { useCommonCodes, useGetCodeName, type CommonCode } from '@/shared/utils/codeUtils';
+import { useCommonCodes, useGetCodeName } from '@/shared/utils/codeUtils';
 import { Confirm } from '@/shared/components/modal';
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton, RegisterButton } from '@/shared/components/ui/button';
+import { SearchButton, ManagementButtonGroup  } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
+import { useApiWithNotification } from '@/shared/hooks';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Snackbar, Alert } from '@mui/material';
+import { Box } from '@mui/material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -29,6 +30,11 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
   // 공통코드 가져오기
   const allCodes = useCommonCodes();
   const getCodeNameFn = useGetCodeName();
+
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+  });
 
   // 공통코드 헬퍼 함수
   const getMeetingBodyCodes = useCallback(() => {
@@ -57,10 +63,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
   // 삭제 확인 모달 상태
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string[] | null>(null);
-
-  // 페이지 로드/조회 성공 알림 상태 (PageContent 기본 스낵바 대체)
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('페이지 로드 완료');
 
   // 회의체 현황 컬럼 정의
   const meetingColumns: DataGridColumn<MeetingBody>[] = useMemo(
@@ -108,36 +110,35 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
 
   // API 호출 함수
   const fetchMeetingBodies = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      // gubun 값 추출
-      let gubunValue: string | undefined;
-      
-      if (filterDivision === '전체') {
-        gubunValue = undefined;
-      } else if (typeof filterDivision === 'string') {
-        gubunValue = filterDivision;
-      } else if (filterDivision && typeof filterDivision === 'object' && filterDivision.value === '전체') {
-        gubunValue = undefined;
-      } else if (filterDivision && typeof filterDivision === 'object') {
-        gubunValue = filterDivision.value;
-      } else {
-        gubunValue = undefined;
-      }
+    // gubun 값 추출
+    let gubunValue: string | undefined;
+    
+    if (filterDivision === '전체') {
+      gubunValue = undefined;
+    } else if (typeof filterDivision === 'string') {
+      gubunValue = filterDivision;
+    } else if (filterDivision && typeof filterDivision === 'object' && filterDivision.value === '전체') {
+      gubunValue = undefined;
+    } else if (filterDivision && typeof filterDivision === 'object') {
+      gubunValue = filterDivision.value;
+    } else {
+      gubunValue = undefined;
+    }
 
-      const searchParams = {
-        page: pageInfo.page,
-        size: pageInfo.size,
-        gubun: gubunValue,
-        sortBy: 'createdAt',
-        sortDirection: 'desc',
-      };
+    const searchParams = {
+      page: pageInfo.page,
+      size: pageInfo.size,
+      gubun: gubunValue,
+      sortBy: 'createdAt',
+      sortDirection: 'desc',
+    };
 
+    const responseData = await callApiWithNotification(() => meetingStatusApi.search(searchParams),'success_load');
 
-      const responseData = await meetingStatusApi.search(searchParams);
-
+    if (responseData) {
       // 응답 구조에 따라 데이터 추출
       let meetingBodyData: MeetingBody[] = [];
       let totalElements = 0;
@@ -183,25 +184,10 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
         totalElements: totalElements,
         totalPages: totalPages,
       }));
-
-      // 로드 성공 알림 (2초 노출)
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    } catch (err: unknown) {
-      if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message?: string }).message === 'string'
-      ) {
-        setError((err as { message: string }).message);
-      } else {
-        setError('회의체 목록 조회에 실패했습니다.');
-      }
-    } finally {
-      setLoading(false);
     }
-  }, [pageInfo.page, pageInfo.size, filterDivision]);
+    
+    setLoading(false);
+  }, [pageInfo.page, pageInfo.size, filterDivision, callApiWithNotification]);
 
 
 
@@ -256,27 +242,21 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
     }
     setLoading(true);
     setError(null);
-    try {
-      await meetingStatusApi.deleteBulk(pendingDelete);
+    
+    const result = await callApiWithNotification(
+      () => meetingStatusApi.deleteBulk(pendingDelete),
+      'custom'
+    );
+    
+    if (result) {
       setSelectedIds([]); // 선택 초기화
       fetchMeetingBodies(); // 목록 새로고침
-    } catch (err: unknown) {
-      if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message?: string }).message === 'string'
-      ) {
-        setError((err as { message: string }).message);
-      } else {
-        setError('삭제 중 오류가 발생했습니다.');
-      }
-    } finally {
-      setLoading(false);
-      setConfirmOpen(false);
-      setPendingDelete(null);
     }
-  }, [pendingDelete, fetchMeetingBodies]);
+    
+    setLoading(false);
+    setConfirmOpen(false);
+    setPendingDelete(null);
+  }, [pendingDelete, fetchMeetingBodies, callApiWithNotification]);
 
   // 엑셀 다운로드 핸들러 (ExcelJS 사용)
   const handleExcelDownload = useCallback(async () => {
@@ -344,7 +324,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
       />
 
       <PageContent
-        showLoadSuccess={false}
         sx={{
           flex: 1,
           display: 'flex',
@@ -478,17 +457,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             serverSide
           />
         </Box>
-        {/* 성공 알림 (상단 중앙, 크게 1회 표시) */}
-        <Snackbar
-          open={showSuccess}
-          autoHideDuration={2000}
-          onClose={() => setShowSuccess(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert severity="success">
-            {successMessage}
-          </Alert>
-        </Snackbar>
       </PageContent>
 
       {/* 회의체 등록/수정/조회 다이얼로그 */}

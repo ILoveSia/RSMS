@@ -1,7 +1,3 @@
-/**
- * 직책별 책무 현황 페이지
- * TestGrid.tsx를 대체하는 실제 업무 페이지
- */
 import { Box, Chip } from '@mui/material';
 import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -9,15 +5,14 @@ import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
-import { Button, SearchButton, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { SearchButton } from '@/shared/components/ui/button';
 import { PermissionButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PositionSearchBox } from '@/shared/components/ui/form';
 import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
 import positionApi from '@/domains/ledgermngt/api/positionApi';
 import { Confirm } from '@/shared/components/modal';
-import { useSnackbar } from '@/shared/hooks/useSnackbar';
-import Toast from '@/shared/components/ui/feedback/Toast';
+import { useApiWithNotification } from '@/shared/hooks';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -105,6 +100,11 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+  });
+
   // 필터 상태
   const [selectedPosition, setSelectedPosition] = useState<PositionSearchResult | null>(null);
 
@@ -134,8 +134,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // LedgerOrderSelect 새로고침 트리거
   const [ledgerOrderRefreshTrigger, setLedgerOrderRefreshTrigger] = useState<number>(0);
 
-  // Toast 알림을 위한 snackbar 훅
-  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+
 
   const getCodeNameFn = useGetCodeName();
 
@@ -241,21 +240,20 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     setLoading(true);
     setError(null);
 
-    try {
-      // API URL 구성
-      const params = new URLSearchParams();
-      if (selectedPosition?.positionsId) {
-        params.append('positionsId', selectedPosition.positionsId.toString());
-      }
-      if (ledgerOrdersId) {
-        params.append('ledgerOrdersId', ledgerOrdersId.toString());
-      }
+    // API URL 구성
+    const params = new URLSearchParams();
+    if (selectedPosition?.positionsId) {
+      params.append('positionsId', selectedPosition.positionsId.toString());
+    }
+    if (ledgerOrdersId) {
+      params.append('ledgerOrdersId', ledgerOrdersId.toString());
+    }
 
-      const url = `/api/position-responsibilities${params.toString() ? `?${params.toString()}` : ''}`;
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      
+    const url = `/api/position-responsibilities${params.toString() ? `?${params.toString()}` : ''}`;
+    
+    const data = await callApiWithNotification(() => fetch(url).then(res => res.json()));
+
+    if (data) {
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         id: item.id ?? 0,
         responsibility_id: item.respontibility_id ?? item.id ?? 0,
@@ -294,24 +292,19 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // 그룹핑된 데이터를 DataGrid용으로 변환
       const gridRows = convertToGridRows(grouped);
       setRows(gridRows);
-    } catch (err) {
-      setErrorMessage('데이터를 불러오는 데 실패했습니다.');
-      setErrorDialogOpen(true);
-    } finally {
-      setLoading(false);
     }
-  }, [ledgerOrdersId, selectedPosition, groupDataByPositionId, convertToGridRows]);
+    
+    setLoading(false);
+  }, [ledgerOrdersId, selectedPosition, groupDataByPositionId, convertToGridRows, callApiWithNotification]);
 
   // 초기 데이터 로드 (한 번만)
   const loadAllData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    try {
-      // 모든 데이터를 한 번만 로드
-      const response = await fetch('/api/position-responsibilities');
-      const data = await response.json();
+    const data = await callApiWithNotification(() => fetch('/api/position-responsibilities').then(res => res.json()));
 
+    if (data) {
       const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
         id: item.id ?? 0,
         responsibility_id: item.respontibility_id ?? item.id ?? 0,
@@ -350,13 +343,10 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       // 그룹핑된 데이터를 DataGrid용으로 변환
       const gridRows = convertToGridRows(grouped);
       setRows(gridRows);
-    } catch (err) {
-      setErrorMessage('데이터를 불러오는 데 실패했습니다.');
-      setErrorDialogOpen(true);
-    } finally {
-      setLoading(false);
     }
-  }, [groupDataByPositionId, convertToGridRows]);
+    
+    setLoading(false);
+  }, [groupDataByPositionId, convertToGridRows, callApiWithNotification]);
 
   useEffect(() => {
     loadAllData();
@@ -620,14 +610,16 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const handleConfirmClick = useCallback(() => {
     // 1. LedgerOrderSelect 선택 검증
     if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
-      showError('원장차수를 선택해주세요.');
+      setErrorMessage('원장차수를 선택해주세요.');
+      setErrorDialogOpen(true);
       return;
     }
 
     // 2. "직책확정" 상태 검증 (신규가 아닌 직책확정이어야 함)
     const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
     if (!selectedOption) {
-      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      setErrorMessage('선택된 원장차수 정보를 찾을 수 없습니다.');
+      setErrorDialogOpen(true);
       return;
     }
 
@@ -641,20 +633,22 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     }
 
     if (statusInfo !== '직책확정') {
-      showError('직책확정 상태의 원장차수만 확정 가능합니다.');
+      setErrorMessage('직책확정 상태의 원장차수만 확정 가능합니다.');
+      setErrorDialogOpen(true);
       return;
     }
 
     // 3. DataGrid의 모든 행의 결재상태가 APPROVED인지 검증
     const unapprovedRows = rows.filter(row => row.appr_stat_cd !== 'APPROVED');
     if (unapprovedRows.length > 0) {
-      showError(`결재가 완료되지 않은 항목이 ${unapprovedRows.length}개 있습니다. 모든 항목의 결재가 승인되어야 확정 가능합니다.`);
+      setErrorMessage(`결재가 완료되지 않은 항목이 ${unapprovedRows.length}개 있습니다. 모든 항목의 결재가 승인되어야 확정 가능합니다.`);
+      setErrorDialogOpen(true);
       return;
     }
 
     // 5. 확정 confirm 창 표시
     setConfirmConfirmOpen(true);
-  }, [selectedLedgerOrder, ledgerOrderOptions, rows, showError]);
+  }, [selectedLedgerOrder, ledgerOrderOptions, rows]);
 
   // LedgerOrderSelect 새로고침 함수
   const refreshLedgerOrderSelect = useCallback(() => {
@@ -669,46 +663,38 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     }
 
     setLoading(true);
-    try {
-      // 직책별 책무 확정 전용 API 사용 (P2 → P3)
-      const response = await positionApi.confirmPositionResponsibility(selectedLedgerOrder);
-      showSuccess(response.message || '직책별 책무가 확정되었습니다.');
-      
+    
+    const result = await callApiWithNotification(
+      () => positionApi.confirmPositionResponsibility(selectedLedgerOrder),
+      'custom'
+    );
+
+    if (result) {
       // 1. LedgerOrderSelect 새로고침
       refreshLedgerOrderSelect();
       
       // 2. DataGrid 새로고침
       await fetchPositionResponsibilityData();
-      
-    } catch (err: unknown) {
-      let errorMessage = '확정 처리 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('확정 처리 실패:', err);
-    } finally {
-      setLoading(false);
-      setConfirmConfirmOpen(false);
     }
-  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionResponsibilityData, refreshLedgerOrderSelect]);
+    
+    setLoading(false);
+    setConfirmConfirmOpen(false);
+  }, [selectedLedgerOrder, callApiWithNotification, fetchPositionResponsibilityData, refreshLedgerOrderSelect]);
 
   // 확정취소 버튼 클릭 핸들러
   const handleCancelConfirmClick = useCallback(() => {
     // 1. LedgerOrderSelect 선택 검증
     if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
-      showError('원장차수를 선택해주세요.');
+      setErrorMessage('원장차수를 선택해주세요.');
+      setErrorDialogOpen(true);
       return;
     }
 
     // 2. "직책별책무확정" 상태 검증 (직책확정이 아닌 직책별책무확정이어야 함)
     const selectedOption = ledgerOrderOptions.find(option => option.value === selectedLedgerOrder);
     if (!selectedOption) {
-      showError('선택된 원장차수 정보를 찾을 수 없습니다.');
+      setErrorMessage('선택된 원장차수 정보를 찾을 수 없습니다.');
+      setErrorDialogOpen(true);
       return;
     }
 
@@ -722,13 +708,14 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     }
 
     if (statusInfo !== '직책별책무확정') {
-      showError('직책별책무확정 상태의 원장차수만 확정취소 가능합니다.');
+      setErrorMessage('직책별책무확정 상태의 원장차수만 확정취소 가능합니다.');
+      setErrorDialogOpen(true);
       return;
     }
 
     // 3. 확정취소 confirm 창 표시
     setCancelConfirmOpen(true);
-  }, [selectedLedgerOrder, ledgerOrderOptions, showError]);
+  }, [selectedLedgerOrder, ledgerOrderOptions]);
 
   // 확정취소 처리 핸들러
   const handleCancelConfirmLedgerOrder = useCallback(async () => {
@@ -738,34 +725,23 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     }
 
     setLoading(true);
-    try {
+    
+    const result = await callApiWithNotification(
+      () => positionApi.cancelPositionResponsibility(selectedLedgerOrder),
+      'custom'
+    );
 
-      // 직책별 책무 확정취소 전용 API 사용 (P3 → P2)
-      const response = await positionApi.cancelPositionResponsibility(selectedLedgerOrder);
-      showSuccess(response.message || '직책별 책무 확정이 취소되었습니다.');
-      
+    if (result) {
       // 1. LedgerOrderSelect 새로고침
       refreshLedgerOrderSelect();
       
       // 2. DataGrid 새로고침
       await fetchPositionResponsibilityData();
-      
-    } catch (err: unknown) {
-      let errorMessage = '확정취소 처리 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('확정취소 처리 실패:', err);
-    } finally {
-      setLoading(false);
-      setCancelConfirmOpen(false);
     }
-  }, [selectedLedgerOrder, showSuccess, showError, fetchPositionResponsibilityData, refreshLedgerOrderSelect]);
+    
+    setLoading(false);
+    setCancelConfirmOpen(false);
+  }, [selectedLedgerOrder, callApiWithNotification, fetchPositionResponsibilityData, refreshLedgerOrderSelect]);
 
   // 오류 다이얼로그 닫기
   const handleCloseErrorDialog = () => {
@@ -1014,13 +990,7 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         }}
       />
 
-      {/* Toast 알림 */}
-      <Toast
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={hideSnackbar}
-      />
+
     </PageContainer>
   );
 };

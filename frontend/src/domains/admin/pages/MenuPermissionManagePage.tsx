@@ -5,11 +5,10 @@ import { Save as SaveIcon, Clear as ClearIcon, Security as SecurityIcon, Visibil
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, ExcelDownloadButton, RefreshButton } from '@/shared/components/ui/button';
-import { useSnackbar } from '@/shared/hooks/useSnackbar';
-import Toast from '@/shared/components/ui/feedback/Toast';
+import { SearchButton, RefreshButton } from '@/shared/components/ui/button';
 import { adminApi } from '../api/adminApi';
 import { SearchBox } from '@/shared/components/ui/form';
+import { useApiWithNotification } from '@/shared/hooks';
 import type { 
   MenuPermissionMatrix, 
   MenuPermissionUpdate, 
@@ -21,6 +20,7 @@ import type {
  * 메뉴 권한 관리 페이지
  * 모든 메뉴와 역할별 권한을 매트릭스 형태로 표시하고 관리합니다.
  */
+
 const MenuPermissionManagePage: React.FC = () => {
   // 상태 관리
   const [matrix, setMatrix] = useState<MenuPermissionMatrix | null>(null);
@@ -30,22 +30,21 @@ const MenuPermissionManagePage: React.FC = () => {
   const [filter, setFilter] = useState<MenuPermissionFilter>({});
   // const [expandedMenus, setExpandedMenus] = useState<Set<number>>(new Set());
 
-  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+  });
 
   // 데이터 로드
   const loadMatrix = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await adminApi.getMenuPermissionMatrix();
+    setLoading(true);
+    const data = await callApiWithNotification(() => adminApi.getMenuPermissionMatrix());
+    if(data){
       setMatrix(data);
       setChanges(new Map());
-    } catch (error) {
-      showError('메뉴 권한 정보를 불러오는데 실패했습니다.');
-      console.error('메뉴 권한 매트릭스 로드 실패:', error);
-    } finally {
-      setLoading(false);
     }
-  }, [showError]);
+    setLoading(false);
+  }, [callApiWithNotification]);
 
   useEffect(() => {
     loadMatrix();
@@ -143,38 +142,38 @@ const MenuPermissionManagePage: React.FC = () => {
   // 변경사항 저장
   const handleSave = useCallback(async () => {
     if (changes.size === 0) {
-      showError('저장할 변경사항이 없습니다.');
       return;
     }
 
-    try {
-      setSaving(true);
-      
-      // 메뉴별로 변경사항 그룹핑
-      const changesByMenu = new Map<number, MenuPermissionUpdate[]>();
-      changes.forEach((change, key) => {
-        const menuId = parseInt(key.split('-')[0]);
-        if (!changesByMenu.has(menuId)) {
-          changesByMenu.set(menuId, []);
-        }
-        changesByMenu.get(menuId)!.push(change);
-      });
-
-      // 각 메뉴별로 저장
-      for (const [menuId, updates] of changesByMenu) {
-        await adminApi.updateMenuPermissions(menuId, updates);
+    setSaving(true);
+    
+    // 메뉴별로 변경사항 그룹핑
+    const changesByMenu = new Map<number, MenuPermissionUpdate[]>();
+    changes.forEach((change, key) => {
+      const menuId = parseInt(key.split('-')[0]);
+      if (!changesByMenu.has(menuId)) {
+        changesByMenu.set(menuId, []);
       }
+      changesByMenu.get(menuId)!.push(change);
+    });
 
+    // 각 메뉴별로 저장
+    const result = await callApiWithNotification(
+      async () => {
+        for (const [menuId, updates] of changesByMenu) {
+          await adminApi.updateMenuPermissions(menuId, updates);
+        }
+        return changesByMenu.size;
+      },
+      'custom'
+    );
+
+    if (result) {
       setChanges(new Map());
-      showSuccess(`${changesByMenu.size}개 메뉴의 권한이 성공적으로 저장되었습니다.`);
-      
-    } catch (error) {
-      showError('권한 저장에 실패했습니다.');
-      console.error('권한 저장 실패:', error);
-    } finally {
-      setSaving(false);
     }
-  }, [changes, showError, showSuccess]);
+    
+    setSaving(false);
+  }, [changes, callApiWithNotification]);
 
   // 권한 레벨 표시
   const getPermissionLevel = (permissions: PermissionSet): string => {
@@ -511,13 +510,7 @@ const MenuPermissionManagePage: React.FC = () => {
         )}
       </PageContent>
       
-      {/* Toast 컴포넌트 */}
-      <Toast
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={hideSnackbar}
-      />
+
     </PageContainer>
   );
 };

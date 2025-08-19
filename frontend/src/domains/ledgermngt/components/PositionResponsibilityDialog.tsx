@@ -10,6 +10,7 @@ import { Box, Button, Grid, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
 import { useReduxState } from '@/app/store/use-store';
+import { useApiWithNotification } from '@/shared/hooks';
 
 // LoginUser 타입 (loginStore용)
 interface LoginUser {
@@ -79,6 +80,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   // 로그인 사용자 정보 가져오기
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
   const currentUserId = loginData?.userid || null;
+
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+  });
   
   
   
@@ -111,7 +117,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   // 관련 근거는 공통 항목으로 별도 관리
   const [relatedBasis, setRelatedBasis] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
@@ -273,45 +278,45 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         usedLedgerOrder: roleRespStatusId ? (rowData?.ledger_orders_id || null) : (ledgerOrdersId || null)
       }
     });
-    try {
-      setLoading(true);
 
-      // 백엔드 API 호출
-      const response = await apiClient.put('/position-responsibilities', responsibilityRequestData);
+    setLoading(true);
 
+    const result = await callApiWithNotification(
+      () => apiClient.put('/position-responsibilities', responsibilityRequestData),
+      'custom'
+    );
+
+    if (result) {
       // 저장 성공 시 현재 formData를 새로운 원본 데이터로 설정
       setOriginalFormData({ ...formData });
-
       await onSave();
-      setShowSuccessAlert(true);
       onClose();
-    } catch (err: any) {
-      console.error('책무 저장 실패:', err);
-      console.error('에러 상세:', err.response?.data || err.message);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
   const handleSelect = async (responsibility: ResponsibilitySearchResult) => {
-    try {
-      // 실제 API 응답 구조에 맞는 타입 정의
-      type ApiResponseItem = {
-        id: number;
-        responsibilityContent: string;
-        responsibilityDetailContent: string;
-        responsibilityRelEvid: string;  // 관련 근거
-        responsibilityMgtSts: string;   // 주요 관리업무
-      };
+    // 실제 API 응답 구조에 맞는 타입 정의
+    type ApiResponseItem = {
+      id: number;
+      responsibilityContent: string;
+      responsibilityDetailContent: string;
+      responsibilityRelEvid: string;  // 관련 근거
+      responsibilityMgtSts: string;   // 주요 관리업무
+    };
 
-      const response = await apiClient.get<ApiResponseItem[]>(
-        `/responsibilities/${responsibility.responsibilityId}`
-      );
+    const response = await callApiWithNotification(
+      () => apiClient.get<ApiResponseItem[]>(`/responsibilities/${responsibility.responsibilityId}`),
+      'custom'
+    );
 
+    if (response) {
       // 응답 데이터를 상태에 저장 (PUT 요청 시 활용)
       setSelectedResponsibilityData(response);
       // 응답이 배열인지 확인
       if (!Array.isArray(response) || response.length === 0) {
-        throw new Error('올바르지 않은 응답 형식입니다.');
+        setError('올바르지 않은 응답 형식입니다.');
+        return;
       }
 
       // 첫 번째 항목에서 책무 내용과 관련 근거 가져오기 (모든 항목이 같은 값을 가짐)
@@ -335,9 +340,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       
       // 관련 근거는 공통 항목이므로 별도 상태에 설정
       setRelatedBasis(relatedBasisData);
-    } catch (err) {
-      console.error('책무 선택 중 오류 발생:', err);
-      setError('책무 데이터를 불러오는 중 오류가 발생했습니다.');
     }
   };
   // 다이얼로그 닫기 핸들러 - 검색된 데이터를 버리고 원본 데이터로 복원
@@ -638,13 +640,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           )}
         </Box>
       </BaseDialog>
-      <Alert
-        open={showSuccessAlert}
-        message={`책무가 ${mode === 'create' ? '등록' : '수정'}되었습니다.`}
-        severity="success"
-        autoHideDuration={2000}
-        onClose={() => setShowSuccessAlert(false)}
-      />
+
       
       <ResponsibilitySearchPopup
         open={searchPopupOpen}

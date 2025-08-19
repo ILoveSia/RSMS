@@ -10,6 +10,7 @@ import { configureAppStore, setGlobalStore } from './app/store';
 import './assets/scss/style.css';
 import './index.css';
 import createRootReducer from './shared/store';
+import { NotificationProvider } from './shared/context/NotificationContext';
 
 // Redux store 초기화
 setGlobalStore();
@@ -19,7 +20,9 @@ const store = configureAppStore(reducers);
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <App />
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
     </Provider>
   </StrictMode>
 );

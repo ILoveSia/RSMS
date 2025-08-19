@@ -2,29 +2,26 @@
  * 임원 현황 페이지
  * 책무구조 원장 관리 - 임원 현황
  */
-import { useCommonCodes, type CommonCode } from '@/shared/utils/codeUtils';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn, SelectOption } from '@/shared/types/common';
+import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
-import { Box, Snackbar } from '@mui/material';
+import { Box } from '@mui/material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
-import ErrorDialog from '../../../app/components/ErrorDialog';
 import '../../../assets/scss/style.css';
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton, PermissionButton } from '../../../shared/components/ui/button';
-import Alert from '../../../shared/components/ui/feedback/Alert';
-import { ComboBox } from '../../../shared/components/ui/form';
+import { SearchButton, ManagementButtonGroup, PermissionButton } from '../../../shared/components/ui/button';
 import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
 import execOfficerApi, { type ExecOfficer } from '../api/executivestatusApi';
 import { Confirm } from '@/shared/components/modal';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import positionApi from '@/domains/ledgermngt/api/positionApi';
+import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 
 interface IExecutiveStatusPageProps {
   className?: string;
@@ -35,8 +32,6 @@ type ExecutiveStatusRow = ExecOfficer;
 
 const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.Element => {
   const [rows, setRows] = useState<ExecutiveStatusRow[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   const [ledgerOrdersId, setLedgerOrdersId] = useState<number | undefined>(undefined);
   // LedgerOrder 옵션 목록을 저장할 state
@@ -45,20 +40,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // 선택된 행
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  // 오류 다이얼로그 상태
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-
   // 임원 상세 다이얼로그 상태 통합
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
   const [selectedExecutive, setSelectedExecutive] = useState<ExecutiveStatusRow | null>(null);
-
-  // 성공 알림 상태
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  // 공통코드 가져오기
-  const allCodes = useCommonCodes();
 
   // 확정/확정취소/최종확정 관련 상태
   const [confirmConfirmOpen, setConfirmConfirmOpen] = useState(false);
@@ -68,25 +53,22 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // LedgerOrderSelect 새로고침 트리거
   const [ledgerOrderRefreshTrigger, setLedgerOrderRefreshTrigger] = useState<number>(0);
 
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+  });
   // Toast 알림을 위한 snackbar 훅
   const { snackbar, showSuccess: showToastSuccess, showError, hideSnackbar } = useSnackbar();
 
 
   const fetchExecutiveStatus = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      
-      const data = await execOfficerApi.getAll(ledgerOrdersId);
+    const data = await callApiWithNotification(() => execOfficerApi.getAll(ledgerOrdersId), 'success_load');
+    if (data) {
       setRows(data);
-    } catch (err) {
-      setError('임원 현황 데이터를 불러오는 데 실패했습니다.');
-      setErrorMessage('임원 현황 데이터를 불러오는 데 실패했습니다.');
-      setErrorDialogOpen(true);
-    } finally {
-      setLoading(false);
+    } else {
+      setRows([]);
     }
-  }, [ledgerOrdersId]);
+  }, [ledgerOrdersId, callApiWithNotification]);
 
   useEffect(() => {
     fetchExecutiveStatus();
@@ -169,23 +151,20 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
   // 임원 저장 핸들러 (등록/수정 공통)
   const handleSaveExecutive = async (data: ExecOfficer) => {
-    try {
-      if (data.execofficerId) {
-        // 수
-        await execOfficerApi.update(data.execofficerId, data);
-        setSuccessMessage('임원 정보가 성공적으로 수정되었습니다.');
-      } else {
-        // 등록
-        await execOfficerApi.create(data);
-        setSuccessMessage('임원 정보가 성공적으로 등록되었습니다.');
-      }
+    const isUpdate = !!data.execofficerId;
+    const apiCall = isUpdate
+      ? () => execOfficerApi.update(data.execofficerId!, data)
+      : () => execOfficerApi.create(data);
+
+    const result = await callApiWithNotification(apiCall, 'custom');
+
+    if (result) {
+      const successMessage = isUpdate
+        ? '임원 정보가 성공적으로 수정되었습니다.'
+        : '임원 정보가 성공적으로 등록되었습니다.';
+      showToastSuccess(successMessage);
       await fetchExecutiveStatus();
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
       setDialogOpen(false);
-    } catch (error) {
-      setErrorMessage('임원 정보 저장 중 오류가 발생했습니다.');
-      setErrorDialogOpen(true);
     }
   };
 
@@ -220,7 +199,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        setError(null);
+        //
       }
     };
     input.click();
@@ -275,7 +254,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   // 엑셀 다운로드 핸들러 (ExcelJS 사용)
   const handleExcelDownload = async () => {
     if (!rows || rows.length === 0) {
-      setError('엑셀로 내보낼 데이터가 없습니다.');
+      showError('엑셀로 내보낼 데이터가 없습니다.');
       return;
     }
 
@@ -298,14 +277,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       await downloadExcelFile(workbook, filename);
     } catch (error) {
       console.error('엑셀 다운로드 실패:', error);
-      setError('엑셀 다운로드 중 오류가 발생했습니다.');
+      showError('엑셀 다운로드 중 오류가 발생했습니다.');
     }
-  };
-
-  // 오류 다이얼로그 닫기
-  const handleCloseErrorDialog = () => {
-    setErrorDialogOpen(false);
-    setErrorMessage('');
   };
 
   // LedgerOrderSelect 새로고침 함수
@@ -356,36 +329,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       return;
     }
 
-    setLoading(true);
-    try {
-      
+    const response = await callApiWithNotification(
+      () => positionApi.confirmExecutive(selectedLedgerOrder),
+      'custom'
+    );
 
-      // 임원 확정 전용 API 사용 (P3 → P4)
-      const response = await positionApi.confirmExecutive(selectedLedgerOrder);
+    if (response) {
       showToastSuccess(response.message || '임원이 확정되었습니다.');
-      
-      // 1. LedgerOrderSelect 새로고침
       refreshLedgerOrderSelect();
-      
-      // 2. DataGrid 새로고침
       await fetchExecutiveStatus();
-      
-    } catch (err: unknown) {
-      let errorMessage = '확정 처리 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('확정 처리 실패:', err);
-    } finally {
-      setLoading(false);
-      setConfirmConfirmOpen(false);
     }
-  }, [selectedLedgerOrder, showToastSuccess, showError, fetchExecutiveStatus, refreshLedgerOrderSelect]);
+    setConfirmConfirmOpen(false);
+  }, [selectedLedgerOrder, callApiWithNotification, showToastSuccess, fetchExecutiveStatus, refreshLedgerOrderSelect]);
 
   // 확정취소 버튼 클릭 핸들러
   const handleCancelConfirmClick = useCallback(() => {
@@ -429,36 +384,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       return;
     }
 
-    setLoading(true);
-    try {
-      
+    const response = await callApiWithNotification(
+      () => positionApi.cancelExecutive(selectedLedgerOrder),
+      'custom'
+    );
 
-      // 임원 확정취소 전용 API 사용 (P4 → P3)
-      const response = await positionApi.cancelExecutive(selectedLedgerOrder);
+    if (response) {
       showToastSuccess(response.message || '임원 확정이 취소되었습니다.');
-      
-      // 1. LedgerOrderSelect 새로고침
       refreshLedgerOrderSelect();
-      
-      // 2. DataGrid 새로고침
       await fetchExecutiveStatus();
-      
-    } catch (err: unknown) {
-      let errorMessage = '확정취소 처리 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('확정취소 처리 실패:', err);
-    } finally {
-      setLoading(false);
-      setCancelConfirmOpen(false);
     }
-  }, [selectedLedgerOrder, showToastSuccess, showError, fetchExecutiveStatus, refreshLedgerOrderSelect]);
+    setCancelConfirmOpen(false);
+  }, [selectedLedgerOrder, callApiWithNotification, showToastSuccess, fetchExecutiveStatus, refreshLedgerOrderSelect]);
 
   // 최종확정 버튼 클릭 핸들러
   const handleFinalConfirmClick = useCallback(() => {
@@ -502,36 +439,18 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
       return;
     }
 
-    setLoading(true);
-    try {
-      
+    const response = await callApiWithNotification(
+      () => positionApi.finalConfirmExecutive(selectedLedgerOrder),
+      'custom'
+    );
 
-      // 임원 최종확정 전용 API 사용 (P4 → P5)
-      const response = await positionApi.finalConfirmExecutive(selectedLedgerOrder);
+    if (response) {
       showToastSuccess(response.message || '임원이 최종확정되었습니다.');
-      
-      // 1. LedgerOrderSelect 새로고침
       refreshLedgerOrderSelect();
-      
-      // 2. DataGrid 새로고침
       await fetchExecutiveStatus();
-      
-    } catch (err: unknown) {
-      let errorMessage = '최종확정 처리 중 오류가 발생했습니다.';
-      
-      if (typeof err === 'object' && err !== null && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      showError(errorMessage);
-      console.error('최종확정 처리 실패:', err);
-    } finally {
-      setLoading(false);
-      setFinalConfirmOpen(false);
     }
-  }, [selectedLedgerOrder, showToastSuccess, showError, fetchExecutiveStatus, refreshLedgerOrderSelect]);
+    setFinalConfirmOpen(false);
+  }, [selectedLedgerOrder, callApiWithNotification, showToastSuccess, fetchExecutiveStatus, refreshLedgerOrderSelect]);
 
   return (
     <PageContainer
@@ -598,8 +517,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
               
               fetchExecutiveStatus();
             }, [fetchExecutiveStatus, ledgerOrdersId])}
-            loading={loading}
-            disabled={loading}
+            loading={false}
+            disabled={false}
           />
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <PermissionButton
@@ -609,7 +528,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
               color="success"
               size="small"
               onClick={handleConfirmClick}
-              disabled={loading}
+              disabled={false}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정 권한이 없습니다"
               sx={{
@@ -629,7 +548,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
               color="error"
               size="small"
               onClick={handleCancelConfirmClick}
-              disabled={loading}
+              disabled={false}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정취소 권한이 없습니다"
               sx={{
@@ -649,7 +568,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
               color="primary"
               size="small"
               onClick={handleFinalConfirmClick}
-              disabled={loading}
+              disabled={false}
               hideWhenNoPermission={true}
               noPermissionTooltip="최종확정 권한이 없습니다"
               sx={{
@@ -708,9 +627,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           <DataGrid
             data={rows}
             columns={executiveColumns}
-            loading={loading}
+            loading={false}
             height={600} 
-            error={error}
             selectable
             multiSelect={false}
             selectedRows={selectedIds}
@@ -720,25 +638,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           />
         </Box>
 
-        {/* 성공 알림 */}
-        <Snackbar
-          open={showSuccess}
-          autoHideDuration={2000}
-          onClose={() => setShowSuccess(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert severity="success">
-            {successMessage}
-          </Alert>
-        </Snackbar>
-
         {/* 다이얼로그들 */}
-        <ErrorDialog
-          open={errorDialogOpen}
-          onClose={handleCloseErrorDialog}
-          errorMessage={errorMessage}
-        />
-
         <ExecutiveDetailDialog
           mode={dialogMode}
           open={dialogOpen}

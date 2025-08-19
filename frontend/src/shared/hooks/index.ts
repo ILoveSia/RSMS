@@ -12,6 +12,7 @@ export { useQuery } from './useQuery';
 export { useDialog } from './useDialog';
 export { useNavigation } from './useNavigation';
 export { useSnackbar } from './useSnackbar';
+export { useApiWithNotification } from './useApiWithNotification';
 
 // 향후 추가될 훅들
 // export { useLocalStorage } from './useLocalStorage';
