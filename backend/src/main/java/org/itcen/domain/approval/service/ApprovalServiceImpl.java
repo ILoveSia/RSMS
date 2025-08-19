@@ -12,6 +12,7 @@ import org.itcen.domain.approval.repository.ApprovalStepRepository;
 import org.itcen.domain.user.entity.User;
 import org.itcen.domain.user.repository.UserRepository;
 import org.itcen.domain.employee.entity.Employee;
+import org.itcen.domain.audit.repository.AuditProgMngtDetailRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final ApprovalStepRepository approvalStepRepository;
     private final UserRepository userRepository;
+    private final AuditProgMngtDetailRepository auditProgMngtDetailRepository;
 
     @Override
     @Transactional
@@ -341,6 +343,19 @@ public class ApprovalServiceImpl implements ApprovalService {
                 // 마지막 단계면 전체 승인 완료
                 if (approval.isAllStepsCompleted()) {
                     approval.complete();
+                    
+                    // 최종 승인 완료 시 audit_prog_mngt_detail 테이블 업데이트
+                    if ("audit_prog_mngt_detail".equals(approval.getTaskTypeCd())) {
+                        try {
+                            int updatedCount = auditProgMngtDetailRepository.updateImpPlStatusToPLI03(approval.getTaskId());
+                            log.info("audit_prog_mngt_detail 업데이트 완료: taskId={}, updatedCount={}", 
+                                    approval.getTaskId(), updatedCount);
+                        } catch (Exception e) {
+                            log.error("audit_prog_mngt_detail 업데이트 실패: taskId={}, error={}", 
+                                    approval.getTaskId(), e.getMessage(), e);
+                            // 업데이트 실패해도 결재는 완료 상태 유지 (비즈니스 요구사항에 따라 조정 가능)
+                        }
+                    }
                 }
             }
         }

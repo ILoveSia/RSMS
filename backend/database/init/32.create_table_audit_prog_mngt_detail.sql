@@ -13,9 +13,10 @@ CREATE TABLE public.audit_prog_mngt_detail (
     audit_detail_content           varchar(1000)       NULL,                -- 개선계획 세부내용
     audit_done_dt                   date                NULL,               -- 이행완료 예정일자
     audit_done_content              varchar(1000)       NULL,               -- 이행완료 내용
-    imp_pl_status_cd                varchar(10) NULL,                       -- 개선계획상태코드(계획작성,계획결재요청,계획결재완료,이행작성,이행결재요청,이행결재완료) PLAN_IMP
+    imp_pl_status_cd                varchar(10) NULL,                       -- 개선계획상태코드(개선계획작성, 이행결과작성, 이행결과결재완료) PLAN_IMP
     responsibility_id               int8                NULL,               -- 책무id
     responsibility_detail_id        int8                NULL,               -- 책무상세id
+    audit_final_result_yn           varchar(1)          NULL DEFAULT 'N',   -- 점검결과 최종 결과 여부
     created_id varchar(100)                             NULL,               -- 생성자 ID
     updated_id varchar(100)                             NULL,               -- 수정자 ID
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP    NULL,               -- 생성일시

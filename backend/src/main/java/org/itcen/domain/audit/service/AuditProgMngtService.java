@@ -77,4 +77,13 @@ public interface AuditProgMngtService {
      * @return 점검 현황(항목별) 목록
      */
     List<AuditItemStatusResponseDto> getAuditItemStatus(Long ledgerOrdersHod, String auditResultStatusCd);
+
+    /**
+     * 결재 승인 시 점검계획관리상세의 개선계획상태코드를 PLI03으로 업데이트
+     * 동시에 점검최종결과여부를 'Y'로 업데이트
+     * 
+     * @param auditProgMngtDetailId 점검계획관리상세 ID
+     * @return 업데이트된 레코드 수
+     */
+    int updateImpPlStatusToPLI03(Long auditProgMngtDetailId);
 }

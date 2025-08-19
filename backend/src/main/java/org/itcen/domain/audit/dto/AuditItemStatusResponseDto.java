@@ -105,4 +105,35 @@ public class AuditItemStatusResponseDto {
      * 책무 ID (audit_prog_mngt_detail 테이블에서)
      */
     private Long responsibilityId;
+
+    /**
+     * 점검회차명 (audit_prog_mngt 테이블에서)
+     */
+    private String auditTitle;
+
+    /**
+     * 점검 계획진행상태 (audit_prog_mngt 테이블에서)
+     */
+    private String auditStatusCdFromProgMngt;
+
+    /**
+     * 개선계획상태코드 (audit_prog_mngt_detail 테이블에서)
+     */
+    private String impPlStatusCd;
+
+    /**
+     * 이행결과보고 (audit_prog_mngt_detail 테이블에서)
+     */
+    private String auditDoneContent;
+
+    /**
+     * 결재 ID (approval 테이블에서)
+     */
+    private Long approvalId;
+
+    /**
+     * 결재상태코드 (approval 테이블에서)
+     */
+    private String approvalStatusCd;
+
 }

@@ -68,6 +68,10 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     @Column(name = "audit_done_content")
     private String auditDoneContent;
 
+    @Column(name = "audit_final_result_yn", length = 1)
+    @Builder.Default
+    private String auditFinalResultYn = "N";
+
     // AuditProgMngt와의 연관관계 설정
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "audit_prog_mngt_id", insertable = false, updatable = false)
@@ -116,6 +120,13 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
     }
 
     /**
+     * 점검최종결과여부 설정
+     */
+    public void setAuditFinalResultYn(String auditFinalResultYn) {
+        this.auditFinalResultYn = auditFinalResultYn;
+    }
+
+    /**
      * 점검자 지정
      * 점검자 지정 시 상태코드도 함께 업데이트
      */
@@ -139,6 +150,19 @@ public class AuditProgMngtDetail extends BaseTimeEntity {
         this.beforeAuditYn = beforeAuditYn;
         this.auditDetailContent = auditDetailContent;
         this.auditDoneDt = auditDoneDt;
+        
+        // auditResultStatusCd가 "INS03"(미흡)인 경우 imp_pl_status_cd를 "PLI01"로 설정
+        if ("INS03".equals(auditResultStatusCd)) {
+            this.impPlStatusCd = "PLI01";
+        }
+    }
+
+    /**
+     * 점검최종결과여부 업데이트
+     * audit_result_status_cd가 INS02(적정) 또는 INS04(점검제외)인 경우 호출
+     */
+    public void updateAuditFinalResultYn(String auditFinalResultYn) {
+        this.auditFinalResultYn = auditFinalResultYn;
     }
 
     // HodIcItem과의 연관관계 설정 (임시 주석처리 - 삭제 문제 해결 후 복원)

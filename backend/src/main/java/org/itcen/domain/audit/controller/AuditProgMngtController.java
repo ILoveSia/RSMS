@@ -9,7 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 점검계획관리 Controller
@@ -216,5 +218,42 @@ public class AuditProgMngtController {
         
         log.info("점검 현황(항목별) 조회 완료 - 건수: {}", itemStatusList.size());
         return ResponseEntity.ok(itemStatusList);
+    }
+
+    /**
+     * 결재 승인 시 점검계획관리상세 상태 업데이트 API
+     * 
+     * @param auditProgMngtDetailId 점검계획관리상세 ID
+     * @return 업데이트 결과
+     */
+    @PutMapping("/detail/{auditProgMngtDetailId}/approve")
+    public ResponseEntity<Map<String, Object>> updateImpPlStatusToPLI03(
+            @PathVariable Long auditProgMngtDetailId) {
+        log.info("점검계획관리상세 결재 승인 요청 - auditProgMngtDetailId: {}", auditProgMngtDetailId);
+        
+        try {
+            int updatedCount = auditProgMngtService.updateImpPlStatusToPLI03(auditProgMngtDetailId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", updatedCount > 0);
+            response.put("updatedCount", updatedCount);
+            response.put("message", updatedCount > 0 ? 
+                "개선계획상태코드가 PLI03(계획결재완료)으로, 점검최종결과여부가 'Y'로 업데이트되었습니다." : 
+                "업데이트할 데이터를 찾을 수 없습니다.");
+            
+            log.info("점검계획관리상세 결재 승인 완료 - auditProgMngtDetailId: {}, 업데이트된 레코드 수: {}", 
+                    auditProgMngtDetailId, updatedCount);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("점검계획관리상세 결재 승인 실패 - auditProgMngtDetailId: {}, 오류: {}", 
+                    auditProgMngtDetailId, e.getMessage());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "결재 승인 처리 중 오류가 발생했습니다: " + e.getMessage());
+            
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }

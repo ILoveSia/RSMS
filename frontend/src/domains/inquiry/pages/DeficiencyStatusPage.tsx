@@ -7,33 +7,64 @@ import { Button } from '@/shared/components/ui/button';
 import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { Modal } from '@/shared/components/ui/feedback';
-import { ComboBox, SearchConditionPanel } from '@/shared/components/ui/form';
+import ErrorDialog from '@/app/components/ErrorDialog';
+import { SearchConditionPanel, LedgerOrdersHodSelect } from '@/shared/components/ui/form';
 import DepartmentSearchBox, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSearchBox';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Chip } from '@mui/material';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
-import deficiencyStatusApi, { type DeficiencyStatusResponse } from '../api/deficiencyStatusApi';
+import { getAuditItemStatusList, type AuditItemStatusResponse } from '../api/auditItemApi';
 import ImplementationResultDialog, { type ImplementationResultData } from '../components/ImplementationResultDialog';
+import AuditResultDialog from '../components/AuditResultDialog';
+import { useGetCodeName, getDepartmentNameSync, type Department } from '@/shared/utils/codeUtils';
+import DepartmentApi from '@/domains/common/api/departmentApi';
+import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
+import { updateImplementationResultDialog } from '../api/deficiencyStatusApi';
+import { useReduxState } from '@/app/store/use-store';
+
+// LoginUser 타입 (로그인 API 응답에 맞춤)
+interface LoginUser {
+  userid: string;
+  username: string;  // 직원명 (employee.emp_name)
+  email: string;
+  empNo: string;     // 사번 (users.emp_no)
+  deptCd: string;    // 부서코드 (employee.dept_code)
+  positionCode: string; // 직급코드 (employee.position_code)
+  role?: string;
+  accessibleMenus?: any[];
+}
 
 interface IDeficiencyStatusPageProps {
   className?: string;
 }
 
-// 미흡상황 데이터 타입 정의 (API 응답 타입 사용)
-type DeficiencyRow = DeficiencyStatusResponse;
+// 미흡상황 데이터 타입 정의 (AuditItemStatusResponse 사용)
+type DeficiencyRow = AuditItemStatusResponse & { 
+  id: number | string;
+  approvalSubmit?: string; // 가상 필드 (결재상신 버튼용)
+};
 
 const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX.Element => {
+  // 로그인 사용자 정보 가져오기
+  const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
   const [rows, setRows] = useState<DeficiencyRow[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [inspectionRound, setInspectionRound] = useState<string>('2024-001');
+  const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   const [departmentFilter, setDepartmentFilter] = useState<DepartmentSearchResult | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+
+  // 부서 정보 상태
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  // Hook을 컴포넌트 레벨에서 호출
+  const getCodeNameFn = useGetCodeName();
 
   // 오류 다이얼로그 상태
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -43,27 +74,40 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const [implementationDialogOpen, setImplementationDialogOpen] = useState(false);
   const [selectedImplementationData, setSelectedImplementationData] = useState<ImplementationResultData | undefined>();
 
-  // 옵션 데이터 상태
-  const [inspectionRoundOptions, setInspectionRoundOptions] = useState([
-    { value: '2024-001', label: '2024-001' },
-    { value: '2024-002', label: '2024-002' },
-    { value: '2024-003', label: '2024-003' },
-  ]);
+  // 개선계획 변경 다이얼로그 상태 (AuditResultDialog 사용)
+  const [improvementDialogOpen, setImprovementDialogOpen] = useState(false);
 
-  // 데이터 로드 함수
+  // 부서 정보 로드
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const deptList = await DepartmentApi.getAll();
+        setDepartments(deptList);
+        console.log('loginData :', loginData);
+      } catch (error) {
+        console.error('부서 정보 로드 실패:', error);
+      }
+    };
+    loadDepartments();
+  }, []);
+
+  // 데이터 로드 함수 (INS03 미흡 건만 조회)
   const fetchDeficiencies = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // 실제 API 호출
-      const data = await deficiencyStatusApi.getAllDeficiencyStatusList();
+      // item-status API 호출 (auditResultStatusCd=INS03 기본값)
+      const data = await getAuditItemStatusList({
+        ledgerOrdersHod: selectedLedgerOrder === 'ALL' ? undefined : Number(selectedLedgerOrder),
+        auditResultStatusCd: 'INS03' // 미흡 건만 조회
+      });
 
       if (Array.isArray(data)) {
         // 백엔드 응답 데이터를 프론트엔드 형식에 맞게 매핑
         const mappedData = data.map(item => ({
           ...item,
-          id: item.auditProgMngtDetailId || item.id, // ID 매핑
+          id: item.hodIcItemId || item.auditProgMngtDetailId, // ID 매핑
         }));
 
         setRows(mappedData);
@@ -76,53 +120,82 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     } finally {
       setLoading(false);
     }
-  }, [departmentFilter, inspectionRound]);
-
-  // 옵션 데이터 로드 함수
-  const fetchOptions = useCallback(async () => {
-    try {
-      // 점검회차 목록 조회
-      const rounds = await deficiencyStatusApi.getInspectionRoundList();
-      setInspectionRoundOptions(rounds);
-    } catch (error) {
-      // 에러 시 기본값 유지
-    }
-  }, []);
+  }, [selectedLedgerOrder]);
 
   useEffect(() => {
-    fetchOptions();
     fetchDeficiencies();
-  }, [fetchOptions, fetchDeficiencies]);
+  }, [fetchDeficiencies]);
 
-  // 상태 색상 반환 함수
-  const getStatusColor = (status: string): string => {
-          if (status.includes('완료')) return '#2e7d32'; // 녹색
-          if (status.includes('이행중')) return '#ed6c02'; // 주황색
-          if (status.includes('수립완료')) return '#1976d2'; // 파란색
-          if (status.includes('수립중')) return '#9c27b0'; // 보라색
-          return '#666666'; // 기본 회색
-        };
+  // 부서명 렌더링 함수
+  const renderDepartmentCell = ({ value }: { value: string | number | undefined }) => 
+    getDepartmentNameSync(departments, value as string) || '-';
 
-  // 개선현황 셀 렌더링 함수
-  const renderImprovementPlanCell = ({ row }: { row: DeficiencyRow }) => {
-    const status = String(row.improvementPlan);
+  // 개선상태 렌더링 함수  
+  const renderImpStatusCell = ({ value }: { value: string | number | undefined }) => {
+    if (!value) return null;
+    
+    const codeValue = value as string;
+    const codeName = getCodeNameFn('PLAN_IMP', codeValue);
+    
+    return (
+      <Chip
+        label={codeName || codeValue}
+        color={
+          codeValue === 'PLI05' ? 'success' :
+            codeValue === 'PLI04' ? 'primary' :
+              codeValue === 'PLI03' ? 'info' :
+                codeValue === 'PLI02' ? 'warning' :
+                  codeValue === 'PLI01' ? 'default' : 'default'
+        }
+        size="small"
+      />
+    );
+  };
 
-        return (
-          <span
-            style={{
-              color: getStatusColor(status),
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              textDecoration: 'underline'
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeficiencyClick(row.id);
-            }}
-          >
-            {status}
-          </span>
-        );
+  // 점검자 렌더링 함수
+  const renderAuditorCell = ({ value }: { value: string | number | undefined }) => (value as string) || '미지정';
+
+  // 결재상태 렌더링 함수
+  const renderApprovalStatusCell = ({ value }: { value: string | number | undefined }) => {
+    if (!value) return '-';
+    
+    const codeValue = value as string;
+    const codeName = getCodeNameFn('APPR_STAT_CD', codeValue);
+    
+    return (
+      <Chip
+        label={codeName || codeValue}
+        color={
+          codeValue === 'APPROVED' ? 'success' :
+            codeValue === 'PENDING' ? 'warning' :
+              codeValue === 'REJECTED' ? 'error' :
+                codeValue === 'DRAFT' ? 'default' : 'default'
+        }
+        size="small"
+      />
+    );
+  };
+
+  // 결재상신 버튼 렌더링 함수
+  const renderApprovalCell = ({ row }: { row: DeficiencyRow }) => {
+    // imp_pl_status_cd가 'PLI02'인 경우에만 버튼 표시
+    if (row.impPlStatusCd === 'PLI02' || row.impPlStatusCd === 'PLI03') {
+      return (
+        <ApprovalActionButton
+          taskType="audit_prog_mngt_detail"
+          taskId={Number(row.auditProgMngtDetailId)}
+          taskTitle={`미흡상황 - ${row.auditResult || '미흡사항'}`}
+          currentUserId={loginData?.userid || 'unknown'}
+          onApprovalStateChange={() => {
+            // 결재 상태 변경 시 데이터 새로고침
+            fetchDeficiencies();
+          }}
+          size="small"
+          variant="contained"
+        />
+      );
+    }
+    return null;
   };
 
   // 이행결과 셀 렌더링 함수
@@ -130,38 +203,68 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     <span style={{
       whiteSpace: 'nowrap',
       overflow: 'hidden',
-      textOverflow: 'ellipsis'
+      textOverflow: 'ellipsis',
+      maxWidth: '200px',
+      display: 'block'
     }}>
-      {value || '-'}
+      {(value as string) || '-'}
     </span>
   );
 
   // 작성일자 셀 렌더링 함수
   const renderWriteDateCell = ({ value }: { value: string | number | undefined }) => 
-    dayjs(String(value)).format('YYYY.MM.DD');
+    value ? dayjs(value as string).format('YYYY.MM.DD') : '-';
 
   // 컬럼 정의
   const columns: DataGridColumn<DeficiencyRow>[] = [
     {
-      field: 'improvementPlan',
-      headerName: '개선현황',
-      width: 200,
+      field: 'deptCd',
+      headerName: '부서',
+      width: 100,
+      renderCell: renderDepartmentCell,
+    },
+    {
+      field: 'impPlStatusCd',
+      headerName: '개선상태',
+      width: 150,
+      renderCell: renderImpStatusCell,
+    },
+    {
+      field: 'auditMenId',
+      headerName: '점검자',
+      width: 90,
+      renderCell: renderAuditorCell,
+    },
+    {
+      field: 'approvalStatusCd' as keyof DeficiencyRow,
+      headerName: '결재상태',
+      width: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: renderImprovementPlanCell,
+      renderCell: renderApprovalStatusCell,
     },
     {
-      field: 'inspector',
-      headerName: '점검자',
-      width: 120,
+      field: 'approvalSubmit' as keyof DeficiencyRow,
+      headerName: '결재상신',
+      width: 180,
       align: 'center',
-      headerAlign: 'center'
+      headerAlign: 'center',
+      renderCell: renderApprovalCell,
+      sortable: false,
     },
     {
-      field: 'deficiencyContent',
+      field: 'auditResult',
       headerName: '미흡사항',
-      width: 250,
-      flex: 1
+      width: 200,
+      flex: 1,
+      renderCell: ({ value }) => value || '-'
+    },
+    {
+      field: 'auditDetailContent' as keyof DeficiencyRow,
+      headerName: '개선계획',
+      width: 200,
+      flex: 1,
+      renderCell: ({ value }) => value || '-'
     },
     {
       field: 'auditDoneContent',
@@ -171,9 +274,9 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       renderCell: renderImplementationResultCell,
     },
     {
-      field: 'writeDate',
+      field: 'auditDoneDt' as keyof DeficiencyRow,
       headerName: '작성일자',
-      width: 110,
+      width: 100,
       align: 'center',
       headerAlign: 'center',
       renderCell: renderWriteDateCell,
@@ -185,10 +288,10 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     fetchDeficiencies();
   };
 
-  // 개선계획 셀 클릭 핸들러
-  const handleDeficiencyClick = (_deficiencyId: number) => {
-    // TODO: 상세조회 다이얼로그 구현
-  };
+  // 결재상신 버튼 클릭 핸들러 (ApprovalActionButton에서 자동 처리)
+  // const handleApprovalSubmit = (row: DeficiencyRow) => {
+  //   // ApprovalActionButton이 자동으로 결재상신을 처리합니다.
+  // };
 
   // 개선계획 변경 버튼 클릭 핸들러
   const handleImprovementPlanChange = () => {
@@ -197,7 +300,19 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       setErrorDialogOpen(true);
       return;
     }
-    // TODO: 개선계획 변경 다이얼로그 구현
+
+    // 선택된 항목들의 impPlStatusCd 검증
+    const selectedRows = rows.filter(row => selectedIds.includes(row.id as number));
+    const invalidRows = selectedRows.filter(row => row.impPlStatusCd !== 'PLI01');
+    
+    if (invalidRows.length > 0) {
+      setErrorMessage('개선계획 변경은 계획수립(PLI01) 상태인 항목만 가능합니다.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // AuditResultDialog 열기
+    setImprovementDialogOpen(true);
   };
 
   // 이행결과 작성 버튼 클릭 핸들러
@@ -208,32 +323,35 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       return;
     }
 
+    // 선택된 항목들의 impPlStatusCd 검증 (PLI01만 작성 가능)
+    const selectedRows = rows.filter(row => selectedIds.includes(row.id as number));
+    const invalidRows = selectedRows.filter(row => row.impPlStatusCd !== 'PLI01');
+    
+    if (invalidRows.length > 0) {
+      setErrorMessage('이행결과 작성은 계획수립(PLI01) 상태인 항목만 가능합니다.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
     // 선택된 첫 번째 항목의 데이터 가져오기
     const selectedRow = rows.find(row => row.id === selectedIds[0]);
     if (selectedRow) {
+      console.log('선택된 row 데이터:', selectedRow);
+      console.log('auditProgMngtDetailId:', selectedRow.auditProgMngtDetailId);
+      
       const implementationData: ImplementationResultData = {
-        id: selectedRow.id,
-        auditProgMngtId: selectedRow.auditProgMngtId,  // 점검계획 ID 추가
-        deficiencyContent: selectedRow.deficiencyContent || '',
-        improvementPlan: selectedRow.improvementPlan || '',
+        id: selectedRow.auditProgMngtDetailId || 0,  // auditProgMngtDetailId를 id로 사용
+        auditProgMngtId: selectedRow.auditProgMngtDetailId || 0,  // 점검계획 ID 추가
+        deficiencyContent: selectedRow.auditResult || '',
+        improvementPlan: selectedRow.impPlStatusCd || '',
         auditDetailContent: selectedRow.auditDetailContent || '',
         auditDoneContent: selectedRow.auditDoneContent || '',
         auditDoneDt: selectedRow.auditDoneDt || '',
-        implementationStatus: selectedRow.statusName || '완료',
+        implementationStatus: '완료',
       };
       setSelectedImplementationData(implementationData);
       setImplementationDialogOpen(true);
     }
-  };
-
-  // 승인하기 버튼 클릭 핸들러
-  const handleApproval = () => {
-    if (selectedIds.length === 0) {
-      setErrorMessage('승인할 항목을 선택해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-    // TODO: 승인 다이얼로그 구현
   };
 
   // 오류 다이얼로그 닫기
@@ -245,23 +363,39 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   // 이행결과 저장 핸들러
   const handleImplementationSave = async (data: ImplementationResultData) => {
     try {
-      // 실제 API 호출로 이행결과 저장
-      const requestData = {
-        ids: [data.id],
-        implementationResult: data.auditDoneContent || '',
-        completionDate: data.auditDoneDt || '',
-        statusCode: '완료', // 기본값으로 완료 설정
-        remarks: ''
-      };
+      console.log('저장할 데이터:', data);
+      console.log('data.id:', data.id, 'typeof:', typeof data.id);
+      
+      // auditProgMngtDetailId 검증
+      const auditProgMngtDetailId = Number(data.id);
+      if (!auditProgMngtDetailId || auditProgMngtDetailId <= 0) {
+        throw new Error('유효하지 않은 점검계획상세 ID입니다.');
+      }
 
-      await deficiencyStatusApi.updateImplementationResult(requestData);
+      console.log('API 호출 파라미터:', {
+        auditProgMngtDetailId,
+        auditDoneContent: data.auditDoneContent
+      });
 
-      // 성공 시 데이터 다시 로드
-      await fetchDeficiencies();
+      // 새로운 API 호출: audit_done_content 업데이트, imp_pl_status_cd를 PLI02로 변경      
+      const response = await updateImplementationResultDialog({
+        auditProgMngtDetailId: auditProgMngtDetailId,
+        auditDoneContent: data.auditDoneContent
+      });
 
-      // 선택 해제
-      setSelectedIds([]);
+      if (response.success) {
+        console.log('이행결과 저장 성공:', response);
+        
+        // 성공 시 데이터 다시 로드
+        await fetchDeficiencies();
+
+        // 선택 해제
+        setSelectedIds([]);
+      } else {
+        throw new Error(response.message || '이행결과 저장에 실패했습니다.');
+      }
     } catch (error) {
+      console.error('이행결과 저장 오류:', error);
       throw error;
     }
   };
@@ -270,6 +404,22 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   const handleImplementationDialogClose = () => {
     setImplementationDialogOpen(false);
     setSelectedImplementationData(undefined);
+  };
+
+  // 선택된 항목들을 AuditItemInfo 형태로 변환
+  const getSelectedAuditItems = () => {
+    const selectedRows = rows.filter(row => selectedIds.includes(row.id as number));
+    return selectedRows.map(row => ({
+      hodIcItemId: row.hodIcItemId,
+      auditProgMngtDetailId: row.auditProgMngtDetailId,
+      responsibilityContent: row.responsibilityContent,
+      responsibilityDetailContent: row.responsibilityDetailContent,
+      positionsNm: row.positionsNm,
+      deptCd: row.deptCd,
+      fieldTypeCd: row.fieldTypeCd,
+      roleTypeCd: row.roleTypeCd,
+      icTask: row.icTask,
+    }));
   };
 
   return (
@@ -294,12 +444,10 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         <SearchConditionPanel disabled={loading}>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', whiteSpace: 'nowrap' }}>점검회차</span>
-            <ComboBox
-              value={inspectionRound}
-              onChange={(value) => setInspectionRound(value as string)}
-              options={inspectionRoundOptions}
+            <LedgerOrdersHodSelect
+              value={selectedLedgerOrder}
+              onChange={setSelectedLedgerOrder}
               size="small"
-              mode="editable"
               disabled={loading}
               sx={{ minWidth: '200px' }}
             />
@@ -362,24 +510,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           >
             이행결과 작성
           </Button>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={handleApproval}
-            disabled={loading}
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              px: 1.5,
-              lineHeight: 1,
-              borderRadius: 1,
-            }}
-          >
-            승인하기
-          </Button>
         </Box>
 
         {/* 그리드 영역 */}
@@ -401,13 +531,11 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         </Box>
 
         {/* 오류 다이얼로그 */}
-        <Modal
+        <ErrorDialog
           open={errorDialogOpen}
           onClose={handleCloseErrorDialog}
-          title="알림"
-        >
-          <Typography>{errorMessage}</Typography>
-        </Modal>
+          errorMessage={errorMessage}
+        />
 
         {/* 이행결과 작성 다이얼로그 */}
         <ImplementationResultDialog
@@ -416,6 +544,20 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           data={selectedImplementationData}
           onSave={handleImplementationSave}
           mode="edit"
+        />
+
+        {/* 개선계획 변경 다이얼로그 (AuditResultDialog 재사용) */}
+        <AuditResultDialog
+          open={improvementDialogOpen}
+          mode="edit"
+          onClose={() => {
+            setImprovementDialogOpen(false);
+            setSelectedIds([]);
+            // 저장 후 데이터 새로고침
+            fetchDeficiencies();
+          }}
+          selectedItems={getSelectedAuditItems()}
+          loading={loading}
         />
       </PageContent>
     </PageContainer>

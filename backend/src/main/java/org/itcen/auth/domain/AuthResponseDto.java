@@ -33,9 +33,24 @@ public class AuthResponseDto {
         private String userId;
         
         /**
-         * 사용자명
+         * 사원명 (employee.emp_name)
          */
         private String username;
+        
+        /**
+         * 사번 (users.emp_no)
+         */
+        private String empNo;
+        
+        /**
+         * 부서코드 (employee.dept_code)
+         */
+        private String deptCd;
+        
+        /**
+         * 직급코드 (employee.position_code)
+         */
+        private String positionCode;
         
         /**
          * 이메일
@@ -126,9 +141,24 @@ public class AuthResponseDto {
         private String userId;
         
         /**
-         * 사용자명
+         * 사원명 (employee.emp_name)
          */
         private String username;
+        
+        /**
+         * 사번 (users.emp_no)
+         */
+        private String empNo;
+        
+        /**
+         * 부서코드 (employee.dept_code)
+         */
+        private String deptCd;
+        
+        /**
+         * 직급코드 (employee.position_code)
+         */
+        private String positionCode;
         
         /**
          * 이메일

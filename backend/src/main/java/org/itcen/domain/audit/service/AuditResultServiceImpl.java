@@ -101,6 +101,13 @@ public class AuditResultServiceImpl implements AuditResultService {
                         auditDoneDt
                 );
 
+                // audit_result_status_cd가 INS02(적정) 또는 INS04(점검제외)인 경우 audit_final_result_yn을 'Y'로 업데이트
+                if ("INS02".equals(request.getAuditResultStatusCd()) || "INS04".equals(request.getAuditResultStatusCd())) {
+                    detail.updateAuditFinalResultYn("Y");
+                    log.debug("audit_final_result_yn을 'Y'로 업데이트 - ID: {}, status: {}", 
+                            auditProgMngtDetailId, request.getAuditResultStatusCd());
+                }
+
                 // 저장 (JPA dirty checking으로 자동 업데이트)
                 auditProgMngtDetailRepository.save(detail);
                 updatedCount++;
@@ -276,6 +283,58 @@ public class AuditResultServiceImpl implements AuditResultService {
                 detail.getAuditDoneDt() != null ? detail.getAuditDoneDt().toString() : "",
                 attachmentDtos
         );
+    }
+
+    /**
+     * 이행결과 업데이트
+     * 
+     * @param request 이행결과 업데이트 요청 데이터
+     * @return 업데이트 결과
+     */
+    @Override
+    public ImplementationResultUpdateResponseDto updateImplementationResult(ImplementationResultUpdateRequestDto request) {
+        log.info("이행결과 업데이트 시작 - auditProgMngtDetailId: {}", request.getAuditProgMngtDetailId());
+        log.info("요청 데이터: {}", request);
+
+        try {
+            // 1. 기존 엔티티 조회
+            log.info("DB에서 auditProgMngtDetailId {} 조회 시도", request.getAuditProgMngtDetailId());
+            AuditProgMngtDetail detail = auditProgMngtDetailRepository.findById(request.getAuditProgMngtDetailId())
+                    .orElseThrow(() -> new RuntimeException("점검계획상세를 찾을 수 없습니다: " + request.getAuditProgMngtDetailId()));
+
+            log.info("엔티티 조회 성공 - detail: {}", detail);
+
+            // 2. audit_done_content 업데이트
+            detail.setAuditDoneContent(request.getAuditDoneContent());
+            
+            // 3. imp_pl_status_cd를 PLI02로 업데이트
+            detail.setImpPlStatusCd("PLI02");
+
+            log.info("업데이트할 내용 - auditDoneContent: {}, impPlStatusCd: PLI02", request.getAuditDoneContent());
+
+            // 4. 엔티티 저장 (JPA dirty checking으로 자동 업데이트)
+            auditProgMngtDetailRepository.save(detail);
+
+            log.info("이행결과 업데이트 완료 - auditProgMngtDetailId: {}, impPlStatusCd: PLI02", 
+                    request.getAuditProgMngtDetailId());
+
+            return ImplementationResultUpdateResponseDto.builder()
+                    .success(true)
+                    .message("이행결과가 성공적으로 저장되었습니다.")
+                    .auditProgMngtDetailId(request.getAuditProgMngtDetailId())
+                    .impPlStatusCd("PLI02")
+                    .build();
+
+        } catch (Exception e) {
+            log.error("이행결과 업데이트 실패 - auditProgMngtDetailId: {}", request.getAuditProgMngtDetailId(), e);
+            
+            return ImplementationResultUpdateResponseDto.builder()
+                    .success(false)
+                    .message("이행결과 저장 중 오류가 발생했습니다: " + e.getMessage())
+                    .auditProgMngtDetailId(request.getAuditProgMngtDetailId())
+                    .impPlStatusCd(null)
+                    .build();
+        }
     }
 
     /**

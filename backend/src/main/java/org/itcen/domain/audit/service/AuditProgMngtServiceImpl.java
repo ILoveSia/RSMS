@@ -341,13 +341,75 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         // 빈 문자열을 null로 변환 (Optional 조건 처리를 위해)
         String finalAuditResultStatusCd = (auditResultStatusCd != null && auditResultStatusCd.trim().isEmpty()) ? null : auditResultStatusCd;
 
-        List<AuditItemStatusResponseDto> result = auditProgMngtRepository.findAuditItemStatus(
+        // Native Query를 사용하여 Object[] 결과 조회
+        List<Object[]> nativeResults = auditProgMngtRepository.findAuditItemStatusNative(
                 ledgerOrdersHod, 
                 finalAuditResultStatusCd
         );
 
+        log.debug("Native Query 결과: {}건", nativeResults.size());
+
+        // Object[] 결과를 AuditItemStatusResponseDto로 변환
+        List<AuditItemStatusResponseDto> result = nativeResults.stream()
+                .map(this::convertObjectArrayToDto)
+                .collect(Collectors.toList());
+
         log.debug("점검 현황(항목별) 조회 결과: {}건", result.size());
         return result;
+    }
+
+    /**
+     * 결재 승인 시 점검계획관리상세의 개선계획상태코드를 PLI03으로 업데이트
+     * 동시에 점검최종결과여부를 'Y'로 업데이트
+     */
+    @Override
+    @Transactional
+    public int updateImpPlStatusToPLI03(Long auditProgMngtDetailId) {
+        log.debug("점검계획관리상세 상태 업데이트 시작 - auditProgMngtDetailId: {}", auditProgMngtDetailId);
+        
+        if (auditProgMngtDetailId == null) {
+            throw new IllegalArgumentException("점검계획관리상세 ID는 필수입니다.");
+        }
+        
+        int updatedCount = auditProgMngtDetailRepository.updateImpPlStatusToPLI03(auditProgMngtDetailId);
+        
+        log.debug("점검계획관리상세 상태 업데이트 완료 - auditProgMngtDetailId: {}, 업데이트된 레코드 수: {} (imp_pl_status_cd='PLI03', audit_final_result_yn='Y')", 
+                auditProgMngtDetailId, updatedCount);
+        
+        return updatedCount;
+    }
+
+    /**
+     * Object[] 배열을 AuditItemStatusResponseDto로 변환
+     * Native Query 결과를 DTO로 매핑
+     */
+    private AuditItemStatusResponseDto convertObjectArrayToDto(Object[] row) {
+        return AuditItemStatusResponseDto.builder()
+                .hodIcItemId(row[0] != null ? ((Number) row[0]).longValue() : null)
+                .auditProgMngtDetailId(row[1] != null ? ((Number) row[1]).longValue() : null)
+                .responsibilityContent(row[2] != null ? row[2].toString() : "")
+                .responsibilityDetailContent(row[3] != null ? row[3].toString() : "")
+                .positionsNm(row[4] != null ? row[4].toString() : "미정")
+                .deptCd(row[5] != null ? row[5].toString() : "")
+                .fieldTypeCd(row[6] != null ? row[6].toString() : "")
+                .roleTypeCd(row[7] != null ? row[7].toString() : "")
+                .icTask(row[8] != null ? row[8].toString() : "")
+                .auditMenId(row[9] != null ? row[9].toString() : "")
+                .auditResultStatusCd(row[10] != null ? row[10].toString() : "")
+                .roleSumm(row[11] != null ? row[11].toString() : "")
+                .ledgerOrdersHod(row[12] != null ? ((Number) row[12]).longValue() : 0L)
+                .auditResult(row[13] != null ? row[13].toString() : "")
+                .auditDoneDt(row[14] != null ? row[14].toString() : "")
+                .auditDetailContent(row[15] != null ? row[15].toString() : "")
+                .auditStatusCd(row[16] != null ? row[16].toString() : "")
+                .responsibilityId(row[17] != null ? ((Number) row[17]).longValue() : 0L)
+                .auditTitle(row[18] != null ? row[18].toString() : "")
+                .auditStatusCdFromProgMngt(row[19] != null ? row[19].toString() : "")
+                .impPlStatusCd(row[20] != null ? row[20].toString() : "")
+                .auditDoneContent(row[21] != null ? row[21].toString() : "")
+                .approvalId(row[22] != null ? ((Number) row[22]).longValue() : 0L)
+                .approvalStatusCd(row[23] != null ? row[23].toString() : "")
+                .build();
     }
 
     /**

@@ -6,6 +6,8 @@ import org.itcen.domain.audit.dto.AuditResultDetailRequestDto;
 import org.itcen.domain.audit.dto.AuditResultDetailResponseDto;
 import org.itcen.domain.audit.dto.AuditResultSaveRequestDto;
 import org.itcen.domain.audit.dto.AuditResultSaveResponseDto;
+import org.itcen.domain.audit.dto.ImplementationResultUpdateRequestDto;
+import org.itcen.domain.audit.dto.ImplementationResultUpdateResponseDto;
 import org.itcen.domain.audit.service.AuditResultService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -83,6 +85,26 @@ public class AuditResultController {
         List<AuditResultDetailResponseDto> response = auditResultService.getAuditResultDetail(request);
         
         log.info("점검결과 상세 조회 완료 - 조회된 항목수: {}", response.size());
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 이행결과 업데이트
+     * 
+     * @param request 이행결과 업데이트 요청 데이터
+     * @return 업데이트 결과
+     */
+    @PutMapping("/implementation-result")
+    public ResponseEntity<ImplementationResultUpdateResponseDto> updateImplementationResult(
+            @RequestBody ImplementationResultUpdateRequestDto request) {
+        log.info("이행결과 업데이트 요청 - auditProgMngtDetailId: {}", 
+                request.getAuditProgMngtDetailId());
+        
+        ImplementationResultUpdateResponseDto response = auditResultService.updateImplementationResult(request);
+        
+        log.info("이행결과 업데이트 완료 - success: {}, impPlStatusCd: {}", 
+                response.isSuccess(), response.getImpPlStatusCd());
         
         return ResponseEntity.ok(response);
     }

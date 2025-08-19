@@ -26,6 +26,9 @@ export interface User {
   userid: string;
   username: string;
   email: string;
+  empNo?: string;     // 사번 (employee.emp_no)
+  deptCd?: string;    // 부서코드 (employee.dept_code)
+  positionCode?: string; // 직급코드 (employee.position_code)
   role?: string;
   roles?: string[];
 }
@@ -123,6 +126,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userid: userData.userid,
           username: userData.username,
           email: userData.email,
+          empNo: userData.empNo,
+          deptCd: userData.deptCd,
+          positionCode: userData.positionCode,
           role: userData.role,
           roles: userData.role ? [userData.role] : ['USER'], // role이 있으면 배열로 변환
         };
@@ -172,6 +178,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       userid: userWithRoles.userid,
       username: userWithRoles.username,
       email: userWithRoles.email,
+      empNo: userWithRoles.empNo,
+      deptCd: userWithRoles.deptCd,
+      positionCode: userWithRoles.positionCode,
       role: userWithRoles.role,
     };
 
@@ -211,6 +220,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         userid: email,
         username: 'Test User',
         email: email,
+        empNo: email, // 테스트용
+        deptCd: 'TEST_DEPT',
+        positionCode: 'TEST_POS',
         role: 'USER',
         roles: ['USER'],
       };
@@ -222,6 +234,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userid: userData.userid,
           username: userData.username,
           email: userData.email,
+          empNo: userData.empNo,
+          deptCd: userData.deptCd,
+          positionCode: userData.positionCode,
           role: userData.role,
         })
       );

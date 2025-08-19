@@ -56,4 +56,13 @@ public interface AuditProgMngtDetailRepository extends JpaRepository<AuditProgMn
      * 점검계획관리상세 ID 목록으로 조회
      */
     List<AuditProgMngtDetail> findByAuditProgMngtDetailIdIn(List<Long> auditProgMngtDetailIds);
+    
+    /**
+     * 점검계획관리상세 ID로 개선계획상태코드를 PLI03(계획결재완료)으로 업데이트
+     * 동시에 점검최종결과여부를 'Y'로 업데이트
+     * 결재 승인 시 호출되는 메서드
+     */
+    @Modifying
+    @Query("UPDATE AuditProgMngtDetail d SET d.impPlStatusCd = 'PLI03', d.auditFinalResultYn = 'Y' WHERE d.auditProgMngtDetailId = :auditProgMngtDetailId")
+    int updateImpPlStatusToPLI03(@Param("auditProgMngtDetailId") Long auditProgMngtDetailId);
 }

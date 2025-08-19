@@ -23,10 +23,14 @@ export interface AuditItemStatusResponse {
   impPlStatusCd: string;            // 이행완료 예정일자
   auditResult: string;              // 점검결과
   auditDoneDt: string;              // 이행완료 예정일자
-  auditDetailcontent: string;      // 점검 세부내용
+  auditDetailContent: string;       // 점검 세부내용
   auditDoneContent: string;         // 이행결과보고
   auditStatusCd: string;            // 점검상태코드 (audit_prog_mngt 테이블)
   responsibilityId: number;         // 책무 ID
+  auditTitle: string;               // 점검회차명
+  auditStatusCdFromProgMngt: string; // 점검 계획진행상태
+  approvalId: number;               // 결재 ID (approval 테이블)
+  approvalStatusCd: string;         // 결재상태코드 (approval 테이블)
 }
 
 // 점검 현황(항목별) 조회 요청 파라미터

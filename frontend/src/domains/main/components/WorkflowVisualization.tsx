@@ -40,7 +40,11 @@ interface LoginUser {
   userid: string;
   username: string;
   email: string;
+  empNo: string;     // 사번 (employee.emp_no)
+  deptCd: string;    // 부서코드 (employee.dept_code)
+  positionCode: string; // 직급코드 (employee.position_code)
   role?: string;
+  accessibleMenus?: any[];
 }
 
 // 워크플로우 단계 타입

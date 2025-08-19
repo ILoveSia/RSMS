@@ -302,6 +302,9 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
     }
   };
 
+  // 개선계획 섹션 활성화 여부 (점검 결과가 "미흡"인 경우만 활성화)
+  const isImprovementPlanEnabled = formData.auditResultStatusCd === 'INS03';
+
   // 첨부파일 추가
   const handleFileAdd = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -387,16 +390,19 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
       newErrors.auditResult = '점검결과작성을 입력해주세요.';
     }
 
-    if (!formData.beforeAuditYn) {
-      newErrors.beforeAuditYn = '이전회차 개선과제 동일 여부를 선택해주세요.';
-    }
+    // 개선계획 섹션이 활성화된 경우에만 해당 필드들 검증
+    if (isImprovementPlanEnabled) {
+      if (!formData.beforeAuditYn) {
+        newErrors.beforeAuditYn = '이전회차 개선과제 동일 여부를 선택해주세요.';
+      }
 
-    if (!formData.auditDetailContent.trim()) {
-      newErrors.auditDetailContent = '개선계획 세부내용을 입력해주세요.';
-    }
+      if (!formData.auditDetailContent.trim()) {
+        newErrors.auditDetailContent = '개선계획 세부내용을 입력해주세요.';
+      }
 
-    if (!formData.auditDoneDt) {
-      newErrors.auditDoneDt = '이행완료 예정일자를 선택해주세요.';
+      if (!formData.auditDoneDt) {
+        newErrors.auditDoneDt = '이행완료 예정일자를 선택해주세요.';
+      }
     }
 
     setErrors(newErrors);
@@ -520,9 +526,11 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
   const canSave = mode !== 'view'
     && !!formData.auditResultStatusCd
     && formData.auditResult.trim() !== ''
-    && !!formData.beforeAuditYn
-    && formData.auditDetailContent.trim() !== ''
-    && !!formData.auditDoneDt;
+    && (!isImprovementPlanEnabled || (
+      !!formData.beforeAuditYn
+      && formData.auditDetailContent.trim() !== ''
+      && !!formData.auditDoneDt
+    ));
 
   return (
     <BaseDialog
@@ -536,8 +544,20 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
       loading={loading || detailLoading}
       showEditButton={false}
       disableSave={loading || detailLoading || !canSave}
+      contentSx={{
+        p: 0,
+        overflow: 'hidden',
+        height: 'calc(90vh - 180px)',
+      }}
     >
-      <Box sx={{ p: 2, maxHeight: '80vh', overflow: 'auto' }}>
+      <Box sx={{ 
+        p: 2, 
+        height: '100%',
+        overflow: 'auto',
+        '&::-webkit-scrollbar': { width: '8px' },
+        '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
+        '&::-webkit-scrollbar-thumb': { backgroundColor: '#c1c1c1', borderRadius: '4px' }
+      }}>
         {/* 선택된 항목 정보 */}
         <Paper sx={{ p: 2, mb: 3, bgcolor: '#f8f9fa' }}>
           <Typography variant="h6" component="div" gutterBottom>
@@ -788,10 +808,6 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
                 helperText={errors.auditResult}
                 mode={mode === 'view' ? 'readonly' : 'editable'}
               />
-              {/* 디버깅용 현재 값 표시 */}
-              <Typography variant="caption" component="div" sx={{ display: 'block', mt: 1, color: 'info.main' }}>
-                현재 auditResult 값: "{formData.auditResult}"
-              </Typography>
             </Grid>
           </Grid>
         </Paper>
@@ -889,9 +905,19 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
         </Paper>
 
         {/* 5. 개선계획 */}
-        <Paper sx={{ p: 2, mb: 3 }}>
+        <Paper sx={{ 
+          p: 2, 
+          mb: 3, 
+          opacity: isImprovementPlanEnabled ? 1 : 0.5,
+          backgroundColor: isImprovementPlanEnabled ? 'background.paper' : '#f5f5f5'
+        }}>
           <Typography variant="h6" component="div" gutterBottom>
             5. 개선계획
+            {!isImprovementPlanEnabled && (
+              <Typography component="span" variant="caption" sx={{ ml: 1, color: 'text.secondary' }}>
+                (점검 결과가 "미흡"인 경우에만 작성)
+              </Typography>
+            )}
           </Typography>
           <Divider sx={{ mb: 2 }} />
           
@@ -903,15 +929,15 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
                 onChange={(value: string) => handleFormChange('beforeAuditYn', value)}
                 options={beforeAuditOptions}
                 row
-                required
+                required={isImprovementPlanEnabled}
                 error={!!errors.beforeAuditYn}
                 helperText={errors.beforeAuditYn}
-                disabled={mode === 'view'}
+                disabled={mode === 'view' || !isImprovementPlanEnabled}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="개선계획 세부내용 *"
+                label={`개선계획 세부내용 ${isImprovementPlanEnabled ? '*' : ''}`}
                 value={formData.auditDetailContent}
                 onChange={(e) => handleFormChange('auditDetailContent', e.target.value)}
                 fullWidth
@@ -919,19 +945,20 @@ const AuditResultDialog: React.FC<AuditResultDialogProps> = ({
                 rows={4}
                 error={!!errors.auditDetailContent}
                 helperText={errors.auditDetailContent}
-                mode={mode === 'view' ? 'readonly' : 'editable'}
+                mode={mode === 'view' || !isImprovementPlanEnabled ? 'readonly' : 'editable'}
+                disabled={!isImprovementPlanEnabled}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <DatePicker
-                label="이행완료 예정일자 *"
+                label={`이행완료 예정일자 ${isImprovementPlanEnabled ? '*' : ''}`}
                 value={formData.auditDoneDt}
                 onChange={(date) => handleFormChange('auditDoneDt', date)}
                 fullWidth
                 error={!!errors.auditDoneDt}
                 helperText={errors.auditDoneDt}
                 format="yyyy-MM-dd"
-                disabled={mode === 'view'}
+                disabled={mode === 'view' || !isImprovementPlanEnabled}
               />
             </Grid>
           </Grid>

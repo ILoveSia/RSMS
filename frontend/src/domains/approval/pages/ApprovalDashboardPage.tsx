@@ -47,7 +47,11 @@ interface LoginUser {
   userid: string;
   username: string;
   email: string;
+  empNo: string;     // 사번 (employee.emp_no)
+  deptCd: string;    // 부서코드 (employee.dept_code)
+  positionCode: string; // 직급코드 (employee.position_code)
   role?: string;
+  accessibleMenus?: any[];
 }
 
 /**
@@ -498,114 +502,141 @@ const ApprovalDashboardPage: React.FC = () => {
               </Grid>
             </Box>
 
-            {/* 내 결재 대기 목록 */}
-            <Box sx={{ px: 2, mb: 3 }}>
-              <Card sx={{ border: '1px solid var(--bank-border)', borderRadius: 2 }}>
-                <CardContent sx={{ p: 1.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <HourglassEmptyIcon color="warning" />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                        내 결재 대기 목록
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={`${myPendingApprovals.length}건`}
-                      color="warning"
-                      size="small"
-                    />
-                  </Box>
-                  <Divider sx={{ mb: 1.5 }} />
-                  
-                  {myPendingApprovals.length > 0 ? (
-                    <DataGrid
-                      data={myPendingApprovals}
-                      columns={pendingColumns}
-                      loading={loading}
-                      error={null}
-                      selectable={false}
-                      multiSelect={false}
-                      rowIdField="approvalId"
-                      sx={{
-                        width: '100%',
-                        height: '200px',
-                        '& .MuiDataGrid-columnHeaders': {
-                          backgroundColor: 'var(--bank-bg-secondary) !important',
-                          fontWeight: 'bold',
-                        },
-                        '& .MuiDataGrid-row': {
-                          cursor: 'pointer',
-                        },
-                      }}
-                    />
-                  ) : (
-                    <Box sx={{ textAlign: 'center', py: 3 }}>
-                      <HourglassEmptyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                      <Typography variant="body1" color="textSecondary" gutterBottom>
-                        결재 대기 중인 항목이 없습니다
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        새로운 결재 요청이 있으면 여기에 표시됩니다.
-                      </Typography>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-            </Box>
-
-            {/* 긴급 결재 목록 */}
+            {/* 결재 목록 영역 - 양옆 배치 */}
             <Box sx={{ px: 2, mb: 1 }}>
-              <Card sx={{ border: '1px solid var(--bank-border)', borderRadius: 2 }}>
-                <CardContent sx={{ p: 1.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <WarningIcon color="error" />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                        긴급 결재 목록
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={`${urgentApprovals.length}건`}
-                      color="error"
-                      size="small"
-                    />
-                  </Box>
-                  <Divider sx={{ mb: 1.5 }} />
-                  
-                  {urgentApprovals.length > 0 ? (
-                    <DataGrid
-                      data={urgentApprovals}
-                      columns={urgentColumns}
-                      loading={loading}
-                      error={null}
-                      selectable={false}
-                      multiSelect={false}
-                      rowIdField="approvalId"
-                      sx={{
-                        width: '100%',
-                        height: '220px',
-                        '& .MuiDataGrid-columnHeaders': {
-                          backgroundColor: 'var(--bank-bg-secondary) !important',
-                          fontWeight: 'bold',
-                        },
-                        '& .MuiDataGrid-row': {
-                          cursor: 'pointer',
-                        },
-                      }}
-                    />
-                  ) : (
-                    <Box sx={{ textAlign: 'center', py: 3 }}>
-                      <WarningIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
-                      <Typography variant="body1" color="textSecondary" gutterBottom>
-                        긴급 결재가 없습니다
-                      </Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        긴급 결재가 있으면 여기에 표시됩니다.
-                      </Typography>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
+              <Grid container spacing={2}>
+                {/* 내 결재 대기 목록 - 왼쪽 */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ border: '1px solid var(--bank-border)', borderRadius: 2, height: '100%' }}>
+                    <CardContent sx={{ p: 1.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <HourglassEmptyIcon color="warning" />
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            내 결재 대기 목록
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={`${myPendingApprovals.length}건`}
+                          color="warning"
+                          size="small"
+                        />
+                      </Box>
+                      <Divider sx={{ mb: 1.5 }} />
+                      
+                      {myPendingApprovals.length > 0 ? (
+                        <Box sx={{ flex: 1, minHeight: 500 }}>
+                          <DataGrid
+                            data={myPendingApprovals}
+                            columns={pendingColumns}
+                            loading={loading}
+                            error={null}
+                            selectable={false}
+                            multiSelect={false}
+                            rowIdField="approvalId"
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              minHeight: 500,
+                              '& .MuiDataGrid-columnHeaders': {
+                                backgroundColor: 'var(--bank-bg-secondary) !important',
+                                fontWeight: 'bold',
+                              },
+                              '& .MuiDataGrid-row': {
+                                cursor: 'pointer',
+                              },
+                            }}
+                          />
+                        </Box>
+                      ) : (
+                        <Box sx={{ 
+                          textAlign: 'center', 
+                          py: 4, 
+                          flex: 1, 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          justifyContent: 'center',
+                          minHeight: 500 
+                        }}>
+                          <HourglassEmptyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                          <Typography variant="body1" color="textSecondary" gutterBottom>
+                            결재 대기 중인 항목이 없습니다
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            새로운 결재 요청이 있으면 여기에 표시됩니다.
+                          </Typography>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* 긴급 결재 목록 - 오른쪽 */}
+                <Grid item xs={12} md={6}>
+                  <Card sx={{ border: '1px solid var(--bank-border)', borderRadius: 2, height: '100%' }}>
+                    <CardContent sx={{ p: 1.5, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <WarningIcon color="error" />
+                          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                            긴급 결재 목록
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={`${urgentApprovals.length}건`}
+                          color="error"
+                          size="small"
+                        />
+                      </Box>
+                      <Divider sx={{ mb: 1.5 }} />
+                      
+                      {urgentApprovals.length > 0 ? (
+                        <Box sx={{ flex: 1, minHeight: 500 }}>
+                          <DataGrid
+                            data={urgentApprovals}
+                            columns={urgentColumns}
+                            loading={loading}
+                            error={null}
+                            selectable={false}
+                            multiSelect={false}
+                            rowIdField="approvalId"
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              minHeight: 500,
+                              '& .MuiDataGrid-columnHeaders': {
+                                backgroundColor: 'var(--bank-bg-secondary) !important',
+                                fontWeight: 'bold',
+                              },
+                              '& .MuiDataGrid-row': {
+                                cursor: 'pointer',
+                              },
+                            }}
+                          />
+                        </Box>
+                      ) : (
+                        <Box sx={{ 
+                          textAlign: 'center', 
+                          py: 4, 
+                          flex: 1, 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          justifyContent: 'center',
+                          minHeight: 500 
+                        }}>
+                          <WarningIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                          <Typography variant="body1" color="textSecondary" gutterBottom>
+                            긴급 결재가 없습니다
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            긴급 결재가 있으면 여기에 표시됩니다.
+                          </Typography>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
             </Box>
           </>
         )}
