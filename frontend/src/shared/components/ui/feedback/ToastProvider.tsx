@@ -65,7 +65,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
   children,
   maxToasts = 5,
   defaultPosition = { vertical: 'bottom', horizontal: 'left' },
-  defaultAutoHideDuration = 6000,
+  defaultAutoHideDuration = 1500,
 }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 

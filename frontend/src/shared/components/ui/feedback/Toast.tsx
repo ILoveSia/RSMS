@@ -66,7 +66,7 @@ const Toast = forwardRef<HTMLDivElement, ToastProps>(
       open,
       message,
       severity = 'info',
-      autoHideDuration = 6000,
+      autoHideDuration = 1500,
       onClose,
       position = { vertical: 'bottom', horizontal: 'left' },
       action,

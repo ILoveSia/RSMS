@@ -16,6 +16,17 @@ const config: StorybookConfig = {
     name: '@storybook/react-vite',
     options: {}
   },
+  typescript: {
+    reactDocgen: 'react-docgen-typescript',
+    reactDocgenTypescriptOptions: {
+      compilerOptions: {
+        allowSyntheticDefaultImports: true,
+        esModuleInterop: true,
+      },
+      propFilter: () => true,
+      tsconfigPath: '../tsconfig.app.json',
+    },
+  },
   viteFinal: async (cfg) => {
     // Align aliases/defines with app's Vite config so imports like '@/...' work in Storybook
     cfg.resolve = {

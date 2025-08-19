@@ -20,7 +20,7 @@ export const Alert: React.FC<AlertProps> = ({
   message,
   severity = 'info',
   title,
-  autoHideDuration = 6000,
+  autoHideDuration = 1500,
   onClose,
 }) => {
   return (
