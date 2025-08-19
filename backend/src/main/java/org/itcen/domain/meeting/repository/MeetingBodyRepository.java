@@ -77,23 +77,6 @@ public interface MeetingBodyRepository extends JpaRepository<MeetingBody, String
             @Param("content") String content,
             Pageable pageable
     );
-
-    /**
-     * 구분별 회의체 개수 조회
-     * 
-     * @param gubun 구분
-     * @return 회의체 개수
-     */
-    Long countByGubun(String gubun);
-
-    /**
-     * 개최주기별 회의체 개수 조회
-     * 
-     * @param meetingPeriod 개최주기
-     * @return 회의체 개수
-     */
-    Long countByMeetingPeriod(String meetingPeriod);
-
     /**
      * 회의체명 중복 체크
      * 

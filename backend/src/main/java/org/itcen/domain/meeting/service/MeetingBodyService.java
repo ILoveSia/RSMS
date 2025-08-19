@@ -51,13 +51,6 @@ public interface MeetingBodyService {
     MeetingBodyDto getMeetingBody(String meetingBodyId);
 
     /**
-     * 전체 회의체 목록 조회
-     * 
-     * @return 회의체 목록
-     */
-    List<MeetingBodyDto> getAllMeetingBodies();
-
-    /**
      * 구분별 회의체 목록 조회
      * 
      * @param gubun 구분
@@ -72,23 +65,6 @@ public interface MeetingBodyService {
      * @return 페이징된 회의체 목록
      */
     Page<MeetingBodyDto> searchMeetingBodies(MeetingBodySearchRequestDto searchRequestDto);
-
-    /**
-     * 구분별 회의체 개수 조회
-     * 
-     * @param gubun 구분
-     * @return 회의체 개수
-     */
-    Long countByGubun(String gubun);
-
-    /**
-     * 개최주기별 회의체 개수 조회
-     * 
-     * @param meetingPeriod 개최주기
-     * @return 회의체 개수
-     */
-    Long countByMeetingPeriod(String meetingPeriod);
-
     /**
      * 회의체명 중복 체크
      * 
@@ -116,18 +92,4 @@ public interface MeetingBodyService {
      * - 확장/폐쇄 원칙: 단건/다건 삭제 모두 지원하도록 확장
      */
     void deleteMeetingBodies(List<String> ids);
-    
-    /**
-     * 회의체 총 개수 조회 (디버깅용)
-     * 
-     * @return 회의체 총 개수
-     */
-    Long getTotalCount();
-    
-    /**
-     * 실제 회의체 데이터의 gubun 값들 조회 (디버깅용)
-     * 
-     * @return gubun 값 목록
-     */
-    List<String> getActualGubunValues();
 }

@@ -116,17 +116,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
     }
 
     /**
-     * 전체 회의체 목록 조회
-     */
-    @Override
-    public List<MeetingBodyDto> getAllMeetingBodies() {
-        List<MeetingBody> meetingBodies = meetingBodyRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
-        return meetingBodies.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * 구분별 회의체 목록 조회
      */
     @Override
@@ -173,23 +162,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
         // DTO 변환
         return meetingBodyPage.map(this::convertToDto);
     }
-
-    /**
-     * 구분별 회의체 개수 조회
-     */
-    @Override
-    public Long countByGubun(String gubun) {
-        return meetingBodyRepository.countByGubun(gubun);
-    }
-
-    /**
-     * 개최주기별 회의체 개수 조회
-     */
-    @Override
-    public Long countByMeetingPeriod(String meetingPeriod) {
-        return meetingBodyRepository.countByMeetingPeriod(meetingPeriod);
-    }
-
     /**
      * 회의체명 중복 체크
      */
@@ -235,23 +207,6 @@ public class MeetingBodyServiceImpl implements MeetingBodyService {
         meetingBodyRepository.deleteAllByIdInBatch(ids);
         
     }
-
-    /**
-     * 회의체 총 개수 조회 (디버깅용)
-     */
-    @Override
-    public Long getTotalCount() {
-        return meetingBodyRepository.count();
-    }
-
-    /**
-     * 실제 회의체 데이터의 gubun 값들 조회 (디버깅용)
-     */
-    @Override
-    public List<String> getActualGubunValues() {
-        return meetingBodyRepository.findDistinctGubunValues();
-    }
-
     /**
      * Entity를 DTO로 변환
      *

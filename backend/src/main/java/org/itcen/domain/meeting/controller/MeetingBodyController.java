@@ -114,24 +114,6 @@ public class MeetingBodyController {
     }
 
     /**
-     * 전체 회의체 목록 조회
-     *
-     * @return 회의체 목록
-     */
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<MeetingBodyDto>>> getAllMeetingBodies() {
-        List<MeetingBodyDto> meetingBodies = meetingBodyService.getAllMeetingBodies();
-
-        ApiResponse<List<MeetingBodyDto>> response = ApiResponse.<List<MeetingBodyDto>>builder()
-                .success(true)
-                .message("회의체 목록 조회가 완료되었습니다.")
-                .data(meetingBodies)
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    /**
      * 구분별 회의체 목록 조회
      *
      * @param gubun 구분
@@ -207,72 +189,6 @@ public class MeetingBodyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
-
-    /**
-     * 구분별 회의체 개수 조회
-     *
-     * @param gubun 구분
-     * @return 회의체 개수
-     */
-    @GetMapping("/count/gubun/{gubun}")
-    public ResponseEntity<ApiResponse<Long>> countByGubun(@PathVariable String gubun) {
-        Long count = meetingBodyService.countByGubun(gubun);
-
-        ApiResponse<Long> response = ApiResponse.<Long>builder()
-                .success(true)
-                .message("구분별 회의체 개수 조회가 완료되었습니다.")
-                .data(count)
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 개최주기별 회의체 개수 조회
-     *
-     * @param meetingPeriod 개최주기
-     * @return 회의체 개수
-     */
-    @GetMapping("/count/period/{meetingPeriod}")
-    public ResponseEntity<ApiResponse<Long>> countByMeetingPeriod(@PathVariable String meetingPeriod) {
-        Long count = meetingBodyService.countByMeetingPeriod(meetingPeriod);
-
-        ApiResponse<Long> response = ApiResponse.<Long>builder()
-                .success(true)
-                .message("개최주기별 회의체 개수 조회가 완료되었습니다.")
-                .data(count)
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 회의체명 중복 체크
-     *
-     * @param meetingName 회의체명
-     * @return 중복 여부
-     */
-    @GetMapping("/check-duplicate")
-    public ResponseEntity<ApiResponse<Boolean>> checkDuplicateMeetingName(
-            @RequestParam String meetingName,
-            @RequestParam(required = false) String excludeId) {
-
-        boolean isDuplicate;
-        if (excludeId != null) {
-            isDuplicate = meetingBodyService.isDuplicateMeetingName(meetingName, excludeId);
-        } else {
-            isDuplicate = meetingBodyService.isDuplicateMeetingName(meetingName);
-        }
-
-        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
-                .success(true)
-                .message("회의체명 중복 체크가 완료되었습니다.")
-                .data(isDuplicate)
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
     /**
      * 여러 회의체 일괄 삭제
      *
@@ -290,38 +206,6 @@ public class MeetingBodyController {
                 .success(true)
                 .message("선택한 회의체가 성공적으로 삭제되었습니다.")
                 .build();
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 디버깅용 - 회의체 총 개수 조회
-     */
-    @GetMapping("/debug/total-count")
-    public ResponseEntity<ApiResponse<Long>> getTotalCount() {
-        long totalCount = meetingBodyService.getTotalCount();
-        
-        ApiResponse<Long> response = ApiResponse.<Long>builder()
-                .success(true)
-                .message("회의체 총 개수 조회 완료")
-                .data(totalCount)
-                .build();
-                
-        return ResponseEntity.ok(response);
-    }
-
-    /**
-     * 디버깅용 - 실제 회의체 데이터의 gubun 값들 조회
-     */
-    @GetMapping("/debug/gubun-values")
-    public ResponseEntity<ApiResponse<List<String>>> getActualGubunValues() {
-        List<String> gubunValues = meetingBodyService.getActualGubunValues();
-        
-        ApiResponse<List<String>> response = ApiResponse.<List<String>>builder()
-                .success(true)
-                .message("실제 gubun 값들 조회 완료")
-                .data(gubunValues)
-                .build();
-                
         return ResponseEntity.ok(response);
     }
 }
