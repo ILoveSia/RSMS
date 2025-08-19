@@ -43,6 +43,11 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
     List<Menu> findByParentIsNullAndIsActiveTrueOrderBySortOrderAsc();
     
     /**
+     * 최상위 메뉴 조회 (parent_id가 null인 메뉴) - 다른 메서드명
+     */
+    List<Menu> findByParentIdIsNullAndIsActiveTrueOrderBySortOrderAsc();
+    
+    /**
      * 특정 부모 메뉴의 하위 메뉴 조회
      */
     List<Menu> findByParentIdAndIsActiveTrueOrderBySortOrderAsc(Long parentId);
@@ -124,7 +129,6 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
             m1.menu_name,
             m1.menu_name_en,
             m1.parent_id,
-            m1.menu_level,
             m1.sort_order,
             m1.description,
             m2.menu_name AS parent_name
@@ -133,7 +137,7 @@ public interface MenuRepository extends JpaRepository<Menu, Long> {
         LEFT JOIN
             menus m2 ON m1.parent_id = m2.id
         ORDER BY
-            m1.menu_level ASC, m1.sort_order ASC
+            m1.sort_order ASC
         """, nativeQuery = true)
     List<Object[]> findAllWithParentSimple();
     

@@ -6,9 +6,25 @@ export interface MenuWithParent {
   menuNameEn: string;
   parentId: number | null;
   parentName: string | null;
-  menuLevel: number;
   sortOrder: number;
   description: string | null;
+}
+
+export interface MenuUpdateRequest {
+  id: number;
+  menuName: string;
+  menuNameEn: string;
+  description: string | null;
+  parentId: number | null;
+  sortOrder: number;
+}
+
+export interface MenuUpdateResponse {
+  menu: MenuWithParent;
+  orderChanged: boolean;
+  infoChanged: boolean;
+  success: boolean;
+  errorMessage?: string;
 }
 
 /**
@@ -16,7 +32,7 @@ export interface MenuWithParent {
  */
 export const menuApi = {
   /**
-   * 모든 메뉴와 부모 메뉴 정보 조회
+   * 모든 메뉴와 부모 메뉴 정보 조회 (관리용)
    */
   getAllMenusWithParent: async (): Promise<MenuWithParent[]> => {
     try {
@@ -24,7 +40,7 @@ export const menuApi = {
       console.log('API 응답:', response);
       return response as MenuWithParent[];
     } catch (error) {
-      console.error('메뉴 API 호출 실패:', error);
+      console.error('메뉴 조회 실패:', error);
       throw error;
     }
   },
@@ -38,11 +54,16 @@ export const menuApi = {
   },
 
   /**
-   * 메뉴 수정
+   * 메뉴 업데이트 (정보 수정 및 순서 변경)
    */
-  updateMenu: async (id: number, menuData: Partial<MenuWithParent>): Promise<MenuWithParent> => {
-    const response = await apiClient.put(`/menus/${id}`, menuData);
-    return response as MenuWithParent;
+  updateMenu: async (menuData: MenuUpdateRequest): Promise<MenuUpdateResponse> => {
+    try {
+      const response = await apiClient.put(`/menus/${menuData.id}`, menuData);
+      return response as MenuUpdateResponse;
+    } catch (error) {
+      console.error('메뉴 업데이트 실패:', error);
+      throw error;
+    }
   },
 
   /**

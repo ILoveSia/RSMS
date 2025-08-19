@@ -2,6 +2,8 @@ package org.itcen.domain.menu.service;
 
 import org.itcen.domain.menu.dto.MenuDto;
 import org.itcen.domain.menu.dto.MenuWithParentDto;
+import org.itcen.domain.menu.dto.MenuUpdateDto;
+import org.itcen.domain.menu.dto.MenuUpdateResponseDto;
 import org.itcen.domain.menu.entity.Menu;
 import org.itcen.domain.menu.entity.MenuPermission;
 import org.itcen.domain.menu.repository.MenuRepository;
@@ -221,10 +223,9 @@ public class MenuService {
                         .menuName((String) row[1])
                         .menuNameEn((String) row[2])
                         .parentId((Long) row[3])
-                        .menuLevel((Integer) row[4])
-                        .sortOrder((Integer) row[5])
-                        .description((String) row[6])
-                        .parentName((String) row[7])
+                        .sortOrder((Integer) row[4])
+                        .description((String) row[5])
+                        .parentName((String) row[6])
                         .build())
                 .collect(Collectors.toList());
     }
@@ -260,5 +261,148 @@ public class MenuService {
      */
     public long countActiveChildrenByParentId(Long parentId) {
         return menuRepository.countActiveChildrenByParentId(parentId);
+    }
+    
+    /**
+     * 메뉴 업데이트 (정보 수정 및 순서 변경)
+     */
+    @Transactional
+    public MenuUpdateResponseDto updateMenu(MenuUpdateDto updateDto) {
+        Optional<Menu> menuOpt = menuRepository.findById(updateDto.getId());
+        if (menuOpt.isEmpty()) {
+            return MenuUpdateResponseDto.builder()
+                .success(false)
+                .errorMessage("메뉴를 찾을 수 없습니다: " + updateDto.getId())
+                .build();
+        }
+        
+        Menu menu = menuOpt.get();
+        
+        // 변경 여부 추적
+        boolean infoChanged = false;
+        boolean orderChanged = false;
+        
+        // 기본 정보 업데이트
+        if (!menu.getMenuName().equals(updateDto.getMenuName())) {
+            menu.setMenuName(updateDto.getMenuName());
+            infoChanged = true;
+        }
+        if (!menu.getMenuNameEn().equals(updateDto.getMenuNameEn())) {
+            menu.setMenuNameEn(updateDto.getMenuNameEn());
+            infoChanged = true;
+        }
+        if (!java.util.Objects.equals(menu.getDescription(), updateDto.getDescription())) {
+            menu.setDescription(updateDto.getDescription());
+            infoChanged = true;
+        }
+        
+        // 부모 변경 처리
+        if (!java.util.Objects.equals(menu.getParent() != null ? menu.getParent().getId() : null, updateDto.getParentId())) {
+            Menu newParent = null;
+            if (updateDto.getParentId() != null) {
+                Optional<Menu> parentOpt = menuRepository.findById(updateDto.getParentId());
+                if (parentOpt.isEmpty()) {
+                    return MenuUpdateResponseDto.builder()
+                        .success(false)
+                        .errorMessage("부모 메뉴를 찾을 수 없습니다: " + updateDto.getParentId())
+                        .build();
+                }
+                newParent = parentOpt.get();
+            }
+            menu.setParent(newParent);
+            
+            // 메뉴 레벨 업데이트
+            if (newParent != null) {
+                menu.setMenuLevel(newParent.getMenuLevel() + 1);
+            } else {
+                menu.setMenuLevel(1);
+            }
+            
+            infoChanged = true;
+        }
+        
+        // 순서 변경 처리
+        if (updateDto.getSortOrder() != null) {
+            // 순서 변경 여부 확인
+            if (updateDto.getSortOrder() != -1) { // -1은 "변경 없음"
+                orderChanged = true;
+            }
+            Long parentId = updateDto.getParentId();
+            List<Menu> siblingMenus = parentId != null ? 
+                menuRepository.findByParentIdAndIsActiveTrueOrderBySortOrderAsc(parentId) :
+                menuRepository.findByParentIdIsNullAndIsActiveTrueOrderBySortOrderAsc();
+            
+            // 현재 메뉴를 제외한 형제 메뉴들
+            List<Menu> otherSiblings = siblingMenus.stream()
+                .filter(m -> !m.getId().equals(menu.getId()))
+                .collect(Collectors.toList());
+            
+            int targetSortOrder;
+            if (updateDto.getSortOrder() == 0) {
+                // 최상단에 배치
+                targetSortOrder = 1;
+                
+                // 모든 형제 메뉴들을 1부터 다시 번호 매기기
+                int newOrder = 2; // 1은 현재 메뉴용
+                for (Menu sibling : otherSiblings) {
+                    sibling.setSortOrder(newOrder);
+                    menuRepository.save(sibling);
+                    newOrder++;
+                }
+            } else {
+                // 선택된 위치에 배치
+                targetSortOrder = updateDto.getSortOrder();
+                
+                // 현재 메뉴의 원래 sortOrder
+                int originalSortOrder = menu.getSortOrder();
+                
+                logger.info("메뉴 순서 변경 - 메뉴ID: {}, 원래위치: {}, 목표위치: {}", 
+                    menu.getId(), originalSortOrder, targetSortOrder);
+                
+                // 목표 위치 계산 (n 밑에 배치 = n+1 위치)
+                int targetPosition = targetSortOrder + 1;
+                
+                // 현재 메뉴가 이동할 때 영향을 받는 메뉴들만 조정
+                if (originalSortOrder < targetPosition) {
+                    // 앞에서 뒤로 이동: 목표 위치 이후의 메뉴들을 뒤로 밀어내기
+                    for (Menu sibling : otherSiblings) {
+                        if (sibling.getSortOrder() >= targetPosition) {
+                            int oldOrder = sibling.getSortOrder();
+                            sibling.setSortOrder(sibling.getSortOrder() + 1);
+                            menuRepository.save(sibling);
+                            logger.info("뒤로 밀어내기 - 메뉴ID: {}, {} -> {}", 
+                                sibling.getId(), oldOrder, sibling.getSortOrder());
+                        }
+                    }
+                } else if (originalSortOrder > targetPosition) {
+                    // 뒤에서 앞으로 이동: targetPosition과 originalSortOrder 사이의 메뉴들을 뒤로 이동
+                    for (Menu sibling : otherSiblings) {
+                        if (sibling.getSortOrder() >= targetPosition && sibling.getSortOrder() < originalSortOrder) {
+                            int oldOrder = sibling.getSortOrder();
+                            sibling.setSortOrder(sibling.getSortOrder() + 1);
+                            menuRepository.save(sibling);
+                            logger.info("뒤로 이동 - 메뉴ID: {}, {} -> {}", 
+                                sibling.getId(), oldOrder, sibling.getSortOrder());
+                        }
+                    }
+                }
+                
+                // 현재 메뉴를 목표 위치에 배치
+                targetSortOrder = targetPosition;
+                logger.info("최종 - 메뉴ID: {}를 위치 {}에 배치", menu.getId(), targetSortOrder);
+            }
+            
+            // 현재 메뉴의 sortOrder 설정
+            menu.setSortOrder(targetSortOrder);
+        }
+        
+        Menu savedMenu = menuRepository.save(menu);
+        
+        return MenuUpdateResponseDto.builder()
+            .menu(MenuDto.from(savedMenu))
+            .orderChanged(orderChanged)
+            .infoChanged(infoChanged)
+            .success(true)
+            .build();
     }
 } 

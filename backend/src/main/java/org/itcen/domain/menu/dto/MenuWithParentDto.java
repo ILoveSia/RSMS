@@ -20,7 +20,6 @@ public class MenuWithParentDto {
     private String menuNameEn;
     private Long parentId;
     private String parentName;
-    private Integer menuLevel;
     private Integer sortOrder;
     private String description;
 }

@@ -2,6 +2,8 @@ package org.itcen.domain.menu.controller;
 
 import org.itcen.domain.menu.dto.MenuDto;
 import org.itcen.domain.menu.dto.MenuWithParentDto;
+import org.itcen.domain.menu.dto.MenuUpdateDto;
+import org.itcen.domain.menu.dto.MenuUpdateResponseDto;
 import org.itcen.domain.menu.service.MenuService;
 import org.itcen.domain.menu.service.MenuInitializationService;
 import org.slf4j.Logger;
@@ -163,6 +165,36 @@ public class MenuController {
         } catch (Exception e) {
             logger.error("메뉴 강제 재초기화 실패", e);
             return ResponseEntity.internalServerError().body("메뉴 재초기화 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 메뉴 업데이트 (정보 수정 및 순서 변경)
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<MenuUpdateResponseDto> updateMenu(@PathVariable Long id, @RequestBody MenuUpdateDto updateDto) {
+        
+        try {
+            // ID 일치 확인
+            if (!id.equals(updateDto.getId())) {
+                return ResponseEntity.badRequest().build();
+            }
+            
+            MenuUpdateResponseDto response = menuService.updateMenu(updateDto);
+            
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            logger.error("메뉴 업데이트 실패", e);
+            return ResponseEntity.internalServerError().body(
+                MenuUpdateResponseDto.builder()
+                    .success(false)
+                    .errorMessage("메뉴 업데이트 중 오류가 발생했습니다: " + e.getMessage())
+                    .build()
+            );
         }
     }
 } 
