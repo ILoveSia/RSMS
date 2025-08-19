@@ -126,21 +126,4 @@ public class ResponsibilityServiceImpl implements ResponsibilityService {
 
         return responsibility;
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<ResponsibilityDetailSelectDto> getResponsibilityDetails(Long responsibilityId) {
-        // 책무 존재 여부 확인
-        responsibilityRepository.findById(responsibilityId)
-                .orElseThrow(() -> new BusinessException("존재하지 않는 책무입니다. ID: " + responsibilityId));
-
-        // 책무상세 목록 조회
-        List<ResponsibilityDetail> details = responsibilityDetailRepository.findAllByResponsibilityId(responsibilityId);
-        
-        return details.stream()
-                .filter(detail -> "Y".equals(detail.getResponsibilityUseYn())) // 사용중인 것만 조회
-                .map(ResponsibilityDetailSelectDto::from)
-                .collect(Collectors.toList());
-    }
-
 }

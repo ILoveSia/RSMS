@@ -164,19 +164,6 @@ public class ResponsibilityDocumentController {
     }
 
     /**
-     * 직책별 책무기술서 조회
-     */
-    // @GetMapping("/position/{positionId}")
-    // public ResponseEntity<List<ResponsibilityDocumentService.ResponsibilityDocumentDto>> getDocumentsByPosition(
-    //         @PathVariable Long positionId) {
-    //     log.debug("직책별 책무기술서 조회 요청 - positionId: {}", positionId);
-    //     
-    //     List<ResponsibilityDocumentService.ResponsibilityDocumentDto> documents = 
-    //             responsibilityDocumentService.getDocumentsByPosition(positionId);
-    //     return ResponseEntity.ok(documents);
-    // }
-
-    /**
      * 상태별 책무기술서 조회
      */
     @GetMapping("/status/{status}")
@@ -201,20 +188,6 @@ public class ResponsibilityDocumentController {
                 responsibilityDocumentService.getDocumentsByAuthor(authorEmpNo);
         return ResponseEntity.ok(documents);
     }
-
-    /**
-     * 직책의 최신 발행 문서 조회
-     */
-    @GetMapping("/position/{positionId}/latest")
-    public ResponseEntity<ResponsibilityDocumentService.ResponsibilityDocumentDto> getLatestPublishedDocument(
-            @PathVariable Long positionId) {
-        log.debug("최신 발행 문서 조회 요청 - positionId: {}", positionId);
-        
-        return responsibilityDocumentService.getLatestPublishedDocument(positionId)
-                .map(document -> ResponseEntity.ok(document))
-                .orElse(ResponseEntity.notFound().build());
-    }
-
     /**
      * 유효한 문서 조회
      */
@@ -226,20 +199,6 @@ public class ResponsibilityDocumentController {
                 responsibilityDocumentService.getValidDocuments();
         return ResponseEntity.ok(documents);
     }
-
-    /**
-     * 만료 예정 문서 조회
-     */
-    @GetMapping("/expiring")
-    public ResponseEntity<List<ResponsibilityDocumentService.ResponsibilityDocumentDto>> getExpiringDocuments(
-            @RequestParam(defaultValue = "30") int daysFromNow) {
-        log.debug("만료 예정 문서 조회 요청 - daysFromNow: {}", daysFromNow);
-        
-        List<ResponsibilityDocumentService.ResponsibilityDocumentDto> documents = 
-                responsibilityDocumentService.getExpiringDocuments(daysFromNow);
-        return ResponseEntity.ok(documents);
-    }
-
     /**
      * 승인 대기중인 문서 조회
      */
@@ -265,43 +224,6 @@ public class ResponsibilityDocumentController {
                 responsibilityDocumentService.searchDocuments(searchDto, pageable);
         return ResponseEntity.ok(documents);
     }
-
-    /**
-     * 문서 통계
-     */
-    @GetMapping("/statistics")
-    public ResponseEntity<ResponsibilityDocumentService.DocumentStatisticsDto> getDocumentStatistics() {
-        log.debug("문서 통계 조회 요청");
-        
-        ResponsibilityDocumentService.DocumentStatisticsDto statistics = 
-                responsibilityDocumentService.getDocumentStatistics();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 월별 생성 통계
-     */
-    @GetMapping("/statistics/monthly")
-    public ResponseEntity<List<ResponsibilityDocumentService.MonthlyStatisticsDto>> getMonthlyCreationStatistics() {
-        log.debug("월별 생성 통계 조회 요청");
-        
-        List<ResponsibilityDocumentService.MonthlyStatisticsDto> statistics = 
-                responsibilityDocumentService.getMonthlyCreationStatistics();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 상태별 통계
-     */
-    @GetMapping("/statistics/status")
-    public ResponseEntity<List<ResponsibilityDocumentService.StatusStatisticsDto>> getStatusStatistics() {
-        log.debug("상태별 통계 조회 요청");
-        
-        List<ResponsibilityDocumentService.StatusStatisticsDto> statistics = 
-                responsibilityDocumentService.getStatusStatistics();
-        return ResponseEntity.ok(statistics);
-    }
-
     /**
      * 결재 연동 검색 - 결재 테이블과 조인하여 문서 검색
      */

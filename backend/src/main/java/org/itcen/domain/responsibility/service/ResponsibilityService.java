@@ -18,12 +18,4 @@ public interface ResponsibilityService {
     Responsibility updateResponsibility(Long id, ResponsibilityCreateRequestDto requestDto);
 
     void deleteResponsibility(Long id);
-
-    /**
-     * 책무상세 조회 (특정 책무ID로 조회)
-     * 
-     * @param responsibilityId 책무 ID
-     * @return 책무상세 목록
-     */
-    List<ResponsibilityDetailSelectDto> getResponsibilityDetails(Long responsibilityId);
 }

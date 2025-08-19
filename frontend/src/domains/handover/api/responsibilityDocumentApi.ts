@@ -274,15 +274,6 @@ export class ResponsibilityDocumentApi {
   }
 
   /**
-   * 만료 예정 문서 조회
-   */
-  static async getExpiringDocuments(daysFromNow = 30): Promise<ResponsibilityDocumentDto[]> {
-    return apiClient.get<ResponsibilityDocumentDto[]>(`${this.BASE_PATH}/expiring`, {
-      params: { daysFromNow }
-    });
-  }
-
-  /**
    * 승인 대기중인 문서 조회
    */
   static async getPendingApprovalDocuments(): Promise<ResponsibilityDocumentDto[]> {
@@ -302,28 +293,6 @@ export class ResponsibilityDocumentApi {
       { params: paginationParams }
     );
   }
-
-  /**
-   * 문서 통계
-   */
-  static async getDocumentStatistics(): Promise<DocumentStatistics> {
-    return apiClient.get<DocumentStatistics>(`${this.BASE_PATH}/statistics`);
-  }
-
-  /**
-   * 월별 생성 통계
-   */
-  static async getMonthlyCreationStatistics(): Promise<MonthlyStatistics[]> {
-    return apiClient.get<MonthlyStatistics[]>(`${this.BASE_PATH}/statistics/monthly`);
-  }
-
-  /**
-   * 상태별 통계
-   */
-  static async getStatusStatistics(): Promise<DocumentStatusStatistics[]> {
-    return apiClient.get<DocumentStatusStatistics[]>(`${this.BASE_PATH}/statistics/status`);
-  }
-
   /**
    * 결재 테이블과 조인하여 문서 검색
    */

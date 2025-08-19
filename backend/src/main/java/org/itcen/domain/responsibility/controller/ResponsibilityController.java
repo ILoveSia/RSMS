@@ -68,20 +68,4 @@ public class ResponsibilityController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    /**
-     * 책무상세 조회 (특정 책무ID로 조회)
-     * 
-     * @param responsibilityId 책무 ID
-     * @return 책무상세 목록
-     */
-    @GetMapping("/responsibility-details")
-    public ResponseEntity<ApiResponse<List<ResponsibilityDetailSelectDto>>> getResponsibilityDetails(
-            @RequestParam("responsibilityId") Long responsibilityId) {
-        try {
-            List<ResponsibilityDetailSelectDto> detailList = responsibilityService.getResponsibilityDetails(responsibilityId);
-            return ResponseEntity.ok(ApiResponse.success(detailList));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(ApiResponse.error("책무상세 조회에 실패했습니다: " + e.getMessage()));
-        }
-    }
 }

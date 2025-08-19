@@ -91,20 +91,9 @@ public interface ResponsibilityDocumentService {
     List<ResponsibilityDocumentDto> getDocumentsByAuthor(String authorEmpNo);
 
     /**
-     * 직책의 최신 발행 문서 조회
-     */
-    Optional<ResponsibilityDocumentDto> getLatestPublishedDocument(Long positionId);
-
-    /**
      * 유효한 문서 조회
      */
     List<ResponsibilityDocumentDto> getValidDocuments();
-
-    /**
-     * 만료 예정 문서 조회
-     */
-    List<ResponsibilityDocumentDto> getExpiringDocuments(int daysFromNow);
-
     /**
      * 승인 대기중인 문서 조회
      */
@@ -114,24 +103,6 @@ public interface ResponsibilityDocumentService {
      * 복합 조건 검색
      */
     Page<ResponsibilityDocumentDto> searchDocuments(DocumentSearchDto searchDto, Pageable pageable);
-
-    // 통계 기능
-
-    /**
-     * 문서 통계
-     */
-    DocumentStatisticsDto getDocumentStatistics();
-
-    /**
-     * 월별 생성 통계
-     */
-    List<MonthlyStatisticsDto> getMonthlyCreationStatistics();
-
-    /**
-     * 상태별 통계
-     */
-    List<StatusStatisticsDto> getStatusStatistics();
-
     // 결재 연동 기능
 
     /**

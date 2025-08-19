@@ -201,28 +201,11 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
     }
 
     @Override
-    public Optional<ResponsibilityDocumentDto> getLatestPublishedDocument(Long positionId) {
-        log.debug("최신 발행 문서 조회 - positionId: {}", positionId);
-        Optional<ResponsibilityDocument> document = responsibilityDocumentRepository.findLatestByPositionId();
-        return document.map(this::convertToDto);
-    }
-
-    @Override
     public List<ResponsibilityDocumentDto> getValidDocuments() {
         log.debug("유효한 문서 조회");
         List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findValidDocuments(LocalDate.now());
         return convertToDto(documents);
     }
-
-    @Override
-    public List<ResponsibilityDocumentDto> getExpiringDocuments(int daysFromNow) {
-        log.debug("만료 예정 문서 조회 - daysFromNow: {}", daysFromNow);
-        LocalDate startDate = LocalDate.now();
-        LocalDate endDate = LocalDate.now().plusDays(daysFromNow);
-        List<ResponsibilityDocument> documents = responsibilityDocumentRepository.findExpiringDocuments(startDate, endDate);
-        return convertToDto(documents);
-    }
-
     @Override
     public List<ResponsibilityDocumentDto> getPendingApprovalDocuments() {
         log.debug("승인 대기 문서 조회");
@@ -242,26 +225,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
 
         return results.map(this::convertToDtoWithJoin);
     }
-
-    // 통계 기능들은 추후 구현 예정
-    @Override
-    public DocumentStatisticsDto getDocumentStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
-    public List<MonthlyStatisticsDto> getMonthlyCreationStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
-    public List<StatusStatisticsDto> getStatusStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
     // 결재 연동 메소드들
 
     @Override
