@@ -136,4 +136,9 @@ public class AuditItemStatusResponseDto {
      */
     private String approvalStatusCd;
 
+    /**
+     * 점검최종결과여부 (audit_prog_mngt_detail 테이블에서)
+     */
+    private String auditFinalResultYn;
+
 }

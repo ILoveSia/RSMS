@@ -55,7 +55,7 @@ interface AuditItemRow {
   auditMenId: string;                   // 점검자 (표시용 - 쉼표로 구분)
   roleSumm: string;                     // 책무 개요
   auditDoneDt: string;                  // 이행완료 예정일자
-  auditDetailcontent: string;          // 점검 세부내용
+  auditDetailContent: string;          // 점검 세부내용
   auditResultStatusCd: string;          // 점가결과 (최우선 상태)
   impPlStatusCd: string;                // 이행완료 예정일자
   auditDoneContent: string;             // 이행결과보고
@@ -64,6 +64,7 @@ interface AuditItemRow {
   detailCount: number;                  // 상세 항목 개수
   auditTitle: string;                   // 점검회차명
   auditStatusCdFromProgMngt: string;    // 점검 계획진행상태
+  auditFinalResultYn: string;           // 점검최종결과여부
 }
 
 /**
@@ -124,7 +125,7 @@ const groupAndConvertApiResponse = (responses: AuditItemStatusResponse[]): Audit
       auditMenId: auditMenIds.join(', '), // 표시용
       roleSumm: firstItem.roleSumm || '',
       auditDoneDt: firstItem.auditDoneDt || '',
-      auditDetailcontent: firstItem.auditDetailcontent || '',
+      auditDetailContent: firstItem.auditDetailContent || '',
       auditResultStatusCd: priorityStatus?.auditResultStatusCd || firstItem.auditResultStatusCd || '',
       impPlStatusCd: firstItem.impPlStatusCd || '',
       auditDoneContent: firstItem.auditDoneContent || '',
@@ -133,6 +134,7 @@ const groupAndConvertApiResponse = (responses: AuditItemStatusResponse[]): Audit
       detailCount: items.length,
       auditTitle: firstItem.auditTitle || '',
       auditStatusCdFromProgMngt: firstItem.auditStatusCdFromProgMngt || '',
+      auditFinalResultYn: firstItem.auditFinalResultYn || 'N',
     };
   });
 };
@@ -312,9 +314,25 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       width: 180,
     },
     {
-      field: 'auditDetailcontent',
+      field: 'auditDetailContent',
       headerName: '점검 세부내용',
       width: 180,
+    },
+    {
+      field: 'auditFinalResultYn',
+      headerName: '점검 및 이행완료',
+      width: 130,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => {
+        return (
+          <Chip
+            label={value === 'Y' ? '완료' : '진행중'}
+            color={value === 'Y' ? 'success' : 'warning'}
+            size="small"
+          />
+        );
+      },
     }
 
   ];
@@ -379,7 +397,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
         '점검결과': row.auditResultStatusCd,
         '책무 개요': row.roleSumm,
         '이행완료 예정일자': row.auditDoneDt,
-        '점검 세부내용': row.auditDetailcontent,
+        '점검 세부내용': row.auditDetailContent,
         '상세항목수': row.detailCount,
         '상세ID목록': row.auditProgMngtDetailIds.join(', '),
       }));

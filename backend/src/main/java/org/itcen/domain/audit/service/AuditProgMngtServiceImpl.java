@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.dto.AuditProgMngtDto;
+import org.itcen.domain.audit.dto.DeptAuditResultStatusDto;
+import org.itcen.domain.audit.dto.DeptImprovementPlanStatusDto;
 import org.itcen.domain.audit.entity.AuditProgMngt;
 import org.itcen.domain.audit.entity.AuditProgMngtDetail;
 import org.itcen.domain.audit.repository.AuditProgMngtDetailRepository;
@@ -409,6 +411,81 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
                 .auditDoneContent(row[21] != null ? row[21].toString() : "")
                 .approvalId(row[22] != null ? ((Number) row[22]).longValue() : 0L)
                 .approvalStatusCd(row[23] != null ? row[23].toString() : "")
+                .auditFinalResultYn(row[24] != null ? row[24].toString() : "N")
+                .build();
+    }
+
+    /**
+     * 부서별 점검결과 현황 조회
+     */
+    @Override
+    public List<DeptAuditResultStatusDto> getDeptAuditResultStatus(Long ledgerOrdersId, String deptCd) {
+        log.debug("부서별 점검결과 현황 조회 - ledgerOrdersId: {}, deptCd: {}", ledgerOrdersId, deptCd);
+
+        // Native Query를 사용하여 Object[] 결과 조회
+        List<Object[]> nativeResults = auditProgMngtRepository.findDeptAuditResultStatusNative(ledgerOrdersId, deptCd);
+        
+        log.debug("부서별 점검결과 현황 Native Query 결과: {}건", nativeResults.size());
+
+        // Object[] 결과를 DeptAuditResultStatusDto로 변환
+        List<DeptAuditResultStatusDto> result = nativeResults.stream()
+                .map(this::convertObjectArrayToDeptAuditResultStatusDto)
+                .collect(Collectors.toList());
+
+        log.debug("부서별 점검결과 현황 조회 결과: {}건", result.size());
+        return result;
+    }
+
+    /**
+     * 부서별 개선계획등록 현황 조회
+     */
+    @Override
+    public List<DeptImprovementPlanStatusDto> getDeptImprovementPlanStatus(Long ledgerOrdersId, String deptCd) {
+        log.debug("부서별 개선계획등록 현황 조회 - ledgerOrdersId: {}, deptCd: {}", ledgerOrdersId, deptCd);
+
+        // Native Query를 사용하여 Object[] 결과 조회
+        List<Object[]> nativeResults = auditProgMngtRepository.findDeptImprovementPlanStatusNative(ledgerOrdersId, deptCd);
+        
+        log.debug("부서별 개선계획등록 현황 Native Query 결과: {}건", nativeResults.size());
+
+        // Object[] 결과를 DeptImprovementPlanStatusDto로 변환
+        List<DeptImprovementPlanStatusDto> result = nativeResults.stream()
+                .map(this::convertObjectArrayToDeptImprovementPlanStatusDto)
+                .collect(Collectors.toList());
+
+        log.debug("부서별 개선계획등록 현황 조회 결과: {}건", result.size());
+        return result;
+    }
+
+    /**
+     * Object[] 배열을 DeptAuditResultStatusDto로 변환
+     * Native Query 결과를 DTO로 매핑
+     */
+    private DeptAuditResultStatusDto convertObjectArrayToDeptAuditResultStatusDto(Object[] row) {
+        return DeptAuditResultStatusDto.builder()
+                .deptCd(row[0] != null ? row[0].toString() : "")
+                .deptName(row[1] != null ? row[1].toString() : "미지정")
+                .totalCount(row[2] != null ? ((Number) row[2]).longValue() : 0L)
+                .appropriateCount(row[3] != null ? ((Number) row[3]).longValue() : 0L)
+                .inadequateCount(row[4] != null ? ((Number) row[4]).longValue() : 0L)
+                .excludedCount(row[5] != null ? ((Number) row[5]).longValue() : 0L)
+                .appropriateRate(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0)
+                .build();
+    }
+
+    /**
+     * Object[] 배열을 DeptImprovementPlanStatusDto로 변환
+     * Native Query 결과를 DTO로 매핑
+     */
+    private DeptImprovementPlanStatusDto convertObjectArrayToDeptImprovementPlanStatusDto(Object[] row) {
+        return DeptImprovementPlanStatusDto.builder()
+                .deptCd(row[0] != null ? row[0].toString() : "")
+                .deptName(row[1] != null ? row[1].toString() : "미지정")
+                .inadequateCount(row[2] != null ? ((Number) row[2]).longValue() : 0L)
+                .planCreatedCount(row[3] != null ? ((Number) row[3]).longValue() : 0L)
+                .resultWrittenCount(row[4] != null ? ((Number) row[4]).longValue() : 0L)
+                .resultApprovedCount(row[5] != null ? ((Number) row[5]).longValue() : 0L)
+                .completionRate(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0)
                 .build();
     }
 

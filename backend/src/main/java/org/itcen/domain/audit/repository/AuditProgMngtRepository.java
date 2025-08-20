@@ -73,7 +73,8 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
                 COALESCE(apd.imp_pl_status_cd, '') as impPlStatusCd,
                 COALESCE(apd.audit_done_content, '') as auditDoneContent,
                 COALESCE(app.approval_id, 0) as approvalId,
-                COALESCE(app.appr_stat_cd, '') as approvalStatusCd
+                COALESCE(app.appr_stat_cd, '') as approvalStatusCd,
+                COALESCE(apd.audit_final_result_yn, 'N') as auditFinalResultYn
             FROM audit_prog_mngt apm
             INNER JOIN audit_prog_mngt_detail apd ON apm.audit_prog_mngt_id = apd.audit_prog_mngt_id
             INNER JOIN hod_ic_item hi ON apd.hod_ic_item_id = hi.hod_ic_item_id
@@ -111,6 +112,66 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
             ORDER BY r.responsibility_content
             """, nativeQuery = true)
     List<String> findResponsibilityContentsByAuditProgMngtId(@Param("auditProgMngtId") Long auditProgMngtId);
+
+    /**
+     * 부서별 점검결과 현황 조회
+     * 부서별로 audit_result_status_cd 코드별 집계
+     */
+    @Query(value = """
+            SELECT 
+                hi.dept_cd as deptCd,
+                d.department_name as deptName,
+                COUNT(apd.audit_prog_mngt_detail_id) as totalCount,
+                COUNT(CASE WHEN apd.audit_result_status_cd = 'INS02' THEN 1 END) as appropriateCount,
+                COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' THEN 1 END) as inadequateCount,
+                COUNT(CASE WHEN apd.audit_result_status_cd = 'INS04' THEN 1 END) as excludedCount,
+                CASE 
+                    WHEN COUNT(apd.audit_prog_mngt_detail_id) > 0 
+                    THEN ROUND((COUNT(CASE WHEN apd.audit_result_status_cd = 'INS02' THEN 1 END) * 100.0 / COUNT(apd.audit_prog_mngt_detail_id)), 2)
+                    ELSE 0.0 
+                END as appropriateRate
+            FROM audit_prog_mngt apm
+            INNER JOIN audit_prog_mngt_detail apd ON apm.audit_prog_mngt_id = apd.audit_prog_mngt_id
+            INNER JOIN hod_ic_item hi ON apd.hod_ic_item_id = hi.hod_ic_item_id
+            LEFT JOIN departments d ON hi.dept_cd = d.department_id
+            LEFT JOIN ledger_orders_hod loh ON apm.ledger_orders_hod = loh.ledger_orders_hod_id
+            WHERE (:ledgerOrdersId IS NULL OR loh.ledger_orders_id = :ledgerOrdersId)
+            AND (:deptCd IS NULL OR :deptCd = '' OR hi.dept_cd = :deptCd)
+            AND apd.audit_result_status_cd IN ('INS02', 'INS03', 'INS04')
+            GROUP BY hi.dept_cd, d.department_name
+            ORDER BY hi.dept_cd
+            """, nativeQuery = true)
+    List<Object[]> findDeptAuditResultStatusNative(@Param("ledgerOrdersId") Long ledgerOrdersId, @Param("deptCd") String deptCd);
+
+    /**
+     * 부서별 개선계획등록 현황 조회
+     * 부서별로 미흡사항 대한 개선계획 진행 현황 집계
+     */
+    @Query(value = """
+            SELECT 
+                hi.dept_cd as deptCd,
+                d.department_name as deptName,
+                COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' THEN 1 END) as inadequateCount,
+                COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' AND apd.imp_pl_status_cd = 'PLI01' THEN 1 END) as planCreatedCount,
+                COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' AND apd.imp_pl_status_cd = 'PLI02' THEN 1 END) as resultWrittenCount,
+                COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' AND apd.imp_pl_status_cd = 'PLI03' THEN 1 END) as resultApprovedCount,
+                CASE 
+                    WHEN COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' THEN 1 END) > 0 
+                    THEN ROUND((COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' AND apd.imp_pl_status_cd = 'PLI03' THEN 1 END) * 100.0 / COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' THEN 1 END)), 2)
+                    ELSE 0.0 
+                END as completionRate
+            FROM audit_prog_mngt apm
+            INNER JOIN audit_prog_mngt_detail apd ON apm.audit_prog_mngt_id = apd.audit_prog_mngt_id
+            INNER JOIN hod_ic_item hi ON apd.hod_ic_item_id = hi.hod_ic_item_id
+            LEFT JOIN departments d ON hi.dept_cd = d.department_id
+            LEFT JOIN ledger_orders_hod loh ON apm.ledger_orders_hod = loh.ledger_orders_hod_id
+            WHERE (:ledgerOrdersId IS NULL OR loh.ledger_orders_id = :ledgerOrdersId)
+            AND (:deptCd IS NULL OR :deptCd = '' OR hi.dept_cd = :deptCd)
+            GROUP BY hi.dept_cd, d.department_name
+            HAVING COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' THEN 1 END) > 0
+            ORDER BY hi.dept_cd
+            """, nativeQuery = true)
+    List<Object[]> findDeptImprovementPlanStatusNative(@Param("ledgerOrdersId") Long ledgerOrdersId, @Param("deptCd") String deptCd);
 
     // ====== 메인 대시보드용 쿼리 메서드들 ======
     

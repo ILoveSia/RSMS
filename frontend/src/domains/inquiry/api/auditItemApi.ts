@@ -31,6 +31,7 @@ export interface AuditItemStatusResponse {
   auditStatusCdFromProgMngt: string; // 점검 계획진행상태
   approvalId: number;               // 결재 ID (approval 테이블)
   approvalStatusCd: string;         // 결재상태코드 (approval 테이블)
+  auditFinalResultYn: string;       // 점검최종결과여부 (audit_prog_mngt_detail 테이블)
 }
 
 // 점검 현황(항목별) 조회 요청 파라미터

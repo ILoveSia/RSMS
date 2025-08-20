@@ -281,6 +281,20 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       headerAlign: 'center',
       renderCell: renderWriteDateCell,
     },
+    {
+      field: 'auditFinalResultYn' as keyof DeficiencyRow,
+      headerName: '점검 및 이행완료',
+      width: 130,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Chip
+          label={value === 'Y' ? '완료' : '진행중'}
+          color={value === 'Y' ? 'success' : 'warning'}
+          size="small"
+        />
+      ),
+    },
   ];
 
   // 조회 버튼 클릭 핸들러

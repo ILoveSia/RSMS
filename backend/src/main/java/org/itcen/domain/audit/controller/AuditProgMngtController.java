@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.dto.AuditProgMngtDto;
+import org.itcen.domain.audit.dto.DeptAuditResultStatusDto;
+import org.itcen.domain.audit.dto.DeptImprovementPlanStatusDto;
 import org.itcen.domain.audit.service.AuditProgMngtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -255,5 +257,43 @@ public class AuditProgMngtController {
             
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    /**
+     * 부서별 점검결과 현황 조회 API
+     * 
+     * @param ledgerOrdersId 원장차수 ID (조회조건, 선택적)
+     * @param deptCd 부서코드 (조회조건, 선택적)
+     * @return 부서별 점검결과 현황 목록
+     */
+    @GetMapping("/dept-audit-result-status")
+    public ResponseEntity<List<DeptAuditResultStatusDto>> getDeptAuditResultStatus(
+            @RequestParam(required = false) Long ledgerOrdersId,
+            @RequestParam(required = false) String deptCd) {
+        log.info("부서별 점검결과 현황 조회 요청 - ledgerOrdersId: {}, deptCd: {}", ledgerOrdersId, deptCd);
+        
+        List<DeptAuditResultStatusDto> deptStatusList = auditProgMngtService.getDeptAuditResultStatus(ledgerOrdersId, deptCd);
+        
+        log.info("부서별 점검결과 현황 조회 완료 - 건수: {}", deptStatusList.size());
+        return ResponseEntity.ok(deptStatusList);
+    }
+
+    /**
+     * 부서별 개선계획등록 현황 조회 API
+     * 
+     * @param ledgerOrdersId 원장차수 ID (조회조건, 선택적)
+     * @param deptCd 부서코드 (조회조건, 선택적)
+     * @return 부서별 개선계획등록 현황 목록
+     */
+    @GetMapping("/dept-improvement-plan-status")
+    public ResponseEntity<List<DeptImprovementPlanStatusDto>> getDeptImprovementPlanStatus(
+            @RequestParam(required = false) Long ledgerOrdersId,
+            @RequestParam(required = false) String deptCd) {
+        log.info("부서별 개선계획등록 현황 조회 요청 - ledgerOrdersId: {}, deptCd: {}", ledgerOrdersId, deptCd);
+        
+        List<DeptImprovementPlanStatusDto> deptStatusList = auditProgMngtService.getDeptImprovementPlanStatus(ledgerOrdersId, deptCd);
+        
+        log.info("부서별 개선계획등록 현황 조회 완료 - 건수: {}", deptStatusList.size());
+        return ResponseEntity.ok(deptStatusList);
     }
 }
