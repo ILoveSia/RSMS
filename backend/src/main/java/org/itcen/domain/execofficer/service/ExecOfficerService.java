@@ -3,8 +3,12 @@ package org.itcen.domain.execofficer.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.domain.execofficer.dto.ExecOfficerDto;
+import org.itcen.domain.execofficer.dto.ExecutiveAuthResponseDto;
+import org.itcen.domain.execofficer.dto.ExecutiveDepartmentInfoDto;
 import org.itcen.domain.execofficer.entity.ExecOfficer;
 import org.itcen.domain.execofficer.repository.ExecOfficerRepository;
+import org.itcen.domain.audit.dto.DeptAuditResultStatusDto;
+import org.itcen.domain.audit.dto.DeptImprovementPlanStatusDto;
 import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -177,5 +181,305 @@ public class ExecOfficerService {
             return LocalDateTime.parse(value.toString());
         }
         return null;
+    }
+
+    // ====== Executive Dashboard API Service Methods ======
+
+    /**
+     * 임원 권한 확인
+     * execofficer 테이블에서 해당 사용자가 임원인지 확인하고,
+     * ledger_order의 최대값을 가진 임원인지 확인
+     */
+    public ExecutiveAuthResponseDto checkExecutiveAuth(String empId) {
+        log.debug("임원 권한 확인 시작: empId={}", empId);
+
+        String sql = """
+            SELECT 
+                eo.execofficer_id,
+                eo.emp_id,
+                eo.positions_id,
+                p.positions_nm,
+                p.ledger_order,
+                CASE WHEN p.ledger_order = (
+                    SELECT MAX(p2.ledger_order) 
+                    FROM positions p2 
+                    JOIN execofficer eo2 ON p2.positions_id = eo2.positions_id
+                    WHERE eo2.emp_id = eo.emp_id
+                ) THEN true ELSE false END as is_max_order
+            FROM execofficer eo
+            JOIN positions p ON eo.positions_id = p.positions_id
+            WHERE eo.emp_id = :empId
+            ORDER BY p.ledger_order DESC
+            LIMIT 1
+            """;
+
+        try {
+            List<Object[]> results = em.createNativeQuery(sql)
+                    .setParameter("empId", empId)
+                    .getResultList();
+
+            if (results.isEmpty()) {
+                // 임원이 아닌 경우
+                return ExecutiveAuthResponseDto.builder()
+                        .isExecutive(false)
+                        .empId(empId)
+                        .departmentCount(0)
+                        .build();
+            }
+
+            Object[] row = results.get(0);
+            Long execofficerId = row[0] != null ? ((Number) row[0]).longValue() : null;
+            Long positionsId = row[2] != null ? ((Number) row[2]).longValue() : null;
+            String positionsName = (String) row[3];
+            Long ledgerOrder = row[4] != null ? ((Number) row[4]).longValue() : null;
+            Boolean isMaxOrder = (Boolean) row[5];
+
+            // 소관부서 수 조회
+            Integer departmentCount = getDepartmentCount(empId);
+
+            log.debug("임원 권한 확인 완료: execofficerId={}, positionsId={}, ledgerOrder={}, isMaxOrder={}, departmentCount={}", 
+                    execofficerId, positionsId, ledgerOrder, isMaxOrder, departmentCount);
+
+            return ExecutiveAuthResponseDto.builder()
+                    .isExecutive(true)
+                    .execofficerId(execofficerId)
+                    .empId(empId)
+                    .positionsId(positionsId)
+                    .positionsName(positionsName)
+                    .ledgerOrder(ledgerOrder)
+                    .departmentCount(departmentCount)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("임원 권한 확인 중 오류 발생: empId={}", empId, e);
+            return ExecutiveAuthResponseDto.builder()
+                    .isExecutive(false)
+                    .empId(empId)
+                    .departmentCount(0)
+                    .build();
+        }
+    }
+
+    /**
+     * 임원 소관부서 목록 조회
+     * positions_owner_dept 테이블을 통해 소관부서 목록 조회
+     */
+    public List<ExecutiveDepartmentInfoDto> getExecutiveDepartments(String empId) {
+        log.debug("임원 소관부서 조회 시작: empId={}", empId);
+
+        String sql = """
+            SELECT DISTINCT
+                pod.owner_dept_cd,
+                d.department_name,
+                pod.owner_dept_cd,
+                p.positions_id,
+                p.positions_nm
+            FROM positions_owner_dept pod
+            JOIN execofficer eo ON pod.positions_id = eo.positions_id
+            JOIN positions p ON eo.positions_id = p.positions_id
+            LEFT JOIN departments d ON pod.owner_dept_cd = d.department_id
+            WHERE eo.emp_id = :empId
+            ORDER BY pod.owner_dept_cd
+            """;
+
+        try {
+            List<Object[]> results = em.createNativeQuery(sql)
+                    .setParameter("empId", empId)
+                    .getResultList();
+
+            List<ExecutiveDepartmentInfoDto> departments = results.stream()
+                    .map(row -> ExecutiveDepartmentInfoDto.builder()
+                            .deptCd((String) row[0])
+                            .deptName((String) row[1])
+                            .ownerDeptCd((String) row[2])
+                            .positionsId(row[3] != null ? ((Number) row[3]).longValue() : null)
+                            .positionsName((String) row[4])
+                            .build())
+                    .collect(Collectors.toList());
+
+            log.debug("임원 소관부서 조회 완료: empId={}, 부서수={}", empId, departments.size());
+            return departments;
+
+        } catch (Exception e) {
+            log.error("임원 소관부서 조회 중 오류 발생: empId={}", empId, e);
+            return List.of();
+        }
+    }
+
+    /**
+     * 임원 소관부서별 점검결과 현황 조회
+     */
+    public List<DeptAuditResultStatusDto> getExecutiveAuditResultStatus(String empId, Long ledgerOrdersHodId) {
+        log.debug("임원 소관부서 점검결과 현황 조회 시작: empId={}, ledgerOrdersHodId={}", empId, ledgerOrdersHodId);
+
+        String sql = """
+            SELECT 
+                hici.dept_cd,
+                COALESCE(d.department_name, hici.dept_cd) as dept_name,
+                COUNT(hici.hod_ic_item_id) as total_count,
+                SUM(CASE WHEN apmd.audit_result_status_cd = 'INS02' THEN 1 ELSE 0 END) as appropriate_count,
+                SUM(CASE WHEN apmd.audit_result_status_cd = 'INS03' THEN 1 ELSE 0 END) as inadequate_count,
+                SUM(CASE WHEN apmd.audit_result_status_cd = 'INS04' THEN 1 ELSE 0 END) as excluded_count,
+                ROUND(
+                    CASE WHEN COUNT(hici.hod_ic_item_id) > 0
+                    THEN (SUM(CASE WHEN apmd.audit_result_status_cd = 'INS02' THEN 1 ELSE 0 END)::decimal / COUNT(hici.hod_ic_item_id)) * 100
+                    ELSE 0 END, 1
+                ) as appropriate_rate,
+                arr.audit_result_report_id,
+                apm.audit_prog_mngt_id
+            FROM audit_prog_mngt_detail apmd
+            JOIN audit_prog_mngt apm ON apmd.audit_prog_mngt_id = apm.audit_prog_mngt_id
+            LEFT JOIN hod_ic_item hici ON apmd.hod_ic_item_id = hici.hod_ic_item_id
+            LEFT JOIN departments d ON hici.dept_cd = d.department_id
+            LEFT JOIN audit_result_report arr ON apmd.audit_prog_mngt_id = arr.audit_prog_mngt_id
+            WHERE hici.dept_cd IN (
+                SELECT pod.owner_dept_cd 
+                FROM positions_owner_dept pod
+                JOIN execofficer eo ON pod.positions_id = eo.positions_id
+                WHERE eo.emp_id = :empId
+            )
+            """;
+
+        if (ledgerOrdersHodId != null) {
+            sql += " AND apm.ledger_orders_hod = :ledgerOrdersHodId ";
+        }
+
+        sql += """
+            GROUP BY hici.dept_cd, d.department_name, arr.audit_result_report_id, apm.audit_prog_mngt_id
+            ORDER BY hici.dept_cd
+            """;
+
+        try {
+            var query = em.createNativeQuery(sql)
+                    .setParameter("empId", empId);
+
+            if (ledgerOrdersHodId != null) {
+                query.setParameter("ledgerOrdersHodId", ledgerOrdersHodId);
+            }
+
+            List<Object[]> results = query.getResultList();
+
+            List<DeptAuditResultStatusDto> statusList = results.stream()
+                    .map(row -> {
+                        DeptAuditResultStatusDto dto = new DeptAuditResultStatusDto();
+                        dto.setDeptCd((String) row[0]);
+                        dto.setDeptName((String) row[1]);
+                        dto.setTotalCount(row[2] != null ? ((Number) row[2]).longValue() : 0L);
+                        dto.setAppropriateCount(row[3] != null ? ((Number) row[3]).longValue() : 0L);
+                        dto.setInadequateCount(row[4] != null ? ((Number) row[4]).longValue() : 0L);
+                        dto.setExcludedCount(row[5] != null ? ((Number) row[5]).longValue() : 0L);
+                        dto.setAppropriateRate(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0);
+                        dto.setAuditResultReportId(row[7] != null ? ((Number) row[7]).longValue() : null);
+                        dto.setAuditProgMngtId(row[8] != null ? ((Number) row[8]).longValue() : null);
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+
+            log.debug("임원 소관부서 점검결과 현황 조회 완료: empId={}, 결과수={}", empId, statusList.size());
+            return statusList;
+
+        } catch (Exception e) {
+            log.error("임원 소관부서 점검결과 현황 조회 중 오류 발생: empId={}, ledgerOrdersHodId={}", empId, ledgerOrdersHodId, e);
+            return List.of();
+        }
+    }
+
+    /**
+     * 임원 소관부서별 개선계획 이행 현황 조회
+     */
+    public List<DeptImprovementPlanStatusDto> getExecutiveImprovementPlanStatus(String empId, Long ledgerOrdersHodId) {
+        log.debug("임원 소관부서 개선계획 이행 현황 조회 시작: empId={}, ledgerOrdersHodId={}", empId, ledgerOrdersHodId);
+
+        String sql = """
+            SELECT 
+                hici.dept_cd,
+                COALESCE(d.department_name, hici.dept_cd) as dept_name,
+                COUNT(hici.hod_ic_item_id) as plan_created_count,
+                SUM(CASE WHEN arr.audit_result_report_id IS NOT NULL THEN 1 ELSE 0 END) as result_written_count,
+                SUM(CASE WHEN a.appr_stat_cd = 'APPROVED' THEN 1 ELSE 0 END) as result_approved_count,
+                ROUND(
+                    CASE WHEN COUNT(hici.hod_ic_item_id) > 0
+                    THEN (SUM(CASE WHEN a.appr_stat_cd = 'APPROVED' THEN 1 ELSE 0 END)::decimal / COUNT(hici.hod_ic_item_id)) * 100
+                    ELSE 0 END, 1
+                ) as completion_rate,
+                arr.audit_result_report_id,
+                apm.audit_prog_mngt_id
+            FROM audit_prog_mngt_detail apmd
+            JOIN audit_prog_mngt apm ON apmd.audit_prog_mngt_id = apm.audit_prog_mngt_id
+            LEFT JOIN hod_ic_item hici ON apmd.hod_ic_item_id = hici.hod_ic_item_id
+            LEFT JOIN departments d ON hici.dept_cd = d.department_id
+            LEFT JOIN audit_result_report arr ON apmd.audit_prog_mngt_id = arr.audit_prog_mngt_id
+            LEFT JOIN approval a ON arr.audit_result_report_id = a.task_id AND a.task_type_cd = 'audit_result_report'
+            WHERE hici.dept_cd IN (
+                SELECT pod.owner_dept_cd 
+                FROM positions_owner_dept pod
+                JOIN execofficer eo ON pod.positions_id = eo.positions_id
+                WHERE eo.emp_id = :empId
+            )
+            """;
+
+        if (ledgerOrdersHodId != null) {
+            sql += " AND apm.ledger_orders_hod = :ledgerOrdersHodId ";
+        }
+
+        sql += """
+            GROUP BY hici.dept_cd, d.department_name, arr.audit_result_report_id, apm.audit_prog_mngt_id
+            ORDER BY hici.dept_cd
+            """;
+
+        try {
+            var query = em.createNativeQuery(sql)
+                    .setParameter("empId", empId);
+
+            if (ledgerOrdersHodId != null) {
+                query.setParameter("ledgerOrdersHodId", ledgerOrdersHodId);
+            }
+
+            List<Object[]> results = query.getResultList();
+
+            List<DeptImprovementPlanStatusDto> statusList = results.stream()
+                    .map(row -> {
+                        DeptImprovementPlanStatusDto dto = new DeptImprovementPlanStatusDto();
+                        dto.setDeptCd((String) row[0]);
+                        dto.setDeptName((String) row[1]);
+                        dto.setPlanCreatedCount(row[2] != null ? ((Number) row[2]).longValue() : 0L);
+                        dto.setResultWrittenCount(row[3] != null ? ((Number) row[3]).longValue() : 0L);
+                        dto.setResultApprovedCount(row[4] != null ? ((Number) row[4]).longValue() : 0L);
+                        dto.setCompletionRate(row[5] != null ? ((Number) row[5]).doubleValue() : 0.0);
+                        dto.setAuditResultReportId(row[6] != null ? ((Number) row[6]).longValue() : null);
+                        dto.setAuditProgMngtId(row[7] != null ? ((Number) row[7]).longValue() : null);
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+
+            log.debug("임원 소관부서 개선계획 이행 현황 조회 완료: empId={}, 결과수={}", empId, statusList.size());
+            return statusList;
+
+        } catch (Exception e) {
+            log.error("임원 소관부서 개선계획 이행 현황 조회 중 오류 발생: empId={}, ledgerOrdersHodId={}", empId, ledgerOrdersHodId, e);
+            return List.of();
+        }
+    }
+
+    /**
+     * 소관부서 수 조회 (헬퍼 메서드)
+     */
+    private Integer getDepartmentCount(String empId) {
+        String sql = """
+            SELECT COUNT(DISTINCT pod.owner_dept_cd)
+            FROM positions_owner_dept pod
+            JOIN execofficer eo ON pod.positions_id = eo.positions_id
+            WHERE eo.emp_id = :empId
+            """;
+
+        try {
+            Number result = (Number) em.createNativeQuery(sql)
+                    .setParameter("empId", empId)
+                    .getSingleResult();
+            return result != null ? result.intValue() : 0;
+        } catch (Exception e) {
+            log.warn("소관부서 수 조회 실패: empId={}", empId, e);
+            return 0;
+        }
     }
 }

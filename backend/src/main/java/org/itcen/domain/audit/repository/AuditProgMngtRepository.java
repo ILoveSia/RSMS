@@ -116,6 +116,7 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
     /**
      * 부서별 점검결과 현황 조회
      * 부서별로 audit_result_status_cd 코드별 집계
+     * audit_result_report와 approval 테이블 조인 추가
      */
     @Query(value = """
             SELECT 
@@ -129,16 +130,29 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
                     WHEN COUNT(apd.audit_prog_mngt_detail_id) > 0 
                     THEN ROUND((COUNT(CASE WHEN apd.audit_result_status_cd = 'INS02' THEN 1 END) * 100.0 / COUNT(apd.audit_prog_mngt_detail_id)), 2)
                     ELSE 0.0 
-                END as appropriateRate
+                END as appropriateRate,
+                apm.audit_prog_mngt_id as auditProgMngtId,
+                arr.audit_result_report_id as auditResultReportId,
+                app.approval_id as approvalId,
+                COALESCE(app.appr_stat_cd, 'NONE') as approvalStatusCd,
+                CASE 
+                    WHEN app.appr_stat_cd = 'SUBMITTED' THEN '상신'
+                    WHEN app.appr_stat_cd = 'IN_PROGRESS' THEN '진행중'
+                    WHEN app.appr_stat_cd = 'REJECTED' THEN '반려'
+                    WHEN app.appr_stat_cd = 'APPROVED' THEN '승인'
+                    ELSE '미결재'
+                END as approvalStatusName
             FROM audit_prog_mngt apm
             INNER JOIN audit_prog_mngt_detail apd ON apm.audit_prog_mngt_id = apd.audit_prog_mngt_id
             INNER JOIN hod_ic_item hi ON apd.hod_ic_item_id = hi.hod_ic_item_id
             LEFT JOIN departments d ON hi.dept_cd = d.department_id
             LEFT JOIN ledger_orders_hod loh ON apm.ledger_orders_hod = loh.ledger_orders_hod_id
-            WHERE (:ledgerOrdersId IS NULL OR loh.ledger_orders_id = :ledgerOrdersId)
+            LEFT JOIN audit_result_report arr ON apm.audit_prog_mngt_id = arr.audit_prog_mngt_id AND hi.dept_cd = arr.dept_cd
+            LEFT JOIN approval app ON arr.audit_result_report_id = app.task_id AND app.task_type_cd = 'audit_result_report'
+            WHERE (:ledgerOrdersId IS NULL OR loh.ledger_orders_hod_id = :ledgerOrdersId)
             AND (:deptCd IS NULL OR :deptCd = '' OR hi.dept_cd = :deptCd)
             AND apd.audit_result_status_cd IN ('INS02', 'INS03', 'INS04')
-            GROUP BY hi.dept_cd, d.department_name
+            GROUP BY hi.dept_cd, d.department_name, apm.audit_prog_mngt_id, arr.audit_result_report_id, app.approval_id, app.appr_stat_cd
             ORDER BY hi.dept_cd
             """, nativeQuery = true)
     List<Object[]> findDeptAuditResultStatusNative(@Param("ledgerOrdersId") Long ledgerOrdersId, @Param("deptCd") String deptCd);
@@ -165,7 +179,7 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
             INNER JOIN hod_ic_item hi ON apd.hod_ic_item_id = hi.hod_ic_item_id
             LEFT JOIN departments d ON hi.dept_cd = d.department_id
             LEFT JOIN ledger_orders_hod loh ON apm.ledger_orders_hod = loh.ledger_orders_hod_id
-            WHERE (:ledgerOrdersId IS NULL OR loh.ledger_orders_id = :ledgerOrdersId)
+            WHERE (:ledgerOrdersId IS NULL OR loh.ledger_orders_hod_id = :ledgerOrdersId)
             AND (:deptCd IS NULL OR :deptCd = '' OR hi.dept_cd = :deptCd)
             GROUP BY hi.dept_cd, d.department_name
             HAVING COUNT(CASE WHEN apd.audit_result_status_cd = 'INS03' THEN 1 END) > 0

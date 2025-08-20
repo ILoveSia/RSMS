@@ -51,4 +51,14 @@ public class DeptImprovementPlanStatusDto {
      */
     private Double completionRate;
 
+    /**
+     * 점검계획관리 ID (audit_prog_mngt 테이블의 audit_prog_mngt_id)
+     */
+    private Long auditProgMngtId;
+
+    /**
+     * 점검결과보고서 ID (audit_result_report 테이블의 audit_result_report_id)
+     */
+    private Long auditResultReportId;
+
 }

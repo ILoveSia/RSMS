@@ -460,6 +460,7 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
     /**
      * Object[] 배열을 DeptAuditResultStatusDto로 변환
      * Native Query 결과를 DTO로 매핑
+     * audit_result_report와 approval 정보 포함
      */
     private DeptAuditResultStatusDto convertObjectArrayToDeptAuditResultStatusDto(Object[] row) {
         return DeptAuditResultStatusDto.builder()
@@ -470,6 +471,11 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
                 .inadequateCount(row[4] != null ? ((Number) row[4]).longValue() : 0L)
                 .excludedCount(row[5] != null ? ((Number) row[5]).longValue() : 0L)
                 .appropriateRate(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0)
+                .auditProgMngtId(row[7] != null ? ((Number) row[7]).longValue() : null)
+                .auditResultReportId(row[8] != null ? ((Number) row[8]).longValue() : null)
+                .approvalId(row[9] != null ? ((Number) row[9]).longValue() : null)
+                .approvalStatusCd(row[10] != null ? row[10].toString() : "NONE")
+                .approvalStatusName(row[11] != null ? row[11].toString() : "미결재")
                 .build();
     }
 

@@ -218,16 +218,17 @@ const CustomPagination = ({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        p: 3,
+        px: 3,
+        py: 1.5,
         backgroundColor: 'rgba(248, 249, 250, 0.95)',
         borderTop: '1px solid rgba(82, 122, 138, 0.2)',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <FormControl 
           size='small' 
           sx={{ 
-            minWidth: 140, 
+            minWidth: 120, 
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
               backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -292,10 +293,10 @@ const CustomPagination = ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            px: 2,
-            py: 1,
+            px: 1.5,
+            py: 0.75,
             backgroundColor: 'rgba(82, 122, 138, 0.08)',
-            borderRadius: '8px',
+            borderRadius: '6px',
             border: '1px solid rgba(82, 122, 138, 0.15)',
           }}
         >

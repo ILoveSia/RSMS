@@ -269,6 +269,21 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
     title: '적부구조도 제출 관리',
     icon: 'Upload',
   },
+
+  // 대시보드
+  '/dash/executive': {
+		component: () => import('@/domains/dashboard/pages/ExecutiveDashboardStatusPage'),
+		title: '임원별 대시보드드',
+		icon: 'description',
+	},
+  // '/dash/dept': {
+	// 	component: () => import('@/domains/dashboard/pages/DeptDashboardStatusPage'),
+	// 	title: '부서별 대시보드드',
+	// 	icon: 'description',
+	// },
+
+
+
 };
 
 /**
