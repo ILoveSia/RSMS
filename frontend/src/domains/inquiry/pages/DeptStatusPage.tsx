@@ -6,36 +6,52 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Button } from '@/shared/components/ui/button';
-import SearchButton from '@/shared/components/ui/button/SearchButton';
-import ExcelDownloadButton from '@/shared/components/ui/button/ExcelDownloadButton';
+import { Button, SearchButton } from '@/shared/components/ui/button';
 import LedgerOrdersHodSelect from '@/shared/components/ui/form/LedgerOrdersHodSelect';
 import DepartmentSearchBox from '@/shared/components/ui/form/DepartmentSearchBox';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { SelectOption } from '@/shared/types/common';
+import DataGrid from '@/shared/components/ui/data-display/DataGrid';
+import type { SelectOption, DataGridColumn } from '@/shared/types/common';
 import { useReduxState } from '@/app/store/use-store';
-import { Groups as GroupsIcon, Clear as ClearIcon, Description as DescriptionIcon } from '@mui/icons-material';
+import { Groups as GroupsIcon, Description as DescriptionIcon } from '@mui/icons-material';
 import { 
   Box, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Paper,
   Typography
 } from '@mui/material';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { 
   auditProgMngtApi,
   type DeptAuditResultStatusDto,
   type DeptImprovementPlanStatusDto 
 } from '@/domains/inquiry/api/auditProgMngtApi';
+
+// 통합 부서별 현황 타입
+interface CombinedDeptStatusDto {
+  deptCd: string;
+  deptName: string;
+  // 점검결과 현황
+  totalCount: number;
+  appropriateCount: number;
+  inadequateCount: number;
+  excludedCount: number;
+  appropriateRate: number;
+  // 개선계획 이행 현황
+  planCreatedCount: number;
+  resultWrittenCount: number;
+  resultApprovedCount: number;
+  completionRate: number;
+  // audit_result_report 및 approval 정보
+  auditProgMngtId?: number;
+  auditResultReportId?: number;
+  approvalId?: number;
+  approvalStatusCd?: string;
+  approvalStatusName?: string;
+}
 import type { Department } from '@/domains/common/components/search/DepartmentSearchPopup';
 import AuditResultReportDialog from '../components/AuditResultReportDialog';
+import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
 
 // LoginUser 타입 (로그인 API 응답에 맞춤)
 interface LoginUser {
@@ -72,6 +88,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   // 테이블 데이터 상태
   const [auditResultRows, setAuditResultRows] = useState<DeptAuditResultStatusDto[]>([]);
   const [improvementPlanRows, setImprovementPlanRows] = useState<DeptImprovementPlanStatusDto[]>([]);
+  const [combinedRows, setCombinedRows] = useState<CombinedDeptStatusDto[]>([]);
   
   // 검색 조건 상태
   const [selectedLedgerOrdersHod, setSelectedLedgerOrdersHod] = useState<SelectOption | null>(null);
@@ -81,6 +98,11 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportDialogMode, setReportDialogMode] = useState<'create' | 'edit' | 'view'>('create');
   const [currentAuditProgMngtId, setCurrentAuditProgMngtId] = useState<number | undefined>(undefined);
+  const [selectedDeptForReport, setSelectedDeptForReport] = useState<{ deptCd: string; deptName: string } | null>(null);
+  
+  // DataGrid 체크박스 선택 상태 (단일 선택)
+  const [selectedRow, setSelectedRow] = useState<string | number | null>(null);
+  const [selectedData, setSelectedData] = useState<CombinedDeptStatusDto | null>(null);
 
   /**
    * 부서별 점검결과 현황 조회
@@ -123,6 +145,73 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   }, [filter.ledgerOrdersId, filter.deptCd]);
 
   /**
+   * 두 데이터를 부서코드 기준으로 통합
+   */
+  const combineData = useCallback((auditData: DeptAuditResultStatusDto[], improvementData: DeptImprovementPlanStatusDto[]): CombinedDeptStatusDto[] => {
+    const deptMap = new Map<string, CombinedDeptStatusDto>();
+
+    // 점검결과 데이터 추가
+    auditData.forEach(audit => {
+      deptMap.set(audit.deptCd, {
+        deptCd: audit.deptCd,
+        deptName: audit.deptName,
+        totalCount: audit.totalCount,
+        appropriateCount: audit.appropriateCount,
+        inadequateCount: audit.inadequateCount,
+        excludedCount: audit.excludedCount,
+        appropriateRate: audit.appropriateRate,
+        planCreatedCount: 0,
+        resultWrittenCount: 0,
+        resultApprovedCount: 0,
+        completionRate: 0,
+        auditProgMngtId: (audit as any).auditProgMngtId || undefined,
+        auditResultReportId: (audit as any).auditResultReportId || undefined,
+        approvalId: (audit as any).approvalId || undefined,
+        approvalStatusCd: (audit as any).approvalStatusCd || 'NONE',
+        approvalStatusName: (audit as any).approvalStatusName || '미결재'
+      });
+    });
+
+    // 개선계획 데이터 병합
+    improvementData.forEach(improvement => {
+      const existing = deptMap.get(improvement.deptCd);
+      if (existing) {
+        existing.planCreatedCount = improvement.planCreatedCount;
+        existing.resultWrittenCount = improvement.resultWrittenCount;
+        existing.resultApprovedCount = improvement.resultApprovedCount;
+        existing.completionRate = improvement.completionRate;
+      } else {
+        deptMap.set(improvement.deptCd, {
+          deptCd: improvement.deptCd,
+          deptName: improvement.deptName,
+          totalCount: 0,
+          appropriateCount: 0,
+          inadequateCount: improvement.inadequateCount,
+          excludedCount: 0,
+          appropriateRate: 0,
+          planCreatedCount: improvement.planCreatedCount,
+          resultWrittenCount: improvement.resultWrittenCount,
+          resultApprovedCount: improvement.resultApprovedCount,
+          completionRate: improvement.completionRate,
+          auditProgMngtId: undefined,
+          auditResultReportId: undefined,
+          approvalId: undefined,
+          approvalStatusCd: 'NONE',
+          approvalStatusName: '미결재'
+        });
+      }
+    });
+
+    return Array.from(deptMap.values()).sort((a, b) => a.deptName.localeCompare(b.deptName));
+  }, []);
+
+  // 데이터가 변경될 때마다 통합 데이터 업데이트
+  useEffect(() => {
+    const combined = combineData(auditResultRows, improvementPlanRows);
+    setCombinedRows(combined);
+  }, [auditResultRows, improvementPlanRows, combineData]);
+
+  /**
    * 검색 실행
    */
   const handleSearch = useCallback(async () => {
@@ -132,35 +221,21 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     ]);
   }, [fetchDeptAuditResultStatus, fetchDeptImprovementPlanStatus]);
 
-  /**
-   * 필터 초기화
-   */
-  const handleClearFilter = () => {
-    setFilter({});
-    setSelectedLedgerOrdersHod(null);
-    setSelectedDepartment(null);
-  };
 
-  /**
-   * 검색 조건 적용
-   */
-  const applySearchConditions = () => {
+
+
+  // 검색 조건이 변경될 때 필터만 적용 (자동 검색 방지)
+  useEffect(() => {
     setFilter({
       ledgerOrdersId: selectedLedgerOrdersHod ? Number(selectedLedgerOrdersHod.value) : undefined,
       deptCd: selectedDepartment?.deptCode || undefined
     });
-  };
-
-
-  // 검색 조건이 변경될 때마다 필터 적용
-  useEffect(() => {
-    applySearchConditions();
   }, [selectedLedgerOrdersHod, selectedDepartment]);
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 (한 번만 실행)
   useEffect(() => {
     handleSearch();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleErrorDialogClose = () => {
     setErrorDialogOpen(false);
@@ -168,24 +243,34 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
   };
 
   /**
-   * 점검결과 현황 합계 계산
+   * 통합 데이터 합계 계산
    */
-  const calculateAuditResultTotal = (): DeptAuditResultStatusDto => {
-    const total = auditResultRows.reduce((acc, row) => {
+  const calculateCombinedTotal = (): CombinedDeptStatusDto => {
+    const total = combinedRows.reduce((acc, row) => {
       acc.totalCount += row.totalCount;
       acc.appropriateCount += row.appropriateCount;
       acc.inadequateCount += row.inadequateCount;
       acc.excludedCount += row.excludedCount;
+      acc.planCreatedCount += row.planCreatedCount;
+      acc.resultWrittenCount += row.resultWrittenCount;
+      acc.resultApprovedCount += row.resultApprovedCount;
       return acc;
     }, {
       totalCount: 0,
       appropriateCount: 0,
       inadequateCount: 0,
-      excludedCount: 0
+      excludedCount: 0,
+      planCreatedCount: 0,
+      resultWrittenCount: 0,
+      resultApprovedCount: 0
     });
 
     const appropriateRate = total.totalCount > 0 
       ? Math.round((total.appropriateCount / total.totalCount) * 100 * 100) / 100
+      : 0;
+
+    const completionRate = total.inadequateCount > 0 
+      ? Math.round((total.resultApprovedCount / total.inadequateCount) * 100 * 100) / 100
       : 0;
 
     return {
@@ -195,35 +280,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       appropriateCount: total.appropriateCount,
       inadequateCount: total.inadequateCount,
       excludedCount: total.excludedCount,
-      appropriateRate: appropriateRate
-    };
-  };
-
-  /**
-   * 개선계획 이행 현황 합계 계산
-   */
-  const calculateImprovementPlanTotal = (): DeptImprovementPlanStatusDto => {
-    const total = improvementPlanRows.reduce((acc, row) => {
-      acc.inadequateCount += row.inadequateCount;
-      acc.planCreatedCount += row.planCreatedCount;
-      acc.resultWrittenCount += row.resultWrittenCount;
-      acc.resultApprovedCount += row.resultApprovedCount;
-      return acc;
-    }, {
-      inadequateCount: 0,
-      planCreatedCount: 0,
-      resultWrittenCount: 0,
-      resultApprovedCount: 0
-    });
-
-    const completionRate = total.inadequateCount > 0 
-      ? Math.round((total.resultApprovedCount / total.inadequateCount) * 100 * 100) / 100
-      : 0;
-
-    return {
-      deptCd: '합계',
-      deptName: '합계',
-      inadequateCount: total.inadequateCount,
+      appropriateRate: appropriateRate,
       planCreatedCount: total.planCreatedCount,
       resultWrittenCount: total.resultWrittenCount,
       resultApprovedCount: total.resultApprovedCount,
@@ -231,8 +288,214 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     };
   };
 
-  const auditResultTotal = calculateAuditResultTotal();
-  const improvementPlanTotal = calculateImprovementPlanTotal();
+  const combinedTotal = calculateCombinedTotal();
+
+  /**
+   * 부서명 클릭 처리 (상세조회)
+   */
+  const handleDeptNameClick = useCallback((row: CombinedDeptStatusDto) => {
+    if (row.auditResultReportId) {
+      // 이미 결과보고서가 있으면 조회 모드로 열기
+      setCurrentAuditProgMngtId(row.auditProgMngtId || undefined);
+      setSelectedDeptForReport({ deptCd: row.deptCd, deptName: row.deptName });
+      setReportDialogMode('view');
+      setReportDialogOpen(true);
+    }
+  }, []);
+
+  /**
+   * DataGrid 컬럼 정의
+   */
+  const columns: DataGridColumn<CombinedDeptStatusDto>[] = useMemo(() => [
+    {
+      field: 'deptName',
+      headerName: '부서명',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value, row }) => (
+        <Typography 
+          variant="body2" 
+          fontWeight="bold" 
+          sx={{ 
+            color: row.auditResultReportId ? 'var(--bank-primary)' : '#333',
+            textDecoration: row.auditResultReportId ? 'underline' : 'none',
+            cursor: row.auditResultReportId ? 'pointer' : 'default',
+            '&:hover': row.auditResultReportId ? {
+              color: 'var(--bank-primary-dark)',
+            } : {}
+          }}
+          onClick={(e) => {
+            if (row.auditResultReportId) {
+              e.stopPropagation(); // 행 클릭 이벤트 방지
+              handleDeptNameClick(row);
+            }
+          }}
+        >
+          {value}
+        </Typography>
+      )
+    },
+    // 점검결과 현황 컬럼들
+    {
+      field: 'totalCount',
+      headerName: '전체',
+      width: 80,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value).toLocaleString()}
+        </Typography>
+      )
+    },
+    {
+      field: 'appropriateCount',
+      headerName: '적정',
+      width: 80,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value).toLocaleString()}
+        </Typography>
+      )
+    },
+    {
+      field: 'inadequateCount',
+      headerName: '미흡',
+      width: 80,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value).toLocaleString()}
+        </Typography>
+      )
+    },
+    {
+      field: 'excludedCount',
+      headerName: '점검제외',
+      width: 80,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value).toLocaleString()}
+        </Typography>
+      )
+    },
+    {
+      field: 'appropriateRate',
+      headerName: '적정수행율(%)',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value)}%
+        </Typography>
+      )
+    },
+    // 개선계획 이행 현황 컬럼들
+    {
+      field: 'planCreatedCount',
+      headerName: '개선계획작성',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value).toLocaleString()}
+        </Typography>
+      )
+    },
+    {
+      field: 'resultWrittenCount',
+      headerName: '이행결과작성',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value).toLocaleString()}
+        </Typography>
+      )
+    },
+    {
+      field: 'resultApprovedCount',
+      headerName: '이행결과결재완료',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value).toLocaleString()}
+        </Typography>
+      )
+    },
+    {
+      field: 'completionRate',
+      headerName: '이행완료율(%)',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => (
+        <Typography variant="body2">
+          {Number(value)}%
+        </Typography>
+      )
+    },
+    {
+      field: 'approvalStatusName',
+      headerName: '결재상태',
+      width: 100,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value, row }) => (
+        <Typography
+          variant="caption"
+          sx={{
+            color: row.approvalStatusCd === 'APPROVED' ? 'success.main' : 
+                  row.approvalStatusCd === 'IN_PROGRESS' ? 'primary.main' :
+                  row.approvalStatusCd === 'SUBMITTED' ? 'info.main' :
+                  row.approvalStatusCd === 'REJECTED' ? 'error.main' : 'warning.main',
+            fontWeight: 'bold'
+          }}
+        >
+          {value || '미결재'}
+        </Typography>
+      )
+    },
+    {
+      field: 'approvalAction',
+      headerName: '결재상신',
+      width: 180,
+      align: 'center',
+      headerAlign: 'center',
+      sortable: false,
+      renderCell: ({ row }) => {
+        // 결과보고서가 있는 경우 결재 상태에 관계없이 ApprovalActionButton 표시
+        if (row.auditResultReportId) {
+          return (
+            <ApprovalActionButton
+              taskType="audit_result_report"
+              taskId={Number(row.auditResultReportId)}
+              taskTitle={`부서별 점검 결과보고서 - ${row.deptName}`}
+              currentUserId={loginData?.userid || 'unknown'}
+              onApprovalStateChange={() => {
+                // 결재 상태 변경 시 데이터 새로고침
+                handleSearch();
+              }}
+              size="small"
+              variant="contained"
+            />
+          );
+        }
+        return null;
+      }
+    }
+  ], [loginData?.userid, handleSearch, handleDeptNameClick]);
 
   /**
    * 결과보고서 작성 버튼 활성화 여부 확인
@@ -242,30 +505,6 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     return loginData?.positionCode === 'PC03';
   };
 
-  /**
-   * 결과보고서 작성 버튼 클릭
-   */
-  const handleCreateReport = () => {
-    // 권한 체크
-    if (!isReportButtonEnabled()) {
-      setErrorMessage('결과보고서 작성 권한이 없습니다. (PC03 직급만 가능)');
-      setErrorDialogOpen(true);
-      return;
-    }
-
-    // 현재 선택된 원장차수 확인
-    const auditProgMngtId = selectedLedgerOrdersHod ? Number(selectedLedgerOrdersHod.value) : undefined;
-    
-    if (!auditProgMngtId) {
-      setErrorMessage('결과보고서를 작성할 원장차수를 선택해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-
-    setCurrentAuditProgMngtId(auditProgMngtId);
-    setReportDialogMode('create');
-    setReportDialogOpen(true);
-  };
 
   /**
    * 결과보고서 저장 완료 후 처리
@@ -274,6 +513,61 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     // 데이터 새로고침
     handleSearch();
     setReportDialogOpen(false);
+    setSelectedDeptForReport(null);
+  };
+
+  /**
+   * DataGrid 행 선택 변경 처리 (단일 선택)
+   */
+  const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedRowData: CombinedDeptStatusDto[]) => {
+    const selectedId = selectedRowIds.length > 0 ? selectedRowIds[0] : null;
+    const selectedItem = selectedRowData.length > 0 ? selectedRowData[0] : null;
+    
+    setSelectedRow(selectedId);
+    setSelectedData(selectedItem);
+  };
+
+  /**
+   * 선택된 부서의 결과보고서 작성
+   */
+  const handleCreateReportForSelected = () => {
+    if (!selectedData) {
+      setErrorMessage('결과보고서를 작성할 부서를 선택해주세요.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 이미 결과보고서가 등록된 부서인지 체크
+    if (selectedData.auditResultReportId) {
+      setErrorMessage('이미 결과보고서가 등록된 부서입니다. 부서명을 클릭하여 조회하세요.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 권한 체크
+    if (!isReportButtonEnabled()) {
+      setErrorMessage('결과보고서 작성 권한이 없습니다. (PC03 직급만 가능)');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 선택된 부서의 auditProgMngtId 사용
+    const auditProgMngtId = selectedData.auditProgMngtId;
+    
+    if (!auditProgMngtId) {
+      setErrorMessage('점검계획관리 정보가 없습니다. 원장차수를 다시 선택해주세요.');
+      setErrorDialogOpen(true);
+      return;
+    }
+
+    // 선택된 부서로 다이얼로그 열기
+    setCurrentAuditProgMngtId(auditProgMngtId);
+    setSelectedDeptForReport({ 
+      deptCd: selectedData.deptCd, 
+      deptName: selectedData.deptName 
+    });
+    setReportDialogMode('create');
+    setReportDialogOpen(true);
   };
 
   return (
@@ -327,19 +621,17 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>원장차수</span>
           <LedgerOrdersHodSelect
-            value={selectedLedgerOrdersHod?.value || ''}
-            onChange={(value, ledgerOrdersHodId, ledgerOrdersHodStatusCd) => {
+            value={selectedLedgerOrdersHod?.value || 'ALL'}
+            onChange={useCallback((value: string) => {
               if (value && value !== 'ALL') {
                 setSelectedLedgerOrdersHod({ 
                   value: String(value), 
-                  label: String(value),
-                  ledgerOrdersHodId, 
-                  ledgerOrdersHodStatusCd 
+                  label: String(value)
                 });
               } else {
                 setSelectedLedgerOrdersHod(null);
               }
-            }}
+            }, [])}
             size="small"
             disabled={isLoading}
             includeAll={true}
@@ -356,264 +648,90 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           />
           
           <SearchButton onClick={handleSearch} loading={isLoading} disabled={isLoading} />
-          <Button
-            startIcon={<ClearIcon />}
-            onClick={handleClearFilter}
-            variant="outlined"
-            size="small"
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              borderRadius: 1,
-            }}
-          >
-            초기화
-          </Button>
         </Box>
 
-        {/* 결과보고서 작성 버튼 */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        {/* 액션 버튼들 */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 0.5, 
+          gap: 1,
+          alignItems: 'center',
+          height: '32px',
+        }}>
           <Button
             variant="contained"
             size="small"
             color="primary"
             startIcon={<DescriptionIcon />}
-            onClick={handleCreateReport}
-            disabled={!isReportButtonEnabled()}
+            onClick={handleCreateReportForSelected}
+            disabled={!isReportButtonEnabled() || !selectedData || !!selectedData.auditResultReportId}
             sx={{
               height: '32px',
               minWidth: '120px',
               fontSize: '0.875rem',
               fontWeight: 600,
               borderRadius: 1,
-              opacity: isReportButtonEnabled() ? 1 : 0.5,
             }}
-            title={!isReportButtonEnabled() ? 'PC03 직급만 결과보고서 작성이 가능합니다.' : ''}
           >
-            결과보고서 작성
+            선택부서 결과보고서 작성
           </Button>
+          {selectedData && (
+            <Typography variant="body2" sx={{ color: 'text.secondary', ml: 1 }}>
+              선택됨: {selectedData.deptName}
+            </Typography>
+          )}
         </Box>
 
-        <Box sx={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          
-          {/* 첫 번째 테이블: 부서별 점검결과 현황 */}
-          <Box sx={{ flex: 1, minHeight: 0 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 1,
-              p: 2,
-              backgroundColor: 'var(--bank-bg-secondary)',
-              border: '1px solid var(--bank-border)',
-              borderRadius: '4px',
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="h6" fontWeight="bold" color="primary">
-                  점검결과 현황
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  총 {auditResultRows.length}개 부서
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <ExcelDownloadButton
-                  onDownload={() => {
-                    // Excel 다운로드 구현
-                    console.log('점검결과 현황 Excel 다운로드');
-                  }}
-                />
-              </Box>
-            </Box>
-            
-            <Paper sx={{ 
-              height: 'calc(50vh - 100px)', 
-              display: 'flex', 
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}>
-              <TableContainer sx={{ 
-                flex: 1,
-                overflow: 'auto',
-                position: 'relative',
-                '&::-webkit-scrollbar': { width: '8px' },
-                '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
-                '&::-webkit-scrollbar-thumb': { backgroundColor: '#c1c1c1', borderRadius: '4px' },
-              }}>
-                <Table stickyHeader size="small" sx={{
-                  '& .MuiTableHead-root .MuiTableCell-root': {
-                    backgroundColor: 'var(--bank-bg-secondary) !important',
-                    fontWeight: 'bold',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--bank-border)',
-                  },
-                }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align="center" sx={{ minWidth: 120 }}>부서명</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 80 }}>전체</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 80 }}>적정</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 80 }}>미흡</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 80 }}>점검제외</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 100 }}>적정수행율(%)</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {auditResultRows.map((row, index) => (
-                      <TableRow 
-                        key={`${row.deptCd}-${index}`}
-                        hover
-                        sx={{ 
-                          '& td': { 
-                            border: '1px solid var(--bank-border)',
-                            fontSize: '0.875rem',
-                          }
-                        }}
-                      >
-                        <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: 'var(--bank-bg-secondary)' }}>
-                          {row.deptName}
-                        </TableCell>
-                        <TableCell align="center">{row.totalCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.appropriateCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.inadequateCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.excludedCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.appropriateRate}%</TableCell>
-                      </TableRow>
-                    ))}
-                    
-                    {/* 합계 행 */}
-                    <TableRow sx={{
-                      backgroundColor: 'var(--bank-primary-bg)',
-                      '& td': {
-                        borderTop: '2px solid var(--bank-primary)',
-                        fontWeight: 'bold',
-                        fontSize: '0.875rem',
-                      }
-                    }}>
-                      <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: 'var(--bank-primary-bg)' }}>
-                        {auditResultTotal.deptName}
-                      </TableCell>
-                      <TableCell align="center">{auditResultTotal.totalCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{auditResultTotal.appropriateCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{auditResultTotal.inadequateCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{auditResultTotal.excludedCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{auditResultTotal.appropriateRate}%</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Box>
+        <Box sx={{ width: '100%', flex: 1 }}>
+          <DataGrid
+            data={combinedRows}
+            columns={columns}
+            loading={isLoading}
+            height={600}
+            selectable={true}
+            multiSelect={false}
+            selectedRows={selectedRow ? [selectedRow] : []}
+            onRowSelectionChange={handleRowSelectionChange}
+            rowIdField="deptCd"
+            sx={{
+              width: '100%',
+              height: '500px',
+              '& .MuiDataGrid-columnHeaders': {
+                backgroundColor: 'var(--bank-bg-secondary) !important',
+                fontWeight: 'bold',
+              }
+            }}
+          />
 
-          {/* 두 번째 테이블: 부서별 개선계획 이행 현황 */}
-          <Box sx={{ flex: 1, minHeight: 0 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 1,
-              p: 2,
-              backgroundColor: 'var(--bank-bg-secondary)',
-              border: '1px solid var(--bank-border)',
-              borderRadius: '4px',
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="h6" fontWeight="bold" color="primary">
-                  개선계획 이행 현황
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  총 {improvementPlanRows.length}개 부서
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <ExcelDownloadButton
-                  onDownload={() => {
-                    // Excel 다운로드 구현
-                    console.log('개선계획 이행 현황 Excel 다운로드');
-                  }}
-                />
-              </Box>
+          {/* 합계 정보 표시 */}
+          <Box sx={{ 
+            mt: 1,
+            p: 1.5,
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
+            borderRadius: '4px',
+          }}>
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Typography variant="body2" fontWeight="bold" color="primary">
+                합계: 총 {combinedRows.length}개 부서
+              </Typography>
+              <Typography variant="body2">
+                전체: <strong>{combinedTotal.totalCount.toLocaleString()}</strong>
+              </Typography>
+              <Typography variant="body2">
+                적정: <strong>{combinedTotal.appropriateCount.toLocaleString()}</strong>
+              </Typography>
+              <Typography variant="body2">
+                미흡: <strong>{combinedTotal.inadequateCount.toLocaleString()}</strong>
+              </Typography>
+              <Typography variant="body2">
+                적정수행율: <strong>{combinedTotal.appropriateRate}%</strong>
+              </Typography>
+              <Typography variant="body2">
+                이행완료율: <strong>{combinedTotal.completionRate}%</strong>
+              </Typography>
             </Box>
-            
-            <Paper sx={{ 
-              height: 'calc(50vh - 100px)', 
-              display: 'flex', 
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}>
-              <TableContainer sx={{ 
-                flex: 1,
-                overflow: 'auto',
-                position: 'relative',
-                '&::-webkit-scrollbar': { width: '8px' },
-                '&::-webkit-scrollbar-track': { backgroundColor: '#f1f1f1' },
-                '&::-webkit-scrollbar-thumb': { backgroundColor: '#c1c1c1', borderRadius: '4px' },
-              }}>
-                <Table stickyHeader size="small" sx={{
-                  '& .MuiTableHead-root .MuiTableCell-root': {
-                    backgroundColor: 'var(--bank-bg-secondary) !important',
-                    fontWeight: 'bold',
-                    fontSize: '0.875rem',
-                    border: '1px solid var(--bank-border)',
-                  },
-                }}>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell align="center" sx={{ minWidth: 120 }}>부서명</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 80 }}>미흡사항</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 100 }}>개선계획작성</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 100 }}>이행결과작성</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 120 }}>이행결과결재완료</TableCell>
-                      <TableCell align="center" sx={{ minWidth: 100 }}>이행완료율(%)</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {improvementPlanRows.map((row, index) => (
-                      <TableRow 
-                        key={`${row.deptCd}-${index}`}
-                        hover
-                        sx={{ 
-                          '& td': { 
-                            border: '1px solid var(--bank-border)',
-                            fontSize: '0.875rem',
-                          }
-                        }}
-                      >
-                        <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: 'var(--bank-bg-secondary)' }}>
-                          {row.deptName}
-                        </TableCell>
-                        <TableCell align="center">{row.inadequateCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.planCreatedCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.resultWrittenCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.resultApprovedCount.toLocaleString()}</TableCell>
-                        <TableCell align="center">{row.completionRate}%</TableCell>
-                      </TableRow>
-                    ))}
-                    
-                    {/* 합계 행 */}
-                    <TableRow sx={{
-                      backgroundColor: 'var(--bank-primary-bg)',
-                      '& td': {
-                        borderTop: '2px solid var(--bank-primary)',
-                        fontWeight: 'bold',
-                        fontSize: '0.875rem',
-                      }
-                    }}>
-                      <TableCell align="center" sx={{ fontWeight: 'bold', backgroundColor: 'var(--bank-primary-bg)' }}>
-                        {improvementPlanTotal.deptName}
-                      </TableCell>
-                      <TableCell align="center">{improvementPlanTotal.inadequateCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{improvementPlanTotal.planCreatedCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{improvementPlanTotal.resultWrittenCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{improvementPlanTotal.resultApprovedCount.toLocaleString()}</TableCell>
-                      <TableCell align="center">{improvementPlanTotal.completionRate}%</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
           </Box>
         </Box>
 
@@ -622,8 +740,8 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           open={reportDialogOpen}
           mode={reportDialogMode}
           auditProgMngtId={currentAuditProgMngtId}
-          deptCd={selectedDepartment?.deptCode || loginData?.deptCd}
-          deptName={selectedDepartment?.deptName || loginData?.deptCd}
+          deptCd={selectedDeptForReport?.deptCd || selectedDepartment?.deptCode || loginData?.deptCd}
+          deptName={selectedDeptForReport?.deptName || selectedDepartment?.deptName || loginData?.deptCd}
           empNo={loginData?.empNo || ''}
           empName={loginData?.username || ''}
           onClose={() => setReportDialogOpen(false)}

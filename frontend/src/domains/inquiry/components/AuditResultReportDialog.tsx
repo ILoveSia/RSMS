@@ -297,7 +297,8 @@ const AuditResultReportDialog: React.FC<AuditResultReportDialogProps> = ({
               />
             </Grid>
 
-            {/* 1차 승인자 */}
+            {/* 1차 승인자 - 주석처리 */}
+            {/*
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 1차 승인자 정보
@@ -340,8 +341,10 @@ const AuditResultReportDialog: React.FC<AuditResultReportDialogProps> = ({
                 placeholder="1차 승인자의 종합의견을 입력해주세요."
               />
             </Grid>
+            */}
 
-            {/* 2차 승인자 */}
+            {/* 2차 승인자 - 주석처리 */}
+            {/*
             <Grid item xs={12}>
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 2차 승인자 정보
@@ -384,6 +387,7 @@ const AuditResultReportDialog: React.FC<AuditResultReportDialogProps> = ({
                 placeholder="2차 승인자의 종합의견을 입력해주세요."
               />
             </Grid>
+            */}
           </Grid>
         </DialogContent>
 

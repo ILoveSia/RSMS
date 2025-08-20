@@ -235,6 +235,11 @@ export interface DeptAuditResultStatusDto {
   inadequateCount: number;  // 미흡 건수 (INS03)  
   excludedCount: number;    // 점검제외 건수 (INS04)
   appropriateRate: number;  // 적정 수행율 (%)
+  auditProgMngtId?: number; // 점검계획관리 ID
+  auditResultReportId?: number; // 점검결과보고서 ID
+  approvalId?: number;      // 결재 ID
+  approvalStatusCd?: string; // 결재 상태 코드
+  approvalStatusName?: string; // 결재 상태명
 }
 
 // 부서별 개선계획등록 현황 타입
