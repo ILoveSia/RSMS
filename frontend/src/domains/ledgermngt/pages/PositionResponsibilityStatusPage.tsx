@@ -108,10 +108,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 필터 상태
   const [selectedPosition, setSelectedPosition] = useState<PositionSearchResult | null>(null);
 
-  // 프론트엔드 필터링을 위한 상태
-  const [allPositionData, setAllPositionData] = useState<PositionResponsibility[]>([]);
-  const [filteredPositionData, setFilteredPositionData] = useState<PositionResponsibility[]>([]);
-
   // 선택된 행
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -137,21 +133,12 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
 
 
   const getCodeNameFn = useGetCodeName();
-
-  // 페이징 상태
-  const [pageInfo, setPageInfo] = useState({
-    page: 1,
-    size: 20,
-    totalElements: 0,
-    totalPages: 0
-  });
-
   // positions_id로 데이터 그룹화 함수
   const groupDataByPositionId = useCallback((data: PositionResponsibility[]): GroupedPositionResponsibility[] => {
     const groupMap = new Map<string, GroupedPositionResponsibility>();
 
     data.forEach(item => {
-      const { id, positionId, positionName, createdAt, updatedAt, classification, responsibilityOverview, responsibilityStartDate, lastModifiedDate } = item;
+      const { id, positionId, positionName, createdAt, updatedAt, classification, responsibilityOverview } = item;
 
       if (!groupMap.has(positionId)) {
         groupMap.set(positionId, {
@@ -194,17 +181,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   // 그룹핑된 데이터를 DataGrid용 행 데이터로 변환
   const convertToGridRows = useCallback((groupedData: GroupedPositionResponsibility[]): GroupedPositionResponsibilityRow[] => {
     return groupedData.map(group => {
-      const formatWithCount = (items: string[]) => {
-        const validItems = items.filter(item => item && item.trim() !== '');
-        if (validItems.length === 0) {
-          return '해당 없음';
-        }
-        if (validItems.length === 1) {
-          return validItems[0];
-        }
-        return `${validItems[0]} 외 ${validItems.length - 1}개`;
-      };
-
       return {
         positionId: group.positionId,
         positionName: group.positionName,
@@ -229,11 +205,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
   const getPositionData = useCallback((positionId: string): GroupedPositionResponsibility | undefined => {
     return groupedData.find(item => item.positionId === positionId);
   }, [groupedData]);
-
-  const getDetailsByPositionId = useCallback((positionId: string) => {
-    const position = getPositionData(positionId);
-    return position?.details || [];
-  }, [getPositionData]);
 
   // 직책별 책무 현황 조회 (ledgerOrdersId와 positionsId 지원)
   const fetchPositionResponsibilityData = useCallback(async () => {
@@ -281,8 +252,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         role_resp_status_id: item.role_resp_status_id ?? null,
       }));
 
-      setAllPositionData(mappedRows);
-      setFilteredPositionData(mappedRows);
       setOriginalData(mappedRows);
       
       // 데이터 그룹핑
@@ -332,8 +301,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         role_resp_status_id: item.role_resp_status_id ?? null,
       }));
 
-      setAllPositionData(mappedRows);
-      setFilteredPositionData(mappedRows);
       setOriginalData(mappedRows);
       
       // 데이터 그룹핑
@@ -509,47 +476,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     },
   ];
 
-  // 상세보기 핸들러
-  const handleViewDetail = (row: GroupedPositionResponsibilityRow) => {
-    // 그룹핑된 데이터에서 해당 직책의 모든 세부항목들을 가져오기
-    const groupedPosition = getPositionData(row.positionId);
-    
-    // 원본 데이터에서 해당 positionId의 첫 번째 항목 찾기
-    const originalItem = originalData.find(item => item.positionId === row.positionId);
-
-    // 다이얼로그에서 사용할 수 있는 형태로 데이터 변환
-    const dialogData = groupedPosition && originalItem ? {
-      id: originalItem.id,
-      classification: groupedPosition.classification,
-      positionId: groupedPosition.positionId,
-      positionName: groupedPosition.positionName,
-      responsibilityOverview: groupedPosition.responsibilityOverview,
-      responsibilityStartDate: groupedPosition.responsibilityStartDate,
-      lastModifiedDate: groupedPosition.lastModifiedDate,
-      createdAt: groupedPosition.createdAt,
-      updatedAt: groupedPosition.updatedAt,
-      // 공통 항목들은 그룹에서 직접 가져오기
-      responsibilityContent: groupedPosition.responsibility_conent || '', // 책무 내용
-      relatedBasis: groupedPosition.responsibility_rel_evid || '', // 관련 근거
-      // 개별 항목들은 details[0]에서 가져오기
-      keyManagementTasks: groupedPosition.details[0]?.responsibility_mgt_sts || '', // 주요 관리업무
-      // 모든 세부항목들을 포함
-      allDetails: groupedPosition.details,
-      // ledger_orders 관련 필드 추가
-      ledger_orders_id: row.ledger_orders_id,
-      ledger_orders_title: row.ledger_orders_title,
-      ledger_orders_status_cd: row.ledger_orders_status_cd,
-      // approval 관련 필드 추가
-      appr_stat_cd: row.appr_stat_cd,
-      // role_resp_status 관련 필드 추가
-      role_resp_status_id: row.role_resp_status_id
-    } : null;
-
-    setSelectedDetailData(dialogData);
-    setDialogMode('view');
-    setDialogOpen(true);
-  };
-
   // 수정 저장 핸들러
   const handleSave = async () => {
     try {
@@ -563,21 +489,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     }
   };
 
-  // 엑셀 업로드 핸들러
-  const handleExcelUpload = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.xlsx,.xls';
-    input.onchange = async (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (file) {
-        // 임시로 성공 메시지만 표시
-        alert('엑셀 업로드가 완료되었습니다. (테스트용)');
-      }
-    };
-    input.click();
-  };
-
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = async () => {
     try {
@@ -587,23 +498,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
       setErrorMessage('엑셀 다운로드에 실패했습니다.');
       setErrorDialogOpen(true);
     }
-  };
-
-  // 변경이력 핸들러
-  const handleChangeHistory = async () => {
-    if (selectedIds.length === 0) {
-      setErrorMessage('변경이력을 확인할 항목을 선택해주세요.');
-      setErrorDialogOpen(true);
-      return;
-    }
-
-    // 임시로 성공 메시지만 표시
-    alert('변경이력 조회가 완료되었습니다. (테스트용)');
-  };
-
-  // 행 선택 핸들러
-  const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedData: GroupedPositionResponsibilityRow[]) => {
-    setSelectedIds(selectedRowIds.map(Number));
   };
 
   // 확정 버튼 클릭 핸들러

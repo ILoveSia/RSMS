@@ -9,7 +9,6 @@ import {
   Chip,
   Button,
   Alert,
-  Snackbar,
   FormControl,
   InputLabel,
   Select,
@@ -32,6 +31,8 @@ import type { DataGridColumn } from '@/shared/types/common';
 import approvalApi, { type ApprovalListResponse } from '../api/approvalApi';
 import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
 import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
+import { useApiWithNotification } from '@/shared/hooks';
+import TitleSearch from '@/domains/admin/components/TitleSearch';
 import '../../../assets/scss/style.css';
 
 // 검색 조건 인터페이스
@@ -65,13 +66,17 @@ const TASK_TYPE_OPTIONS = [
  * 결재 히스토리 페이지
  */
 const ApprovalHistoryPage: React.FC = () => {
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '결재 히스토리를 불러오는 중 오류가 발생했습니다.',
+  });
+
   // 상태 관리
   const [approvals, setApprovals] = useState<ApprovalListResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({});
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   // 공통코드 가져오기
   const allCodes = useCommonCodes();
@@ -87,56 +92,54 @@ const ApprovalHistoryPage: React.FC = () => {
 
   // 데이터 로드
   const loadApprovalHistory = useCallback(async (page = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
+    try {
       // 실제 검색 API 구현 필요
       // 임시로 전체 목록 조회 사용
-      const data = await approvalApi.getAllApprovals();
+      const data = await callApiWithNotification(
+        () => approvalApi.getAllApprovals(),
+        'success_load'
+      );
       
-      // 클라이언트 사이드 필터링 (실제로는 서버에서 처리)
-      let filteredData = data;
-      
-      if (searchCriteria.taskTitle) {
-        filteredData = filteredData.filter(item => 
-          item.taskTitle.toLowerCase().includes(searchCriteria.taskTitle!.toLowerCase())
-        );
-      }
-      
-      if (searchCriteria.requesterName) {
-        filteredData = filteredData.filter(item => 
-          item.requesterName.toLowerCase().includes(searchCriteria.requesterName!.toLowerCase())
-        );
-      }
-      
-      if (searchCriteria.status) {
-        filteredData = filteredData.filter(item => item.status === searchCriteria.status);
-      }
+      if (data) {
+        // 클라이언트 사이드 필터링 (실제로는 서버에서 처리)
+        let filteredData = data;
+        
+        if (searchCriteria.taskTitle) {
+          filteredData = filteredData.filter(item => 
+            item.taskTitle.toLowerCase().includes(searchCriteria.taskTitle!.toLowerCase())
+          );
+        }
+        
+        if (searchCriteria.requesterName) {
+          filteredData = filteredData.filter(item => 
+            item.requesterName.toLowerCase().includes(searchCriteria.requesterName!.toLowerCase())
+          );
+        }
+        
+        if (searchCriteria.status) {
+          filteredData = filteredData.filter(item => item.status === searchCriteria.status);
+        }
 
-      if (searchCriteria.taskType) {
-        filteredData = filteredData.filter(item => item.taskType === searchCriteria.taskType);
-      }
+        if (searchCriteria.taskType) {
+          filteredData = filteredData.filter(item => item.taskTypeCd === searchCriteria.taskType);
+        }
 
-      setApprovals(filteredData);
-      setTotalItems(filteredData.length);
-      setCurrentPage(page);
-      
-      setSuccessMessage('결재 히스토리를 성공적으로 불러왔습니다.');
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    } catch (err) {
-      console.error('결재 히스토리 로드 실패:', err);
-      setError('데이터를 불러오는데 실패했습니다.');
+        setApprovals(filteredData);
+        setTotalItems(filteredData.length);
+        setCurrentPage(page);
+      }
     } finally {
       setLoading(false);
     }
-  }, [searchCriteria]);
+  }, [searchCriteria, callApiWithNotification]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     loadApprovalHistory();
-  }, []);
+  }, [loadApprovalHistory]);
 
   // 검색 실행
   const handleSearch = () => {
@@ -151,17 +154,28 @@ const ApprovalHistoryPage: React.FC = () => {
 
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = useCallback(async () => {
-  }, [searchCriteria, approvals.length]);
+    try {
+      // 엑셀 다운로드 로직 구현
+      console.log('엑셀 다운로드:', searchCriteria, approvals.length);
+    } catch (error) {
+      console.error('엑셀 다운로드 오류:', error);
+      callApiWithNotification(
+        () => Promise.reject(new Error('엑셀 다운로드 중 오류가 발생했습니다.')),
+        'custom'
+      );
+    }
+  }, [searchCriteria, approvals.length, callApiWithNotification]);
 
   // 결재 상세 보기
   const handleViewDetail = async (approvalId: number) => {
-    try {
-      const detail = await approvalApi.getApprovalDetail(approvalId);
+    const detail = await callApiWithNotification(
+      () => approvalApi.getApprovalDetail(approvalId),
+      'custom'
+    );
+    
+    if (detail) {
       setSelectedApproval(detail);
       setStatusDialogOpen(true);
-    } catch (err) {
-      console.error('결재 상세 조회 실패:', err);
-      alert('결재 상세 정보를 불러오는데 실패했습니다.');
     }
   };
 
@@ -186,7 +200,8 @@ const ApprovalHistoryPage: React.FC = () => {
       width: 280,
       renderCell: ({ value, row }) => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
-        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
+        const taskTypeCd = row.taskTypeCd || '';
+        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', String(taskTypeCd));
         return (
           <Box>
             <Typography 
@@ -301,7 +316,7 @@ const ApprovalHistoryPage: React.FC = () => {
       headerAlign: 'center',
     },
     {
-      field: 'actions',
+      field: 'approvalId',
       headerName: '상세보기',
       width: 100,
       renderCell: ({ row }) => (
@@ -345,78 +360,72 @@ const ApprovalHistoryPage: React.FC = () => {
         }}
       >
         {/* 검색 조건 영역 */}
-        <SearchConditionPanel disabled={loading}>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <TextField
-              size="small"
-              label="업무명"
-              value={searchCriteria.taskTitle || ''}
-              onChange={(e) => setSearchCriteria(prev => ({ 
-                ...prev, 
-                taskTitle: e.target.value 
-              }))}
-              sx={{ minWidth: 150 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon fontSize="small" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              size="small"
-              label="요청자"
-              value={searchCriteria.requesterName || ''}
-              onChange={(e) => setSearchCriteria(prev => ({ 
-                ...prev, 
-                requesterName: e.target.value 
-              }))}
-              sx={{ minWidth: 120 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>상태</InputLabel>
-              <Select
-                value={searchCriteria.status || ''}
-                label="상태"
+        <TitleSearch
+          value={searchCriteria.taskTitle || ''}
+          onChange={(value) => setSearchCriteria(prev => ({ ...prev, taskTitle: value }))}
+          onEnter={handleSearch}
+          disabled={loading}
+          after={
+            <>
+              <TextField
+                size="small"
+                label="요청자"
+                value={searchCriteria.requesterName || ''}
                 onChange={(e) => setSearchCriteria(prev => ({ 
                   ...prev, 
-                  status: e.target.value 
+                  requesterName: e.target.value 
                 }))}
+                sx={{ minWidth: 120 }}
+              />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>상태</InputLabel>
+                <Select
+                  value={searchCriteria.status || ''}
+                  label="상태"
+                  onChange={(e) => setSearchCriteria(prev => ({ 
+                    ...prev, 
+                    status: e.target.value 
+                  }))}
+                >
+                  {STATUS_OPTIONS.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>업무 유형</InputLabel>
+                <Select
+                  value={searchCriteria.taskType || ''}
+                  label="업무 유형"
+                  onChange={(e) => setSearchCriteria(prev => ({ 
+                    ...prev, 
+                    taskType: e.target.value 
+                  }))}
+                >
+                  {TASK_TYPE_OPTIONS.map(option => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <SearchButton
+                onClick={handleSearch}
+                loading={loading}
+                disabled={loading}
+              />
+              <Button
+                onClick={handleResetSearch}
+                variant="outlined"
+                size="small"
               >
-                {STATUS_OPTIONS.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>업무 유형</InputLabel>
-              <Select
-                value={searchCriteria.taskType || ''}
-                label="업무 유형"
-                onChange={(e) => setSearchCriteria(prev => ({ 
-                  ...prev, 
-                  taskType: e.target.value 
-                }))}
-              >
-                {TASK_TYPE_OPTIONS.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <SearchButton
-              onClick={handleSearch}
-              loading={loading}
-              disabled={loading}
-            />
-          </Box>
-        </SearchConditionPanel>
+                초기화
+              </Button>
+            </>
+          }
+        />
 
         {/* 버튼 영역 */}
         <Box sx={{ 
@@ -479,18 +488,6 @@ const ApprovalHistoryPage: React.FC = () => {
             }}
           />
         )}
-
-        {/* 성공 알림 */}
-        <Snackbar
-          open={showSuccess}
-          autoHideDuration={2000}
-          onClose={() => setShowSuccess(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert severity="success">
-            {successMessage}
-          </Alert>
-        </Snackbar>
       </PageContent>
     </PageContainer>
   );
