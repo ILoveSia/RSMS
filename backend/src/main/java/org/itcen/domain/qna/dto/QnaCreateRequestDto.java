@@ -24,9 +24,6 @@ import org.itcen.domain.qna.entity.QnaPriority;
 @AllArgsConstructor
 public class QnaCreateRequestDto {
 
-    // DB 스키마 변경으로 department 제거
-    private String department;
-
     /**
      * 제목
      */
@@ -63,8 +60,7 @@ public class QnaCreateRequestDto {
      * @return 유효성 검증 결과
      */
     public boolean isValid() {
-        return department != null && !department.trim().isEmpty() &&
-               title != null && !title.trim().isEmpty() &&
+        return title != null && !title.trim().isEmpty() &&
                isPublic != null;
     }
 
@@ -73,9 +69,6 @@ public class QnaCreateRequestDto {
      * 앞뒤 공백 제거 및 null 체크
      */
     public void sanitize() {
-        if (department != null) {
-            department = department.trim();
-        }
         if (title != null) {
             title = title.trim();
         }

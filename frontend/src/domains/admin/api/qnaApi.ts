@@ -167,7 +167,6 @@ export const qnaApi = {
    */
   createQna: async (
     data: {
-      department: string;
       title: string;
       content?: string;
       priority?: QnaPriority;
