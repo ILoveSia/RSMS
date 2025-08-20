@@ -1,12 +1,12 @@
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { ApprovalStatusBadge } from '@/shared/components/ui/badge';
+import { Button, SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { LedgerOrdersHodSelect, CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
-import { useSnackbar } from '@/shared/hooks/useSnackbar';
-import Toast from '@/shared/components/ui/feedback/Toast';
+import { useApiWithNotification } from '@/shared/hooks';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -18,12 +18,18 @@ interface IHodICitemStatusPageProps {
 }
 
 const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.Element => {
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '데이터를 불러오는 중 오류가 발생했습니다.',
+  });
+
+  // 상태 관리
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   const [selectedLedgerOrderId, setSelectedLedgerOrderId] = useState<number | undefined>();
   const [selectedLedgerOrderStatusCd, setSelectedLedgerOrderStatusCd] = useState<string | undefined>();
   const [selectedFieldType, setSelectedFieldType] = useState<string>('ALL');
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<HodICItemRow[]>([]);
 
@@ -38,9 +44,6 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   
   // 부서장 원장차수 새로고침 트리거
   const [hodRefreshTrigger, setHodRefreshTrigger] = useState<number>(0);
-  
-  // 스낵바 상태
-  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
   // 컬럼 정의 - 요청하신 순서대로 변경
   const columns: DataGridColumn<HodICItemRow>[] = [
@@ -50,50 +53,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       width: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => {
-        const status = params.row.approvalStatus;
-        let statusText = '';
-        let statusColor = '#666';
-
-        switch (status) {
-          case 'NONE':
-            statusText = '미결재';
-            statusColor = '#999';
-            break;
-          case 'SUBMITTED':
-              statusText = '상신';
-              statusColor = '#2196f3';
-              break;  
-          case 'IN_PROGRESS':
-            statusText = '진행중';
-            statusColor = '#ff9800';
-            break;
-          case 'APPROVED':
-            statusText = '승인';
-            statusColor = '#4caf50';
-            break;
-          case 'REJECTED':
-            statusText = '반려';
-            statusColor = '#f44336';
-            break;
-          default:
-            statusText = status || '미결재';
-            statusColor = '#999';
-        }
-
-        return (
-          <Box
-            component="span"
-            sx={{
-              color: statusColor,
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}
-          >
-            {statusText}
-          </Box>
-        );
-      },
+      renderCell: params => <ApprovalStatusBadge status={params.row.approvalStatus} />,
     },
     {
       field: 'responsibilityContent',
@@ -248,23 +208,21 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
 
   const handleSearch = useCallback(async () => {
     setLoading(true);
-    setError(null);
-
-    try {
-      const data = await hodICItemApi.getHodICItemStatusList(
+    
+    const data = await callApiWithNotification(
+      () => hodICItemApi.getHodICItemStatusList(
         selectedLedgerOrder === 'ALL' ? undefined : Number(selectedLedgerOrder),
         selectedFieldType === 'ALL' ? undefined : selectedFieldType
-      );
+      ),
+      'success_load'
+    );
+    
+    if (data) {
       setRows(data);
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
     }
-  }, [selectedLedgerOrder, selectedFieldType]);
-
-  // 부서장 원장차수 목록은 LedgerOrdersHodSelect에서 자동으로 로드됨
+    
+    setLoading(false);
+  }, [selectedLedgerOrder, selectedFieldType, callApiWithNotification]);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
@@ -276,67 +234,37 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     try {
       setHodGenerating(true);
       
-      // 부서장차수 생성 API 호출
-      const response = await hodICItemApi.generateHodLedgerOrder();
+      const response = await callApiWithNotification(
+        () => hodICItemApi.generateHodLedgerOrder(),
+        'custom'
+      );
       
-      // 성공 메시지 표시
-      showSuccess(response.message || '부서장차수가 성공적으로 생성되었습니다.');
-      
-      // LedgerOrdersHodSelect 컴포넌트 새로고침 트리거
-      setHodRefreshTrigger(prev => prev + 1);
-      
-    } catch (error: any) {
-      console.error('부서장차수 생성 실패:', error);
-      
-      
-      // P6 상태 에러 체크 및 커스텀 메시지 표시  
-      const responseData = error?.response?.data;
-      const errorDetails = error?.details; // API 클라이언트에서 details에 원본 데이터 저장
-      
-      // 다양한 경로에서 메시지 추출 시도
-      let originalMessage = '';
-      if (responseData?.message) {
-        originalMessage = responseData.message;
-      } else if (errorDetails?.message) {
-        originalMessage = errorDetails.message;
-      } else if (error?.details?.message) {
-        originalMessage = error.details.message;
-      } else if (error?.message) {
-        originalMessage = error.message;
+      if (response) {
+        // LedgerOrdersHodSelect 컴포넌트 새로고침 트리거
+        setHodRefreshTrigger(prev => prev + 1);
       }
       
-      
-      
-      let errorMessage = '부서장차수 생성 중 오류가 발생했습니다.';
-      
-      // P6 상태 관련 에러인지 체크
-      if (originalMessage.includes('P6') && originalMessage.includes('P7')) {
-        errorMessage = '부서장차수를 생성할 수 없습니다. 최신 부서장차수가 부서장확정 상태여야 생성 가능합니다.';
-      } else if (originalMessage.includes('P5') && originalMessage.includes('최종확정')) {
-        errorMessage = '부서장차수를 생성할 수 없습니다. 원장차수가 최종확정(P5) 상태여야 생성 가능합니다.';
-      } else if (originalMessage.includes('이미 존재합니다')) {
-        errorMessage = originalMessage; // 중복 에러는 원본 메시지 사용
-      } else if (originalMessage) {
-        errorMessage = originalMessage; // 기타 에러는 원본 메시지 사용
-      }
-      
-      
-      showError(errorMessage);
     } finally {
       setHodGenerating(false);
     }
-  }, [hodGenerating, showSuccess, showError]);
+  }, [hodGenerating, callApiWithNotification]);
 
   const handleCreateClick = useCallback(() => {
     // P7 상태(부서장확정) 검증
     if (selectedLedgerOrderStatusCd === 'P7') {
-      showError('부서장확정 상태에서는 등록할 수 없습니다.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('부서장확정 상태에서는 등록할 수 없습니다.')),
+        'custom'
+      );
       return;
     }
     
     // 부서장차수가 선택되지 않은 경우 검증
     if (!selectedLedgerOrder || selectedLedgerOrder === 'ALL') {
-      showError('부서장차수를 선택해주세요.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('부서장차수를 선택해주세요.')),
+        'custom'
+      );
       return;
     }
     
@@ -344,7 +272,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
     setSelectedItemId(undefined);
     setSelectedRowApprovalStatus('NONE'); // create 모드에서는 항상 NONE으로 설정
     setDialogOpen(true);
-  }, [selectedLedgerOrderStatusCd, selectedLedgerOrder, showError]);
+  }, [selectedLedgerOrderStatusCd, selectedLedgerOrder, callApiWithNotification]);
 
   const handleRowDoubleClick = useCallback((row: HodICItemRow) => {
     setDialogMode('view');
@@ -362,7 +290,10 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
 
   const handleDelete = useCallback(async () => {
     if (selectedIds.length === 0) {
-      alert('삭제할 항목을 선택해주세요.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('삭제할 항목을 선택해주세요.')),
+        'custom'
+      );
       return;
     }
 
@@ -370,25 +301,27 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
+    try {
       if (selectedIds.length === 1) {
-        await hodICItemApi.deleteHodICItem(selectedIds[0]);
+        await callApiWithNotification(
+          () => hodICItemApi.deleteHodICItem(selectedIds[0]),
+          'custom'
+        );
       } else {
-        await hodICItemApi.deleteMultipleHodICItems(selectedIds);
+        await callApiWithNotification(
+          () => hodICItemApi.deleteMultipleHodICItems(selectedIds),
+          'custom'
+        );
       }
 
-      alert('삭제가 완료되었습니다.');
       setSelectedIds([]);
       await handleSearch(); // 데이터 새로고침
-    } catch (err) {
-      console.error('Failed to delete items:', err);
-      alert('삭제 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [selectedIds, handleSearch]);
+  }, [selectedIds, handleSearch, callApiWithNotification]);
 
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
@@ -418,12 +351,18 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
   // 확정 처리
   const handleConfirm = useCallback(async () => {
     if (!selectedLedgerOrderId) {
-      showError('선택된 부서장차수가 없습니다.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('선택된 부서장차수가 없습니다.')),
+        'custom'
+      );
       return;
     }
 
     if (!canConfirm()) {
-      showError('확정 조건을 만족하지 않습니다. 부서장차수 상태가 P6이고 모든 항목이 승인되어야 합니다.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('확정 조건을 만족하지 않습니다. 부서장차수 상태가 P6이고 모든 항목이 승인되어야 합니다.')),
+        'custom'
+      );
       return;
     }
 
@@ -431,12 +370,13 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       return;
     }
 
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      
-      await hodICItemApi.confirmHodLedgerOrder(selectedLedgerOrderId);
-      
-      showSuccess('부서장차수가 성공적으로 확정되었습니다.');
+      await callApiWithNotification(
+        () => hodICItemApi.confirmHodLedgerOrder(selectedLedgerOrderId),
+        'custom'
+      );
       
       // LedgerOrdersHodSelect 컴포넌트 새로고침 트리거
       setHodRefreshTrigger(prev => prev + 1);
@@ -444,14 +384,10 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
       // 데이터 새로고침
       await handleSearch();
       
-    } catch (error: any) {
-      console.error('부서장차수 확정 실패:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || '부서장차수 확정 중 오류가 발생했습니다.';
-      showError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [selectedLedgerOrderId, canConfirm, showSuccess, showError, handleSearch]);
+  }, [selectedLedgerOrderId, canConfirm, handleSearch, callApiWithNotification]);
 
   return (
     <PageContainer
@@ -587,7 +523,6 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
           />
         </Box>
         <Box sx={{ width: '100%', flex: 1 }}>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
             data={rows}
             columns={columns}
@@ -625,14 +560,6 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
         itemId={selectedItemId}
         approvalStatus={selectedRowApprovalStatus}
         onSuccess={handleDialogSuccess}
-      />
-
-      {/* Toast 알림 */}
-      <Toast
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={hideSnackbar}
       />
     </PageContainer>
   );

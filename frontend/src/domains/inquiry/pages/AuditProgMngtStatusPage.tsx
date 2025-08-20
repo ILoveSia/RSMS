@@ -26,6 +26,7 @@ import {
   type AuditProgMngtStatusResponse,
   type AuditProgMngtRequest
 } from '../api/auditProgMngtApi';
+import { useApiWithNotification } from '@/shared/hooks';
 
 // 점검계획관리 현황 데이터 인터페이스
 interface AuditProgRow {
@@ -107,6 +108,12 @@ const convertToAuditProgramData = (row: AuditProgRow): AuditProgramData => {
 
 
 const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): React.JSX.Element => {
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '데이터를 불러오는 중 오류가 발생했습니다.',
+  });
+
   // 기본 날짜 계산 (3개월 전 ~ 오늘)
   const getDefaultDates = () => {
     const today = new Date();
@@ -127,10 +134,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   const [isRegistrationMode, setIsRegistrationMode] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedItem, setSelectedItem] = useState<AuditProgRow | null>(null);
-
-  // 에러 다이얼로그 상태
-  const [errorMessage, setErrorMessage] = useState('');
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
 
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
@@ -214,9 +217,9 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
   // 점검계획관리 현황 조회
   const handleFetchAuditPrograms = useCallback(async () => {
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-
       // 날짜를 문자열로 포맷팅
       const formatDate = (date: Date | null): string | undefined => {
         if (!date) return undefined;
@@ -224,29 +227,25 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       };
 
       // API 호출
-      const apiResponse = await getAllAuditProgMngtStatusList(
-        formatDate(startDate),
-        formatDate(endDate)
+      const apiResponse = await callApiWithNotification(
+        () => getAllAuditProgMngtStatusList(
+          formatDate(startDate),
+          formatDate(endDate)
+        ),
+        'success_load'
       );
 
       if (apiResponse && Array.isArray(apiResponse)) {
-
         // API 응답을 화면용 데이터로 변환
         const convertedData = apiResponse.map(convertApiResponseToRow);
         setAuditRows(convertedData);
       } else {
-        console.error('API 응답이 배열이 아닙니다:', apiResponse);
         setAuditRows([]);
       }
-
-    } catch (error) {
-      console.error('점검계획관리 현황 조회 오류:', error);
-      setErrorMessage('점검계획관리 현황 조회 중 오류가 발생했습니다.');
-      setErrorDialogOpen(true);
     } finally {
       setIsLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, callApiWithNotification]);
 
   // 초기 로드 시 자동 조회
   useEffect(() => {
@@ -277,21 +276,26 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     }
 
     try {
-      // 행 클릭은 단순 상세보기이므로 전체 페이지 로딩 상태를 변경하지 않음
-
       // 기존 점검계획 상세 정보 조회 (점검대상 정보 포함)
-      const detailResponse = await getAuditProgMngtByCode(row.auditProgMngtCd);
+      const detailResponse = await callApiWithNotification(
+        () => getAuditProgMngtByCode(row.auditProgMngtCd),
+        'custom'
+      );
 
       // 기존에 선정된 점검대상이 있다면 selectedTargetItems에 설정
-      if (detailResponse.targetItemData && detailResponse.targetItemData.length > 0) {
-        const targetItems = detailResponse.targetItemData.map(item => ({
+      if (detailResponse?.targetItemData && detailResponse.targetItemData.length > 0) {
+        const targetItems: InspectionTargetItem[] = detailResponse.targetItemData.map(item => ({
           id: item.hodIcItemId,
           responsibilityId: item.responsibilityId,
           responsibilityDetailId: item.responsibilityDetailId,
-          // 추가 필드들은 실제 InspectionTargetItem 인터페이스에 맞게 설정
-          itemName: `항목 ${item.hodIcItemId}`, // 임시값 - 실제로는 API에서 조회해야 함
-          description: '', // 임시값
-          selected: true, // 기존에 선정된 항목이므로 선택 상태로 설정
+          responsibilityContent: '', // API에서 조회해야 함
+          responsibilityDetailContent: '', // API에서 조회해야 함
+          fieldTypeCd: '', // API에서 조회해야 함
+          icTask: '', // API에서 조회해야 함
+          measureType: '', // API에서 조회해야 함
+          periodCd: '', // API에서 조회해야 함
+          checkPeriod: '', // API에서 조회해야 함
+          checkWay: '', // API에서 조회해야 함
         }));
         setSelectedTargetItems(targetItems);
       } else {
@@ -303,9 +307,8 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
       setIsRegistrationMode(true);
 
     } catch (error) {
+      // 에러는 callApiWithNotification에서 자동 처리됨
       console.error('점검계획 상세 조회 오류:', error);
-      setErrorMessage('점검계획 상세 정보를 불러오는 중 오류가 발생했습니다.');
-      setErrorDialogOpen(true);
     }
   };
 
@@ -329,12 +332,12 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
 
   // 점검계획관리 등록/수정
   const handleSubmit = async (data: AuditProgramData): Promise<void> => {
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-
       // AuditProgramData를 AuditProgMngtRequest로 변환
       const request: AuditProgMngtRequest = {
-        ledgerOrdersHod: data.ledgerOrdersHod,
+        ledgerOrdersHod: Number(data.ledgerOrdersHod), // 문자열을 숫자로 변환
         auditTitle: data.auditTitle, // 점검회차명 추가
         auditStartDt: data.startDate ? data.startDate.toISOString().split('T')[0] : '',
         auditEndDt: data.endDate ? data.endDate.toISOString().split('T')[0] : '',
@@ -344,22 +347,23 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
         targetItemData: data.targetItemData || [] // 새로운 방식
       };
 
-
       if (dialogMode === 'create') {
         // 등록 시 auditProgMngtCd는 자동 생성되므로 제외
-        await createAuditProgMngt(request);
+        await callApiWithNotification(
+          () => createAuditProgMngt(request),
+          'custom'
+        );
       } else if (dialogMode === 'edit' && data.planCode) {
         // 수정 시 auditProgMngtCd 추가
         request.auditProgMngtCd = data.planCode;
-        await updateAuditProgMngt(data.planCode, request);
+        await callApiWithNotification(
+          () => updateAuditProgMngt(data.planCode, request),
+          'custom'
+        );
       }
 
       handleDialogClose();
-      handleFetchAuditPrograms();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '오류가 발생했습니다.');
-      setErrorDialogOpen(true);
-      throw error;
+      await handleFetchAuditPrograms();
     } finally {
       setIsLoading(false);
     }
@@ -414,37 +418,37 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
   // 엑셀 다운로드 핸들러
   const handleExcelDownload = async () => {
     try {
-
       // 현재 표시된 데이터를 엑셀 형태로 변환
       const excelData = convertToExcelData(auditRows);
     } catch (error) {
       console.error('엑셀 다운로드 오류:', error);
-      setErrorMessage('엑셀 다운로드 중 오류가 발생했습니다.');
-      setErrorDialogOpen(true);
-      throw error; // ExcelDownloadButton에서 에러 상태 처리
+      callApiWithNotification(
+        () => Promise.reject(new Error('엑셀 다운로드 중 오류가 발생했습니다.')),
+        'custom'
+      );
     }
   };
 
   // 점검계획관리 삭제
   const handleDelete = async () => {
     if (!selectedAuditIds.length) {
-      setErrorMessage('삭제할 점검계획관리를 선택해주세요.');
-      setErrorDialogOpen(true);
+      callApiWithNotification(
+        () => Promise.reject(new Error('삭제할 점검계획관리를 선택해주세요.')),
+        'custom'
+      );
       return;
     }
 
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-
-      // API 호출
-      await deleteMultipleAuditProgMngt(selectedAuditIds);
+      await callApiWithNotification(
+        () => deleteMultipleAuditProgMngt(selectedAuditIds),
+        'custom'
+      );
 
       setSelectedAuditIds([]);
-      handleFetchAuditPrograms();
-    } catch (error) {
-      console.error('점검계획관리 삭제 오류:', error);
-      setErrorMessage(error instanceof Error ? error.message : '삭제 중 오류가 발생했습니다.');
-      setErrorDialogOpen(true);
+      await handleFetchAuditPrograms();
     } finally {
       setIsLoading(false);
     }
@@ -564,13 +568,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
           onClose={() => setTargetSelectionOpen(false)}
           onSelect={handleTargetSelectionComplete}
           ledgerOrdersHod={currentLedgerOrdersHod}
-        />
-
-        {/* 에러 다이얼로그 */}
-        <ErrorDialog
-          open={errorDialogOpen}
-          errorMessage={errorMessage}
-          onClose={() => setErrorDialogOpen(false)}
         />
       </PageContent>
     </PageContainer>

@@ -13,7 +13,6 @@ export type { TextFieldProps } from './TextField';
 export { default as CommentItem } from './CommentItem';
 export type { LocalComment, CommentItemProps } from './CommentItem';
 
-export { default as Badge } from './Badge';
 export { default as Chip } from './Chip';
 
 // 타입 exports
@@ -27,3 +26,4 @@ export type { BadgeProps, ChipProps } from './types';
 // export { default as Tree } from './Tree';
 // export { default as Carousel } from './Carousel';
 // export { default as Gallery } from './Gallery';
+export * from './ApprovalSummaryCards';

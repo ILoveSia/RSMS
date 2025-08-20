@@ -9,12 +9,13 @@ import { DataGrid } from '@/shared/components/ui/data-display';
 import { DatePicker, LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { useGetCodeName } from '@/shared/utils/codeUtils';
+import { AttachmentBadge } from '@/shared/components/ui/badge';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn, SelectOption } from '@/shared/types/common';
-import { AttachFile as AttachFileIcon, Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Chip, Tooltip } from '@mui/material';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { DataGridColumn } from '@/shared/types/common';
+import { Groups as GroupsIcon } from '@mui/icons-material';
+import { Box, Chip } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
 import type { RegistrationData, SubmissionHistoryRow } from '../api/SubmissionStatusApi';
 import {
   deleteSubmissionHistory,
@@ -23,6 +24,7 @@ import {
   updateSubmissionHistory,
 } from '../api/SubmissionStatusApi';
 import { StructureSubmissionStatusDialog } from '../components';
+import { useApiWithNotification } from '@/shared/hooks';
 
 interface IStructureSubmissionStatusPageProps {
   className?: string;
@@ -38,6 +40,12 @@ const getDefaultDates = () => {
 
 
 const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProps> = (): React.JSX.Element => {
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '데이터를 불러오는 중 오류가 발생했습니다.',
+  });
+
   // 기간 선택 상태
   const [startDate, setStartDate] = useState<Date | null>(getDefaultDates().startDate);
   const [endDate, setEndDate] = useState<Date | null>(getDefaultDates().endDate);
@@ -53,29 +61,8 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('create');
   const [selectedItem, setSelectedItem] = useState<SubmissionHistoryRow | null>(null);
 
-  // 에러 상태
-  const [errorMessage, setErrorMessage] = useState('');
-  const [errorDialogOpen, setErrorDialogOpen] = useState(false);
-
   // 코드 변환 함수 (공통코드: BANK_CD)
   const getCodeName = useGetCodeName();
-
-  // 첨부파일 렌더링 컴포넌트
-  const renderAttachmentCell = ({ row }: { row: SubmissionHistoryRow }) => {
-    if (row.hasAttachment && row.attachmentCount && row.attachmentCount > 0) {
-      return (
-        <Tooltip title={`첨부파일 ${row.attachmentCount}개`}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <AttachFileIcon fontSize="small" color="primary" />
-            <span style={{ fontSize: '0.75rem', color: '#666' }}>
-              {row.attachmentCount}
-            </span>
-          </Box>
-        </Tooltip>
-      );
-    }
-    return <span style={{ fontSize: '0.75rem', color: '#999' }}>-</span>;
-  };
 
   // 직책 렌더링 컴포넌트
   const renderPositionCell = ({ row }: { row: SubmissionHistoryRow }) => (
@@ -129,34 +116,32 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       headerName: '첨부파일',
       width: 120,
       align: 'center',
-      align: 'center' as const,
-      renderCell: renderAttachmentCell,
+      renderCell: ({ row }) => <AttachmentBadge count={row.attachmentCount} />,
     },
     { field: 'remarks', headerName: '비고', width: 200, align: 'center' },
   ];
 
-  // 에러 처리 헬퍼
-  const showError = useCallback((message: string) => {
-    setErrorMessage(message);
-    setErrorDialogOpen(true);
-  }, []);
-
   // 제출 이력 조회
   const handleFetchSubmissionHistory = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await fetchSubmissionHistory(
+    setIsLoading(true);
+    
+    const data = await callApiWithNotification(
+      () => fetchSubmissionHistory(
         startDate, 
         endDate, 
         selectedLedgerOrder !== 'ALL' ? Number(selectedLedgerOrder) : undefined
-      );
+      ),
+      'success_load'
+    );
+    
+    if (data) {
       setHistoryRows(data);
-    } catch (error) {
-      showError('제출 이력 조회 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
+    } else {
+      setHistoryRows([]);
     }
-  }, [startDate, endDate, selectedLedgerOrder, showError]);
+    
+    setIsLoading(false);
+  }, [startDate, endDate, selectedLedgerOrder, callApiWithNotification]);
 
   // 초기 로드 시 자동 조회
   useEffect(() => {
@@ -193,41 +178,52 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
 
   // 제출 이력 등록/수정
   const handleSubmit = useCallback(async (data: RegistrationData): Promise<{ id: number }> => {
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      const result = dialogMode === 'edit' && selectedItem?.id
-        ? await updateSubmissionHistory(selectedItem.id, data)
-        : await submitSubmissionHistory(data);
+      const result = await callApiWithNotification(
+        () => dialogMode === 'edit' && selectedItem?.id
+          ? updateSubmissionHistory(selectedItem.id, data)
+          : submitSubmissionHistory(data),
+        'custom'
+      );
       
-      closeDialog();
-      handleFetchSubmissionHistory();
-      return result;
-    } catch (error) {
-      showError(error instanceof Error ? error.message : '오류가 발생했습니다.');
-      throw error;
+      if (result) {
+        closeDialog();
+        await handleFetchSubmissionHistory();
+        return result;
+      }
+      
+      throw new Error('제출 이력 처리에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
-  }, [dialogMode, selectedItem?.id, closeDialog, handleFetchSubmissionHistory, showError]);
+  }, [dialogMode, selectedItem?.id, closeDialog, handleFetchSubmissionHistory, callApiWithNotification]);
 
   // 제출 이력 삭제
   const handleDelete = useCallback(async () => {
     if (!selectedHistoryIds.length) {
-      showError('삭제할 제출 이력을 선택해주세요.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('삭제할 제출 이력을 선택해주세요.')),
+        'custom'
+      );
       return;
     }
 
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
-      await deleteSubmissionHistory(selectedHistoryIds);
+      await callApiWithNotification(
+        () => deleteSubmissionHistory(selectedHistoryIds),
+        'custom'
+      );
+      
       setSelectedHistoryIds([]);
-      handleFetchSubmissionHistory();
-    } catch (error) {
-      showError(error instanceof Error ? error.message : '오류가 발생했습니다.');
+      await handleFetchSubmissionHistory();
     } finally {
       setIsLoading(false);
     }
-  }, [selectedHistoryIds, handleFetchSubmissionHistory, showError]);
+  }, [selectedHistoryIds, handleFetchSubmissionHistory, callApiWithNotification]);
 
   // 모드 변경 핸들러
   const handleModeChange = useCallback((mode: 'create' | 'edit' | 'view') => {
@@ -380,13 +376,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
             onModeChange={handleModeChange}
           />
         )}
-
-        {/* 에러 다이얼로그 */}
-        <ErrorDialog
-          open={errorDialogOpen}
-          errorMessage={errorMessage}
-          onClose={() => setErrorDialogOpen(false)}
-        />
       </PageContent>
     </PageContainer>
   );

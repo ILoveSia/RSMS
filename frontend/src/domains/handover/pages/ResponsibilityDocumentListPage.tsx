@@ -20,6 +20,7 @@ import type { DataGridColumn } from '@/shared/types/common';
 import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Box, IconButton, InputAdornment } from '@mui/material';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
+import TitleSearch from '@/domains/admin/components/TitleSearch';
 import React, { useCallback, useEffect, useState } from 'react';
 import { responsibilityDocumentApi, type ResponsibilityDocumentDto } from '../api/responsibilityDocumentApi';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
@@ -316,6 +317,13 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
     setAuthorSearchOpen(false);
   }, []);
 
+  // 초기화 핸들러
+  const handleReset = useCallback(() => {
+    setDocumentTitle('');
+    setAuthorEmpNo('');
+    setAuthorName('');
+  }, []);
+
   return (
     <PageContainer>
       <PageHeader
@@ -340,70 +348,46 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
           py: 1,
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
-            alignItems: 'center',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            padding: '8px 16px',
-            borderRadius: '4px',
-          }}
-        >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>문서제목</span>
-          <TextField
-            label=""
-            mode="editable"
-            value={documentTitle}
-            onChange={(e) => setDocumentTitle(e.target.value)}
-            size="small"
-            placeholder="문서제목을 입력하세요"
-            sx={{ minWidth: 150, maxWidth: 200 }}
-          />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>작성자</span>
-          <TextField
-            label=""
-            mode="editable"
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            size="small"
-            placeholder="작성자명"
-            helperText={authorEmpNo ? `사번: ${authorEmpNo}` : ''}
-            sx={{ minWidth: 120, maxWidth: 180 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setAuthorSearchOpen(true)}
-                    size="small"
-                    edge="end"
-                    title="사원 검색"
-                  >
-                    <SearchIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <SearchButton
-            onClick={handleSearch}
-            loading={loading}
-            disabled={loading}
-          />
-          <Button
-            onClick={() => {
-              setDocumentTitle('');
-              setAuthorEmpNo('');
-              setAuthorName('');
-            }}
-            variant="outlined"
-            size="small"
-          >
-            초기화
-          </Button>
-        </Box>
+        <TitleSearch
+          value={documentTitle}
+          onChange={setDocumentTitle}
+          onEnter={handleSearch}
+          disabled={loading}
+          after={
+            <>
+              <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>작성자</span>
+              <TextField
+                label=""
+                mode="editable"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                size="small"
+                placeholder="작성자명"
+                helperText={authorEmpNo ? `사번: ${authorEmpNo}` : ''}
+                sx={{ minWidth: 120, maxWidth: 180 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setAuthorSearchOpen(true)}
+                        size="small"
+                        edge="end"
+                        title="사원 검색"
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <SearchButton
+                onClick={handleSearch}
+                loading={loading}
+                disabled={loading}
+              />
+            </>
+          }
+        />
 
         <Box sx={{
           display: 'flex',

@@ -34,7 +34,7 @@ export type { DateRangeSelectorProps } from './DateRangeSelector';
 
 export { default as RadioGroup } from './RadioGroup';
 export type { RadioGroupProps, RadioOption } from './RadioGroup';
-
+export { MenuPermissionCell } from './MenuPermissionCell';
 export { default as SearchBox } from './SearchBox';
 export { default as CommentInput } from './CommentInput';
 export type { CommentInputProps } from './CommentInput';

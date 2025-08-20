@@ -2,13 +2,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, CircularProgress, Chip, IconButton, FormControl, Select, MenuItem, Avatar, Paper } from '@mui/material';
 import { Edit as EditIcon, Person as PersonIcon, Clear as ClearIcon } from '@mui/icons-material';
 import { PersonAddAlt1 as PersonAddAlt1Icon } from '@mui/icons-material';
-
+import { UserRoleBadges } from '@/shared/components/ui/badge';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { SearchButton, Button as SharedButton, RefreshButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
+import { MenuPermissionCell } from '@/shared/components/ui/form';
 // no-op
 import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
 import { adminApi } from '../api/adminApi';
@@ -478,20 +479,7 @@ const UserPermissionManagePage: React.FC = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Box display="flex" flexWrap="wrap" gap={0.5}>
-                          {user.roles.filter(r => r.isActive).map(role => (
-                            <Chip
-                              key={role.roleId}
-                              label={role.roleId}
-                              size="small"
-                              color={getRoleColor(role.roleId)}
-                              variant="outlined"
-                            />
-                          ))}
-                          {user.roles.filter(r => r.isActive).length === 0 && (
-                            <Chip label="역할 없음" size="small" variant="outlined" />
-                          )}
-                        </Box>
+                        <UserRoleBadges roles={user.roles} />
                       </TableCell>
                       <TableCell>
                         <Chip

@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Button, Alert, CircularProgress, Chip, FormControl, Select, MenuItem, Tooltip, Paper } from '@mui/material';
-import { Save as SaveIcon, Clear as ClearIcon, Security as SecurityIcon, Visibility as ReadIcon, Edit as WriteIcon, Delete as DeleteIcon } from '@mui/icons-material';
-
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Alert, CircularProgress, FormControl, Select, MenuItem, Tooltip, Paper } from '@mui/material';
+import { Save as SaveIcon, Security as SecurityIcon} from '@mui/icons-material';
+import { SaveButton } from '@/shared/components/ui/button';
+import { MenuPermissionCell } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { SearchButton, RefreshButton } from '@/shared/components/ui/button';
 import { adminApi } from '../api/adminApi';
-import { SearchBox } from '@/shared/components/ui/form';
 import { useApiWithNotification } from '@/shared/hooks';
+import TitleSearch from '@/domains/admin/components/TitleSearch';
 import type { 
   MenuPermissionMatrix, 
   MenuPermissionUpdate, 
@@ -22,38 +23,39 @@ import type {
  */
 
 const MenuPermissionManagePage: React.FC = () => {
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '메뉴 권한 정보를 불러오는 중 오류가 발생했습니다.',
+  });
+
   // 상태 관리
   const [matrix, setMatrix] = useState<MenuPermissionMatrix | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changes, setChanges] = useState<Map<string, MenuPermissionUpdate>>(new Map());
   const [filter, setFilter] = useState<MenuPermissionFilter>({});
-  // const [expandedMenus, setExpandedMenus] = useState<Set<number>>(new Set());
-
-  // API 알림 훅
-  const { callApiWithNotification } = useApiWithNotification({
-    showSuccessOnLoad: true,
-  });
 
   // 데이터 로드
   const loadMatrix = useCallback(async () => {
     setLoading(true);
+    
     const data = await callApiWithNotification(() => adminApi.getMenuPermissionMatrix());
-    if(data){
+    if (data) {
       setMatrix(data);
       setChanges(new Map());
     }
+    
     setLoading(false);
   }, [callApiWithNotification]);
 
   useEffect(() => {
     loadMatrix();
-  }, []);
+  }, [loadMatrix]);
 
   // 필터링된 메뉴 목록
   const filteredMenus = useMemo(() => {
     if (!matrix) return [];
-    
     
     const filtered = matrix.menus.filter(menu => {
       // 메뉴명 필터
@@ -142,38 +144,54 @@ const MenuPermissionManagePage: React.FC = () => {
   // 변경사항 저장
   const handleSave = useCallback(async () => {
     if (changes.size === 0) {
+      callApiWithNotification(
+        () => Promise.reject(new Error('저장할 변경사항이 없습니다.')),
+        'custom'
+      );
       return;
     }
 
     setSaving(true);
     
-    // 메뉴별로 변경사항 그룹핑
-    const changesByMenu = new Map<number, MenuPermissionUpdate[]>();
-    changes.forEach((change, key) => {
-      const menuId = parseInt(key.split('-')[0]);
-      if (!changesByMenu.has(menuId)) {
-        changesByMenu.set(menuId, []);
-      }
-      changesByMenu.get(menuId)!.push(change);
-    });
-
-    // 각 메뉴별로 저장
-    const result = await callApiWithNotification(
-      async () => {
-        for (const [menuId, updates] of changesByMenu) {
-          await adminApi.updateMenuPermissions(menuId, updates);
+    try {
+      // 메뉴별로 변경사항 그룹핑
+      const changesByMenu = new Map<number, MenuPermissionUpdate[]>();
+      changes.forEach((change, key) => {
+        const menuId = parseInt(key.split('-')[0]);
+        if (!changesByMenu.has(menuId)) {
+          changesByMenu.set(menuId, []);
         }
-        return changesByMenu.size;
-      },
-      'custom'
-    );
+        changesByMenu.get(menuId)!.push(change);
+      });
 
-    if (result) {
-      setChanges(new Map());
+      // 각 메뉴별로 저장
+      const result = await callApiWithNotification(
+        async () => {
+          for (const [menuId, updates] of changesByMenu) {
+            await adminApi.updateMenuPermissions(menuId, updates);
+          }
+          return changesByMenu.size;
+        },
+        'custom'
+      );
+
+      if (result) {
+        setChanges(new Map());
+      }
+    } finally {
+      setSaving(false);
     }
-    
-    setSaving(false);
   }, [changes, callApiWithNotification]);
+
+  // 필터 초기화 핸들러
+  const handleReset = useCallback(() => {
+    setFilter({});
+  }, []);
+
+  // 검색 핸들러
+  const handleSearch = useCallback(() => {
+    loadMatrix();
+  }, [loadMatrix]);
 
   // 권한 레벨 표시
   const getPermissionLevel = (permissions: PermissionSet): string => {
@@ -188,7 +206,7 @@ const MenuPermissionManagePage: React.FC = () => {
     switch (level) {
       case 'FULL': return 'success';
       case 'WRITE': return 'primary';
-      case 'read': return 'secondary';
+      case 'READ': return 'secondary';
       default: return 'default';
     }
   };
@@ -237,81 +255,44 @@ const MenuPermissionManagePage: React.FC = () => {
         }}
       >
         {/* 검색 조건 */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
-            alignItems: 'center',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            padding: '8px 16px',
-            borderRadius: '4px',
-          }}
-        >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>메뉴명</span>
-          <Box sx={{ minWidth: 220, maxWidth: 320 }}>
-            <SearchBox
-              placeholder="메뉴명 검색"
-              value={filter.menuName || ''}
-              onSearch={(q: string) => setFilter({ ...filter, menuName: q })}
-              onClear={() => setFilter({ ...filter, menuName: '' })}
-            />
-          </Box>
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>권한레벨</span>
-          <FormControl size="small" sx={{ minWidth: 120, maxWidth: 180 }}>
-            <Select
-              value={filter.permissionLevel || ''}
-              onChange={(e) => setFilter({ ...filter, permissionLevel: e.target.value as any })}
-              displayEmpty
-            >
-              <MenuItem value="">전체</MenuItem>
-              <MenuItem value="NONE">권한 없음</MenuItem>
-              <MenuItem value="read">읽기 전용</MenuItem>
-              <MenuItem value="WRITE">읽기/쓰기</MenuItem>
-              <MenuItem value="FULL">전체 권한</MenuItem>
-            </Select>
-          </FormControl>
-          <SearchButton
-            onClick={loadMatrix}
-            loading={loading}
-            disabled={loading}
-          />
-          <Button
-            startIcon={<ClearIcon />}
-            onClick={() => setFilter({})}
-            variant="outlined"
-            size="small"
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              borderRadius: 1,
-            }}
-          >
-            초기화
-          </Button>
-          <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-            <Button
-              variant="contained"
-              startIcon={<SaveIcon />}
-              onClick={handleSave}
-              disabled={saving || changes.size === 0}
-              color="primary"
-              sx={{
-                height: '32px',
-                minWidth: '120px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
-            >
-              {saving ? '저장 중...' : `변경사항 저장 (${changes.size})`}
-            </Button>
-            <RefreshButton size="small" disabled={loading} onClick={loadMatrix} />
-          </Box>
-        </Box>
+        <TitleSearch
+          value={filter.menuName || ''}
+          onChange={(value) => setFilter({ ...filter, menuName: value })}
+          onEnter={handleSearch}
+          disabled={loading}
+          after={
+            <>
+              <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>권한레벨</span>
+              <FormControl size="small" sx={{ minWidth: 120, maxWidth: 180 }}>
+                <Select
+                  value={filter.permissionLevel || ''}
+                  onChange={(e) => setFilter({ ...filter, permissionLevel: e.target.value as any })}
+                  displayEmpty
+                >
+                  <MenuItem value="">전체</MenuItem>
+                  <MenuItem value="NONE">권한 없음</MenuItem>
+                  <MenuItem value="READ">읽기 전용</MenuItem>
+                  <MenuItem value="WRITE">읽기/쓰기</MenuItem>
+                  <MenuItem value="FULL">전체 권한</MenuItem>
+                </Select>
+              </FormControl>
+              <SearchButton
+                onClick={handleSearch}
+                loading={loading}
+                disabled={loading}
+              />
+              <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+                <SaveButton
+                  onClick={handleSave}
+                  disabled={saving || changes.size === 0}
+                  loading={saving}
+                  label={saving ? '저장 중...' : `변경사항 저장 (${changes.size})`}
+                />
+                <RefreshButton disabled={loading} onClick={loadMatrix} />
+              </Box>
+            </>
+          }
+        />
 
         {/* 통계 정보 및 액션 버튼 */}
         <Box sx={{ 
@@ -342,14 +323,6 @@ const MenuPermissionManagePage: React.FC = () => {
               <Typography variant="caption" color="textSecondary">변경사항</Typography>
             </Box>
           </Box>
-          {/* <Box sx={{ display: 'flex', gap: 1 }}>
-            <ExcelDownloadButton
-              onDownload={() => {}}
-              filename="menu_permissions_matrix"
-              disabled={loading}
-              loading={loading}
-            />
-          </Box> */}
         </Box>
 
         {/* 권한 매트릭스 테이블 */}
@@ -449,48 +422,13 @@ const MenuPermissionManagePage: React.FC = () => {
                       
                       return (
                         <TableCell key={`${menu.menuId}-${role}`} align="center">
-                          <Box>
-                            {/* 권한 레벨 표시 */}
-                            <Box mb={1}>
-                              <Chip 
-                                label={level} 
-                                size="small" 
-                                color={getPermissionColor(level)}
-                                variant={hasChanges ? "filled" : "outlined"}
-                              />
-                            </Box>
-                            
-                            {/* 개별 권한 체크박스 */}
-                            <Box display="flex" justifyContent="center" gap={0.5}>
-                              <Tooltip title="읽기">
-                                <Checkbox
-                                  icon={<ReadIcon fontSize="small" />}
-                                  checkedIcon={<ReadIcon fontSize="small" color="primary" />}
-                                  checked={permissions.canRead}
-                                  onChange={(e) => handlePermissionChange(menu.menuId, role, 'canRead', e.target.checked)}
-                                  size="small"
-                                />
-                              </Tooltip>
-                              <Tooltip title="쓰기">
-                                <Checkbox
-                                  icon={<WriteIcon fontSize="small" />}
-                                  checkedIcon={<WriteIcon fontSize="small" color="primary" />}
-                                  checked={permissions.canWrite}
-                                  onChange={(e) => handlePermissionChange(menu.menuId, role, 'canWrite', e.target.checked)}
-                                  size="small"
-                                />
-                              </Tooltip>
-                              <Tooltip title="삭제">
-                                <Checkbox
-                                  icon={<DeleteIcon fontSize="small" />}
-                                  checkedIcon={<DeleteIcon fontSize="small" color="error" />}
-                                  checked={permissions.canDelete}
-                                  onChange={(e) => handlePermissionChange(menu.menuId, role, 'canDelete', e.target.checked)}
-                                  size="small"
-                                />
-                              </Tooltip>
-                            </Box>
-                          </Box>
+                          <MenuPermissionCell
+                            menuId={menu.menuId}
+                            roleName={role}
+                            permissions={permissions}
+                            hasChanges={hasChanges}
+                            onPermissionChange={handlePermissionChange}
+                          />
                         </TableCell>
                       );
                     })}
@@ -509,8 +447,6 @@ const MenuPermissionManagePage: React.FC = () => {
           </Alert>
         )}
       </PageContent>
-      
-
     </PageContainer>
   );
 };

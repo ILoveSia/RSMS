@@ -3,6 +3,7 @@
  * 결재 현황 요약과 중요한 결재 목록을 한눈에 확인할 수 있는 대시보드입니다.
  */
 import React, { useState, useEffect, useCallback } from 'react';
+import { ApprovalSummaryCards } from '@/shared/components/ui/data-display/';
 import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import {
   Box,
@@ -13,7 +14,6 @@ import {
   Chip,
   Button,
   Alert,
-  Snackbar,
   Divider,
   CircularProgress,
 } from '@mui/material';
@@ -40,6 +40,7 @@ import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDia
 import InlineApprovalDialog from '@/shared/components/approval/InlineApprovalDialog';
 import { useReduxState } from '@/app/store/use-store';
 import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
+import { useApiWithNotification } from '@/shared/hooks';
 import '../../../assets/scss/style.css';
 
 // LoginUser 타입 (loginStore용)
@@ -54,10 +55,30 @@ interface LoginUser {
   accessibleMenus?: any[];
 }
 
+// 결재 단계 타입 정의
+interface ApprovalStep {
+  stepId: number;
+  approverId: string;
+  status: string;
+}
+
+// 결재 상세 데이터 타입 정의
+interface ApprovalDetail {
+  approvalId: number;
+  steps: ApprovalStep[];
+  [key: string]: any;
+}
+
 /**
  * 결재 대시보드 페이지
  */
 const ApprovalDashboardPage: React.FC = () => {
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '대시보드 데이터를 불러오는 중 오류가 발생했습니다.',
+  });
+
   // 로그인 사용자 정보 가져오기
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
   const currentUserId = loginData?.userid;
@@ -65,19 +86,15 @@ const ApprovalDashboardPage: React.FC = () => {
   // 공통코드 가져오기
   const allCodes = useCommonCodes();
 
-  
-
   // 상태 관리
   const [summary, setSummary] = useState<ApprovalSummaryResponse | null>(null);
   const [urgentApprovals, setUrgentApprovals] = useState<ApprovalListResponse[]>([]);
   const [myPendingApprovals, setMyPendingApprovals] = useState<ApprovalListResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   // 다이얼로그 상태
-  const [selectedApproval, setSelectedApproval] = useState<any>(null);
+  const [selectedApproval, setSelectedApproval] = useState<ApprovalDetail | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
   const [processAction, setProcessAction] = useState<'approve' | 'reject'>('approve');
@@ -91,137 +108,106 @@ const ApprovalDashboardPage: React.FC = () => {
       return;
     }
 
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
-
-      
-
       // 병렬로 대시보드 데이터 로드
-      const [summaryData, pendingData, allData] = await Promise.all([
-        approvalApi.getApprovalSummary(currentUserId),
-        approvalApi.getMyPendingApprovals(currentUserId),
-        approvalApi.getAllApprovals(),
-      ]);
+      const [summaryData, pendingData, allData] = await callApiWithNotification(
+        async () => {
+          const results = await Promise.all([
+            approvalApi.getApprovalSummary(currentUserId),
+            approvalApi.getMyPendingApprovals(currentUserId),
+            approvalApi.getAllApprovals(),
+          ]);
+          return results;
+        },
+        'success_load'
+      );
 
-      
-
-      setSummary(summaryData);
-      setMyPendingApprovals(pendingData || []);
-      
-      // 긴급 결재만 필터링 (최근 5건)
-      const urgentData = (allData || [])
-        .filter(item => item.urgency === 'URGENT')
-        .slice(0, 5);
-      setUrgentApprovals(urgentData);
-      
-      setSuccessMessage('대시보드 데이터를 성공적으로 불러왔습니다.');
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    } catch (err) {
-      console.error('대시보드 데이터 로드 실패:', err);
-      setError('데이터를 불러오는데 실패했습니다.');
+      if (summaryData && pendingData && allData) {
+        setSummary(summaryData);
+        setMyPendingApprovals(pendingData || []);
+        
+        // 긴급 결재만 필터링 (최근 5건)
+        const urgentData = (allData || [])
+          .filter(item => item.urgency === 'URGENT')
+          .slice(0, 5);
+        setUrgentApprovals(urgentData);
+      }
     } finally {
       setLoading(false);
     }
-  }, [currentUserId]);
+  }, [currentUserId, callApiWithNotification]);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
 
-
   // 결재 상세 보기
   const handleViewDetail = async (approvalId: number) => {
-    try {
-      const detail = await approvalApi.getApprovalDetail(approvalId);
+    const detail = await callApiWithNotification(
+      () => approvalApi.getApprovalDetail(approvalId),
+      'custom'
+    );
+    
+    if (detail) {
       setSelectedApproval(detail);
       setStatusDialogOpen(true);
-    } catch (err) {
-      console.error('결재 상세 조회 실패:', err);
-      alert('결재 상세 정보를 불러오는데 실패했습니다.');
     }
   };
 
   // 인라인 결재 처리
   const handleInlineProcess = async (approvalId: number, action: 'approve' | 'reject') => {
-    try {
-      const detail = await approvalApi.getApprovalDetail(approvalId);
+    const detail = await callApiWithNotification(
+      () => approvalApi.getApprovalDetail(approvalId),
+      'custom'
+    );
+    
+    if (detail) {
       setSelectedApproval(detail);
       setProcessAction(action);
       setProcessDialogOpen(true);
-    } catch (err) {
-      console.error('결재 상세 조회 실패:', err);
-      alert('결재 정보를 불러오는데 실패했습니다.');
     }
   };
 
   // 결재 처리 확인
   const handleProcessConfirm = async (comments: string) => {
-    if (!selectedApproval) return;
+    if (!selectedApproval || !currentUserId) return;
 
     try {
       // 내가 처리해야 할 단계 찾기
       const myStep = selectedApproval.steps.find(
-        step => step.approverId === currentUserId && step.status === 'PENDING'
+        (step: ApprovalStep) => step.approverId === currentUserId && step.status === 'PENDING'
       );
       
       if (!myStep?.stepId) {
-        throw new Error('처리할 수 있는 결재 단계를 찾을 수 없습니다.');
+        await callApiWithNotification(
+          () => Promise.reject(new Error('처리할 수 있는 결재 단계를 찾을 수 없습니다.')),
+          'custom'
+        );
+        return;
       }
 
       // 결재 처리 API 호출
-      await approvalApi.processApproval({
-        stepId: myStep.stepId,
-        action: processAction,
-        comments: comments,
-      });
+      await callApiWithNotification(
+        () => approvalApi.processApproval({
+          stepId: myStep.stepId,
+          action: processAction,
+          comments: comments,
+        }),
+        'custom'
+      );
 
       setProcessDialogOpen(false);
       loadDashboardData(); // 데이터 새로고침
       
-      setSuccessMessage(`결재가 성공적으로 ${processAction === 'approve' ? '승인' : '반려'}되었습니다.`);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-      
     } catch (error) {
+      // 에러는 callApiWithNotification에서 자동 처리됨
       console.error('결재 처리 실패:', error);
-      alert(`결재 처리에 실패했습니다: ${error}`);
     }
   };
-
-  // 요약 카드 데이터
-  const summaryCards = summary ? [
-    {
-      title: '내 결재 대기',
-      value: summary.myPendingCount,
-      color: 'warning' as const,
-      icon: <NotificationsIcon />,
-      description: '처리해야 할 결재',
-    },
-    {
-      title: '전체 결재',
-      value: summary.totalCount,
-      color: 'info' as const,
-      icon: <AssignmentIcon />,
-      description: '전체 결재 건수',
-    },
-    {
-      title: '승인 완료',
-      value: summary.approvedCount,
-      color: 'success' as const,
-      icon: <CheckCircleIcon />,
-      description: '승인된 결재',
-    },
-    {
-      title: '반려',
-      value: summary.rejectedCount,
-      color: 'error' as const,
-      icon: <CancelIcon />,
-      description: '반려된 결재',
-    },
-  ] : [];
 
   // 내 결재 대기 목록 컬럼
   const pendingColumns: DataGridColumn<ApprovalListResponse>[] = [
@@ -231,7 +217,8 @@ const ApprovalDashboardPage: React.FC = () => {
       width: 250,
       renderCell: ({ value, row }) => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
-        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
+        const taskTypeCd = row.taskTypeCd || '';
+        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', String(taskTypeCd));
         return (
           <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#1976d2', cursor: 'pointer' }}>
             {taskTypeName}
@@ -271,7 +258,7 @@ const ApprovalDashboardPage: React.FC = () => {
       width: 120,
       renderCell: ({ value }) => (
         <Typography variant="caption">
-          {value ? new Date(value).toLocaleDateString() : '해당없음'}
+          {value && typeof value === 'string' ? new Date(value).toLocaleDateString() : '해당없음'}
         </Typography>
       ),
       flex: 1,
@@ -279,7 +266,7 @@ const ApprovalDashboardPage: React.FC = () => {
       headerAlign: 'center',
     },
     {
-      field: 'actions',
+      field: 'approvalId',
       headerName: '처리',
       width: 140,
       renderCell: ({ row }) => (
@@ -316,7 +303,8 @@ const ApprovalDashboardPage: React.FC = () => {
       width: 200,
       renderCell: ({ value, row }) => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
-        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', row.taskTypeCd || value);
+        const taskTypeCd = row.taskTypeCd || '';
+        const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', String(taskTypeCd));
         return (
           <Typography 
             variant="body2" 
@@ -385,7 +373,7 @@ const ApprovalDashboardPage: React.FC = () => {
       headerAlign: 'center',
     },
     {
-      field: 'actions',
+      field: 'approvalId',
       headerName: '상세보기',
       width: 80,
       renderCell: ({ row }) => (
@@ -458,49 +446,7 @@ const ApprovalDashboardPage: React.FC = () => {
           </Box>
         ) : (
           <>
-            {/* 요약 카드 영역 */}
-            <Box sx={{ px: 2, mb: 3 }}>
-              <Grid container spacing={1.5}>
-                {summaryCards.map((card, index) => (
-                  <Grid item xs={12} sm={6} md={3} key={index}>
-                    <Card 
-                      sx={{ 
-                        border: '1px solid var(--bank-border)',
-                        borderRadius: 2,
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          boxShadow: 2,
-                          transform: 'translateY(-2px)',
-                        }
-                      }}
-                    >
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Box>
-                            <Typography 
-                              variant="h5" 
-                              color={`${card.color}.main`}
-                              sx={{ fontWeight: 'bold' }}
-                            >
-                              {card.value.toLocaleString()}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary" gutterBottom>
-                              {card.title}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                              {card.description}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ color: `${card.color}.main`, fontSize: 32 }}>
-                            {card.icon}
-                          </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
+            <ApprovalSummaryCards summary={summary} />
 
             {/* 결재 목록 영역 - 양옆 배치 */}
             <Box sx={{ px: 2, mb: 1 }}>
@@ -556,9 +502,10 @@ const ApprovalDashboardPage: React.FC = () => {
                           display: 'flex', 
                           flexDirection: 'column', 
                           justifyContent: 'center',
+                          alignItems: 'center',
                           minHeight: 500 
                         }}>
-                          <HourglassEmptyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                          <HourglassEmptyIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1, alignSelf: 'center' }} />
                           <Typography variant="body1" color="textSecondary" gutterBottom>
                             결재 대기 중인 항목이 없습니다
                           </Typography>
@@ -622,9 +569,10 @@ const ApprovalDashboardPage: React.FC = () => {
                           display: 'flex', 
                           flexDirection: 'column', 
                           justifyContent: 'center',
+                          alignItems: 'center',
                           minHeight: 500 
                         }}>
-                          <WarningIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                          <WarningIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1, alignSelf: 'center' }} />
                           <Typography variant="body1" color="textSecondary" gutterBottom>
                             긴급 결재가 없습니다
                           </Typography>
@@ -666,18 +614,6 @@ const ApprovalDashboardPage: React.FC = () => {
             onConfirm={handleProcessConfirm}
           />
         )}
-
-        {/* 성공 알림 */}
-        <Snackbar
-          open={showSuccess}
-          autoHideDuration={2000}
-          onClose={() => setShowSuccess(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        >
-          <Alert severity="success">
-            {successMessage}
-          </Alert>
-        </Snackbar>
       </PageContent>
     </PageContainer>
   );

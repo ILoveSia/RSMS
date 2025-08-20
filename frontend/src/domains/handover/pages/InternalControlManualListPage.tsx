@@ -10,7 +10,8 @@
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton, Button } from '@/shared/components/ui/button';
+import { ApprovalStatusBadge, AttachmentBadge } from '@/shared/components/ui/badge';
+import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { TextField } from '@/shared/components/ui/data-display/';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -20,10 +21,10 @@ import type { DataGridColumn } from '@/shared/types/common';
 import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Box, Chip, IconButton, InputAdornment } from '@mui/material';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
+import TitleSearch from '@/domains/admin/components/TitleSearch';
 import React, { useCallback, useEffect, useState } from 'react';
 import { internalControlManualApi, type InternalControlManualDto } from '../api/internalControlManualApi';
-import { useSnackbar } from '@/shared/hooks/useSnackbar';
-import Toast from '@/shared/components/ui/feedback/Toast';
+import { useApiWithNotification } from '@/shared/hooks';
 import InternalControlManualDialog from '../components/InternalControlManualDialog';
 
 
@@ -33,20 +34,23 @@ interface IInternalControlManualListPageProps {
 
 
 const InternalControlManualListPage: React.FC<IInternalControlManualListPageProps> = (): React.JSX.Element => {
+  // API 알림 훅
+  const { callApiWithNotification } = useApiWithNotification({
+    showSuccessOnLoad: true,
+    errorMessage: '데이터를 불러오는 중 오류가 발생했습니다.',
+  });
+
+  // 상태 관리
   const [manualTitle, setManualTitle] = useState<string>('');
   const [authorEmpNo, setAuthorEmpNo] = useState<string>('');
   const [authorName, setAuthorName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<InternalControlManualDto[]>([]);
   const [apiResponseData, setApiResponseData] = useState<any>(null);
 
   // 사원 검색 팝업 상태
   const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
-
-  // 알림 처리
-  const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
 
   // 다이얼로그 상태
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -94,50 +98,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       width: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => {
-        const status = params.row.approvalStatus;
-        let statusText = '';
-        let statusColor = '#666';
-
-        switch (status) {
-          case 'NONE':
-            statusText = '미결재';
-            statusColor = '#999';
-            break;
-          case 'SUBMITTED':
-              statusText = '상신';
-              statusColor = '#2196f3';
-              break;  
-          case 'IN_PROGRESS':
-            statusText = '진행중';
-            statusColor = '#ff9800';
-            break;
-          case 'APPROVED':
-            statusText = '승인';
-            statusColor = '#4caf50';
-            break;
-          case 'REJECTED':
-            statusText = '반려';
-            statusColor = '#f44336';
-            break;
-          default:
-            statusText = status || '미결재';
-            statusColor = '#999';
-        }
-
-        return (
-          <Box
-            component="span"
-            sx={{
-              color: statusColor,
-              fontSize: '0.875rem',
-              fontWeight: 500,
-            }}
-          >
-            {statusText}
-          </Box>
-        );
-      },
+      renderCell: params => <ApprovalStatusBadge status={params.row.approvalStatus} />,
     },
     {
       field: 'authorName',
@@ -152,17 +113,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       width: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: params => {
-        const count = params.value as number || 0;
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-            📎
-            <span style={{ fontSize: '0.875rem', color: count > 0 ? 'var(--bank-primary)' : '#999' }}>
-              {count}
-            </span>
-          </Box>
-        );
-      },
+      renderCell: params => <AttachmentBadge count={params.value as number} />,
     },
     {
       field: 'effectiveDate',
@@ -214,8 +165,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
     },
   ];
 
-
-
   // 초기 데이터 로드
   useEffect(() => {
     handleSearch();
@@ -223,32 +172,27 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
 
   const handleSearch = useCallback(async () => {
     setLoading(true);
-    setError(null);
-
-    try {
-      const searchParams = {
-        manualTitle: manualTitle.trim() || undefined,
-        authorEmpNo: authorEmpNo.trim() || undefined,
-      };
-
-      
-
-      // 결재 테이블과 조인하여 검색
-      const data = await internalControlManualApi.searchManualsWithApproval(
-        searchParams,
+    
+    const data = await callApiWithNotification(
+      () => internalControlManualApi.searchManualsWithApproval(
+        {
+          manualTitle: manualTitle.trim() || undefined,
+          authorEmpNo: authorEmpNo.trim() || undefined,
+        },
         { page: 0, size: 100 }
-      );
-
-      
+      ),
+      'success_load'
+    );
+    
+    if (data) {
       setRows(data.content);
       setApiResponseData(data);
-    } catch (err) {
-      console.error('Failed to fetch data:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+    } else {
+      setRows([]);
     }
-  }, [manualTitle, authorEmpNo]);
+    
+    setLoading(false);
+  }, [manualTitle, authorEmpNo, callApiWithNotification]);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
@@ -277,7 +221,10 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
 
   const handleDelete = useCallback(async () => {
     if (selectedIds.length === 0) {
-      alert('삭제할 항목을 선택해주세요.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('삭제할 항목을 선택해주세요.')),
+        'custom'
+      );
       return;
     }
 
@@ -285,23 +232,22 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
+    try {
       for (const id of selectedIds) {
-        await internalControlManualApi.deleteManual(id);
+        await callApiWithNotification(
+          () => internalControlManualApi.deleteManual(id),
+          'custom'
+        );
       }
 
-      alert('삭제가 완료되었습니다.');
       setSelectedIds([]);
       await handleSearch(); // 데이터 새로고침
-    } catch (err) {
-      console.error('Failed to delete items:', err);
-      alert('삭제 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [selectedIds, handleSearch]);
+  }, [selectedIds, handleSearch, callApiWithNotification]);
 
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
@@ -316,34 +262,44 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   // 결재 요청 처리
   const handleApprovalStart = useCallback(async (manual: InternalControlManualDto) => {
     if (!manual.manualId) {
-      showError('메뉴얼 ID가 없습니다.');
+      callApiWithNotification(
+        () => Promise.reject(new Error('메뉴얼 ID가 없습니다.')),
+        'custom'
+      );
       return;
     }
 
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      await internalControlManualApi.startApproval(manual.manualId, {
-        taskTypeCode: 'internal_control_manuals',
-        taskId: manual.manualId,
-        title: `내부통제 업무메뉴얼 결재 - ${manual.manualTitle}`,
-        description: `내부통제 업무메뉴얼 "${manual.manualTitle}" 결재를 요청합니다.`
-      });
+      await callApiWithNotification(
+        () => internalControlManualApi.startApproval(manual.manualId, {
+          taskTypeCode: 'internal_control_manuals',
+          taskId: manual.manualId,
+          title: `내부통제 업무메뉴얼 결재 - ${manual.manualTitle}`,
+          description: `내부통제 업무메뉴얼 "${manual.manualTitle}" 결재를 요청합니다.`
+        }),
+        'custom'
+      );
       
-      showSuccess('결재 요청이 완료되었습니다.');
       await handleSearch(); // 데이터 새로고침
-    } catch (error) {
-      console.error('결재 요청 실패:', error);
-      showError('결재 요청 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [showSuccess, showError, handleSearch]);
+  }, [handleSearch, callApiWithNotification]);
 
   // 사원 선택 핸들러
   const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
     setAuthorEmpNo(employee.num);
     setAuthorName(employee.username);
     setAuthorSearchOpen(false);
+  }, []);
+
+  // 초기화 핸들러
+  const handleReset = useCallback(() => {
+    setManualTitle('');
+    setAuthorEmpNo('');
+    setAuthorName('');
   }, []);
 
   return (
@@ -370,66 +326,46 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
           py: 1,
         }}
       >
-        <Box
-          sx={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px',
-            alignItems: 'center',
-            backgroundColor: 'var(--bank-bg-secondary)',
-            border: '1px solid var(--bank-border)',
-            padding: '8px 16px',
-            borderRadius: '4px',
-          }}
-        >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>메뉴얼제목</span>
-          <TextField
-            value={manualTitle}
-            onChange={(e) => setManualTitle(e.target.value)}
-            size="small"
-            placeholder="메뉴얼제목을 입력하세요"
-            sx={{ minWidth: 150, maxWidth: 200 }}
-          />
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>작성자</span>
-          <TextField
-            value={authorName}
-            onChange={(e) => setAuthorName(e.target.value)}
-            size="small"
-            placeholder="작성자명"
-            helperText={authorEmpNo ? `사번: ${authorEmpNo}` : ''}
-            sx={{ minWidth: 120, maxWidth: 180 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setAuthorSearchOpen(true)}
-                    size="small"
-                    edge="end"
-                    title="사원 검색"
-                  >
-                    <SearchIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <SearchButton
-            onClick={handleSearch}
-            loading={loading}
-            disabled={loading}
-          />
-          <Button
-            onClick={() => {
-              setManualTitle('');
-              setAuthorEmpNo('');
-              setAuthorName('');
-            }}
-            variant="outlined"
-            size="small"
-          >
-            초기화
-          </Button>
-        </Box>
+        <TitleSearch
+          value={manualTitle}
+          onChange={setManualTitle}
+          onEnter={handleSearch}
+          disabled={loading}
+          after={
+            <>
+              <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>작성자</span>
+              <TextField
+                label=""
+                mode="editable"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                size="small"
+                placeholder="작성자명"
+                helperText={authorEmpNo ? `사번: ${authorEmpNo}` : ''}
+                sx={{ minWidth: 120, maxWidth: 180 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setAuthorSearchOpen(true)}
+                        size="small"
+                        edge="end"
+                        title="사원 검색"
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <SearchButton
+                onClick={handleSearch}
+                loading={loading}
+                disabled={loading}
+              />
+            </>
+          }
+        />
 
         <Box sx={{ 
           display: 'flex', 
@@ -439,19 +375,16 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
           alignItems: 'center',
           height: '32px',
         }}>
-          <ExcelDownloadButton
-            onDownload={handleExcelDownload}
-            filename="internal_control_manuals"
-            disabled={loading}
-            loading={loading}
-          />
           <ManagementButtonGroup
             onRegister={handleCreateClick}
             onDelete={handleDelete}
+            onExcelDownload={handleExcelDownload}
+            filename="internal_control_manuals"
             showRegister={true}
             showDelete={true}
             showEdit={false}
             showRefresh={false}
+            showExcelDownload={true}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"
@@ -462,7 +395,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         </Box>
 
         <Box sx={{ width: '100%', flex: 1 }}>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
           <DataGrid
             data={rows}
             columns={columns}
@@ -509,14 +441,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         onClose={() => setAuthorSearchOpen(false)}
         onSelect={handleAuthorSelect}
         title="작성자 검색"
-      />
-
-      {/* 알림 토스트 */}
-      <Toast
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={hideSnackbar}
       />
     </PageContainer>
   );
