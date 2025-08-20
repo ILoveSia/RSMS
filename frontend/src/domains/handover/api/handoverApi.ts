@@ -287,19 +287,6 @@ export class HandoverApi {
     return this.deleteHandoverAssignment(assignmentId);
   }
 
-  /**
-   * 인수인계 통계
-   */
-  static async getHandoverStatistics(): Promise<HandoverStatistics> {
-    return apiClient.get<HandoverStatistics>(`${this.BASE_PATH}/statistics`);
-  }
-
-  /**
-   * 상태별 통계
-   */
-  static async getStatusStatistics(): Promise<StatusStatistics[]> {
-    return apiClient.get<StatusStatistics[]>(`${this.BASE_PATH}/statistics/status`);
-  }
 }
 
 // 싱글톤 인스턴스 생성 및 내보내기

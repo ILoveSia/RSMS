@@ -44,68 +44,6 @@ public class DeficiencyStatusController {
         return ResponseEntity.ok(statusList);
     }
 
-    /**
-     * 미흡상황 현황 조회 (파라미터 기반)
-     * 
-     * @param inspectionRound 점검회차 (선택적)
-     * @param department 부서 (선택적)
-     * @param statusCode 상태코드 (선택적)
-     * @param inspector 점검자 (선택적)
-     * @param startDate 시작일 (선택적)
-     * @param endDate 종료일 (선택적)
-     * @param priority 우선순위 (선택적)
-     * @return 미흡상황 현황 목록
-     */
-    @GetMapping
-    public ResponseEntity<List<DeficiencyStatusDto>> getDeficiencyStatus(
-            @RequestParam(required = false) String inspectionRound,
-            @RequestParam(required = false) String department,
-            @RequestParam(required = false) String statusCode,
-            @RequestParam(required = false) String inspector,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) String priority) {
-        log.info("미흡상황 현황 조회 요청 - inspectionRound: {}, department: {}, statusCode: {}", 
-                inspectionRound, department, statusCode);
-        
-        List<DeficiencyStatusDto> statusList = deficiencyStatusService.getDeficiencyStatus(
-                inspectionRound, department, statusCode, inspector, startDate, endDate, priority);
-        
-        log.info("미흡상황 현황 조회 완료 - 건수: {}", statusList.size());
-        return ResponseEntity.ok(statusList);
-    }
-
-    /**
-     * 미흡상황 상세 조회
-     * 
-     * @param id 미흡상황 ID
-     * @return 미흡상황 정보
-     */
-    @GetMapping("/{id}")
-    public ResponseEntity<DeficiencyStatusDto> getDeficiencyStatusById(@PathVariable Long id) {
-        log.info("미흡상황 상세 조회 요청: {}", id);
-        
-        DeficiencyStatusDto dto = deficiencyStatusService.getDeficiencyStatusById(id);
-        
-        log.info("미흡상황 상세 조회 완료: {}", id);
-        return ResponseEntity.ok(dto);
-    }
-
-    /**
-     * 미흡상황 등록
-     * 
-     * @param dto 미흡상황 데이터
-     * @return 등록된 미흡상황 정보
-     */
-    @PostMapping
-    public ResponseEntity<DeficiencyStatusDto> createDeficiencyStatus(@RequestBody DeficiencyStatusDto dto) {
-        log.info("미흡상황 등록 요청: {}", dto);
-        
-        DeficiencyStatusDto savedDto = deficiencyStatusService.createDeficiencyStatus(dto);
-        
-        log.info("미흡상황 등록 완료: {}", savedDto.getAuditProgMngtDetailId());
-        return ResponseEntity.ok(savedDto);
-    }
 
     /**
      * 미흡상황 수정
@@ -162,26 +100,6 @@ public class DeficiencyStatusController {
         }
         
         log.info("미흡상황 다중 삭제 완료: {}건", request.getIds().size());
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * 개선계획 변경
-     * 
-     * @param request 개선계획 변경 요청
-     * @return 변경 결과
-     */
-    @PostMapping("/improvement-plan/update")
-    public ResponseEntity<Void> updateImprovementPlan(@RequestBody ImprovementPlanUpdateRequest request) {
-        log.info("개선계획 변경 요청: {}", request);
-        
-        deficiencyStatusService.updateImprovementPlan(
-                request.getIds(), 
-                request.getImprovementPlan(), 
-                request.getDueDate(), 
-                request.getRemarks());
-        
-        log.info("개선계획 변경 완료: {}건", request.getIds().size());
         return ResponseEntity.ok().build();
     }
 

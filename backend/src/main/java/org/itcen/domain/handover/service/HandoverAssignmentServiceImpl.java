@@ -266,23 +266,6 @@ public class HandoverAssignmentServiceImpl implements HandoverAssignmentService 
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
-
-    @Override
-    public HandoverAssignmentStatistics getStatistics() {
-        log.info("인수인계 통계 조회");
-
-        long totalCount = handoverAssignmentRepository.count();
-        long plannedCount = handoverAssignmentRepository.countByStatus(HandoverAssignment.HandoverStatus.PLANNED);
-        long inProgressCount = handoverAssignmentRepository.countInProgress();
-        long completedCount = handoverAssignmentRepository.countCompleted();
-        long cancelledCount = handoverAssignmentRepository.countByStatus(HandoverAssignment.HandoverStatus.CANCELLED);
-        long delayedCount = handoverAssignmentRepository.findDelayedAssignments().size();
-
-        return new HandoverAssignmentStatistics(
-                totalCount, plannedCount, inProgressCount,
-                completedCount, cancelledCount, delayedCount);
-    }
-
     /**
      * 인수인계 관계 중복 검증 (생성 시)
      */

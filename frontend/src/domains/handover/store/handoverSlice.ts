@@ -123,12 +123,6 @@ export const cancelHandover = createAsyncThunk(
   }
 );
 
-export const fetchHandoverStatistics = createAsyncThunk(
-  'handover/fetchStatistics',
-  async () => {
-    return await HandoverApi.getHandoverStatistics();
-  }
-);
 
 export const fetchActiveHandovers = createAsyncThunk(
   'handover/fetchActiveHandovers',

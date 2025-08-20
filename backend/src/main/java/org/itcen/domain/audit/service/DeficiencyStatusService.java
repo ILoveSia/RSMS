@@ -20,38 +20,6 @@ public interface DeficiencyStatusService {
      * @return 미흡상황 현황 목록
      */
     List<DeficiencyStatusDto> getAllDeficiencyStatus(String startDate, String endDate);
-
-    /**
-     * 미흡상황 현황 조회 (파라미터 기반)
-     * 
-     * @param inspectionRound 점검회차
-     * @param department 부서
-     * @param statusCode 상태코드
-     * @param inspector 점검자
-     * @param startDate 시작일
-     * @param endDate 종료일
-     * @param priority 우선순위
-     * @return 미흡상황 현황 목록
-     */
-    List<DeficiencyStatusDto> getDeficiencyStatus(String inspectionRound, String department, 
-            String statusCode, String inspector, String startDate, String endDate, String priority);
-
-    /**
-     * 미흡상황 상세 조회
-     * 
-     * @param id 미흡상황 ID
-     * @return 미흡상황 DTO
-     */
-    DeficiencyStatusDto getDeficiencyStatusById(Long id);
-
-    /**
-     * 미흡상황 등록
-     * 
-     * @param dto 미흡상황 데이터
-     * @return 등록된 미흡상황 DTO
-     */
-    DeficiencyStatusDto createDeficiencyStatus(DeficiencyStatusDto dto);
-
     /**
      * 미흡상황 수정
      * 
@@ -66,17 +34,6 @@ public interface DeficiencyStatusService {
      * @param id 미흡상황 ID
      */
     void deleteDeficiencyStatus(Long id);
-
-    /**
-     * 개선계획 변경
-     * 
-     * @param ids 미흡상황 ID 목록
-     * @param improvementPlan 새로운 개선계획
-     * @param dueDate 완료예정일
-     * @param remarks 비고
-     */
-    void updateImprovementPlan(List<Long> ids, String improvementPlan, String dueDate, String remarks);
-
     /**
      * 이행결과 작성
      * 

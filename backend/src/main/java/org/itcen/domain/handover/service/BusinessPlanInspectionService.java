@@ -167,7 +167,6 @@ public interface BusinessPlanInspectionService {
         LocalDate getActualEndDate();
         BusinessPlanInspection.InspectionStatus getStatus();
         String getInspectorEmpNo();
-        String getInspectorName();
         boolean isOnSchedule();
     }
 

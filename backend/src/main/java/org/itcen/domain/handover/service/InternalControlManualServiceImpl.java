@@ -187,32 +187,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
 
     @Override
     @Transactional
-    public void revertToDraft(Long manualId, String actorEmpNo, String reason) {
-        log.debug("내부통제 메뉴얼 초안으로 되돌리기 시작 - manualId: {}", manualId);
-
-        InternalControlManual manual = internalControlManualRepository.findById(manualId)
-                .orElseThrow(() -> new BusinessException("내부통제 업무메뉴얼을 찾을 수 없습니다: " + manualId));
-
-        // status 컬럼 삭제되어 상태 확인 로직 제거
-        manual.setUpdatedId(actorEmpNo);
-        internalControlManualRepository.save(manual);
-
-        // 이력 생성
-        HandoverHistory history = HandoverHistory.createManualHistory(
-                1L, // assignmentId - 기본값 설정
-                HandoverHistory.ActivityType.DOCUMENT_REVERTED,
-                "내부통제 업무메뉴얼이 초안으로 되돌아갔습니다. 사유: " + reason,
-                actorEmpNo,
-                null, // actorName
-                manualId
-        );
-        handoverHistoryRepository.save(history);
-
-        log.debug("내부통제 메뉴얼 초안으로 되돌리기 완료 - manualId: {}", manualId);
-    }
-
-    @Override
-    @Transactional
     public InternalControlManual updateVersion(Long manualId, String newVersion, String actorEmpNo) {
         log.debug("내부통제 메뉴얼 버전 업데이트 시작 - manualId: {}, newVersion: {}", manualId, newVersion);
 
@@ -243,23 +217,9 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         List<InternalControlManual> manuals = internalControlManualRepository.findByDeptCd(deptCd);
         return convertToDto(manuals);
     }
-
-    @Override
-    public List<InternalControlManualDto> getManualsByStatus(String status) {
-        // status 컬럼 삭제로 인해 전체 메뉴얼 조회
-        List<InternalControlManual> manuals = internalControlManualRepository.findAll();
-        return convertToDto(manuals);
-    }
-
     @Override
     public List<InternalControlManualDto> getManualsByAuthor(String authorEmpNo) {
         List<InternalControlManual> manuals = internalControlManualRepository.findByAuthorEmpNo(authorEmpNo);
-        return convertToDto(manuals);
-    }
-
-    @Override
-    public List<InternalControlManualDto> getLatestPublishedManuals(String deptCd) {
-        List<InternalControlManual> manuals = internalControlManualRepository.findLatestByDept(deptCd);
         return convertToDto(manuals);
     }
 
@@ -268,14 +228,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         List<InternalControlManual> manuals = internalControlManualRepository.findValidManuals(LocalDate.now());
         return convertToDto(manuals);
     }
-
-    @Override
-    public List<InternalControlManualDto> getExpiringManuals(int daysFromNow) {
-        LocalDate targetDate = LocalDate.now().plusDays(daysFromNow);
-        List<InternalControlManual> manuals = internalControlManualRepository.findExpiringManuals(targetDate);
-        return convertToDto(manuals);
-    }
-
     @Override
     public List<InternalControlManualDto> getPendingApprovalManuals() {
         List<InternalControlManual> manuals = internalControlManualRepository.findPendingApprovalManuals();
@@ -295,41 +247,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
         );
         
         return manuals.map(this::convertToDto);
-    }
-
-    @Override
-    public ManualStatisticsDto getManualStatistics() {
-        // TODO: 통계 로직 구현
-        return new ManualStatisticsDto() {
-            @Override
-            public Long getTotalManuals() { return 0L; }
-            @Override
-            public Long getDraftManuals() { return 0L; }
-            @Override
-            public Long getPublishedManuals() { return 0L; }
-            @Override
-            public Long getExpiringManuals() { return 0L; }
-            @Override
-            public Double getApprovalRate() { return 0.0; }
-        };
-    }
-
-    @Override
-    public List<DepartmentStatisticsDto> getManualStatisticsByDepartment() {
-        // TODO: 부서별 통계 로직 구현
-        return List.of();
-    }
-
-    @Override
-    public List<CategoryStatisticsDto> getManualStatisticsByCategory() {
-        // TODO: 카테고리별 통계 로직 구현
-        return List.of();
-    }
-
-    @Override
-    public List<MonthlyStatisticsDto> getMonthlyCreationStatistics() {
-        // TODO: 월별 생성 통계 로직 구현
-        return List.of();
     }
 
     private List<InternalControlManualDto> convertToDto(List<InternalControlManual> manuals) {
@@ -366,9 +283,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
 
             @Override
             public String getAuthorEmpNo() { return manual.getAuthorEmpNo(); }
-
-            @Override
-            public String getAuthorName() { return null; } // TODO: User 조인 후 구현
 
             // reviewer_emp_no, approver_emp_no 컬럼 삭제됨
         };
@@ -497,10 +411,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
                 return safeStringValue(row[8]); // icm.author_emp_no (인덱스 8)
             }
 
-            @Override
-            public String getAuthorName() { 
-                return safeStringValue(row[9]); // e.emp_name (인덱스 9)
-            }
             
             // 감사 필드
             @Override

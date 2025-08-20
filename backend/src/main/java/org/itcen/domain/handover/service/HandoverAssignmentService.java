@@ -75,11 +75,6 @@ public interface HandoverAssignmentService {
     List<HandoverAssignmentDto> getDelayedAssignments();
 
     /**
-     * 인수인계 통계 조회
-     */
-    HandoverAssignmentStatistics getStatistics();
-
-    /**
      * 인수인계 통계 DTO
      */
     record HandoverAssignmentStatistics(

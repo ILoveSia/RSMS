@@ -134,21 +134,6 @@ public class ResponsibilityDocumentController {
         responsibilityDocumentService.publishDocument(documentId, actorEmpNo);
         return ResponseEntity.ok().build();
     }
-
-    /**
-     * 초안으로 되돌리기
-     */
-    @PostMapping("/{documentId}/revert")
-    public ResponseEntity<Void> revertToDraft(
-            @PathVariable Long documentId,
-            @RequestParam String actorEmpNo,
-            @RequestParam(required = false) String reason) {
-        log.debug("초안 되돌리기 요청 - documentId: {}, reason: {}", documentId, reason);
-        
-        responsibilityDocumentService.revertToDraft(documentId, actorEmpNo, reason);
-        return ResponseEntity.ok().build();
-    }
-
     /**
      * 문서 버전 업데이트
      */

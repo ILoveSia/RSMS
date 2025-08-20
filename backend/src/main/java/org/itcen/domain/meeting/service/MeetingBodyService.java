@@ -17,7 +17,12 @@ import java.util.List;
  * - Dependency Inversion: 구현체에 의존하지 않고 인터페이스에 의존
  */
 public interface MeetingBodyService {
-
+    /**
+     * 전체 회의체 목록 조회
+     * 
+     * @return 회의체 목록
+     */
+    List<MeetingBodyDto> getAllMeetingBodies();
     /**
      * 회의체 생성
      * 

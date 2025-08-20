@@ -3,8 +3,6 @@ package org.itcen.domain.handover.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.common.exception.BusinessException;
-import org.itcen.domain.handover.dto.SearchDto;
-import org.itcen.domain.handover.dto.StatisticsDto;
 import org.itcen.domain.handover.entity.BusinessPlanInspection;
 import org.itcen.domain.handover.repository.BusinessPlanInspectionRepository;
 import org.springframework.data.domain.Page;
@@ -374,9 +372,6 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
             
             @Override
             public String getInspectorEmpNo() { return inspection.getInspectorEmpNo(); }
-            
-            @Override
-            public String getInspectorName() { return null; } // TODO: User 조인 후 구현
             
             @Override
             public boolean isOnSchedule() { return inspection.isOnSchedule(); }

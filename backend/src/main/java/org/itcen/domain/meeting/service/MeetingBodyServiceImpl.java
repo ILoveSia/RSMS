@@ -36,7 +36,13 @@ import java.util.stream.Collectors;
 public class MeetingBodyServiceImpl implements MeetingBodyService {
 
     private final MeetingBodyRepository meetingBodyRepository;
-
+    @Override
+    public List<MeetingBodyDto> getAllMeetingBodies() {
+        List<MeetingBody> meetingBodies = meetingBodyRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        return meetingBodies.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
     /**
      * 회의체 생성
      */

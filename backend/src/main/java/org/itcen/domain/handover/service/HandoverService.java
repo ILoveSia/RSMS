@@ -95,19 +95,6 @@ public interface HandoverService {
      * 복합 조건 검색
      */
     Page<HandoverAssignmentDto> searchHandoverAssignments(HandoverAssignmentSearchDto searchDto, Pageable pageable);
-
-    // 통계 기능
-
-    /**
-     * 인수인계 진행률 통계
-     */
-    HandoverStatisticsDto getHandoverStatistics();
-
-    /**
-     * 상태별 통계
-     */
-    List<StatusStatisticsDto> getStatusStatistics();
-
     // DTO 클래스들 (내부 정의)
 
     interface HandoverAssignmentDto {
@@ -128,26 +115,5 @@ public interface HandoverService {
         String getHandoverToEmpNo();
         LocalDate getStartDate();
         LocalDate getEndDate();
-    }
-
-    interface HandoverStatisticsDto {
-        Long getTotalHandovers();
-        Long getCompletedHandovers();
-        Long getInProgressHandovers();
-        Long getDelayedHandovers();
-        Double getAverageProgress();
-        Double getCompletionRate();
-    }
-
-    interface MonthlyStatisticsDto {
-        Integer getYear();
-        Integer getMonth();
-        Long getCompletedCount();
-    }
-
-    interface StatusStatisticsDto {
-        HandoverAssignment.HandoverStatus getStatus();
-        Long getCount();
-        Double getPercentage();
     }
 }

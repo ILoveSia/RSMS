@@ -10,8 +10,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
-
 /**
  * 사업계획 점검 Repository
  * 사업계획 점검 데이터 접근을 담당

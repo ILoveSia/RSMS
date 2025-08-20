@@ -113,7 +113,6 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
                 .improvementPlan(getImprovementStatusByCode(detail.getImpPlStatusCd()))
                 .implementationResult(getImplementationResultByStatus(detail.getAuditResultStatusCd()))
                 .dueDate(detail.getAuditDoneDt())
-                .inspector(getInspectorName(detail.getAuditMenId()))
                 .inspectorId(detail.getAuditMenId())
                 
                 // audit 테이블 정보
@@ -143,13 +142,6 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
     }
 
     /**
-     * 점검자 이름 반환
-     */
-    private String getInspectorName(String auditMenId) {
-        return auditMenId != null ? auditMenId : "점검자미정";
-    }
-
-    /**
      * 점검내용 반환
      */
     private String getAuditContents(String auditContents) {
@@ -165,26 +157,6 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
     }
 
     @Override
-    public List<DeficiencyStatusDto> getDeficiencyStatus(String inspectionRound, String department, 
-            String statusCode, String inspector, String startDate, String endDate, String priority) {
-        // TODO: 파라미터 기반 조회 구현
-        return getAllDeficiencyStatus(startDate, endDate);
-    }
-
-    @Override
-    public DeficiencyStatusDto getDeficiencyStatusById(Long id) {
-        // TODO: 상세 조회 구현
-        return null;
-    }
-
-    @Override
-    @Transactional
-    public DeficiencyStatusDto createDeficiencyStatus(DeficiencyStatusDto dto) {
-        // TODO: 등록 구현
-        return null;
-    }
-
-    @Override
     @Transactional
     public DeficiencyStatusDto updateDeficiencyStatus(DeficiencyStatusDto dto) {
         // TODO: 수정 구현
@@ -195,12 +167,6 @@ public class DeficiencyStatusServiceImpl implements DeficiencyStatusService {
     @Transactional
     public void deleteDeficiencyStatus(Long id) {
         // TODO: 삭제 구현
-    }
-
-    @Override
-    @Transactional
-    public void updateImprovementPlan(List<Long> ids, String improvementPlan, String dueDate, String remarks) {
-        // TODO: 개선계획 변경 구현
     }
 
     @Override

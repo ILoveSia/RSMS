@@ -2,8 +2,6 @@ package org.itcen.auth.config;
 
 import java.util.Arrays;
 import org.itcen.auth.filter.SessionAuthenticationFilter;
-import org.itcen.auth.handler.CustomAuthFailureHandler;
-import org.itcen.auth.handler.CustomAuthSuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -32,9 +30,6 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final CustomAuthSuccessHandler customAuthSuccessHandler;
-    private final CustomAuthFailureHandler customAuthFailureHandler;
     private final SessionAuthenticationFilter sessionAuthenticationFilter;
 
     /**

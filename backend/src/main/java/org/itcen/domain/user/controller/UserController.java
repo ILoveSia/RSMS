@@ -12,9 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 사용자 컨트롤러
@@ -168,17 +166,5 @@ public class UserController {
 
         List<UserDto.Response> employees = userService.getEmployees(request);
         return ResponseEntity.ok(ApiResponse.success("사원 목록을 성공적으로 조회했습니다.", employees));
-    }
-
-    /**
-     * 사용자 통계 조회
-     * GET /api/users/statistics
-     */
-    @GetMapping("/statistics")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getUserStatistics() {
-        Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalUserCount", userService.getTotalUserCount());
-
-        return ResponseEntity.ok(ApiResponse.success("사용자 통계를 성공적으로 조회했습니다.", statistics));
     }
 } 

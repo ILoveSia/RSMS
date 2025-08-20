@@ -136,15 +136,6 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
     Long getTotalDocumentCount();
 
     /**
-     * 월별 문서 생성 통계
-     */
-    @Query("SELECT YEAR(rd.createdAt), MONTH(rd.createdAt), COUNT(rd) " +
-           "FROM ResponsibilityDocument rd " +
-           "GROUP BY YEAR(rd.createdAt), MONTH(rd.createdAt) " +
-           "ORDER BY YEAR(rd.createdAt) DESC, MONTH(rd.createdAt) DESC")
-    List<Object[]> getMonthlyCreationStatistics();
-
-    /**
      * 작성자별 문서 수 조회
      */
     @Query("SELECT rd.authorEmpNo, COUNT(rd) FROM ResponsibilityDocument rd " +

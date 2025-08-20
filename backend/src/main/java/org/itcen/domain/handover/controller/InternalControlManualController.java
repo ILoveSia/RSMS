@@ -109,20 +109,6 @@ public class InternalControlManualController {
     }
 
     /**
-     * 초안으로 되돌리기
-     */
-    @PostMapping("/{manualId}/revert")
-    public ResponseEntity<Void> revertToDraft(
-            @PathVariable Long manualId,
-            @RequestParam String actorEmpNo,
-            @RequestParam(required = false) String reason) {
-        log.debug("초안 되돌리기 요청 - manualId: {}, reason: {}", manualId, reason);
-        
-        internalControlManualService.revertToDraft(manualId, actorEmpNo, reason);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
      * 메뉴얼 버전 업데이트
      */
     @PostMapping("/{manualId}/version")
@@ -152,19 +138,6 @@ public class InternalControlManualController {
     }
 
     /**
-     * 상태별 내부통제 메뉴얼 조회
-     */
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getManualsByStatus(
-            @PathVariable String status) {
-        log.debug("상태별 내부통제 메뉴얼 조회 요청 - status: {}", status);
-        
-        List<InternalControlManualService.InternalControlManualDto> manuals = 
-                internalControlManualService.getManualsByStatus(status);
-        return ResponseEntity.ok(manuals);
-    }
-
-    /**
      * 작성자별 내부통제 메뉴얼 조회
      */
     @GetMapping("/author/{authorEmpNo}")
@@ -174,23 +147,6 @@ public class InternalControlManualController {
         
         List<InternalControlManualService.InternalControlManualDto> manuals = 
                 internalControlManualService.getManualsByAuthor(authorEmpNo);
-        return ResponseEntity.ok(manuals);
-    }
-
-    
-
-
-
-    /**
-     * 부서의 최신 발행 메뉴얼 조회
-     */
-    @GetMapping("/department/{deptCd}/latest")
-    public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getLatestPublishedManuals(
-            @PathVariable String deptCd) {
-        log.debug("부서 최신 발행 메뉴얼 조회 요청 - deptCd: {}", deptCd);
-        
-        List<InternalControlManualService.InternalControlManualDto> manuals = 
-                internalControlManualService.getLatestPublishedManuals(deptCd);
         return ResponseEntity.ok(manuals);
     }
 
@@ -205,20 +161,6 @@ public class InternalControlManualController {
                 internalControlManualService.getValidManuals();
         return ResponseEntity.ok(manuals);
     }
-
-    /**
-     * 만료 예정 메뉴얼 조회
-     */
-    @GetMapping("/expiring")
-    public ResponseEntity<List<InternalControlManualService.InternalControlManualDto>> getExpiringManuals(
-            @RequestParam(defaultValue = "30") int daysFromNow) {
-        log.debug("만료 예정 메뉴얼 조회 요청 - daysFromNow: {}", daysFromNow);
-        
-        List<InternalControlManualService.InternalControlManualDto> manuals = 
-                internalControlManualService.getExpiringManuals(daysFromNow);
-        return ResponseEntity.ok(manuals);
-    }
-
 
 
     /**
@@ -247,54 +189,6 @@ public class InternalControlManualController {
         Page<InternalControlManualService.InternalControlManualDto> manuals = 
                 internalControlManualService.searchManuals(searchDto, pageable);
         return ResponseEntity.ok(manuals);
-    }
-
-    /**
-     * 메뉴얼 통계
-     */
-    @GetMapping("/statistics")
-    public ResponseEntity<InternalControlManualService.ManualStatisticsDto> getManualStatistics() {
-        log.debug("메뉴얼 통계 조회 요청");
-        
-        InternalControlManualService.ManualStatisticsDto statistics = 
-                internalControlManualService.getManualStatistics();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 부서별 통계
-     */
-    @GetMapping("/statistics/department")
-    public ResponseEntity<List<InternalControlManualService.DepartmentStatisticsDto>> getManualStatisticsByDepartment() {
-        log.debug("부서별 통계 조회 요청");
-        
-        List<InternalControlManualService.DepartmentStatisticsDto> statistics = 
-                internalControlManualService.getManualStatisticsByDepartment();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 분류별 통계
-     */
-    @GetMapping("/statistics/category")
-    public ResponseEntity<List<InternalControlManualService.CategoryStatisticsDto>> getManualStatisticsByCategory() {
-        log.debug("분류별 통계 조회 요청");
-        
-        List<InternalControlManualService.CategoryStatisticsDto> statistics = 
-                internalControlManualService.getManualStatisticsByCategory();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 월별 생성 통계
-     */
-    @GetMapping("/statistics/monthly")
-    public ResponseEntity<List<InternalControlManualService.MonthlyStatisticsDto>> getMonthlyCreationStatistics() {
-        log.debug("월별 생성 통계 조회 요청");
-        
-        List<InternalControlManualService.MonthlyStatisticsDto> statistics = 
-                internalControlManualService.getMonthlyCreationStatistics();
-        return ResponseEntity.ok(statistics);
     }
 
     // 결재 연동 API 엔드포인트들

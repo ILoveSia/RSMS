@@ -265,19 +265,6 @@ public class HandoverServiceImpl implements HandoverService {
         return assignments.map(this::convertToDto);
     }
 
-    // 통계 기능들은 추후 구현 예정
-    @Override
-    public HandoverStatisticsDto getHandoverStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
-    public List<StatusStatisticsDto> getStatusStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
     // Private helper methods
 
     private List<HandoverAssignmentDto> convertToDto(List<HandoverAssignment> assignments) {

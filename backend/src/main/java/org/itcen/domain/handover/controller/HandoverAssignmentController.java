@@ -195,14 +195,4 @@ public class HandoverAssignmentController {
         return ResponseEntity.ok(assignments);
     }
 
-    /**
-     * 인수인계 통계 조회
-     */
-    @GetMapping("/statistics")
-    public ResponseEntity<HandoverAssignmentService.HandoverAssignmentStatistics> getStatistics() {
-        log.info("인수인계 통계 조회 요청");
-        
-        HandoverAssignmentService.HandoverAssignmentStatistics statistics = handoverAssignmentService.getStatistics();
-        return ResponseEntity.ok(statistics);
-    }
 }

@@ -126,31 +126,6 @@ export interface ApprovalRequest {
   approvalComments?: string;        // 승인의견
 }
 
-/**
- * 미흡상황 현황 목록 조회
- */
-export const getDeficiencyStatusList = async (
-  params: DeficiencyStatusRequest
-): Promise<DeficiencyStatusResponse[]> => {
-  try {
-    const response = await apiClient.get<ApiResponse<DeficiencyStatusResponse[]>>('/deficiency-status', { 
-      params: params as Record<string, string | number>
-    });
-
-    // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && response.data) {
-      return response.data;
-    } else if (response.data && Array.isArray(response.data)) {
-      return response.data;
-    } else {
-      console.error('예상하지 못한 응답 구조:', response);
-      return [];
-    }
-  } catch (error) {
-    console.error('미흡상황 현황 조회 오류:', error);
-    throw error;
-  }
-};
 
 /**
  * 전체 미흡상황 현황 목록 조회
@@ -174,51 +149,6 @@ export const getAllDeficiencyStatusList = async (
     }
   } catch (error) {
     console.error('API 호출 에러:', error);
-    throw error;
-  }
-};
-
-/**
- * 미흡상황 상세 조회
- */
-export const getDeficiencyStatusById = async (
-  id: number
-): Promise<DeficiencyStatusResponse> => {
-  try {
-    const response = await apiClient.get<ApiResponse<DeficiencyStatusResponse>>(`/deficiency-status/${id}`);
-
-    // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && (response.data as any).data) {
-      return (response.data as any).data;
-    } else if (response.data) {
-      return response.data;
-    } else {
-      throw new Error('유효하지 않은 응답 구조');
-    }
-  } catch (error) {
-    console.error('미흡상황 상세 조회 오류:', error);
-    throw error;
-  }
-};
-
-/**
- * 미흡상황 등록
- */
-export const createDeficiencyStatus = async (
-  data: DeficiencyRequest
-): Promise<{ id: number }> => {
-  try {
-    const response = await apiClient.post<ApiResponse<{ id: number }>>('/deficiency-status', data);
-
-    // 응답 구조 확인 후 적절한 데이터 반환
-    if (response.data && (response.data as any).id) {
-      return { id: (response.data as any).id };
-    } else if (response.data && (response.data as any).data && (response.data as any).data.id) {
-      return { id: (response.data as any).data.id };
-    } else {
-      throw new Error('유효하지 않은 응답 구조');
-    }
-  } catch (error) {
     throw error;
   }
 };
@@ -270,19 +200,6 @@ export const deleteMultipleDeficiencyStatus = async (
     await apiClient.post('/deficiency-status/multiple/delete', {
       ids
     });
-  } catch (error) {
-    throw error;
-  }
-};
-
-/**
- * 개선계획 변경
- */
-export const updateImprovementPlan = async (
-  data: ImprovementPlanUpdateRequest
-): Promise<void> => {
-  try {
-    await apiClient.post('/deficiency-status/improvement-plan/update', data);
   } catch (error) {
     throw error;
   }
@@ -382,14 +299,10 @@ export const getDepartmentList = async (): Promise<{ value: string; label: strin
 export { updateImplementationResultDialog };
 
 export default {
-  getDeficiencyStatusList,
   getAllDeficiencyStatusList,
-  getDeficiencyStatusById,
-  createDeficiencyStatus,
   updateDeficiencyStatus,
   deleteDeficiencyStatus,
   deleteMultipleDeficiencyStatus,
-  updateImprovementPlan,
   updateImplementationResult,
   updateImplementationResultDialog,
   approveDeficiencyStatus,

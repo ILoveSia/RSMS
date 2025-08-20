@@ -146,21 +146,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
 
     @Override
     @Transactional
-    public void revertToDraft(Long documentId, String actorEmpNo, String reason) {
-        log.debug("초안 되돌리기 - documentId: {}, reason: {}", documentId, reason);
-
-        ResponsibilityDocument document = responsibilityDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new BusinessException("책무기술서를 찾을 수 없습니다: " + documentId));
-
-        // 되돌리기 처리
-        document.setUpdatedId(actorEmpNo);
-        responsibilityDocumentRepository.save(document);
-
-        log.debug("초안 되돌리기 완료 - documentId: {}", documentId);
-    }
-
-    @Override
-    @Transactional
     public ResponsibilityDocument updateVersion(Long documentId, String newVersion, String actorEmpNo) {
         log.debug("버전 업데이트 - documentId: {}, newVersion: {}", documentId, newVersion);
 
@@ -342,10 +327,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
             @Override
             public String getAuthorEmpNo() { return document.getAuthorEmpNo(); }
 
-            @Override
-            public String getAuthorName() {
-                return document.getAuthor() != null ? document.getAuthor().getEmpName() : null;
-            }
 
             // 검토자, 승인자는 approval 테이블에서 관리
             
@@ -437,11 +418,6 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
             @Override
             public String getAuthorEmpNo() { 
                 return safeStringValue(row[6]); // rd.author_emp_no (인덱스 6으로 변경)
-            }
-
-            @Override
-            public String getAuthorName() { 
-                return safeStringValue(row[7]); // e.emp_name (인덱스 7로 변경)
             }
             
             // 감사 필드

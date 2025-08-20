@@ -3,7 +3,6 @@ package org.itcen.domain.qna.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import org.itcen.domain.qna.dto.QnaStatisticsDto;
 import org.itcen.domain.qna.entity.Qna;
 import org.itcen.domain.qna.entity.QnaPriority;
 import org.itcen.domain.qna.entity.QnaStatus;
@@ -191,17 +190,6 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
      */
     List<Qna> findByQuestionerIdAndStatus(String questionerId, QnaStatus status);
 
-    /**
-     * 부서별 Q&A 통계 조회
-     *
-     * @return 부서별 통계 목록
-     */
-    @Query("SELECT new org.itcen.domain.qna.dto.QnaStatisticsDto('ALL', COUNT(q), "
-            + "COUNT(CASE WHEN q.status = 'PENDING' THEN 1 END), "
-            + "COUNT(CASE WHEN q.status = 'ANSWERED' THEN 1 END), "
-            + "COUNT(CASE WHEN q.status = 'CLOSED' THEN 1 END)) "
-            + "FROM Qna q")
-    List<QnaStatisticsDto> findDepartmentStatistics();
 
     /**
      * 월별 Q&A 통계 조회

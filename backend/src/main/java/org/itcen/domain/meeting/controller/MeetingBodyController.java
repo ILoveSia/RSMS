@@ -31,7 +31,23 @@ import java.util.List;
 public class MeetingBodyController {
 
     private final MeetingBodyService meetingBodyService;
+    /**
+     * 전체 회의체 목록 조회
+     *
+     * @return 회의체 목록
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<MeetingBodyDto>>> getAllMeetingBodies() {
+        List<MeetingBodyDto> meetingBodies = meetingBodyService.getAllMeetingBodies();
 
+        ApiResponse<List<MeetingBodyDto>> response = ApiResponse.<List<MeetingBodyDto>>builder()
+                .success(true)
+                .message("회의체 목록 조회가 완료되었습니다.")
+                .data(meetingBodies)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
     /**
      * 회의체 생성
      *

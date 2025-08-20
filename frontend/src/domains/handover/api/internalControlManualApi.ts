@@ -168,13 +168,6 @@ export class InternalControlManualApi {
   }
 
   /**
-   * 상태별 내부통제 업무메뉴얼 조회
-   */
-  static async getManualsByStatus(status: string): Promise<InternalControlManualDto[]> {
-    return apiClient.get(`${this.BASE_URL}/status/${status}`);
-  }
-
-  /**
    * 부서별 내부통제 업무메뉴얼 조회
    */
   static async getManualsByDepartment(deptCd: string): Promise<InternalControlManualDto[]> {
@@ -256,21 +249,6 @@ export class InternalControlManualApi {
   }
 
   /**
-   * 내부통제 업무메뉴얼 초안으로 되돌리기
-   */
-  static async revertToDraft(
-    manualId: number,
-    actorEmpNo: string,
-    reason: string
-  ): Promise<InternalControlManualDto> {
-    const response = await apiClient.post(`${this.BASE_URL}/${manualId}/revert`, {
-      actorEmpNo,
-      reason,
-    });
-    return response.data;
-  }
-
-  /**
    * 내부통제 업무메뉴얼 버전 생성
    */
   static async createVersion(
@@ -293,20 +271,6 @@ export class InternalControlManualApi {
     return response.data;
   }
 
-  /**
-   * 내부통제 업무메뉴얼 통계 조회
-   */
-  static async getManualStatistics(): Promise<{
-    totalCount: number;
-    draftCount: number;
-    reviewCount: number;
-    approvedCount: number;
-    publishedCount: number;
-    expiringCount: number;
-  }> {
-    const response = await apiClient.get(`${this.BASE_URL}/statistics`);
-    return response.data;
-  }
 
   /**
    * 내부통제 업무메뉴얼 첨부파일 업로드

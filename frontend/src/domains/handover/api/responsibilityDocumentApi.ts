@@ -217,23 +217,6 @@ export class ResponsibilityDocumentApi {
   }
 
   /**
-   * 초안으로 되돌리기
-   */
-  static async revertToDraft(
-    documentId: number,
-    actorEmpNo: string,
-    reason?: string
-  ): Promise<void> {
-    const params: any = { actorEmpNo };
-    if (reason) {
-      params.reason = reason;
-    }
-    return apiClient.post(`${this.BASE_PATH}/${documentId}/revert`, null, {
-      params
-    });
-  }
-
-  /**
    * 문서 버전 업데이트
    */
   static async updateVersion(

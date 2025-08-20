@@ -65,12 +65,6 @@ public interface ResponsibilityDocumentService {
      * 문서 발행
      */
     void publishDocument(Long documentId, String actorEmpNo);
-
-    /**
-     * 초안으로 되돌리기
-     */
-    void revertToDraft(Long documentId, String actorEmpNo, String reason);
-
     /**
      * 문서 버전 업데이트
      */
@@ -145,7 +139,6 @@ public interface ResponsibilityDocumentService {
         LocalDate getEffectiveDate();
         LocalDate getExpiryDate();
         String getAuthorEmpNo();
-        String getAuthorName();
         // 검토자, 승인자는 approval 테이블에서 관리
         
         // 첨부파일 관련
@@ -200,7 +193,6 @@ public interface ResponsibilityDocumentService {
         LocalDate getEffectiveDate();
         LocalDate getExpiryDate();
         String getAuthorEmpNo();
-        String getAuthorName();
         
         // 감사 필드
         LocalDate getCreatedAt();
