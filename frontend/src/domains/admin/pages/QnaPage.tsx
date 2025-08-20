@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ListAlt as ListAltIcon } from '@mui/icons-material';
-// removed unused Box, Typography imports
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -15,6 +14,7 @@ import type { GridSortModel } from '@mui/x-data-grid';
 import qnaApi from '../api/qnaApi';
 import { QnaStatus } from '@/app/types/qna';
 import { useToastHelpers } from '@/shared/components/ui/feedback/ToastProvider';
+import { useDialog } from '@/shared/hooks/useDialog';
 
 interface QnaPageProps {
   className?: string;
@@ -26,16 +26,15 @@ const QnaPage: React.FC<QnaPageProps> = () => {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1); // UI 1-based
   const [pageSize, setPageSize] = useState<number>(10);
-  // 클라이언트 페이지네이션으로 전환됨: 총계는 sortedRows.length로 계산
   const [sortModel, setSortModel] = useState<GridSortModel>([{ field: 'createdAt', sort: 'desc' }]);
   const [keyword, setKeyword] = useState<string>('');
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [creating, setCreating] = useState(false);
-  const [createKey, setCreateKey] = useState(0);
   const { showError } = useToastHelpers();
+
+  // Dialog states managed by useDialog hook
+  const { dialogOpen: detailOpen, dialogData: selectedId, openDialog: openDetailDialog, closeDialog: closeDetailDialog } = useDialog<number>();
+  const { dialogOpen: createOpen, openDialog: openCreateDialog, closeDialog: closeCreateDialog } = useDialog();
 
   const loadAllData = useCallback(async () => {
     try {
@@ -173,7 +172,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
               )}
               <ManagementButtonGroup
                 onRefresh={async () => { setPage(1); await loadAllData(); }}
-                onRegister={() => { setCreateKey(k => k + 1); setCreateOpen(true); }}
+                onRegister={openCreateDialog}
                 showRegister={true}
                 showRefresh={true}
                 onExcelDownload={async () => { /* TODO: export hook up if needed */ }}
@@ -202,8 +201,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setSelectedId(Number(row.id));
-                    setDetailOpen(true);
+                    openDetailDialog('view', Number(row.id));
                   }}
                 >
                   {row.title}
@@ -232,7 +230,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
         <QnaDetailDialog
           open={detailOpen}
           qnaId={selectedId ?? undefined}
-          onClose={() => setDetailOpen(false)}
+          onClose={closeDetailDialog}
           onSaved={async () => {
             await loadAllData();
           }}
@@ -240,9 +238,8 @@ const QnaPage: React.FC<QnaPageProps> = () => {
 
         {createOpen && (
           <QnaCreateDialog
-            key={createKey}
-            open={true}
-            onClose={() => setCreateOpen(false)}
+            open={createOpen}
+            onClose={closeCreateDialog}
             loading={creating}
             onSubmit={async (form) => {
               try {
@@ -252,7 +249,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
                 const userId = userJson?.userid || 'anonymous';
                 const userName = userJson?.username || '익명';
                 await qnaApi.createQna(form, { userId, userName });
-                setCreateOpen(false);
+                closeCreateDialog();
                  setPage(1);
                  await loadAllData();
               } finally {

@@ -1,42 +1,39 @@
-import { useCallback, useState } from 'react';
-import type { DialogMode } from '../components/modal/BaseDialog';
+import { useState, useCallback } from 'react';
 
-interface UseDialogReturn<T> {
-  dialogOpen: boolean;
-  dialogMode: DialogMode;
-  selectedItem: T | null;
-  openDialog: (mode: DialogMode, item?: T | null) => void;
-  closeDialog: () => void;
-  changeMode: (mode: DialogMode) => void;
+type DialogMode = 'create' | 'edit' | 'view';
+
+interface UseDialogProps<T> {
+  initialMode?: DialogMode;
+  initialData?: T | null;
 }
 
-export function useDialog<T>(initialMode: DialogMode = 'view'): UseDialogReturn<T> {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogMode, setDialogMode] = useState<DialogMode>(initialMode);
-  const [selectedItem, setSelectedItem] = useState<T | null>(null);
+export function useDialog<T>({ initialMode = 'create', initialData = null }: UseDialogProps<T> = {}) {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<DialogMode>(initialMode);
+  const [data, setData] = useState<T | null>(initialData);
 
-  const openDialog = useCallback((mode: DialogMode, item?: T | null) => {
-    setDialogMode(mode);
-    setSelectedItem(item || null);
-    setDialogOpen(true);
+  const openDialog = useCallback((newMode: DialogMode = 'create', newData?: T) => {
+    setMode(newMode);
+    setData(newData === undefined ? null : newData);
+    setOpen(true);
   }, []);
 
   const closeDialog = useCallback(() => {
-    setDialogOpen(false);
-    setSelectedItem(null);
-    setDialogMode(initialMode);
-  }, [initialMode]);
+    setOpen(false);
+    // 데이터를 즉시 초기화하지 않고, 다이얼로그가 닫히는 애니메이션 동안 유지되도록 할 수 있습니다.
+    // 필요하다면 setTimeout을 사용하여 데이터를 초기화할 수 있습니다.
+  }, []);
 
-  const changeMode = useCallback((mode: DialogMode) => {
-    setDialogMode(mode);
+  const setDialogMode = useCallback((newMode: DialogMode) => {
+    setMode(newMode);
   }, []);
 
   return {
-    dialogOpen,
-    dialogMode,
-    selectedItem,
+    dialogOpen: open,
+    dialogMode: mode,
+    dialogData: data,
     openDialog,
     closeDialog,
-    changeMode,
+    setDialogMode,
   };
 }
