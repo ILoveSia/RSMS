@@ -1,6 +1,8 @@
 package org.itcen.auth.repository;
 
+import org.itcen.auth.dto.UserWithEmployeeDto;
 import org.itcen.domain.user.entity.User;
+import org.itcen.domain.employee.entity.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -106,4 +108,32 @@ public interface AuthUserRepository extends JpaRepository<User, String> {
     @Modifying
     @Query("UPDATE User u SET u.password = :newPassword, u.updatedAt = CURRENT_TIMESTAMP WHERE u.id = :userId")
     void updatePassword(@Param("userId") String userId, @Param("newPassword") String newPassword);
+    
+    /**
+     * 사용자 ID로 사용자와 employee 정보 함께 조회 (로그인용)
+     * 
+     * @param userId 사용자 ID
+     * @return 사용자 정보와 employee 정보
+     */
+    @Query("SELECT new org.itcen.auth.dto.UserWithEmployeeDto(" +
+           "u.id, u.email, u.address, u.mobile, u.password, u.empNo, " +
+           "e.empName, e.deptCode, e.positionCode, " +
+           "u.createdAt, u.updatedAt) " +
+           "FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo " +
+           "WHERE u.id = :userId")
+    Optional<UserWithEmployeeDto> findUserWithEmployeeByUserId(@Param("userId") String userId);
+    
+    /**
+     * 사번으로 사용자와 employee 정보 함께 조회 (로그인용)
+     * 
+     * @param empNo 사번
+     * @return 사용자 정보와 employee 정보
+     */
+    @Query("SELECT new org.itcen.auth.dto.UserWithEmployeeDto(" +
+           "u.id, u.email, u.address, u.mobile, u.password, u.empNo, " +
+           "e.empName, e.deptCode, e.positionCode, " +
+           "u.createdAt, u.updatedAt) " +
+           "FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo " +
+           "WHERE u.empNo = :empNo")
+    Optional<UserWithEmployeeDto> findUserWithEmployeeByEmpNo(@Param("empNo") String empNo);
 } 

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.auth.domain.AuthRequestDto;
 import org.itcen.auth.domain.AuthResponseDto;
+import org.itcen.auth.dto.UserWithEmployeeDto;
 import org.itcen.auth.repository.AuthUserRepository;
 import org.itcen.auth.repository.UserRoleRepository;
 import org.itcen.auth.domain.permission.UserRole;
@@ -70,18 +71,18 @@ public class AuthService {
     @Transactional
     public AuthResponseDto.LoginResponse login(AuthRequestDto.LoginRequest request, HttpServletRequest httpRequest) {
         try {
-            // 1. 사용자 조회 (사용자 ID)
-            User user = authUserRepository.findByUserId(request.getUserid())
+            // 1. 사용자와 employee 정보 함께 조회 (사용자 ID)
+            UserWithEmployeeDto userWithEmployee = authUserRepository.findUserWithEmployeeByUserId(request.getUserid())
                     .orElseThrow(() -> new BadCredentialsException("사용자 ID 또는 비밀번호가 올바르지 않습니다."));
 
             // 2. 비밀번호 검증
-            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            if (!passwordEncoder.matches(request.getPassword(), userWithEmployee.getPassword())) {
                 log.warn("비밀번호 불일치: {}", request.getUserid());
                 throw new BadCredentialsException("아이디 또는 비밀번호가 올바르지 않습니다.");
             }
             
             // 3. UserDetails 생성 (권한 정보 포함)
-            UserDetails userDetails = createUserDetails(user);
+            UserDetails userDetails = createUserDetailsFromDto(userWithEmployee);
             
             // 중복 로그인 처리는 기본 HTTP 세션으로 처리
             
@@ -94,8 +95,8 @@ public class AuthService {
             
             // 새 세션 생성
             HttpSession session = httpRequest.getSession(true);
-            session.setAttribute("userId", user.getId());
-            session.setAttribute("username", user.getEmpNo()); // empNo를 username으로 사용
+            session.setAttribute("userId", userWithEmployee.getId());
+            session.setAttribute("username", userWithEmployee.getEmpNo()); // empNo를 username으로 사용
             session.setAttribute("authorities", userDetails.getAuthorities());
             
             // Remember Me 처리
@@ -106,7 +107,7 @@ public class AuthService {
             // 기본 HTTP 세션 사용
             
             // 마지막 로그인 시간 업데이트
-            authUserRepository.updateLastLoginTime(user.getId(), LocalDateTime.now());
+            authUserRepository.updateLastLoginTime(userWithEmployee.getId(), LocalDateTime.now());
             
             // 사용자 역할에 따른 접근 가능한 메뉴 조회
             List<String> authorities = userDetails.getAuthorities().stream()
@@ -125,22 +126,25 @@ public class AuthService {
                 userRole = "USER";
             }
             
-            log.info("사용자 {} 최종 선택된 역할: {} (전체 권한: {})", user.getId(), userRole, authorities);
+            log.info("사용자 {} 최종 선택된 역할: {} (전체 권한: {})", userWithEmployee.getId(), userRole, authorities);
             
             List<MenuDto> accessibleMenus = menuService.getAccessibleMenusByRole(userRole);
             
             // 메뉴가 없는 경우 디버깅 정보 출력
             if (accessibleMenus.isEmpty()) {
-                log.warn("메뉴가 조회되지 않았습니다. 역할: {}, 사용자: {}", userRole, user.getEmpNo());
+                log.warn("메뉴가 조회되지 않았습니다. 역할: {}, 사용자: {}", userRole, userWithEmployee.getEmpNo());
                 // 전체 메뉴 개수 확인
                 List<MenuDto> allMenus = menuService.getAllActiveMenus();
                 log.warn("전체 활성 메뉴 개수: {}", allMenus.size());
             }
             
             return AuthResponseDto.LoginResponse.builder()
-                    .userId(user.getId())
-                    .username(user.getEmpNo()) // empNo를 username으로 사용
-                    .email(user.getEmail())
+                    .userId(userWithEmployee.getId())
+                    .username(userWithEmployee.getEmpName()) // employee.emp_name을 username으로 사용
+                    .empNo(userWithEmployee.getEmpNo()) // users.emp_no 사용
+                    .deptCd(userWithEmployee.getDeptCode()) // employee.dept_code 사용
+                    .positionCode(userWithEmployee.getPositionCode()) // employee.position_code 사용
+                    .email(userWithEmployee.getEmail())
                     .authorities(authorities)
                     .sessionId(session.getId())
                     .loginTime(LocalDateTime.now())
@@ -267,8 +271,8 @@ public class AuthService {
             return null;
         }
         
-        User user = authUserRepository.findById(userId).orElse(null);
-        if (user == null) {
+        UserWithEmployeeDto userWithEmployee = authUserRepository.findUserWithEmployeeByUserId(userId).orElse(null);
+        if (userWithEmployee == null) {
             return null;
         }
         
@@ -276,19 +280,59 @@ public class AuthService {
         Collection<GrantedAuthority> authorities = (Collection<GrantedAuthority>) session.getAttribute("authorities");
         
         return AuthResponseDto.UserInfoResponse.builder()
-                .userId(user.getId())
-                .username(user.getEmpNo()) // empNo를 username으로 사용
-                .email(user.getEmail())
-                .address(user.getAddress())
-                .mobile(user.getMobile())
+                .userId(userWithEmployee.getId())
+                .username(userWithEmployee.getEmpName()) // employee.emp_name을 username으로 사용
+                .empNo(userWithEmployee.getEmpNo()) // users.emp_no 사용
+                .deptCd(userWithEmployee.getDeptCode()) // employee.dept_code 사용
+                .positionCode(userWithEmployee.getPositionCode()) // employee.position_code 사용
+                .email(userWithEmployee.getEmail())
+                .address(userWithEmployee.getAddress())
+                .mobile(userWithEmployee.getMobile())
                 .authorities(authorities != null ? 
                         authorities.stream().map(GrantedAuthority::getAuthority).toList() : 
                         List.of())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .createdAt(userWithEmployee.getCreatedAt())
+                .updatedAt(userWithEmployee.getUpdatedAt())
                 .build();
     }
     
+    /**
+     * UserDetails 생성 - user_roles 테이블에서 실제 역할 조회 (UserWithEmployeeDto 버전)
+     * 
+     * @param userWithEmployee 사용자+직원 정보 DTO
+     * @return UserDetails 구현체
+     */
+    private UserDetails createUserDetailsFromDto(UserWithEmployeeDto userWithEmployee) {
+        // user_roles 테이블에서 활성화된 역할 조회
+        List<String> roleIds = userRoleRepository.findActiveRolesByUserId(userWithEmployee.getId())
+                .stream()
+                .map(UserRole::getRoleId)
+                .toList();
+        
+        // 역할이 없으면 기본적으로 USER 역할 부여
+        if (roleIds.isEmpty()) {
+            log.warn("사용자 {}에게 할당된 역할이 없습니다. 기본 USER 역할을 부여합니다.", userWithEmployee.getId());
+            roleIds = List.of("USER");
+        }
+        
+        // GrantedAuthority 생성 (ROLE_ 접두사 추가)
+        Collection<GrantedAuthority> authorities = roleIds.stream()
+                .map(roleId -> new SimpleGrantedAuthority("ROLE_" + roleId))
+                .collect(java.util.stream.Collectors.toList());
+        
+        log.info("사용자 {} 역할 조회 완료: {}", userWithEmployee.getId(), roleIds);
+        
+        return org.springframework.security.core.userdetails.User.builder()
+                .username(userWithEmployee.getEmpNo()) // empNo를 username으로 사용
+                .password(userWithEmployee.getPassword())
+                .authorities(authorities)
+                .accountExpired(false)
+                .accountLocked(false)
+                .credentialsExpired(false)
+                .disabled(false)
+                .build();
+    }
+
     /**
      * UserDetails 생성 - user_roles 테이블에서 실제 역할 조회
      * 

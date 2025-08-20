@@ -46,6 +46,9 @@ interface LoginUser {
   userid: string;
   username: string;
   email: string;
+  empNo: string;     // 사번 (employee.emp_no)
+  deptCd: string;    // 부서코드 (employee.dept_code)
+  positionCode: string; // 직급코드 (employee.position_code)
   role?: string;
   accessibleMenus?: Menu[];
 }
@@ -63,6 +66,9 @@ interface LoginResponseData {
   userId: string;
   username: string;
   email: string;
+  empNo: string;     // 사번 (employee.emp_no)
+  deptCd: string;    // 부서코드 (employee.dept_code)
+  positionCode: string; // 직급코드 (employee.position_code)
   authorities: string[];
   sessionId: string;
   loginTime: string;
@@ -340,6 +346,9 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         userid: userData.userId, // 필드명 매핑: userId → userid
         username: userData.username,
         email: userData.email,
+        empNo: userData.empNo || userData.userId, // 사번 (fallback: userId)
+        deptCd: userData.deptCd || '', // 부서코드
+        positionCode: userData.positionCode || '', // 직급코드
         role: userData.authorities?.[0]?.replace('ROLE_', '') || 'USER', // authorities에서 role 추출
         accessibleMenus: userData.accessibleMenus || [],
       };
@@ -356,6 +365,9 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
         userid: userForStore.userid,
         username: userForStore.username,
         email: userForStore.email,
+        empNo: userForStore.empNo,
+        deptCd: userForStore.deptCd,
+        positionCode: userForStore.positionCode,
         role: userForStore.role,
         roles: userData.authorities?.map(auth => auth.replace('ROLE_', '')) || ['USER'],
       };

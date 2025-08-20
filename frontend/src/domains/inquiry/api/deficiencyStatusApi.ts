@@ -105,6 +105,20 @@ export interface ImplementationResultRequest {
   remarks?: string;                 // 비고
 }
 
+// 이행결과 업데이트 요청 타입 (Backend API 호출용)
+export interface ImplementationResultUpdateRequest {
+  auditProgMngtDetailId: number;    // 점검 계획관리 상세 ID
+  auditDoneContent: string;         // 이행결과 내용
+}
+
+// 이행결과 업데이트 응답 타입 (Backend API 응답)
+export interface ImplementationResultUpdateResponse {
+  success: boolean;                 // 업데이트 성공 여부
+  message: string;                  // 메시지
+  auditProgMngtDetailId: number;    // 업데이트된 점검 계획관리 상세 ID
+  impPlStatusCd: string;            // 업데이트된 imp_pl_status_cd 값
+}
+
 // 승인 요청 타입
 export interface ApprovalRequest {
   ids: number[];                    // 미흡상황 ID 목록
@@ -288,6 +302,24 @@ export const updateImplementationResult = async (
 };
 
 /**
+ * 이행결과 업데이트 (ImplementationResultDialog용)
+ */
+const updateImplementationResultDialog = async (
+  data: ImplementationResultUpdateRequest
+): Promise<ImplementationResultUpdateResponse> => {
+  try {
+    const response = await apiClient.put<ImplementationResultUpdateResponse>(
+      '/inquiry/audit-result/implementation-result', 
+      data
+    );
+    return response;
+  } catch (error) {
+    console.error('이행결과 업데이트 오류:', error);
+    throw error;
+  }
+};
+
+/**
  * 승인 처리
  */
 export const approveDeficiencyStatus = async (
@@ -346,6 +378,9 @@ export const getDepartmentList = async (): Promise<{ value: string; label: strin
 };
 
 
+// 개별 export 추가
+export { updateImplementationResultDialog };
+
 export default {
   getDeficiencyStatusList,
   getAllDeficiencyStatusList,
@@ -356,6 +391,7 @@ export default {
   deleteMultipleDeficiencyStatus,
   updateImprovementPlan,
   updateImplementationResult,
+  updateImplementationResultDialog,
   approveDeficiencyStatus,
   getInspectionRoundList,
   getDepartmentList,

@@ -2,6 +2,8 @@ package org.itcen.domain.audit.service;
 
 import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.dto.AuditProgMngtDto;
+import org.itcen.domain.audit.dto.DeptAuditResultStatusDto;
+import org.itcen.domain.audit.dto.DeptImprovementPlanStatusDto;
 
 import java.util.List;
 
@@ -77,4 +79,31 @@ public interface AuditProgMngtService {
      * @return 점검 현황(항목별) 목록
      */
     List<AuditItemStatusResponseDto> getAuditItemStatus(Long ledgerOrdersHod, String auditResultStatusCd);
+
+    /**
+     * 결재 승인 시 점검계획관리상세의 개선계획상태코드를 PLI03으로 업데이트
+     * 동시에 점검최종결과여부를 'Y'로 업데이트
+     * 
+     * @param auditProgMngtDetailId 점검계획관리상세 ID
+     * @return 업데이트된 레코드 수
+     */
+    int updateImpPlStatusToPLI03(Long auditProgMngtDetailId);
+
+    /**
+     * 부서별 점검결과 현황 조회
+     * 
+     * @param ledgerOrdersId 원장차수 ID (조회조건)
+     * @param deptCd 부서코드 (조회조건)
+     * @return 부서별 점검결과 현황 목록
+     */
+    List<DeptAuditResultStatusDto> getDeptAuditResultStatus(Long ledgerOrdersId, String deptCd);
+
+    /**
+     * 부서별 개선계획등록 현황 조회
+     * 
+     * @param ledgerOrdersId 원장차수 ID (조회조건)
+     * @param deptCd 부서코드 (조회조건)
+     * @return 부서별 개선계획등록 현황 목록
+     */
+    List<DeptImprovementPlanStatusDto> getDeptImprovementPlanStatus(Long ledgerOrdersId, String deptCd);
 }

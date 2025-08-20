@@ -338,3 +338,5 @@ erDiagram
 - **부분 인덱스**: deleted_yn = 'N' 조건의 부분 인덱스 사용
 
 
+
+

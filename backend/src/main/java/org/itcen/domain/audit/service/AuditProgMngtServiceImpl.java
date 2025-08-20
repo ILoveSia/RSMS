@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.itcen.domain.audit.dto.AuditItemStatusResponseDto;
 import org.itcen.domain.audit.dto.AuditProgMngtDto;
+import org.itcen.domain.audit.dto.DeptAuditResultStatusDto;
+import org.itcen.domain.audit.dto.DeptImprovementPlanStatusDto;
 import org.itcen.domain.audit.entity.AuditProgMngt;
 import org.itcen.domain.audit.entity.AuditProgMngtDetail;
 import org.itcen.domain.audit.repository.AuditProgMngtDetailRepository;
@@ -341,13 +343,150 @@ public class AuditProgMngtServiceImpl implements AuditProgMngtService {
         // 빈 문자열을 null로 변환 (Optional 조건 처리를 위해)
         String finalAuditResultStatusCd = (auditResultStatusCd != null && auditResultStatusCd.trim().isEmpty()) ? null : auditResultStatusCd;
 
-        List<AuditItemStatusResponseDto> result = auditProgMngtRepository.findAuditItemStatus(
+        // Native Query를 사용하여 Object[] 결과 조회
+        List<Object[]> nativeResults = auditProgMngtRepository.findAuditItemStatusNative(
                 ledgerOrdersHod, 
                 finalAuditResultStatusCd
         );
 
+        log.debug("Native Query 결과: {}건", nativeResults.size());
+
+        // Object[] 결과를 AuditItemStatusResponseDto로 변환
+        List<AuditItemStatusResponseDto> result = nativeResults.stream()
+                .map(this::convertObjectArrayToDto)
+                .collect(Collectors.toList());
+
         log.debug("점검 현황(항목별) 조회 결과: {}건", result.size());
         return result;
+    }
+
+    /**
+     * 결재 승인 시 점검계획관리상세의 개선계획상태코드를 PLI03으로 업데이트
+     * 동시에 점검최종결과여부를 'Y'로 업데이트
+     */
+    @Override
+    @Transactional
+    public int updateImpPlStatusToPLI03(Long auditProgMngtDetailId) {
+        log.debug("점검계획관리상세 상태 업데이트 시작 - auditProgMngtDetailId: {}", auditProgMngtDetailId);
+        
+        if (auditProgMngtDetailId == null) {
+            throw new IllegalArgumentException("점검계획관리상세 ID는 필수입니다.");
+        }
+        
+        int updatedCount = auditProgMngtDetailRepository.updateImpPlStatusToPLI03(auditProgMngtDetailId);
+        
+        log.debug("점검계획관리상세 상태 업데이트 완료 - auditProgMngtDetailId: {}, 업데이트된 레코드 수: {} (imp_pl_status_cd='PLI03', audit_final_result_yn='Y')", 
+                auditProgMngtDetailId, updatedCount);
+        
+        return updatedCount;
+    }
+
+    /**
+     * Object[] 배열을 AuditItemStatusResponseDto로 변환
+     * Native Query 결과를 DTO로 매핑
+     */
+    private AuditItemStatusResponseDto convertObjectArrayToDto(Object[] row) {
+        return AuditItemStatusResponseDto.builder()
+                .hodIcItemId(row[0] != null ? ((Number) row[0]).longValue() : null)
+                .auditProgMngtDetailId(row[1] != null ? ((Number) row[1]).longValue() : null)
+                .responsibilityContent(row[2] != null ? row[2].toString() : "")
+                .responsibilityDetailContent(row[3] != null ? row[3].toString() : "")
+                .positionsNm(row[4] != null ? row[4].toString() : "미정")
+                .deptCd(row[5] != null ? row[5].toString() : "")
+                .fieldTypeCd(row[6] != null ? row[6].toString() : "")
+                .roleTypeCd(row[7] != null ? row[7].toString() : "")
+                .icTask(row[8] != null ? row[8].toString() : "")
+                .auditMenId(row[9] != null ? row[9].toString() : "")
+                .auditResultStatusCd(row[10] != null ? row[10].toString() : "")
+                .roleSumm(row[11] != null ? row[11].toString() : "")
+                .ledgerOrdersHod(row[12] != null ? ((Number) row[12]).longValue() : 0L)
+                .auditResult(row[13] != null ? row[13].toString() : "")
+                .auditDoneDt(row[14] != null ? row[14].toString() : "")
+                .auditDetailContent(row[15] != null ? row[15].toString() : "")
+                .auditStatusCd(row[16] != null ? row[16].toString() : "")
+                .responsibilityId(row[17] != null ? ((Number) row[17]).longValue() : 0L)
+                .auditTitle(row[18] != null ? row[18].toString() : "")
+                .auditStatusCdFromProgMngt(row[19] != null ? row[19].toString() : "")
+                .impPlStatusCd(row[20] != null ? row[20].toString() : "")
+                .auditDoneContent(row[21] != null ? row[21].toString() : "")
+                .approvalId(row[22] != null ? ((Number) row[22]).longValue() : 0L)
+                .approvalStatusCd(row[23] != null ? row[23].toString() : "")
+                .auditFinalResultYn(row[24] != null ? row[24].toString() : "N")
+                .build();
+    }
+
+    /**
+     * 부서별 점검결과 현황 조회
+     */
+    @Override
+    public List<DeptAuditResultStatusDto> getDeptAuditResultStatus(Long ledgerOrdersId, String deptCd) {
+        log.debug("부서별 점검결과 현황 조회 - ledgerOrdersId: {}, deptCd: {}", ledgerOrdersId, deptCd);
+
+        // Native Query를 사용하여 Object[] 결과 조회
+        List<Object[]> nativeResults = auditProgMngtRepository.findDeptAuditResultStatusNative(ledgerOrdersId, deptCd);
+        
+        log.debug("부서별 점검결과 현황 Native Query 결과: {}건", nativeResults.size());
+
+        // Object[] 결과를 DeptAuditResultStatusDto로 변환
+        List<DeptAuditResultStatusDto> result = nativeResults.stream()
+                .map(this::convertObjectArrayToDeptAuditResultStatusDto)
+                .collect(Collectors.toList());
+
+        log.debug("부서별 점검결과 현황 조회 결과: {}건", result.size());
+        return result;
+    }
+
+    /**
+     * 부서별 개선계획등록 현황 조회
+     */
+    @Override
+    public List<DeptImprovementPlanStatusDto> getDeptImprovementPlanStatus(Long ledgerOrdersId, String deptCd) {
+        log.debug("부서별 개선계획등록 현황 조회 - ledgerOrdersId: {}, deptCd: {}", ledgerOrdersId, deptCd);
+
+        // Native Query를 사용하여 Object[] 결과 조회
+        List<Object[]> nativeResults = auditProgMngtRepository.findDeptImprovementPlanStatusNative(ledgerOrdersId, deptCd);
+        
+        log.debug("부서별 개선계획등록 현황 Native Query 결과: {}건", nativeResults.size());
+
+        // Object[] 결과를 DeptImprovementPlanStatusDto로 변환
+        List<DeptImprovementPlanStatusDto> result = nativeResults.stream()
+                .map(this::convertObjectArrayToDeptImprovementPlanStatusDto)
+                .collect(Collectors.toList());
+
+        log.debug("부서별 개선계획등록 현황 조회 결과: {}건", result.size());
+        return result;
+    }
+
+    /**
+     * Object[] 배열을 DeptAuditResultStatusDto로 변환
+     * Native Query 결과를 DTO로 매핑
+     */
+    private DeptAuditResultStatusDto convertObjectArrayToDeptAuditResultStatusDto(Object[] row) {
+        return DeptAuditResultStatusDto.builder()
+                .deptCd(row[0] != null ? row[0].toString() : "")
+                .deptName(row[1] != null ? row[1].toString() : "미지정")
+                .totalCount(row[2] != null ? ((Number) row[2]).longValue() : 0L)
+                .appropriateCount(row[3] != null ? ((Number) row[3]).longValue() : 0L)
+                .inadequateCount(row[4] != null ? ((Number) row[4]).longValue() : 0L)
+                .excludedCount(row[5] != null ? ((Number) row[5]).longValue() : 0L)
+                .appropriateRate(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0)
+                .build();
+    }
+
+    /**
+     * Object[] 배열을 DeptImprovementPlanStatusDto로 변환
+     * Native Query 결과를 DTO로 매핑
+     */
+    private DeptImprovementPlanStatusDto convertObjectArrayToDeptImprovementPlanStatusDto(Object[] row) {
+        return DeptImprovementPlanStatusDto.builder()
+                .deptCd(row[0] != null ? row[0].toString() : "")
+                .deptName(row[1] != null ? row[1].toString() : "미지정")
+                .inadequateCount(row[2] != null ? ((Number) row[2]).longValue() : 0L)
+                .planCreatedCount(row[3] != null ? ((Number) row[3]).longValue() : 0L)
+                .resultWrittenCount(row[4] != null ? ((Number) row[4]).longValue() : 0L)
+                .resultApprovedCount(row[5] != null ? ((Number) row[5]).longValue() : 0L)
+                .completionRate(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0)
+                .build();
     }
 
     /**

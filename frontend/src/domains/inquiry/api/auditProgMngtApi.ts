@@ -225,3 +225,96 @@ export const deleteMultipleAuditProgMngt = async (
     throw error;
   }
 };
+
+// 부서별 점검결과 현황 타입
+export interface DeptAuditResultStatusDto {
+  deptCd: string;           // 부서코드
+  deptName: string;         // 부서명
+  totalCount: number;       // 전체 건수
+  appropriateCount: number; // 적정 건수 (INS02)
+  inadequateCount: number;  // 미흡 건수 (INS03)  
+  excludedCount: number;    // 점검제외 건수 (INS04)
+  appropriateRate: number;  // 적정 수행율 (%)
+}
+
+// 부서별 개선계획등록 현황 타입
+export interface DeptImprovementPlanStatusDto {
+  deptCd: string;               // 부서코드
+  deptName: string;             // 부서명
+  inadequateCount: number;      // 미흡사항 건수 (INS03)
+  planCreatedCount: number;     // 개선계획작성 건수 (INS03 and PLI01)
+  resultWrittenCount: number;   // 이행결과작성 건수 (INS03 and PLI02) 
+  resultApprovedCount: number;  // 이행결과결재완료 건수 (INS03 and PLI03)
+  completionRate: number;       // 이행완료율 (%)
+}
+
+/**
+ * 부서별 점검결과 현황 조회
+ */
+export const getDeptAuditResultStatus = async (
+  ledgerOrdersId?: number,
+  deptCd?: string
+): Promise<DeptAuditResultStatusDto[]> => {
+  try {
+    const params: Record<string, string> = {};
+    if (ledgerOrdersId) params.ledgerOrdersId = String(ledgerOrdersId);
+    if (deptCd) params.deptCd = deptCd;
+
+    const response = await apiClient.get<DeptAuditResultStatusDto[]>('/audit-prog-mngt/dept-audit-result-status', { params });
+
+    // Spring Boot에서 직접 List를 반환하므로 response가 배열이어야 함
+    if (Array.isArray(response)) {
+      return response;
+    } else if (response && typeof response === 'object' && Array.isArray((response as any).data)) {
+      // 혹시 ApiResponse 구조로 감싸져 있는 경우
+      return (response as any).data;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error('부서별 점검결과 현황 조회 오류:', error);
+    throw error;
+  }
+};
+
+/**
+ * 부서별 개선계획등록 현황 조회
+ */
+export const getDeptImprovementPlanStatus = async (
+  ledgerOrdersId?: number,
+  deptCd?: string
+): Promise<DeptImprovementPlanStatusDto[]> => {
+  try {
+    const params: Record<string, string> = {};
+    if (ledgerOrdersId) params.ledgerOrdersId = String(ledgerOrdersId);
+    if (deptCd) params.deptCd = deptCd;
+
+    const response = await apiClient.get<DeptImprovementPlanStatusDto[]>('/audit-prog-mngt/dept-improvement-plan-status', { params });
+
+    // Spring Boot에서 직접 List를 반환하므로 response가 배열이어야 함
+    if (Array.isArray(response)) {
+      return response;
+    } else if (response && typeof response === 'object' && Array.isArray((response as any).data)) {
+      // 혹시 ApiResponse 구조로 감싸져 있는 경우
+      return (response as any).data;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error('부서별 개선계획등록 현황 조회 오류:', error);
+    throw error;
+  }
+};
+
+// auditProgMngtApi 객체 생성 및 export
+export const auditProgMngtApi = {
+  getAuditProgMngtStatusList,
+  getAllAuditProgMngtStatusList,
+  getAuditProgMngtByCode,
+  createAuditProgMngt,
+  updateAuditProgMngt,
+  deleteAuditProgMngt,
+  deleteMultipleAuditProgMngt,
+  getDeptAuditResultStatus,
+  getDeptImprovementPlanStatus
+};
