@@ -10,6 +10,7 @@ import loginRoutes from '@/domains/login/router';
 import mainRoutes from '@/domains/main/router';
 import handoverRoutes from '@/domains/handover/router';
 import adminRoutes from '@/domains/admin/router';
+import approvalRoutes from '@/domains/approval/router';
 
 // 라우트 매니저 인스턴스 생성
 const routeManager = new RouteManager();
@@ -17,10 +18,11 @@ const routeManager = new RouteManager();
 // 도메인별 라우트 등록
 routeManager.registerDomainRoutes('login', loginRoutes);
 routeManager.registerDomainRoutes('main', mainRoutes);
-routeManager.registerDomainRoutes('ledgermngt', ledgermngtRoutes);
 routeManager.registerDomainRoutes('inquiry', inquiryRoutes);
+routeManager.registerDomainRoutes('ledgermngt', ledgermngtRoutes);
 routeManager.registerDomainRoutes('handover', handoverRoutes);
 routeManager.registerDomainRoutes('admin', adminRoutes);
+routeManager.registerDomainRoutes('approval', approvalRoutes);
 
 // React Router용 RouteObject 생성
 const generateRoutes = (): RouteObject[] => {

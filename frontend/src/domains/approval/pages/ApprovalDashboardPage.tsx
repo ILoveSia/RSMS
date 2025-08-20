@@ -4,7 +4,6 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { ApprovalSummaryCards } from '@/shared/components/ui/data-display/';
-import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import {
   Box,
   Grid,
@@ -19,18 +18,13 @@ import {
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
-  Assignment as AssignmentIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
   HourglassEmpty as HourglassEmptyIcon,
-  Notifications as NotificationsIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { SearchConditionPanel } from '@/shared/components/ui/form';
 import type { DataGridColumn } from '@/shared/types/common';
 import approvalApi, {
   type ApprovalSummaryResponse,
