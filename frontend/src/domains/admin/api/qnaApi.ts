@@ -57,7 +57,6 @@ export const qnaApi = {
       endDate,
     } = params;
 
-    // 필요한 파라미터만 전송 (빈 문자열/undefined/null 제외)
     const queryParams: Record<string, string | number> = {
       page,
       size,
@@ -69,12 +68,9 @@ export const qnaApi = {
       if (value === undefined || value === null) return;
       if (typeof value === 'string' && value.trim() === '') return;
       if (typeof value === 'boolean') {
-        // boolean은 서버에서 Boolean 바인딩되도록 1/0이 아닌 true/false 문자열로 전달하지 않고 제외
-        // 서버는 @ModelAttribute로 boolean 파라미터를 안전히 변환하므로 'true'/'false' 문자열 전달
         queryParams[key] = value ? 'true' : 'false';
         return;
       }
-      // enum/string/date 그대로 문자열로 전달
       queryParams[key] = String(value);
     };
 
@@ -112,9 +108,10 @@ export const qnaApi = {
     user: { userId: string }
   ): Promise<number> => {
     return apiClient.post<number>(`/qna/${qnaId}/comments`, data, {
-      headers: { 'X-User-Id': user.userId },
+      headers: { 'X-User-Id': encodeURIComponent(user.userId) },
     });
   },
+
   /**
    * Q&A 상세 조회
    */
@@ -149,8 +146,8 @@ export const qnaApi = {
   ): Promise<void> => {
     return apiClient.post<void>(`/qna/${id}/answer`, data, {
       headers: {
-        'X-User-Id': user.userId,
-        'X-User-Name': user.userName,
+        'X-User-Id': encodeURIComponent(user.userId),
+        'X-User-Name': encodeURIComponent(user.userName),
       },
     });
   },
@@ -184,8 +181,8 @@ export const qnaApi = {
       data,
       {
         headers: {
-          'X-User-Id': user.userId,
-          'X-User-Name': user.userName,
+          'X-User-Id': encodeURIComponent(user.userId),
+          'X-User-Name': encodeURIComponent(user.userName),
         },
       }
     );
@@ -197,8 +194,8 @@ export const qnaApi = {
   deleteQna: async (id: number, user: { userId: string; userName: string }): Promise<void> => {
     return apiClient.delete<void>(`/qna/${id}`, {
       headers: {
-        'X-User-Id': user.userId,
-        'X-User-Name': user.userName,
+        'X-User-Id': encodeURIComponent(user.userId),
+        'X-User-Name': encodeURIComponent(user.userName),
       },
     });
   },
@@ -212,8 +209,8 @@ export const qnaApi = {
       // eslint-disable-next-line no-await-in-loop
       await apiClient.delete<void>(`/qna/${id}`, {
         headers: {
-          'X-User-Id': user.userId,
-          'X-User-Name': user.userName,
+          'X-User-Id': encodeURIComponent(user.userId),
+          'X-User-Name': encodeURIComponent(user.userName),
         },
       });
     }
