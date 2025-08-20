@@ -295,13 +295,6 @@ export class HandoverApi {
   }
 
   /**
-   * 월별 완료 통계
-   */
-  static async getMonthlyCompletionStatistics(): Promise<MonthlyStatistics[]> {
-    return apiClient.get<MonthlyStatistics[]>(`${this.BASE_PATH}/statistics/monthly`);
-  }
-
-  /**
    * 상태별 통계
    */
   static async getStatusStatistics(): Promise<StatusStatistics[]> {

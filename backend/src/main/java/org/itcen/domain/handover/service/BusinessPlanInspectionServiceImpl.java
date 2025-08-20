@@ -318,42 +318,6 @@ public class BusinessPlanInspectionServiceImpl implements BusinessPlanInspection
         
         return inspections.map(this::convertToDto);
     }
-
-    @Override
-    public BusinessPlanInspectionService.InspectionStatisticsDto getInspectionStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
-    public List<BusinessPlanInspectionService.DepartmentInspectionStatisticsDto> getInspectionStatisticsByDepartment() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    public List<BusinessPlanInspectionService.GradeStatisticsDto> getInspectionStatisticsByGrade() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
-    public List<BusinessPlanInspectionService.YearlyStatisticsDto> getInspectionStatisticsByYear() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
-    public List<BusinessPlanInspectionService.MonthlyStatisticsDto> getMonthlyCompletionStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
-    public List<BusinessPlanInspectionService.YearlyInspectionStatusDto> getYearlyInspectionStatus(Integer year) {
-        // TODO: 구현 예정
-        return null;
-    }
-
     private List<BusinessPlanInspectionDto> convertToDto(List<BusinessPlanInspection> inspections) {
         return inspections.stream()
                 .map(this::convertToDto)

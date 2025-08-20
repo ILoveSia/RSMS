@@ -149,33 +149,6 @@ public interface BusinessPlanInspectionService {
      */
     Page<BusinessPlanInspectionDto> searchInspections(InspectionSearchDto searchDto, Pageable pageable);
 
-    // 통계 기능
-
-    /**
-     * 점검 통계
-     */
-    InspectionStatisticsDto getInspectionStatistics();
-
-    /**
-     * 부서별 점검 통계
-     */
-    List<DepartmentInspectionStatisticsDto> getInspectionStatisticsByDepartment();
-
-    /**
-     * 연도별 점검 통계
-     */
-    List<YearlyStatisticsDto> getInspectionStatisticsByYear();
-
-    /**
-     * 월별 완료 통계
-     */
-    List<MonthlyStatisticsDto> getMonthlyCompletionStatistics();
-
-    /**
-     * 연도별 부서 점검 현황
-     */
-    List<YearlyInspectionStatusDto> getYearlyInspectionStatus(Integer year);
-
     // DTO 인터페이스들
 
     interface BusinessPlanInspectionDto {

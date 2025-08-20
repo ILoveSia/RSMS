@@ -319,66 +319,7 @@ public class BusinessPlanInspectionController {
         Page<BusinessPlanInspectionService.BusinessPlanInspectionDto> inspections = businessPlanInspectionService
                 .searchInspections(searchDto, pageable);
         return ResponseEntity.ok(inspections);
-    }
+}
 
-    /**
-     * 점검 통계
-     */
-    @GetMapping("/statistics")
-    public ResponseEntity<BusinessPlanInspectionService.InspectionStatisticsDto> getInspectionStatistics() {
-        log.debug("점검 통계 조회 요청");
 
-        BusinessPlanInspectionService.InspectionStatisticsDto statistics = businessPlanInspectionService
-                .getInspectionStatistics();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 부서별 점검 통계
-     */
-    @GetMapping("/statistics/department")
-    public ResponseEntity<List<BusinessPlanInspectionService.DepartmentInspectionStatisticsDto>> getInspectionStatisticsByDepartment() {
-        log.debug("부서별 점검 통계 조회 요청");
-
-        List<BusinessPlanInspectionService.DepartmentInspectionStatisticsDto> statistics = businessPlanInspectionService
-                .getInspectionStatisticsByDepartment();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 연도별 점검 통계
-     */
-    @GetMapping("/statistics/year")
-    public ResponseEntity<List<BusinessPlanInspectionService.YearlyStatisticsDto>> getInspectionStatisticsByYear() {
-        log.debug("연도별 점검 통계 조회 요청");
-
-        List<BusinessPlanInspectionService.YearlyStatisticsDto> statistics = businessPlanInspectionService
-                .getInspectionStatisticsByYear();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 월별 완료 통계
-     */
-    @GetMapping("/statistics/monthly")
-    public ResponseEntity<List<BusinessPlanInspectionService.MonthlyStatisticsDto>> getMonthlyCompletionStatistics() {
-        log.debug("월별 완료 통계 조회 요청");
-
-        List<BusinessPlanInspectionService.MonthlyStatisticsDto> statistics = businessPlanInspectionService
-                .getMonthlyCompletionStatistics();
-        return ResponseEntity.ok(statistics);
-    }
-
-    /**
-     * 연도별 부서 점검 현황
-     */
-    @GetMapping("/status/year/{year}")
-    public ResponseEntity<List<BusinessPlanInspectionService.YearlyInspectionStatusDto>> getYearlyInspectionStatus(
-            @PathVariable Integer year) {
-        log.debug("연도별 부서 점검 현황 조회 요청 - year: {}", year);
-
-        List<BusinessPlanInspectionService.YearlyInspectionStatusDto> status = businessPlanInspectionService
-                .getYearlyInspectionStatus(year);
-        return ResponseEntity.ok(status);
-    }
 }

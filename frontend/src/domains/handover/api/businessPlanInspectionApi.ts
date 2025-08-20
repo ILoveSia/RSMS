@@ -298,25 +298,6 @@ export class BusinessPlanInspectionApi {
   }
 
   /**
-   * 점검 진행률 업데이트
-   */
-  static async updateProgress(
-    inspectionId: number,
-    progressRate: number,
-    currentPhase: string,
-    phaseDescription: string,
-    actorEmpNo: string
-  ): Promise<BusinessPlanInspectionDto> {
-    const response: any = await apiClient.post(`${this.BASE_URL}/${inspectionId}/progress`, {
-      progressRate,
-      currentPhase,
-      phaseDescription,
-      actorEmpNo,
-    });
-    return response.data;
-  }
-
-  /**
    * 점검 항목 목록 조회
    */
   static async getInspectionItems(inspectionId: number): Promise<InspectionItemDto[]> {
@@ -362,50 +343,6 @@ export class BusinessPlanInspectionApi {
    */
   static async getInspectionsByAssignment(assignmentId: number): Promise<BusinessPlanInspectionDto[]> {
     const response: any = await apiClient.get(`${this.BASE_URL}/assignment/${assignmentId}`);
-    return response.data;
-  }
-
-  /**
-   * 사업계획 점검 통계 조회
-   */
-  static async getInspectionStatistics(): Promise<{
-    totalCount: number;
-    plannedCount: number;
-    inProgressCount: number;
-    completedCount: number;
-    cancelledCount: number;
-    averageScore: number;
-    totalIssueCount: number;
-  }> {
-    const response: any = await apiClient.get(`${this.BASE_URL}/statistics`);
-    return response.data;
-  }
-
-  /**
-   * 사업계획 점검 템플릿 목록 조회
-   */
-  static async getInspectionTemplates(): Promise<Array<{
-    templateId: number;
-    templateName: string;
-    inspectionType: string;
-    itemCount: number;
-    description: string;
-  }>> {
-    const response: any = await apiClient.get(`${this.BASE_URL}/templates`);
-    return response.data;
-  }
-
-  /**
-   * 템플릿으로 점검 생성
-   */
-  static async createInspectionFromTemplate(
-    templateId: number,
-    inspectionData: Partial<BusinessPlanInspectionDto>
-  ): Promise<BusinessPlanInspectionDto> {
-    const response: any = await apiClient.post(`${this.BASE_URL}/create-from-template`, {
-      templateId,
-      ...inspectionData,
-    });
     return response.data;
   }
 

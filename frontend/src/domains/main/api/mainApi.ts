@@ -22,22 +22,6 @@ export const mainApi = {
       throw error;
     }
   },
-
-  /**
-   * 대시보드 통계 정보 조회 (향후 확장용)
-   */
-  getDashboardStats: async (): Promise<any> => {
-    try {
-      // 향후 대시보드 통계 API 구현 시 사용
-      // API URL 중복 경로 수정: /api는 apiClient에서 자동 추가됨
-      const response = await apiClient.get('/dashboard/stats');
-
-      return response;
-    } catch (error) {
-      console.error('[mainApi] getDashboardStats 에러:', error);
-      throw error;
-    }
-  },
 };
 
 export default mainApi;

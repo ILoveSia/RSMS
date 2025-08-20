@@ -273,12 +273,6 @@ public class HandoverServiceImpl implements HandoverService {
     }
 
     @Override
-    public List<MonthlyStatisticsDto> getMonthlyCompletionStatistics() {
-        // TODO: 구현 예정
-        return null;
-    }
-
-    @Override
     public List<StatusStatisticsDto> getStatusStatistics() {
         // TODO: 구현 예정
         return null;

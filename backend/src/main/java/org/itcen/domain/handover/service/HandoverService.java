@@ -104,11 +104,6 @@ public interface HandoverService {
     HandoverStatisticsDto getHandoverStatistics();
 
     /**
-     * 월별 완료 통계
-     */
-    List<MonthlyStatisticsDto> getMonthlyCompletionStatistics();
-
-    /**
      * 상태별 통계
      */
     List<StatusStatisticsDto> getStatusStatistics();

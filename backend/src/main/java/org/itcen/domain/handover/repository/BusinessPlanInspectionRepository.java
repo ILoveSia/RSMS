@@ -133,41 +133,6 @@ public interface BusinessPlanInspectionRepository extends JpaRepository<Business
                                                       Pageable pageable);
 
     /**
-     * 상태별 점검 통계
-     */
-    @Query("SELECT bpi.status, COUNT(bpi) FROM BusinessPlanInspection bpi GROUP BY bpi.status")
-    List<Object[]> getInspectionStatistics();
-
-    /**
-     * 부서별 점검 통계
-     */
-    @Query("SELECT bpi.deptCd, COUNT(bpi) FROM BusinessPlanInspection bpi GROUP BY bpi.deptCd")
-    List<Object[]> getInspectionStatisticsByDept();
-
-    /**
-     * 등급별 점검 통계
-     */
-    @Query("SELECT bpi.overallGrade, COUNT(bpi) FROM BusinessPlanInspection bpi " +
-           "WHERE bpi.overallGrade IS NOT NULL GROUP BY bpi.overallGrade")
-    List<Object[]> getInspectionStatisticsByGrade();
-
-    /**
-     * 연도별 점검 통계
-     */
-    @Query("SELECT bpi.inspectionYear, COUNT(bpi) FROM BusinessPlanInspection bpi GROUP BY bpi.inspectionYear " +
-           "ORDER BY bpi.inspectionYear DESC")
-    List<Object[]> getInspectionStatisticsByYear();
-
-    /**
-     * 월별 점검 완료 통계
-     */
-    @Query("SELECT YEAR(bpi.actualEndDate), MONTH(bpi.actualEndDate), COUNT(bpi) " +
-           "FROM BusinessPlanInspection bpi WHERE bpi.status = 'COMPLETED' " +
-           "GROUP BY YEAR(bpi.actualEndDate), MONTH(bpi.actualEndDate) " +
-           "ORDER BY YEAR(bpi.actualEndDate) DESC, MONTH(bpi.actualEndDate) DESC")
-    List<Object[]> getMonthlyCompletionStatistics();
-
-    /**
      * 중복 점검 체크 (같은 부서, 같은 연도, 같은 분기, 다른 ID)
      */
     @Query("SELECT bpi FROM BusinessPlanInspection bpi WHERE bpi.deptCd = :deptCd " +
@@ -178,13 +143,7 @@ public interface BusinessPlanInspectionRepository extends JpaRepository<Business
                                                           @Param("quarter") Integer quarter,
                                                           @Param("excludeId") Long excludeId);
 
-    /**
-     * 연도별 부서 점검 현황 조회
-     */
-    @Query("SELECT bpi.deptCd, bpi.inspectionYear, bpi.inspectionQuarter, bpi.status, bpi.overallGrade " +
-           "FROM BusinessPlanInspection bpi WHERE bpi.inspectionYear = :year " +
-           "ORDER BY bpi.deptCd, bpi.inspectionQuarter")
-    List<Object[]> getYearlyInspectionStatus(@Param("year") Integer year);
+
 
     /**
      * 부서코드, 점검연도, 점검분기로 조회 (ServiceImpl에서 사용)
