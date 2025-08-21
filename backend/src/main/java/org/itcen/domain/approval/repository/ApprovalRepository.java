@@ -3,6 +3,7 @@ package org.itcen.domain.approval.repository;
 import java.util.List;
 import java.util.Optional;
 import org.itcen.domain.approval.entity.Approval;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -150,4 +151,12 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
            "WHERE a.urgencyCd = :urgencyCd " +
            "ORDER BY a.requestDatetime DESC")
     List<Approval> findByUrgencyCdWithSteps(@Param("urgencyCd") String urgencyCd);
+
+    /**
+     * 요청자별 결재 목록 조회 (페이징 지원, 최신순)
+     */
+    @Query("SELECT a FROM Approval a " +
+           "WHERE a.requesterId = :requesterId " +
+           "ORDER BY a.requestDatetime DESC")
+    List<Approval> findByRequesterIdOrderByRequestDatetimeDesc(@Param("requesterId") String requesterId, Pageable pageable);
 }

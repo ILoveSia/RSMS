@@ -53,6 +53,49 @@ public class ApprovalController {
     }
     
     /**
+     * 사용자별 결재 데이터 확인용 디버깅 엔드포인트
+     * GET /api/approval/debug-user/{userId}
+     */
+    @GetMapping("/debug-user/{userId}")
+    public ResponseEntity<String> debugUserApprovals(@PathVariable String userId) {
+        try {
+            // 내가 요청한 결재 수
+            List<ApprovalDto.ListResponse> myRequests = approvalService.getMyRequestedApprovals(userId);
+            
+            // 내가 처리해야 할 결재 수  
+            List<ApprovalDto.ListResponse> myPending = approvalService.getMyPendingApprovals(userId);
+            
+            StringBuilder result = new StringBuilder();
+            result.append("User: ").append(userId).append("\n");
+            result.append("My Requests: ").append(myRequests.size()).append("\n");
+            result.append("My Pending: ").append(myPending.size()).append("\n");
+            
+            if (!myRequests.isEmpty()) {
+                result.append("\nMy Requests Details:\n");
+                for (ApprovalDto.ListResponse req : myRequests) {
+                    result.append("- ID: ").append(req.getApprovalId())
+                          .append(", Type: ").append(req.getTaskTypeName())
+                          .append(", Status: ").append(req.getStatusName()).append("\n");
+                }
+            }
+            
+            if (!myPending.isEmpty()) {
+                result.append("\nMy Pending Details:\n");
+                for (ApprovalDto.ListResponse pending : myPending) {
+                    result.append("- ID: ").append(pending.getApprovalId())
+                          .append(", Type: ").append(pending.getTaskTypeName())
+                          .append(", Requester: ").append(pending.getRequesterName()).append("\n");
+                }
+            }
+            
+            return ResponseEntity.ok(result.toString());
+        } catch (Exception e) {
+            log.error("사용자 결재 데이터 디버깅 오류: {}", e.getMessage(), e);
+            return ResponseEntity.ok("Error: " + e.getMessage());
+        }
+    }
+    
+    /**
      * URL 매핑 정보 디버깅용 엔드포인트
      * GET /api/approval/debug-mappings
      */
