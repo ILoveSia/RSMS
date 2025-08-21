@@ -10,7 +10,7 @@ import BaseDialog from '@/shared/components/modal/BaseDialog';
 import DatePicker from '@/shared/components/ui/form/DatePicker';
 import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 import { submissionReportApi } from '../api/submissionReportApi';
-import { uploadAttachment } from '@/domains/common/api/attachmentApi';
+import { uploadAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
 import { AttachmentList } from '@/shared/components/ui/data-display';
 import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
 
@@ -20,12 +20,7 @@ interface SubmissionReportDialogProps {
   onSuccess: () => void;
   mode?: 'create' | 'edit' | 'view';
   reportId?: number;
-  initialData?: {
-    submissionReportId?: number;
-    baseDate: string;
-    targetInstitution: string;
-    attachments?: { originalFilename: string }[];
-  };
+  initialData?: AttachmentInfo[];
   onModeChange?: (mode: 'create' | 'edit' | 'view') => void;
   loading?: boolean;
 }
@@ -43,17 +38,18 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   const [baseDate, setBaseDate] = useState<Date>(new Date());
   const [targetInstitution, setTargetInstitution] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [existingAttachments, setExistingAttachments] = useState<AttachmentInfo | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // 초기 데이터 설정
   useEffect(() => {
     if (initialData) {
-      setBaseDate(initialData.baseDate ? new Date(initialData.baseDate) : new Date());
-      setTargetInstitution(initialData.targetInstitution || '');
+        setExistingAttachments(initialData[0]);
     } else if (mode === 'create') {
       setBaseDate(new Date());
       setTargetInstitution('');
       setSelectedFile(null);
+      setExistingAttachments(null);
     }
   }, [initialData, mode]);
 
@@ -229,6 +225,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
     setBaseDate(new Date());
     setTargetInstitution('');
     setSelectedFile(null);
+    setExistingAttachments(null);
     setUploadError(null);
     
     if (mode === 'edit' && onModeChange) {
@@ -249,11 +246,42 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       originalFilename: selectedFile.name,
       storedFilename: '',
       fileSize: selectedFile.size,
+      filePath: '',
+      contentType: selectedFile.type,
       entityType: 'SUBMISSION_REPORT',
       entityId: 0,
       uploadedBy: 'system',
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdId: 'system',
+      updatedId: 'system',
     };
+  };
+
+  // 기존 첨부파일 다운로드 핸들러
+  const handleDownloadExisting = async (file: AttachmentInfo) => {
+    try {
+      const blob = await downloadAttachment(file.attachId);
+      // 파일 다운로드
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.originalFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('파일 다운로드 실패:', error);
+      setUploadError('파일 다운로드에 실패했습니다.');
+    }
+  };
+
+  // 기존 첨부파일 삭제 핸들러 (임시)
+  const handleDeleteExisting = (id: number) => {
+    console.log('Delete existing file with ID:', id);
+    // TODO: 실제 삭제 로직 구현
+    setExistingAttachments(prev => prev.filter(f => f.attachId !== id));
   };
 
   return (
@@ -309,10 +337,11 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
                   선택된 파일:
                 </Typography>
                 <AttachmentList
-                  attachments={[selectedFileToAttachment() as AttachmentInfo]}
+                  attachments={[selectedFileToAttachment()!]}
                   mode="register"
                   onDownload={() => {
-                    // 파일 다운로드 로직 (새 파일이라 실제 다운로드 불가능)
+                    // 새 파일은 아직 서버에 업로드되지 않았으므로 다운로드 불가능
+                    setUploadError('새로 선택된 파일은 아직 업로드되지 않았습니다. 저장 후 다운로드할 수 있습니다.');
                   }}
                   onDelete={() => {
                     setSelectedFile(null);
@@ -323,17 +352,20 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           </>
         )}
 
-        {/* 기존 첨부파일 표시 (상세보기/수정 모드)
-        {(mode === 'view' || mode === 'edit') && initialData?.attachments && initialData.attachments.length > 0 && (
-          <Box>
-            <strong>첨부파일:</strong>
-            <ul>
-              {initialData.attachments.map((attachment, index) => (
-                <li key={index}>{attachment.originalFilename}</li>
-              ))}
-            </ul>
+        {/* 기존 첨부파일 표시 (상세보기/수정 모드) */}
+        {(mode === 'view' || mode === 'edit') && existingAttachments && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              기존 첨부파일:
+            </Typography>
+            <AttachmentList
+              attachments={[existingAttachments]}
+              mode={mode}
+              onDownload={handleDownloadExisting}
+              onDelete={handleDeleteExisting}
+            />
           </Box>
-        )} */}
+        )}
       </Box>
     </BaseDialog>
   );
