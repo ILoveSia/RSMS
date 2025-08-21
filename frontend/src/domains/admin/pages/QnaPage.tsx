@@ -9,6 +9,8 @@ import { Button } from '@/shared/components/ui/button';
 import TitleSearch from '../components/TitleSearch';
 import QnaDetailDialog from '../components/QnaDetailDialog';
 import QnaCreateDialog from '../components/QnaCreateDialog';
+import CommonCodeSelect from '@/shared/components/ui/form/CommonCodeSelect';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
 import type { QnaListResponseDto } from '@/app/types/qna';
 import type { GridSortModel } from '@mui/x-data-grid';
 import qnaApi from '../api/qnaApi';
@@ -30,7 +32,9 @@ const QnaPage: React.FC<QnaPageProps> = () => {
   const [keyword, setKeyword] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [creating, setCreating] = useState(false);
+  const [category, setCategory] = useState<string>('ALL');
   const { showError } = useToastHelpers();
+  const getCodeName = useGetCodeName();
 
   // Dialog states managed by useDialog hook
   const { dialogOpen: detailOpen, dialogData: selectedId, openDialog: openDetailDialog, closeDialog: closeDetailDialog } = useDialog<number>();
@@ -68,19 +72,34 @@ const QnaPage: React.FC<QnaPageProps> = () => {
 
   // 키워드 필터링 (제목 기준)
   const filteredRows = useMemo(() => {
+    // 카테고리 필터링 먼저 적용
+    let result = allRows;
+    if (category && category !== 'ALL') {
+      result = allRows.filter(r => r.category === category);
+    }
+    
+    // 키워드 필터링 (제목 기준)
     const k = keyword.trim();
-    if (!k) return allRows;
+    if (!k) return result;
     const lower = k.toLowerCase();
-    return allRows.filter(r => (r.title || '').toLowerCase().includes(lower));
-  }, [allRows, keyword]);
+    return result.filter(r => (r.title || '').toLowerCase().includes(lower));
+  }, [allRows, keyword, category]);
+
+  // 카테고리 코드명으로 변환된 행 데이터
+  const rowsWithCategoryNames = useMemo(() => {
+    return filteredRows.map(row => ({
+      ...row,
+      categoryName: getCodeName('CATEGORY', row.category || '')
+    }));
+  }, [filteredRows, getCodeName]);
 
   // 정렬 (primary sort만 적용)
   const sortedRows = useMemo(() => {
     const primary = sortModel[0];
-    if (!primary) return filteredRows;
+    if (!primary) return rowsWithCategoryNames;
     const { field, sort } = primary;
     const dir = sort === 'asc' ? 1 : -1;
-    const sorted = [...filteredRows].sort((a: any, b: any) => {
+    const sorted = [...rowsWithCategoryNames].sort((a: any, b: any) => {
       const va = a?.[field as keyof typeof a];
       const vb = b?.[field as keyof typeof b];
       if (va == null && vb == null) return 0;
@@ -94,7 +113,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
       return sa.localeCompare(sb) * dir;
     });
     return sorted;
-  }, [filteredRows, sortModel]);
+  }, [rowsWithCategoryNames, sortModel]);
 
   // 페이지네이션 계산 (클라이언트 사이드)
   const pagedRows = useMemo(() => {
@@ -141,6 +160,14 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           onEnter={() => setPage(1)}
           right={
             <>
+              <CommonCodeSelect
+                groupCode="CATEGORY"
+                value={category}
+                onChange={(v) => setCategory(v)}
+                includeAll={true}
+                allLabel="전체 카테고리"
+                sx={{ mr: 1 }}
+              />
               {selectedIds.length > 0 && (
                 <Button
                   size="small"
@@ -183,12 +210,12 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           }
         />
 
-        <DataGrid<QnaListResponseDto>
+        <DataGrid<QnaListResponseDto & { categoryName: string }>
           data={pagedRows}
           loading={loading}
           error={error}
           columns={[
-            { field: 'category', headerName: '카테고리', width: 140, align: 'center' },
+            { field: 'categoryName', headerName: '카테고리', width: 140, align: 'center' },
             {
               field: 'title',
               headerName: '제목',
