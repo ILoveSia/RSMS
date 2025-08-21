@@ -11,6 +11,8 @@ import noticeApi, { type NoticeListResponseDto } from '../api/noticeApi';
 import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import NoticeDetailDialog from '../components/NoticeDetailDialog';
 import NoticeCreateDialog from '../components/NoticeCreateDialog';
+import CommonCodeSelect from '@/shared/components/ui/form/CommonCodeSelect';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
 
 type NoticeRow = NoticeListResponseDto;
 
@@ -23,6 +25,8 @@ const NoticePage: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selected, setSelected] = useState<NoticeRow | null>(null);
+  const [category, setCategory] = useState<string>('ALL');
+  const getCodeName = useGetCodeName();
 
   const loadData = useCallback(async () => {
     try {
@@ -42,7 +46,18 @@ const NoticePage: React.FC = () => {
 
   const rows = useMemo(() => {
     const k = keyword.trim().toLowerCase();
-    const filtered = k ? rowsRaw.filter(r => (r.title || '').toLowerCase().includes(k)) : rowsRaw;
+    
+    // 카테고리 필터링 먼저 적용
+    let filtered = rowsRaw;
+    if (category && category !== 'ALL') {
+      filtered = rowsRaw.filter(r => r.category === category);
+    }
+    
+    // 키워드 필터링 적용
+    if (k) {
+      filtered = filtered.filter(r => (r.title || '').toLowerCase().includes(k));
+    }
+    
     // pinned 우선 정렬 (true 먼저), 그 다음 created_at 내림차순
     return [...filtered].sort((a, b) => {
       const ap = a.pinned ? 1 : 0;
@@ -52,7 +67,15 @@ const NoticePage: React.FC = () => {
       const bd = b.created_at ? new Date(b.created_at as any).getTime() : 0;
       return bd - ad;
     });
-  }, [rowsRaw, keyword]);
+  }, [rowsRaw, keyword, category]);
+
+  // 카테고리 코드명으로 변환된 행 데이터
+  const rowsWithCategoryNames = useMemo(() => {
+    return rows.map(row => ({
+      ...row,
+      categoryName: getCodeName('CATEGORY', row.category || '')
+    }));
+  }, [rows, getCodeName]);
 
   return (
     <PageContainer>
@@ -76,25 +99,35 @@ const NoticePage: React.FC = () => {
       >
           <TitleSearch value={keyword} onChange={setKeyword} onEnter={() => { /* no-op, client filter */ }} 
           right={
-          <ManagementButtonGroup
-          showRegister
-          showRefresh
-          showDelete={false}
-          align='right'
-          onRegister={() => setCreateOpen(true)}
-          onRefresh={loadData}
-          />
+          <>
+            <CommonCodeSelect
+              groupCode="CATEGORY"
+              value={category}
+              onChange={setCategory}
+              includeAll={true}
+              allLabel="전체 카테고리"
+              sx={{ mr: 1 }}
+            />
+            <ManagementButtonGroup
+              showRegister
+              showRefresh
+              showDelete={false}
+              align='right'
+              onRegister={() => setCreateOpen(true)}
+              onRefresh={loadData}
+            />
+          </>
           }
         />
             
         
 
-        <DataGrid<NoticeRow>
-          data={rows}
+        <DataGrid<NoticeRow & { categoryName: string }>
+          data={rowsWithCategoryNames}
           loading={loading}
           error={error}
           columns={[
-            { field: 'category', headerName: '카테고리', width: 140, align: 'center' },
+            { field: 'categoryName', headerName: '카테고리', width: 140, align: 'center' },
             {
               field: 'title',
               headerName: '제목',
@@ -116,7 +149,7 @@ const NoticePage: React.FC = () => {
           pagination={{
             page: 1,
             pageSize: 10,
-            totalItems: rows.length,
+            totalItems: rowsWithCategoryNames.length,
             totalPages: 1,
             onPageChange: () => {},
             onPageSizeChange: () => {},

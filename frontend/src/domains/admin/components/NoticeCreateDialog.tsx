@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import { Box, FormControlLabel, Switch, TextField } from '@mui/material';
+import { Box, FormControl, InputLabel, FormControlLabel, Switch, TextField } from '@mui/material';
+import CommonCodeSelect from '@/shared/components/ui/form/CommonCodeSelect';
 
 interface NoticeCreateDialogProps {
   open: boolean;
@@ -27,8 +28,19 @@ const NoticeCreateDialog: React.FC<NoticeCreateDialogProps> = ({ open, onClose, 
       maxWidth='sm'
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <TextField label='카테고리' size='small' value={category} onChange={e => setCategory(e.target.value)} />
-        <TextField label='제목' size='small' value={title} onChange={e => setTitle(e.target.value)} required />
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField label='제목' size='small' value={title} onChange={e => setTitle(e.target.value)} required sx={{ flex: 1 }} />
+          <FormControl size="small" sx={{ width: 200 }}>
+            {!category && <InputLabel>카테고리</InputLabel>}
+            <CommonCodeSelect
+              groupCode="CATEGORY"
+              value={category}
+              onChange={setCategory}
+              includeAll={false}
+              // placeholder="카테고리 선택"
+            />
+          </FormControl>
+        </Box>
         <TextField label='내용' minRows={6} multiline value={content} onChange={e => setContent(e.target.value)} />
         <Box sx={{ display: 'flex', gap: 2 }}>
           <FormControlLabel control={<Switch checked={pinned} onChange={e => setPinned(e.target.checked)} />} label='상단고정' />
