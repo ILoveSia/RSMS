@@ -235,7 +235,7 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
 
 	// 리포트
 	'/report/report': {
-		component: () => import('@/domains/report/pages/ReportPage'),
+		component: () => import('@/domains/report/pages/SubmissionReportPage'),
 		title: '제출 보고서 관리',
 		icon: 'description',
 	},

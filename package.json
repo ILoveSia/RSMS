@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
+    "f":"concurrently \"npm run dev:frontend\" \"wait-on http://localhost:3000 && start chrome http://localhost:3000\"",
     "dev:backend": "cd backend && gradlew bootRun --args='--spring.profiles.active=local'",
-    "d": "concurrently \"npm run dev:frontend\" \"npm run dev:be\" \"start chrome http://localhost:3000\\ \"",
+    "d": "concurrently \"npm run dev:be\" \"wait-on tcp:8080 && npm run f \" ",
     "dev:be": "cd backend && gradlew bootRun --args='--spring.profiles.active=docker'",
     "dev:local": "npm run setup:db && npm run dev",
     "dev:db": "docker-compose up postgres redis -d",
@@ -41,7 +42,8 @@
     "storybook": "cd frontend && npm run storybook"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "wait-on": "^8.0.0"
   },
   "engines": {
     "node": ">=22.16.0",

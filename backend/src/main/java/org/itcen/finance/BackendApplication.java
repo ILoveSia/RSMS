@@ -25,7 +25,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "org.itcen.domain.menu.repository", "org.itcen.domain.positions.repository",
         "org.itcen.domain.qna.repository", "org.itcen.domain.responsibility.repository",
         "org.itcen.domain.user.repository", "org.itcen.auth.repository",
-        "org.itcen.domain.execofficer.repository", "org.itcen.domain.submission.repository",
+                "org.itcen.domain.execofficer.repository", "org.itcen.domain.submission.repository",
+        "org.itcen.domain.submissionreport.repository",
         "org.itcen.domain.positionresponsibility.repository", "org.itcen.domain.audit.repository",
         "org.itcen.domain.employee.repository", "org.itcen.domain.approval.repository",
         "org.itcen.domain.handover.repository", "org.itcen.domain.notice.repository"})
@@ -35,7 +36,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "org.itcen.domain.positions.entity", "org.itcen.domain.qna.entity",
         "org.itcen.domain.responsibility.entity", "org.itcen.domain.user.entity",
         "org.itcen.auth.domain", "org.itcen.auth.domain.permission",
-        "org.itcen.domain.execofficer.entity", "org.itcen.domain.submission.entity",
+                "org.itcen.domain.execofficer.entity", "org.itcen.domain.submission.entity",
+        "org.itcen.domain.submissionreport.entity",
         "org.itcen.domain.positionresponsibility.entity", "org.itcen.domain.audit.entity",
         "org.itcen.domain.employee.entity", "org.itcen.domain.approval.entity",
         "org.itcen.domain.handover.entity", "org.itcen.domain.notice.entity"})

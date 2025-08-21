@@ -36,10 +36,10 @@ export async function uploadAttachment(
   formData.append('uploadedBy', request.uploadedBy);
 
   const response = await apiClient.post('/common/attachments/upload/single', formData);
-  if (response.success !== false) {
-    return response.data || response;
+  if (response !== false) {
+    return response as AttachmentInfo;
   } else {
-    throw new Error(response.message || '파일 업로드에 실패했습니다.');
+    throw new Error(response || '파일 업로드에 실패했습니다.');
   }
 }
 
@@ -54,10 +54,10 @@ export async function getAttachments(entityType: string, entityId: number): Prom
     }
   });
   
-  if (response.success !== false) {
-    return response.data || response || [];
+  if (response !== false) {
+    return response as AttachmentInfo[];
   } else {
-    throw new Error(response.message || '첨부파일 목록 조회에 실패했습니다.');
+    throw new Error(response || '첨부파일 목록 조회에 실패했습니다.');
   }
 }
 
@@ -84,8 +84,8 @@ export async function downloadAttachment(attachmentId: number): Promise<Blob> {
 export async function deleteAttachment(attachmentId: number, deletedBy: string = 'system'): Promise<void> {
   const response = await apiClient.delete(`/common/attachments/${attachmentId}?deletedBy=${deletedBy}`);
   
-  if (response.success === false) {
-    throw new Error(response.message || '첨부파일 삭제에 실패했습니다.');
+  if (response === false) {
+    throw new Error(response || '첨부파일 삭제에 실패했습니다.');
   }
 }
 
@@ -95,9 +95,9 @@ export async function deleteAttachment(attachmentId: number, deletedBy: string =
 export async function getAttachmentInfo(attachmentId: number): Promise<AttachmentInfo> {
   const response = await apiClient.get(`/common/attachments/${attachmentId}`);
   
-  if (response.success !== false) {
-    return response.data || response;
+  if (response !== false) {
+    return response as AttachmentInfo;
   } else {
-    throw new Error(response.message || '첨부파일 정보 조회에 실패했습니다.');
+    throw new Error(response || '첨부파일 정보 조회에 실패했습니다.');
   }
 }

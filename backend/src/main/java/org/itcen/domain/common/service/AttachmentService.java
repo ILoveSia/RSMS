@@ -113,4 +113,15 @@ public interface AttachmentService {
      */
     List<AttachmentDto.Response> getAttachmentsByUploader(String uploadedBy);
 
+    /**
+     * 첨부파일을 엔티티에 연결합니다.
+     * 파일 업로드 시에는 entityType과 entityId가 null로 저장될 수 있으므로,
+     * 실제 엔티티 생성 후 이 메서드를 통해 연결 정보를 업데이트합니다.
+     *
+     * @param entityId 연결할 엔티티의 ID
+     * @param entityType 연결할 엔티티의 타입 (예: "SUBMISSION_REPORT")
+     * @param attachIds 연결할 첨부파일 ID 목록
+     */
+    void linkAttachments(Long entityId, String entityType, List<Long> attachIds);
+
 }

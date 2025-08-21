@@ -30,7 +30,16 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
-
+    
+    /**
+     * 컨트롤러 테스트용 엔드포인트
+     * GET /api/admin/health-check
+     */
+    @GetMapping("/health-check")
+    public ResponseEntity<String> testEndpoint() {
+        return ResponseEntity.ok("AdminController is working!");
+    }
+    
     /**
      * 메뉴 권한 매트릭스 조회
      * 모든 메뉴와 역할별 권한을 매트릭스 형태로 반환

@@ -2,7 +2,7 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import { Chip as MuiChip, useTheme } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import type { SxProps } from '@mui/system';
-import React, { forwardRef, ReactNode } from 'react';
+import React, { forwardRef, type ReactNode } from 'react';
 
 // Chip 컴포넌트 Props 타입 정의
 interface ChipProps {
