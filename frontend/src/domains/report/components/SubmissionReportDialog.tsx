@@ -4,12 +4,15 @@ import {
   TextField,
   Box,
   Alert,
+  Typography,
 } from '@mui/material';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import DatePicker from '@/shared/components/ui/form/DatePicker';
 import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 import { submissionReportApi } from '../api/submissionReportApi';
 import { uploadAttachment } from '@/domains/common/api/attachmentApi';
+import { AttachmentList } from '@/shared/components/ui/data-display';
+import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
 
 interface SubmissionReportDialogProps {
   open: boolean;
@@ -39,7 +42,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 }) => {
   const [baseDate, setBaseDate] = useState<Date>(new Date());
   const [targetInstitution, setTargetInstitution] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // 초기 데이터 설정
@@ -50,7 +53,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
     } else if (mode === 'create') {
       setBaseDate(new Date());
       setTargetInstitution('');
-      setSelectedFiles([]);
+      setSelectedFile(null);
     }
   }, [initialData, mode]);
 
@@ -59,91 +62,89 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
     errorMessage: mode === 'create' ? '보고서 등록 실패' : '보고서 수정 실패',
   });
 
-  const uploadFilesToEntity = useCallback(async (files: File[], entityId: number): Promise<boolean> => {
-    if (files.length === 0) {
+  const uploadFileToEntity = useCallback(async (file: File | null, entityId: number): Promise<boolean> => {
+    if (!file) {
       return true; // 성공
     }
     
     setUploadError(null); // 오류 상태 초기화
     
-    for (const file of files) {
-      try {
-        await uploadAttachment(file, {
-          entityType: 'SUBMISSION_REPORT',
-          entityId: entityId,
-          uploadedBy: 'system' // TODO: Replace with actual user ID
-        });
-      } catch (error: any) {
-        console.error('File upload failed:', file.name, error);
-        
-        // 오류 메시지 추출
-        let errorMessage = '파일 업로드에 실패했습니다.';
-        
-        console.log('Upload error details:', {
-          error,
-          response: error?.response,
-          data: error?.response?.data,
-          status: error?.response?.status
-        });
-        
-        // HTTP 상태 코드별 오류 메시지 처리
-        if (error?.response?.status === 400) {
-          // 400 Bad Request - 파일 검증 오류
-          if (error?.response?.data?.message) {
-            errorMessage = `${file.name}: ${error.response.data.message}`;
-          } else if (error?.response?.data?.error) {
-            errorMessage = `${file.name}: ${error.response.data.error}`;
-          } else {
-            errorMessage = `${file.name}: 파일 형식이나 크기가 올바르지 않습니다.`;
-          }
-        } else if (error?.response?.status === 413) {
-          // 413 Payload Too Large - 파일 크기 초과
-          errorMessage = `${file.name}: 파일 크기가 너무 큽니다. (최대 10MB)`;
-        } else if (error?.response?.data?.message) {
+    try {
+      await uploadAttachment(file, {
+        entityType: 'SUBMISSION_REPORT',
+        entityId: entityId,
+        uploadedBy: 'system' // TODO: Replace with actual user ID
+      });
+    } catch (error: any) {
+      console.error('File upload failed:', file.name, error);
+      
+      // 오류 메시지 추출
+      let errorMessage = '파일 업로드에 실패했습니다.';
+      
+      console.log('Upload error details:', {
+        error,
+        response: error?.response,
+        data: error?.response?.data,
+        status: error?.response?.status
+      });
+      
+      // HTTP 상태 코드별 오류 메시지 처리
+      if (error?.response?.status === 400) {
+        // 400 Bad Request - 파일 검증 오류
+        if (error?.response?.data?.message) {
           errorMessage = `${file.name}: ${error.response.data.message}`;
         } else if (error?.response?.data?.error) {
           errorMessage = `${file.name}: ${error.response.data.error}`;
-        } else if (error?.response?.message) {
-          errorMessage = `${file.name}: ${error.response.message}`;
-        } else if (error?.message) {
-          errorMessage = `${file.name}: ${error.message}`;
-        } else if (typeof error === 'string') {
-          errorMessage = `${file.name}: ${error}`;
+        } else {
+          errorMessage = `${file.name}: 파일 형식이나 크기가 올바르지 않습니다.`;
         }
-        
-        setUploadError(errorMessage);
-        return false; // 실패
+      } else if (error?.response?.status === 413) {
+        // 413 Payload Too Large - 파일 크기 초과
+        errorMessage = `${file.name}: 파일 크기가 너무 큽니다. (최대 10MB)`;
+      } else if (error?.response?.data?.message) {
+        errorMessage = `${file.name}: ${error.response.data.message}`;
+      } else if (error?.response?.data?.error) {
+        errorMessage = `${file.name}: ${error.response.data.error}`;
+      } else if (error?.response?.message) {
+        errorMessage = `${file.name}: ${error.response.message}`;
+      } else if (error?.message) {
+        errorMessage = `${file.name}: ${error.message}`;
+      } else if (typeof error === 'string') {
+        errorMessage = `${file.name}: ${error}`;
       }
+      
+      setUploadError(errorMessage);
+      return false; // 실패
     }
     
     return true; // 성공
   }, []);
 
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const files = Array.from(event.target.files);
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
       
       // 파일 검증
       const maxSize = 10 * 1024 * 1024; // 10MB
       const allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png', '.gif'];
       
-      for (const file of files) {
-        // 파일 크기 검증
-        if (file.size > maxSize) {
-          setUploadError(`${file.name}: 파일 크기가 너무 큽니다. (최대 10MB)`);
-          return;
-        }
-        
-        // 파일 확장자 검증
-        const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-        if (!allowedTypes.includes(extension)) {
-          setUploadError(`${file.name}: 허용되지 않는 파일 형식입니다. 허용 형식: ${allowedTypes.join(', ')}`);
-          return;
-        }
+      // 파일 크기 검증
+      if (file.size > maxSize) {
+        setUploadError(`${file.name}: 파일 크기가 너무 큽니다. (최대 10MB)`);
+        return;
+      }
+      
+      // 파일 확장자 검증
+      const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+      if (!allowedTypes.includes(extension)) {
+        setUploadError(`${file.name}: 허용되지 않는 파일 형식입니다. 허용 형식: ${allowedTypes.join(', ')}`);
+        return;
       }
       
       setUploadError(null); // 검증 통과 시 오류 메시지 초기화
-      setSelectedFiles(files);
+      setSelectedFile(file);
+    } else {
+      setSelectedFile(null);
     }
   }, []);
 
@@ -162,14 +163,19 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 
         if (result && result.submissionReportId) {
           // 2. 파일 업로드
-          if (selectedFiles.length > 0) {
-            const uploadSuccess = await uploadFilesToEntity(selectedFiles, result.submissionReportId);
+          if (selectedFile) {
+            const uploadSuccess = await uploadFileToEntity(selectedFile, result.submissionReportId);
             if (!uploadSuccess) {
               return; // 파일 업로드 실패 시 저장 프로세스 중단
             }
           }
 
           onSuccess();
+          // 성공 후 상태 초기화
+          setBaseDate(new Date());
+          setTargetInstitution('');
+          setSelectedFile(null);
+          setUploadError(null);
           onClose();
         }
       } else if (mode === 'edit' && reportId) {
@@ -183,14 +189,19 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 
         if (result) {
           // 파일 업로드
-          if (selectedFiles.length > 0) {
-            const uploadSuccess = await uploadFilesToEntity(selectedFiles, reportId);
+          if (selectedFile) {
+            const uploadSuccess = await uploadFileToEntity(selectedFile, reportId);
             if (!uploadSuccess) {
               return; // 파일 업로드 실패 시 저장 프로세스 중단
             }
           }
 
           onSuccess();
+          // 성공 후 상태 초기화
+          setBaseDate(new Date());
+          setTargetInstitution('');
+          setSelectedFile(null);
+          setUploadError(null);
           if (onModeChange) {
             onModeChange('view');
           }
@@ -200,7 +211,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       console.error('Save failed:', error);
       // 에러는 useApiWithNotification에서 처리됨
     }
-  }, [mode, baseDate, targetInstitution, selectedFiles, uploadFilesToEntity, callRegisterApi, onSuccess, onClose, reportId, onModeChange]);
+  }, [mode, baseDate, targetInstitution, selectedFile, uploadFileToEntity, callRegisterApi, onSuccess, onClose, reportId, onModeChange]);
 
   // 모드별 제목 설정
   const getTitle = () => {
@@ -214,7 +225,12 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 
   // 다이얼로그 닫기 핸들러
   const handleClose = () => {
-    setUploadError(null); // 다이얼로그 닫을 때 오류 상태 초기화
+    // 모든 상태 초기화
+    setBaseDate(new Date());
+    setTargetInstitution('');
+    setSelectedFile(null);
+    setUploadError(null);
+    
     if (mode === 'edit' && onModeChange) {
       onModeChange('view');
       return;
@@ -223,6 +239,22 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   };
 
   const isReadOnly = mode === 'view';
+
+  // 선택된 파일을 AttachmentInfo 형식으로 변환
+  const selectedFileToAttachment = (): AttachmentInfo | null => {
+    if (!selectedFile) return null;
+    
+    return {
+      attachId: 0,
+      originalFilename: selectedFile.name,
+      storedFilename: '',
+      fileSize: selectedFile.size,
+      entityType: 'SUBMISSION_REPORT',
+      entityId: 0,
+      uploadedBy: 'system',
+      createdAt: new Date().toISOString(),
+    };
+  };
 
   return (
     <BaseDialog
@@ -269,22 +301,29 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           <>
             <Button variant="contained" component="label">
               파일 선택
-              <input type="file" hidden multiple onChange={handleFileChange} />
+              <input type="file" hidden onChange={handleFileChange} />
             </Button>
-            {selectedFiles.length > 0 && (
-              <Box>
-                선택된 파일:
-                <ul>
-                  {selectedFiles.map((file, index) => (
-                    <li key={index}>{file.name}</li>
-                  ))}
-                </ul>
+            {selectedFile && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  선택된 파일:
+                </Typography>
+                <AttachmentList
+                  attachments={[selectedFileToAttachment() as AttachmentInfo]}
+                  mode="register"
+                  onDownload={() => {
+                    // 파일 다운로드 로직 (새 파일이라 실제 다운로드 불가능)
+                  }}
+                  onDelete={() => {
+                    setSelectedFile(null);
+                  }}
+                />
               </Box>
             )}
           </>
         )}
 
-        {/* 기존 첨부파일 표시 (상세보기/수정 모드) */}
+        {/* 기존 첨부파일 표시 (상세보기/수정 모드)
         {(mode === 'view' || mode === 'edit') && initialData?.attachments && initialData.attachments.length > 0 && (
           <Box>
             <strong>첨부파일:</strong>
@@ -294,7 +333,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
               ))}
             </ul>
           </Box>
-        )}
+        )} */}
       </Box>
     </BaseDialog>
   );

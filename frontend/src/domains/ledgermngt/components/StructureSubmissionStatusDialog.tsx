@@ -13,7 +13,7 @@ import { AttachFile as AttachFileIcon, Delete as DeleteIcon, Download as Downloa
 import { Box, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from '@mui/material';
 import React, { useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/app/common/api/client';
-
+import { AttachmentList } from '@/shared/components/ui/data-display';
 interface RegistrationData {
   submitHistCd: string;
   execofficerId?: string | null; // 직원 ID 추가
@@ -499,42 +499,12 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
             </Box>
           )}
 
-          {/* 기존 첨부파일 목록 */}
-          {attachments.length > 0 && (
-            <Box>
-              <Typography sx={{ mb: 1, fontSize: '0.8rem', color: '#666' }}>첨부파일 목록</Typography>
-              <List dense>
-                {attachments.map((attachment) => (
-                  <ListItem key={attachment.attachId} sx={{ px: 0, py: 0.5, border: '1px solid #e0e0e0', borderRadius: 1, mb: 0.5 }}>
-                    <ListItemText
-                      primary={attachment.originalFilename}
-                      secondary={`${(attachment.fileSize / 1024).toFixed(1)} KB • ${new Date(attachment.createdAt).toLocaleDateString()}`}
-                      primaryTypographyProps={{ fontSize: '0.8rem' }}
-                      secondaryTypographyProps={{ fontSize: '0.7rem' }}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleFileDownload(attachment)}
-                        title="다운로드"
-                      >
-                        <DownloadIcon fontSize="small" />
-                      </IconButton>
-                      {mode !== 'view' && (
-                        <IconButton
-                          size="small"
-                          onClick={() => handleFileDelete(attachment.attachId)}
-                          title="삭제"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      )}
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
-            </Box>
-          )}
+          <AttachmentList
+            attachments={attachments}
+            mode={mode}
+            onDownload={handleFileDownload}
+            onDelete={handleFileDelete}
+          />
 
           {attachments.length === 0 && !selectedFile && (
             <Typography sx={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>

@@ -14,6 +14,7 @@ export { default as CommentItem } from './CommentItem';
 export type { LocalComment, CommentItemProps } from './CommentItem';
 
 export { default as Chip } from './Chip';
+export { default as AttachmentList } from './AttachmentList';
 
 // 타입 exports
 export type { BadgeProps, ChipProps } from './types';
