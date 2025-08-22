@@ -226,6 +226,7 @@ const SubmissionReportPage: React.FC = () => {
         open={isDialogOpen}
         mode={dialogMode}
         reportId={selectedReport?.submissionReportId}
+        dialogData={selectedReport}
         initialData={initialData}
         onClose={closeDialog}
         onSuccess={async () => {

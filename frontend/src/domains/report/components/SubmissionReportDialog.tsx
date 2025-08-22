@@ -13,6 +13,7 @@ import { submissionReportApi } from '../api/submissionReportApi';
 import { uploadAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
 import { AttachmentList } from '@/shared/components/ui/data-display';
 import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
+import type { SubmissionReportRow } from '../pages/SubmissionReportPage';
 
 interface SubmissionReportDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface SubmissionReportDialogProps {
   onSuccess: () => void;
   mode?: 'create' | 'edit' | 'view';
   reportId?: number;
+  dialogData?: SubmissionReportRow | null;
   initialData?: AttachmentInfo[];
   onModeChange?: (mode: 'create' | 'edit' | 'view') => void;
   loading?: boolean;
@@ -31,6 +33,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   onSuccess,
   mode = 'create',
   reportId,
+  dialogData,
   initialData,
   onModeChange,
   loading = false,
@@ -51,7 +54,13 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       setSelectedFile(null);
       setExistingAttachments([]);
     }
-  }, [initialData, mode]);
+    
+    // dialogData가 있을 경우 baseDate와 targetInstitution 설정
+    if (dialogData) {
+      setBaseDate(new Date(dialogData.baseDate));
+      setTargetInstitution(dialogData.targetInstitution);
+    }
+  }, [initialData, mode, dialogData]);
 
   const { callApiWithNotification: callRegisterApi } = useApiWithNotification({
     successMessage: mode === 'create' ? '보고서가 성공적으로 등록되었습니다.' : '보고서가 성공적으로 수정되었습니다.',
