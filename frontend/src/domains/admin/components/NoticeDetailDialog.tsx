@@ -1,6 +1,7 @@
 import React from 'react';
 import BaseDialog, { type BaseDialogProps } from '@/shared/components/modal/BaseDialog';
 import { Box, Divider, Typography } from '@mui/material';
+import { useDialog } from '@/shared/hooks/useDialog';
 
 export interface NoticeDetailData {
   id: number;
@@ -12,18 +13,31 @@ export interface NoticeDetailData {
   content?: string;
 }
 
-interface NoticeDetailDialogProps extends Omit<BaseDialogProps, 'title' | 'children' | 'mode'> {
+interface NoticeDetailDialogProps extends Omit<BaseDialogProps, 'title' | 'children' | 'mode' | 'open'> {
+  onClose: () => void;
   mode?: 'view';
   data?: NoticeDetailData | null;
 }
 
-const NoticeDetailDialog: React.FC<NoticeDetailDialogProps> = ({ open, onClose, data, mode = 'view', ...rest }) => {
+const NoticeDetailDialog: React.FC<NoticeDetailDialogProps> = ({ onClose, data, mode = 'view', ...rest }) => {
   const header = data ? `공지 상세 (#${data.id})` : '공지 상세';
+
+  // 다이얼로그 상태 관리 (useDialog 훅 사용)
+  const {
+    dialogOpen: open,
+    openDialog,
+    closeDialog
+  } = useDialog();
+
+  // 컴포넌트가 마운트될 때 다이얼로그 열기
+  React.useEffect(() => {
+    openDialog(mode);
+  }, [openDialog, mode]);
 
   return (
     <BaseDialog
       open={open}
-      onClose={onClose}
+      onClose={() => { closeDialog(); onClose(); }}
       mode={mode}
       title={header}
       hideDefaultActions

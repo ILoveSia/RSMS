@@ -13,9 +13,9 @@ import { submissionReportApi } from '../api/submissionReportApi';
 import { uploadAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
 import { AttachmentList } from '@/shared/components/ui/data-display';
 import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
+import { useDialog } from '@/shared/hooks/useDialog';
 
 interface SubmissionReportDialogProps {
-  open: boolean;
   onClose: () => void;
   onSuccess: () => void;
   mode?: 'create' | 'edit' | 'view';
@@ -26,7 +26,6 @@ interface SubmissionReportDialogProps {
 }
 
 const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
-  open,
   onClose,
   onSuccess,
   mode = 'create',
@@ -38,18 +37,31 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   const [baseDate, setBaseDate] = useState<Date>(new Date());
   const [targetInstitution, setTargetInstitution] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [existingAttachments, setExistingAttachments] = useState<AttachmentInfo | null>(null);
+  const [existingAttachments, setExistingAttachments] = useState<AttachmentInfo[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // 다이얼로그 상태 관리 (useDialog 훅 사용)
+  const {
+    dialogOpen: open,
+    openDialog,
+    closeDialog,
+    setDialogMode
+  } = useDialog();
+
+  // 컴포넌트가 마운트될 때 다이얼로그 열기
+  useEffect(() => {
+    openDialog(mode);
+  }, [openDialog, mode]);
 
   // 초기 데이터 설정
   useEffect(() => {
     if (initialData) {
-        setExistingAttachments(initialData[0]);
+      setExistingAttachments(initialData);
     } else if (mode === 'create') {
       setBaseDate(new Date());
       setTargetInstitution('');
       setSelectedFile(null);
-      setExistingAttachments(null);
+      setExistingAttachments([]);
     }
   }, [initialData, mode]);
 
@@ -172,6 +184,8 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           setTargetInstitution('');
           setSelectedFile(null);
           setUploadError(null);
+          setExistingAttachments([]);
+          closeDialog();
           onClose();
         }
       } else if (mode === 'edit' && reportId) {
@@ -207,7 +221,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       console.error('Save failed:', error);
       // 에러는 useApiWithNotification에서 처리됨
     }
-  }, [mode, baseDate, targetInstitution, selectedFile, uploadFileToEntity, callRegisterApi, onSuccess, onClose, reportId, onModeChange]);
+  }, [mode, baseDate, targetInstitution, selectedFile, uploadFileToEntity, callRegisterApi, onSuccess, closeDialog, onClose, reportId, onModeChange]);
 
   // 모드별 제목 설정
   const getTitle = () => {
@@ -225,13 +239,15 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
     setBaseDate(new Date());
     setTargetInstitution('');
     setSelectedFile(null);
-    setExistingAttachments(null);
+    setExistingAttachments([]);
     setUploadError(null);
     
     if (mode === 'edit' && onModeChange) {
       onModeChange('view');
-      return;
     }
+    
+    // useDialog의 closeDialog 호출
+    closeDialog();
     onClose();
   };
 
@@ -353,13 +369,13 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
         )}
 
         {/* 기존 첨부파일 표시 (상세보기/수정 모드) */}
-        {(mode === 'view' || mode === 'edit') && existingAttachments && (
+        {(mode === 'view' || mode === 'edit') && existingAttachments.length > 0 && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
               기존 첨부파일:
             </Typography>
             <AttachmentList
-              attachments={[existingAttachments]}
+              attachments={existingAttachments}
               mode={mode}
               onDownload={handleDownloadExisting}
               onDelete={handleDeleteExisting}

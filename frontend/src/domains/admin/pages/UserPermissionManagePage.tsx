@@ -9,8 +9,6 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { SearchButton, Button as SharedButton, RefreshButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
-import { MenuPermissionCell } from '@/shared/components/ui/form';
-// no-op
 import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
 import { adminApi } from '../api/adminApi';
 // import UserEditDialog from '@/domains/admin/components/UserEditDialog';
@@ -18,6 +16,7 @@ import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
 import DepartmentSearchBox, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSearchBox';
 import type { UserWithRoles, Role, UserFilter, UserRoleInfo, EmployeeBasic } from '../types';
 import { useApiWithNotification } from '@/shared/hooks';
+
 /**
  * 사용자 권한 컬러 매핑 함수
  * - SRP: 역할 ID → 칩 컬러 결정만 담당
@@ -178,9 +177,7 @@ const UserPermissionManagePage: React.FC = () => {
     setUsers(prev => prev.map(u => (u.userId === updatedUser.userId ? updatedUser : u)));
   }, []);
 
-  const handleUserDeleted = useCallback((userId: string) => {
-    setUsers(prev => prev.filter(u => u.userId !== userId));
-  }, []);
+  
 
   // 등록 버튼 및 다이얼로그 핸들러
   const openCreateDialog = useCallback(() => {
@@ -518,7 +515,6 @@ const UserPermissionManagePage: React.FC = () => {
           roles={roles}
           onClose={() => setEditDialogOpen(false)}
           onSaved={(u) => handleRolesSaved(u)}
-          onDeleted={handleUserDeleted}
         />
       </PageContent>
       
@@ -530,7 +526,6 @@ const UserPermissionManagePage: React.FC = () => {
         onClose={closeCreateDialog}
         onCreated={handleCreated}
       />
-
 
       {/* Toast 컴포넌트 */}
       <Toast

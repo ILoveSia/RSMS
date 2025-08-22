@@ -4,6 +4,7 @@ import { Box, FormControl, InputLabel } from '@mui/material';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import CommonCodeSelect from '@/shared/components/ui/form/CommonCodeSelect';
 import type { QnaPriority } from '@/app/types/qna';
+import { useDialog } from '@/shared/hooks/useDialog';
 
 export interface QnaCreateForm {
   title: string;
@@ -14,13 +15,12 @@ export interface QnaCreateForm {
 }
 
 interface QnaCreateDialogProps {
-  open: boolean;
   onClose: () => void;
   onSubmit: (form: QnaCreateForm) => Promise<void> | void;
   loading?: boolean;
 }
 
-const QnaCreateDialog: React.FC<QnaCreateDialogProps> = ({ open, onClose, onSubmit, loading = false }) => {
+const QnaCreateDialog: React.FC<QnaCreateDialogProps> = ({ onClose, onSubmit, loading = false }) => {
   const initialForm: QnaCreateForm = {
     title: '',
     content: '',
@@ -28,6 +28,18 @@ const QnaCreateDialog: React.FC<QnaCreateDialogProps> = ({ open, onClose, onSubm
     isPublic: true,
   };
   const [form, setForm] = useState<QnaCreateForm>(initialForm);
+
+  // 다이얼로그 상태 관리 (useDialog 훅 사용)
+  const {
+    dialogOpen: open,
+    openDialog,
+    closeDialog
+  } = useDialog();
+
+  // 컴포넌트가 마운트될 때 다이얼로그 열기
+  React.useEffect(() => {
+    openDialog('create');
+  }, [openDialog]);
 
   const handleSave = async () => {
     if (!form.title.trim()) return;
@@ -42,6 +54,8 @@ const QnaCreateDialog: React.FC<QnaCreateDialogProps> = ({ open, onClose, onSubm
 
   const handleClose = () => {
     setForm(initialForm);
+    // useDialog의 closeDialog 호출
+    closeDialog();
     onClose();
   };
 

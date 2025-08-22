@@ -22,6 +22,7 @@ import { type ResponsibilityRow } from '../api/responsibilityApi';
 import ResponsibilityDialog from '../components/ResponsibilityDialog';
 import responsibilityApi from '../api/responsibilityApi';
 import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
+import { useDialog } from '@/shared/hooks/useDialog';
 
 // 그룹핑된 책무 데이터 타입 정의
 interface GroupedResponsibility {
@@ -62,10 +63,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     });
     
     const [rows, setRows] = useState<GroupedResponsibilityRow[]>([]);
-    const [selectedResponsibilityId, setSelectedResponsibilityId] = useState<number | null>(null);
-    const [selectedRowData, setSelectedRowData] = useState<any>(null);
-    const [dialogOpen, setDialogOpen] = useState<boolean>(false);
-    const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'view'>('view');
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [ledgerOrdersId, setLedgerOrdersId] = useState<number | undefined>(undefined);
@@ -81,7 +78,18 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     // 프론트엔드 필터링을 위한 상태
     const [allResponsibilityData, setAllResponsibilityData] = useState<ResponsibilityRow[]>([]);
 
-    // 원장차수는 LedgerOrderSelect에서 자동 관리
+    // 다이얼로그 상태 관리 (useDialog 훅 사용)
+    const {
+      dialogOpen,
+      dialogMode,
+      dialogData: selectedRowData,
+      openDialog,
+      closeDialog,
+      setDialogMode
+    } = useDialog<any>();
+
+    // 책임 ID 상태 (다이얼로그에서 사용)
+    const [selectedResponsibilityId, setSelectedResponsibilityId] = useState<number | null>(null);
 
     // 데이터 그룹핑 함수
     const groupDataByResponsibilityId = useCallback((data: ResponsibilityRow[]): GroupedResponsibility[] => {
@@ -298,9 +306,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
                 // React 18의 자동 배치 처리를 활용하여 상태 동시 업데이트
                 setSelectedResponsibilityId(params.row.responsibilityId);
-                setSelectedRowData(dialogData);
-                setDialogMode('view');
-                setDialogOpen(true);
+                openDialog('view', dialogData);
               }}
             >
               {params.value}
@@ -367,7 +373,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           ),
         },
       ],
-      [data, setSelectedResponsibilityId, setSelectedRowData, setDialogMode, setDialogOpen]
+      [data, setSelectedResponsibilityId, openDialog]
     );
 
     // 조회 버튼 클릭 핸들러
@@ -406,18 +412,16 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
 
       // 3. ResponsibilityDialog 열기 (원장차수 값 전달)
       setSelectedResponsibilityId(null);
-      setDialogMode('create');
-      setDialogOpen(true);
-    }, [ledgerOrder, ledgerOrderOptions, showError]);
+      openDialog('create');
+    }, [ledgerOrder, ledgerOrderOptions, showError, openDialog]);
 
 
 
     // 다이얼로그 닫기 (성능 최적화)
     const handleDialogClose = useCallback(() => {
-      setDialogOpen(false);
+      closeDialog();
       setSelectedResponsibilityId(null);
-      setSelectedRowData(null);
-    }, []);
+    }, [closeDialog]);
 
     // 다이얼로그 저장
     const handleDialogSave = useCallback(() => {
@@ -428,7 +432,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     // 다이얼로그 모드 변경
     const handleModeChange = useCallback((newMode: 'create' | 'edit' | 'view') => {
       setDialogMode(newMode);
-    }, []);
+    }, [setDialogMode]);
 
 
     const handleDelete = useCallback(async () => {

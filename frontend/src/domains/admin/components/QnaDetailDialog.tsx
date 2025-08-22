@@ -8,15 +8,15 @@ import { CommentInput } from '@/shared/components/ui/form';
 import type { QnaDetailResponseDto } from '../api/qnaApi';
 import qnaApi from '../api/qnaApi';
 import { useToastHelpers } from '@/shared/components/ui/feedback';
+import { useDialog } from '@/shared/hooks/useDialog';
 // 댓글 항목은 공통 컴포넌트 사용
 interface QnaDetailDialogProps {
-  open: boolean;
   qnaId?: number | null;
   onClose: () => void;
   onSaved?: () => void;
 }
 
-const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose, onSaved }) => {
+const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSaved }) => {
   const [detail, setDetail] = useState<QnaDetailResponseDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +31,20 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
   });
   const [savingAnswer, setSavingAnswer] = useState(false);
   const { showSuccess } = useToastHelpers();
+
+  // 다이얼로그 상태 관리 (useDialog 훅 사용)
+  const {
+    dialogOpen: open,
+    dialogMode,
+    openDialog,
+    closeDialog,
+    setDialogMode
+  } = useDialog();
+
+  // 컴포넌트가 마운트될 때 다이얼로그 열기
+  useEffect(() => {
+    openDialog('view');
+  }, [openDialog]);
 
   // 댓글 타입/컴포넌트는 최상단 import에서 가져옵니다
 
@@ -141,7 +155,7 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
       mode={canEdit ? mode : 'onlyRead'}
       title="Q&A 상세"
       maxWidth="md"
-      onClose={() => { setMode('onlyRead'); onClose(); }}
+      onClose={() => { setMode('onlyRead'); closeDialog(); onClose(); }}
       onModeChange={(m) => setMode(m as any)}
       onSave={async () => {
         if (!detail || mode !== 'edit') return;
@@ -157,6 +171,7 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
           });
           showSuccess('수정이 완료되었습니다.');
           onSaved?.();
+          closeDialog();
           onClose();
         } finally {
           setLoading(false);
@@ -169,10 +184,7 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Typography variant="h6">{detail.title}</Typography>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Chip label={`부서: ${detail.department || '-'}`} size="small" />
-            <Chip label={`작성자: ${detail.questionerName || '-'}`} size="small" />
             <Chip label={`상태: ${detail.statusDescription || '-'}`} size="small" color="primary" variant="outlined" />
-            {detail.priorityDescription && <Chip label={`우선순위: ${detail.priorityDescription}`} size="small" variant="outlined" />}
             <Chip label={`공개여부: ${detail.isPublic ? '공개' : '비공개'}`} size="small" variant="outlined" />
             <Chip label={`조회수: ${detail.viewCount ?? 0}`} size="small" variant="outlined" />
           </Box>
@@ -233,7 +245,6 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose,
                 mode="editable"
               />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="caption" color="text.secondary">등록 시 상태가 ANSWERED로 변경됩니다.</Typography>
                 <Button
                   size="small"
                   color="success"
