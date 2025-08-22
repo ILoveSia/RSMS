@@ -54,9 +54,6 @@ public class UserService {
         // Employee JOIN을 통한 검색 조건 조회
         Page<Object[]> results = userRepository.findBySearchCriteria(
                 request.getUsername(), // empName으로 검색
-                request.getEmail(),
-                request.getAddress(),
-                request.getMobile(),
                 request.getEmpNo(),
                 request.getDepartmentName(),
                 request.getPositionName(),
@@ -95,9 +92,6 @@ public class UserService {
                 .map(employee -> UserDto.Response.builder()
                         .id(employee.getEmpNo())
                         .username(employee.getEmpName())
-                        .email(employee.getEmail())
-                        .address("")
-                        .mobile(employee.getPhoneNo())
                         .empNo(employee.getEmpNo())
                         .departmentName(employee.getDeptName())
                         .positionName(employee.getPositionName())
@@ -129,9 +123,6 @@ public class UserService {
         return UserDto.Response.builder()
                 .id(employee.getEmpNo())
                 .username(employee.getEmpName())
-                .email(employee.getEmail())
-                .address("")
-                .mobile(employee.getPhoneNo())
                 .empNo(employee.getEmpNo())
                 .departmentName(employee.getDeptName())
                 .positionName(employee.getPositionName())
@@ -153,14 +144,6 @@ public class UserService {
 
         // Employee 이름 중복 검사는 Employee 테이블에서 처리
         // 필요시 별도 검증 로직 추가
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("이미 존재하는 이메일입니다: " + request.getEmail());
-        }
-
-        if (userRepository.existsByMobile(request.getMobile())) {
-            throw new IllegalArgumentException("이미 존재하는 휴대폰 번호입니다: " + request.getMobile());
-        }
 
         // 사번 중복 검사 (사번이 있는 경우에만)
         if (request.getEmpNo() != null && !request.getEmpNo().trim().isEmpty()) {
@@ -186,26 +169,6 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. ID: " + id));
 
-        // 이메일 중복 검사 (자신 제외)
-        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
-            if (userRepository.existsByEmail(request.getEmail())) {
-                throw new IllegalArgumentException("이미 존재하는 이메일입니다: " + request.getEmail());
-            }
-            user.setEmail(request.getEmail());
-        }
-
-        // 휴대폰 번호 중복 검사 (자신 제외)
-        if (request.getMobile() != null && !request.getMobile().equals(user.getMobile())) {
-            if (userRepository.existsByMobile(request.getMobile())) {
-                throw new IllegalArgumentException("이미 존재하는 휴대폰 번호입니다: " + request.getMobile());
-            }
-            user.setMobile(request.getMobile());
-        }
-
-        // 필드 업데이트
-        if (request.getAddress() != null) {
-            user.setAddress(request.getAddress());
-        }
 
         // 직책코드 제거 반영: jobTitleCd 관련 업데이트 제거
 
@@ -232,28 +195,6 @@ public class UserService {
     }
 
     /**
-     * 휴대폰 번호로 사용자 조회
-     * employee 테이블 사용
-     */
-    public UserDto.Response getUserByMobile(String mobile) {        
-        Employee employee = employeeRepository.findByPhoneNo(mobile)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. Mobile: " + mobile));
-        
-        return UserDto.Response.builder()
-                .id(employee.getEmpNo())
-                .username(employee.getEmpName())
-                .email(employee.getEmail())
-                .address("")
-                .mobile(employee.getPhoneNo())
-                .empNo(employee.getEmpNo())
-                .departmentName(employee.getDeptName())
-                .positionName(employee.getPositionName())
-                .createdAt(employee.getCreatedAt())
-                .updatedAt(employee.getUpdatedAt())
-                .build();
-    }
-
-    /**
      * 사번으로 사용자 조회
      * employee 테이블 사용
      */
@@ -265,9 +206,6 @@ public class UserService {
         return UserDto.Response.builder()
                 .id(employee.getEmpNo())
                 .username(employee.getEmpName())
-                .email(employee.getEmail())
-                .address("")
-                .mobile(employee.getPhoneNo())
                 .empNo(employee.getEmpNo())
                 .departmentName(employee.getDeptName())
                 .positionName(employee.getPositionName())

@@ -144,7 +144,6 @@ public class AuthService {
                     .empNo(userWithEmployee.getEmpNo()) // users.emp_no 사용
                     .deptCd(userWithEmployee.getDeptCode()) // employee.dept_code 사용
                     .positionCode(userWithEmployee.getPositionCode()) // employee.position_code 사용
-                    .email(userWithEmployee.getEmail())
                     .authorities(authorities)
                     .sessionId(session.getId())
                     .loginTime(LocalDateTime.now())
@@ -208,10 +207,7 @@ public class AuthService {
         // 사용자 생성
         User user = User.builder()
                 .id(request.getId())
-                .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .address(request.getAddress())
-                .mobile(request.getMobile())
                 .empNo(request.getEmpNo()) // empNo 필드 사용
                 .build();
         
@@ -220,7 +216,6 @@ public class AuthService {
         return AuthResponseDto.SignupResponse.builder()
                 .userId(savedUser.getId())
                 .username(savedUser.getEmpNo()) // empNo를 username으로 사용
-                .email(savedUser.getEmail())
                 .signupTime(savedUser.getCreatedAt())
                 .authorities(List.of("ROLE_USER")) // 기본 권한
                 .build();
@@ -285,9 +280,6 @@ public class AuthService {
                 .empNo(userWithEmployee.getEmpNo()) // users.emp_no 사용
                 .deptCd(userWithEmployee.getDeptCode()) // employee.dept_code 사용
                 .positionCode(userWithEmployee.getPositionCode()) // employee.position_code 사용
-                .email(userWithEmployee.getEmail())
-                .address(userWithEmployee.getAddress())
-                .mobile(userWithEmployee.getMobile())
                 .authorities(authorities != null ? 
                         authorities.stream().map(GrantedAuthority::getAuthority).toList() : 
                         List.of())
@@ -382,14 +374,6 @@ public class AuthService {
         
         if (authUserRepository.existsByEmpNo(request.getEmpNo())) {
             throw new IllegalArgumentException("이미 사용 중인 사번입니다.");
-        }
-        
-        if (authUserRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-        }
-        
-        if (authUserRepository.existsByMobile(request.getMobile())) {
-            throw new IllegalArgumentException("이미 사용 중인 휴대폰 번호입니다.");
         }
     }
 } 

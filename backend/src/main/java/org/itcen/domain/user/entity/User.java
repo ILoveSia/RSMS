@@ -37,24 +37,6 @@ public class User {
 
 
     /**
-     * 이메일
-     */
-    @Column(unique = true, nullable = false, length = 100)
-    private String email;
-
-    /**
-     * 주소
-     */
-    @Column(nullable = false, length = 255)
-    private String address;
-
-    /**
-     * 휴대폰 번호
-     */
-    @Column(nullable = false, length = 20)
-    private String mobile;
-
-    /**
      * 비밀번호 (암호화된 상태로 저장)
      */
     @Column(nullable = false, length = 255)

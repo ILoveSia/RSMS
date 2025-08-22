@@ -38,9 +38,6 @@ public class UserController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<UserDto.Response>>> getUsers(
             @RequestParam(required = false) String username,
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String address,
-            @RequestParam(required = false) String mobile,
             @RequestParam(required = false) String deptCd,
             @RequestParam(required = false) String num,
             @RequestParam(required = false) String jobRankCd,
@@ -51,9 +48,6 @@ public class UserController {
 
         UserDto.SearchRequest request = UserDto.SearchRequest.builder()
                 .username(username) // empName으로 검색
-                .email(email)
-                .address(address)
-                .mobile(mobile)
                 .empNo(num) // empNo 필드 사용
                 .departmentName(deptCd) // departmentName으로 변경
                 .positionName(jobRankCd) // positionName으로 변경
@@ -84,16 +78,6 @@ public class UserController {
     @GetMapping("/empName/{empName}")
     public ResponseEntity<ApiResponse<UserDto.Response>> getUserByEmpName(@PathVariable String empName) {
         UserDto.Response user = userService.getUserByEmployeeName(empName);
-        return ResponseEntity.ok(ApiResponse.success("사용자 정보를 성공적으로 조회했습니다.", user));
-    }
-
-    /**
-     * 휴대폰 번호로 사용자 조회
-     * GET /api/users/mobile/{mobile}
-     */
-    @GetMapping("/mobile/{mobile}")
-    public ResponseEntity<ApiResponse<UserDto.Response>> getUserByMobile(@PathVariable String mobile) {
-        UserDto.Response user = userService.getUserByMobile(mobile);
         return ResponseEntity.ok(ApiResponse.success("사용자 정보를 성공적으로 조회했습니다.", user));
     }
 

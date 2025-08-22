@@ -23,21 +23,6 @@ public class UserWithEmployeeDto {
     private String id;
     
     /**
-     * 이메일
-     */
-    private String email;
-    
-    /**
-     * 주소
-     */
-    private String address;
-    
-    /**
-     * 휴대폰 번호
-     */
-    private String mobile;
-    
-    /**
      * 비밀번호
      */
     private String password;

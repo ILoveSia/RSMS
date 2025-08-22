@@ -7,9 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.itcen.domain.user.entity.User;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
@@ -32,9 +30,6 @@ public class UserDto {
     public static class Response {
         private String id;
         private String username;
-        private String email;
-        private String address;
-        private String mobile;
         private String empNo;
         
         // Employee 테이블에서 조회되는 추가 정보
@@ -54,9 +49,6 @@ public class UserDto {
             return Response.builder()
                     .id(user.getId())
                     .username(null) // username은 별도로 설정 (Employee empName 사용)
-                    .email(user.getEmail())
-                    .address(user.getAddress())
-                    .mobile(user.getMobile())
                     .empNo(user.getEmpNo())
                     .departmentName(departmentName)
                     .positionName(positionName)
@@ -86,20 +78,6 @@ public class UserDto {
         @Size(min = 3, max = 100, message = "ID는 3-100자 사이여야 합니다.")
         private String id;
 
-        @NotBlank(message = "이메일은 필수입니다.")
-        @Email(message = "올바른 이메일 형식이 아닙니다.")
-        @Size(max = 100, message = "이메일은 100자를 초과할 수 없습니다.")
-        private String email;
-
-        @NotBlank(message = "주소는 필수입니다.")
-        @Size(min = 5, max = 255, message = "주소는 5-255자 사이여야 합니다.")
-        private String address;
-
-        @NotBlank(message = "휴대폰 번호는 필수입니다.")
-        @Pattern(regexp = "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$", message = "올바른 휴대폰 번호 형식이 아닙니다.")
-        @Size(max = 20, message = "휴대폰 번호는 20자를 초과할 수 없습니다.")
-        private String mobile;
-
         @NotBlank(message = "비밀번호는 필수입니다.")
         @Size(min = 8, max = 255, message = "비밀번호는 8-255자 사이여야 합니다.")
         private String password;
@@ -116,9 +94,6 @@ public class UserDto {
         public User toEntity() {
             return User.builder()
                     .id(this.id)
-                    .email(this.email)
-                    .address(this.address)
-                    .mobile(this.mobile)
                     .password(this.password) // 서비스에서 암호화 처리
                     .empNo(this.empNo)
                     .build();
@@ -136,17 +111,6 @@ public class UserDto {
         @Size(min = 3, max = 50, message = "사용자명은 3-50자 사이여야 합니다.")
         private String username;
         
-        @Size(max = 100, message = "이메일은 100자를 초과할 수 없습니다.")
-        @Email(message = "올바른 이메일 형식이 아닙니다.")
-        private String email;
-
-        @Size(min = 5, max = 255, message = "주소는 5-255자 사이여야 합니다.")
-        private String address;
-
-        @Pattern(regexp = "^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$", message = "올바른 휴대폰 번호 형식이 아닙니다.")
-        @Size(max = 20, message = "휴대폰 번호는 20자를 초과할 수 없습니다.")
-        private String mobile;
-
         @Size(max = 100, message = "사번은 100자를 초과할 수 없습니다.")
         private String empNo;
 
@@ -163,9 +127,6 @@ public class UserDto {
     @AllArgsConstructor
     public static class SearchRequest {
         private String username;
-        private String email;
-        private String address;
-        private String mobile;
         private String empNo;
         private String departmentName;
         private String positionName;

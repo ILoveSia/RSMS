@@ -31,30 +31,10 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmployeeName(@Param("empName") String empName);
 
     /**
-     * 이메일로 사용자 조회
-     */
-    Optional<User> findByEmail(String email);
-
-    /**
      * Employee 이름으로 사용자 존재 여부 확인
      */
     @Query("SELECT COUNT(u) > 0 FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo WHERE e.empName = :empName")
     boolean existsByEmployeeName(@Param("empName") String empName);
-
-    /**
-     * 이메일 존재 여부 확인
-     */
-    boolean existsByEmail(String email);
-
-    /**
-     * 휴대폰 번호로 사용자 조회
-     */
-    Optional<User> findByMobile(String mobile);
-
-    /**
-     * 휴대폰 번호 존재 여부 확인
-     */
-    boolean existsByMobile(String mobile);
 
     /**
      * 사번으로 사용자 조회
@@ -72,17 +52,11 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("SELECT u, e FROM User u " +
            "LEFT JOIN Employee e ON u.empNo = e.empNo " +
            "WHERE (:empName IS NULL OR e.empName LIKE %:empName%) AND " +
-           "(:email IS NULL OR u.email LIKE %:email%) AND " +
-           "(:address IS NULL OR u.address LIKE %:address%) AND " +
-           "(:mobile IS NULL OR u.mobile LIKE %:mobile%) AND " +
            "(:empNo IS NULL OR u.empNo LIKE %:empNo%) AND " +
            "(:departmentName IS NULL OR e.deptName LIKE %:departmentName%) AND " +
            "(:positionName IS NULL OR e.positionName LIKE %:positionName%)")
     Page<Object[]> findBySearchCriteria(
             @Param("empName") String empName,
-            @Param("email") String email,
-            @Param("address") String address,
-            @Param("mobile") String mobile,
             @Param("empNo") String empNo,
             @Param("departmentName") String departmentName,
             @Param("positionName") String positionName,

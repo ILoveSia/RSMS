@@ -32,14 +32,6 @@ public interface AuthUserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmpNo(@Param("empNo") String empNo);
     
     /**
-     * 이메일로 사용자 조회 (로그인용)
-     * 
-     * @param email 이메일
-     * @return 사용자 정보
-     */
-    Optional<User> findByEmail(String email);
-    
-    /**
      * 사용자 ID로 사용자 조회 (로그인용)
      * 
      * @param userId 사용자 ID
@@ -55,22 +47,6 @@ public interface AuthUserRepository extends JpaRepository<User, String> {
      * @return 존재 여부
      */
     boolean existsByEmpNo(String empNo);
-    
-    /**
-     * 이메일 존재 여부 확인
-     * 
-     * @param email 이메일
-     * @return 존재 여부
-     */
-    boolean existsByEmail(String email);
-    
-    /**
-     * 휴대폰 번호 존재 여부 확인
-     * 
-     * @param mobile 휴대폰 번호
-     * @return 존재 여부
-     */
-    boolean existsByMobile(String mobile);
     
     /**
      * 사용자 ID 존재 여부 확인
@@ -116,7 +92,7 @@ public interface AuthUserRepository extends JpaRepository<User, String> {
      * @return 사용자 정보와 employee 정보
      */
     @Query("SELECT new org.itcen.auth.dto.UserWithEmployeeDto(" +
-           "u.id, u.email, u.address, u.mobile, u.password, u.empNo, " +
+           "u.id, u.password, u.empNo, " +
            "e.empName, e.deptCode, e.positionCode, " +
            "u.createdAt, u.updatedAt) " +
            "FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo " +
@@ -130,7 +106,7 @@ public interface AuthUserRepository extends JpaRepository<User, String> {
      * @return 사용자 정보와 employee 정보
      */
     @Query("SELECT new org.itcen.auth.dto.UserWithEmployeeDto(" +
-           "u.id, u.email, u.address, u.mobile, u.password, u.empNo, " +
+           "u.id, u.password, u.empNo, " +
            "e.empName, e.deptCode, e.positionCode, " +
            "u.createdAt, u.updatedAt) " +
            "FROM User u LEFT JOIN Employee e ON u.empNo = e.empNo " +

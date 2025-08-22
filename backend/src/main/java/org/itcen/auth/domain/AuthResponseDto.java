@@ -53,11 +53,6 @@ public class AuthResponseDto {
         private String positionCode;
         
         /**
-         * 이메일
-         */
-        private String email;
-        
-        /**
          * 사용자 권한 목록
          */
         private List<String> authorities;
@@ -110,11 +105,6 @@ public class AuthResponseDto {
         private String username;
         
         /**
-         * 이메일
-         */
-        private String email;
-        
-        /**
          * 가입 시간
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -159,21 +149,6 @@ public class AuthResponseDto {
          * 직급코드 (employee.position_code)
          */
         private String positionCode;
-        
-        /**
-         * 이메일
-         */
-        private String email;
-        
-        /**
-         * 주소
-         */
-        private String address;
-        
-        /**
-         * 휴대폰 번호
-         */
-        private String mobile;
         
         /**
          * 사용자 권한 목록

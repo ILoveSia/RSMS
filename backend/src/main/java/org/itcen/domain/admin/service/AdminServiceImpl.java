@@ -404,7 +404,6 @@ public class AdminServiceImpl implements AdminService {
         return UserWithRolesDto.builder()
                 .userId(user.getId())
                 .userName(employee != null ? employee.getEmpName() : null) // Employee empName 사용
-                .email(user.getEmail())
                 .empNo(user.getEmpNo())
                 .department(employee != null ? employee.getDeptCode() : null)
                 .departmentName(employee != null ? employee.getDeptName() : null)
