@@ -172,9 +172,9 @@ const UserPermissionManagePage: React.FC = () => {
 
   // 역할 편집은 분리된 다이얼로그에서 처리
 
-  const handleRolesSaved = useCallback((updatedUser: UserWithRoles | null) => {
-    if (!updatedUser) return;
+  const handleRolesSaved = useCallback((updatedUser: UserWithRoles) => {
     setUsers(prev => prev.map(u => (u.userId === updatedUser.userId ? updatedUser : u)));
+    setEditDialogOpen(false);
   }, []);
 
   
@@ -507,14 +507,14 @@ const UserPermissionManagePage: React.FC = () => {
           </Paper>
         </Box>
 
-        {/* 사용자 관리 다이얼로그 (등록/수정 겸용) */}
+        {/* 사용자 관리 다이얼로그 (편집용) */}
         <CreateUserDialog
           open={editDialogOpen}
           mode="edit"
           user={selectedUser}
           roles={roles}
           onClose={() => setEditDialogOpen(false)}
-          onSaved={(u) => handleRolesSaved(u)}
+          onSaved={handleRolesSaved}
         />
       </PageContent>
       

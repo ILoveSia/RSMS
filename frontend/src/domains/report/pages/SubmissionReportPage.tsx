@@ -222,7 +222,6 @@ const SubmissionReportPage: React.FC = () => {
         </Box>
       </PageContent>
 
-      {isDialogOpen && (
       <SubmissionReportDialog
         open={isDialogOpen}
         mode={dialogMode}
@@ -236,7 +235,6 @@ const SubmissionReportPage: React.FC = () => {
         onModeChange={setDialogMode}
         loading={isLoading}
       />
-    )}
     </PageContainer>
   );
 };

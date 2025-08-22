@@ -13,9 +13,9 @@ import { submissionReportApi } from '../api/submissionReportApi';
 import { uploadAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
 import { AttachmentList } from '@/shared/components/ui/data-display';
 import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
-import { useDialog } from '@/shared/hooks/useDialog';
 
 interface SubmissionReportDialogProps {
+  open: boolean;
   onClose: () => void;
   onSuccess: () => void;
   mode?: 'create' | 'edit' | 'view';
@@ -26,6 +26,7 @@ interface SubmissionReportDialogProps {
 }
 
 const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
+  open,
   onClose,
   onSuccess,
   mode = 'create',
@@ -39,19 +40,6 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [existingAttachments, setExistingAttachments] = useState<AttachmentInfo[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
-
-  // 다이얼로그 상태 관리 (useDialog 훅 사용)
-  const {
-    dialogOpen: open,
-    openDialog,
-    closeDialog,
-    setDialogMode
-  } = useDialog();
-
-  // 컴포넌트가 마운트될 때 다이얼로그 열기
-  useEffect(() => {
-    openDialog(mode);
-  }, [openDialog, mode]);
 
   // 초기 데이터 설정
   useEffect(() => {
@@ -185,7 +173,6 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           setSelectedFile(null);
           setUploadError(null);
           setExistingAttachments([]);
-          closeDialog();
           onClose();
         }
       } else if (mode === 'edit' && reportId) {
@@ -221,7 +208,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       console.error('Save failed:', error);
       // 에러는 useApiWithNotification에서 처리됨
     }
-  }, [mode, baseDate, targetInstitution, selectedFile, uploadFileToEntity, callRegisterApi, onSuccess, closeDialog, onClose, reportId, onModeChange]);
+  }, [mode, baseDate, targetInstitution, selectedFile, uploadFileToEntity, callRegisterApi, onSuccess, onClose, reportId, onModeChange]);
 
   // 모드별 제목 설정
   const getTitle = () => {
@@ -246,8 +233,6 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       onModeChange('view');
     }
     
-    // useDialog의 closeDialog 호출
-    closeDialog();
     onClose();
   };
 

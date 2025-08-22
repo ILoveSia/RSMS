@@ -99,7 +99,6 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
         showSuccess('사용자가 등록되었습니다.');
         onCreated?.();
         reset();
-        closeDialog();
         onClose();
         return;
       }
@@ -253,7 +252,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, roles, onClos
       setFieldErrors({});
       setSubmitErrors([]);
     }
-  }, [mode, open, reset, user]);
+  }, [mode, open, reset]);
 
   // 편집 모드에서 상세 정보 가져와 주소/전화 등 채우기
   useEffect(() => {
