@@ -36,9 +36,28 @@ const QnaPage: React.FC<QnaPageProps> = () => {
   const { showError } = useToastHelpers();
   const getCodeName = useGetCodeName();
 
-  // Dialog states managed by useDialog hook
-  const { dialogOpen: detailOpen, dialogData: selectedId, openDialog: openDetailDialog, closeDialog: closeDetailDialog } = useDialog<number>();
-  const { dialogOpen: createOpen, openDialog: openCreateDialog, closeDialog: closeCreateDialog } = useDialog();
+  // Dialog states
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | undefined>(undefined);
+  const [createOpen, setCreateOpen] = useState(false);
+  
+  const openDetailDialog = useCallback((_mode: string, id: number) => {
+    setSelectedId(id);
+    setDetailOpen(true);
+  }, []);
+  
+  const closeDetailDialog = useCallback(() => {
+    setDetailOpen(false);
+    setSelectedId(undefined);
+  }, []);
+  
+  const openCreateDialog = useCallback(() => {
+    setCreateOpen(true);
+  }, []);
+  
+  const closeCreateDialog = useCallback(() => {
+    setCreateOpen(false);
+  }, []);
 
   const loadAllData = useCallback(async () => {
     try {

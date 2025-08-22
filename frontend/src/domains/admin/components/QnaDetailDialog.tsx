@@ -8,15 +8,15 @@ import { CommentInput } from '@/shared/components/ui/form';
 import type { QnaDetailResponseDto } from '../api/qnaApi';
 import qnaApi from '../api/qnaApi';
 import { useToastHelpers } from '@/shared/components/ui/feedback';
-import { useDialog } from '@/shared/hooks/useDialog';
 // 댓글 항목은 공통 컴포넌트 사용
 interface QnaDetailDialogProps {
+  open: boolean;
   qnaId?: number | null;
   onClose: () => void;
   onSaved?: () => void;
 }
 
-const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSaved }) => {
+const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ open, qnaId, onClose, onSaved }) => {
   const [detail, setDetail] = useState<QnaDetailResponseDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,20 +31,6 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSav
   });
   const [savingAnswer, setSavingAnswer] = useState(false);
   const { showSuccess } = useToastHelpers();
-
-  // 다이얼로그 상태 관리 (useDialog 훅 사용)
-  const {
-    dialogOpen: open,
-    dialogMode,
-    openDialog,
-    closeDialog,
-    setDialogMode
-  } = useDialog();
-
-  // 컴포넌트가 마운트될 때 다이얼로그 열기
-  useEffect(() => {
-    openDialog('view');
-  }, [openDialog]);
 
   // 댓글 타입/컴포넌트는 최상단 import에서 가져옵니다
 
@@ -155,7 +141,7 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSav
       mode={canEdit ? mode : 'onlyRead'}
       title="Q&A 상세"
       maxWidth="md"
-      onClose={() => { setMode('onlyRead'); closeDialog(); onClose(); }}
+      onClose={() => { setMode('onlyRead'); onClose(); }}
       onModeChange={(m) => setMode(m as any)}
       onSave={async () => {
         if (!detail || mode !== 'edit') return;
@@ -171,7 +157,6 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSav
           });
           showSuccess('수정이 완료되었습니다.');
           onSaved?.();
-          closeDialog();
           onClose();
         } finally {
           setLoading(false);
@@ -277,7 +262,8 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSav
           <Divider sx={{ my: 1 }} />
           <Typography variant="subtitle1">댓글</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {/* 댓글 목록 (DB 연동 전 로컬 상태) */}
+            {/* 댓글 목록 (DB 연동 전 로컬 상태) */
+}
             {comments.length === 0 ? (
               <Typography variant="body2" color="text.secondary">등록된 댓글이 없습니다.</Typography>
             ) : (
@@ -297,7 +283,8 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSav
               </Box>
             )}
 
-            {/* 신규 댓글 입력 (최상위) */}
+            {/* 신규 댓글 입력 (최상위) */
+}
             <Box sx={{ mt: 1 }}>
               <CommentInput
                 value={newComment}
@@ -319,5 +306,3 @@ const QnaDetailDialog: React.FC<QnaDetailDialogProps> = ({ qnaId, onClose, onSav
 };
 
 export default QnaDetailDialog;
-
-
