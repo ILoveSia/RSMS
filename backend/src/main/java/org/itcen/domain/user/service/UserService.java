@@ -145,12 +145,12 @@ public class UserService {
         // Employee 이름 중복 검사는 Employee 테이블에서 처리
         // 필요시 별도 검증 로직 추가
 
-        // 사번 중복 검사 (사번이 있는 경우에만)
-        if (request.getEmpNo() != null && !request.getEmpNo().trim().isEmpty()) {
-            if (userRepository.existsByEmpNo(request.getEmpNo())) {
-                throw new IllegalArgumentException("이미 존재하는 사번입니다: " + request.getEmpNo());
-            }
-        }
+        // 사번 중복 검사 제거 (사번이 있는 경우에도 허용)
+//        if (request.getEmpNo() != null && !request.getEmpNo().trim().isEmpty()) {
+//            if (userRepository.existsByEmpNo(request.getEmpNo())) {
+//                throw new IllegalArgumentException("이미 존재하는 사번입니다: " + request.getEmpNo());
+//            }
+//        }
 
         // 엔티티 생성 및 저장 (비밀번호 암호화 적용)
         User user = request.toEntity();

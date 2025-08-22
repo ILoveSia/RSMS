@@ -86,39 +86,15 @@ export interface UserWithRoles {
 export interface CreateUserRequest {
   /** 백엔드 UserDto.CreateRequest와 일치 */
   id: string;
-  username: string;
-  email: string;
-  address: string;
-  mobile: string;
   password: string;
-  // 선택 필드
-  /** 사번(백엔드 필드: num). 프론트 내부 상태에서는 empNo를 쓰되, 전송은 num으로 해야 합니다. */
-  num?: string;
-  // 유지 호환(프론트 내부 사용). API 전송에는 사용하지 않음
   empNo?: string;
-  deptCd?: string;
-  jobRankCd?: string;
-  // 프론트 호환(내부 사용) 필드
-  userId?: string;
-  userName?: string;
-  department?: string;
-  departmentName?: string;
-  position?: string;
-  positionName?: string;
-  isActive?: boolean;
-  roleIds?: string[];
 }
 
 /** 사용자 수정 요청 */
 export interface UpdateUserRequest {
   /** 백엔드 UserDto.UpdateRequest와 일치 (선택 필드 업데이트) */
   username?: string;
-  email?: string;
-  address?: string;
-  mobile?: string;
-  password?: string;
-  /** 사번(백엔드 필드: num) */
-  num?: string;
+  empNo?: string;
 }
 
 /** 사용자 상세 응답 (GET /users/{id}) */

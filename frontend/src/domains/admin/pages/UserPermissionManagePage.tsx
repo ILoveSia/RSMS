@@ -453,7 +453,7 @@ const UserPermissionManagePage: React.FC = () => {
                       <TableCell>
                         <Box display="flex" alignItems="center" gap={2}>
                           <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                            {user.userName.charAt(0)}
+                            {user.userName?.charAt(0) || 'U'}
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight="medium">

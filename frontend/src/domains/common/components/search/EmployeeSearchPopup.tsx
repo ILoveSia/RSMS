@@ -24,8 +24,6 @@ export interface EmployeeSearchResult {
   jobTitleCode: string; // 직책코드
   deptCode: string; // 부서코드
   deptName?: string; // 부서명 (추가)
-  email: string;
-  mobile: string;
 }
 
 const EmployeeSearchPopup: React.FC<{
@@ -145,8 +143,6 @@ const EmployeeSearchPopup: React.FC<{
               jobTitleCode: user.jobTitleCode || '',
               deptCode: user.deptCode || '',
               deptName: deptName,
-              email: user.email || '',
-              mobile: user.mobile || '',
               num: user.empNo || '', // num 필드 추가 (기존 코드 호환용)
             };
           })
