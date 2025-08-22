@@ -26,6 +26,7 @@ import { responsibilityDocumentApi, type ResponsibilityDocumentDto } from '../ap
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import ResponsibilityDocumentDialog from '../components/ResponsibilityDocumentDialog';
+import { AttachmentBadge } from '@/shared/components/ui/badge/AttachmentBadge'; // Import AttachmentBadge
 
 interface IResponsibilityDocumentListPageProps {
   className?: string;
@@ -154,11 +155,8 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       renderCell: params => {
         const count = params.value as number || 0;
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-            📎
-            <span style={{ fontSize: '0.875rem', color: count > 0 ? 'var(--bank-primary)' : '#999' }}>
-              {count}
-            </span>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AttachmentBadge count={count} /> {/* Use AttachmentBadge component */}
           </Box>
         );
       },
