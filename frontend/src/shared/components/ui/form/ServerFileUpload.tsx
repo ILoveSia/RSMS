@@ -1,14 +1,14 @@
-import React, { forwardRef, useCallback, useRef, useState } from 'react';
+import type { BaseComponentProps } from '@/shared/types/common';
 import {
+  Cancel as CancelIcon,
+  CheckCircle as CheckCircleIcon,
   CloudUpload as CloudUploadIcon,
   Delete as DeleteIcon,
   Description as DocumentIcon,
+  Error as ErrorIcon,
   InsertDriveFile as FileIcon,
   Image as ImageIcon,
   PictureAsPdf as PdfIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-  Cancel as CancelIcon,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -21,12 +21,10 @@ import {
   ListItemSecondaryAction,
   ListItemText,
   Paper,
-  Typography,
-  useTheme,
+  Typography
 } from '@mui/material';
-import { useLoading } from '../feedback/LoadingProvider';
+import React, { forwardRef, useCallback, useRef, useState } from 'react';
 import { useToastHelpers } from '../feedback/ToastProvider';
-import type { BaseComponentProps } from '@/shared/types/common';
 
 // 파일 업로드 상태
 export type FileUploadStatus = 'pending' | 'uploading' | 'success' | 'error' | 'cancelled';

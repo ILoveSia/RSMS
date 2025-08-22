@@ -1,6 +1,6 @@
 import { Box, Portal } from '@mui/material';
 import type { AlertColor } from '@mui/material/Alert';
-import React, { createContext, useCallback, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import Toast from './Toast';
 
 // Toast 관련 타입 정의

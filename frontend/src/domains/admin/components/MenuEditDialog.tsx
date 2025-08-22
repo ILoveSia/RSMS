@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  TextField,
-  Typography
-} from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 
+import { useReduxState } from '@/app/store/use-store';
 import { Dialog } from '@/shared/components/modal';
+import { CancelButton, SaveButton } from '@/shared/components/ui/button';
 import { Select } from '@/shared/components/ui/form';
-import { Button, SaveButton, CancelButton } from '@/shared/components/ui/button';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import type { SelectOption } from '@/shared/types/common';
 import { menuApi, type MenuUpdateRequest, type MenuUpdateResponse } from '../api/menuApi';
-import { useReduxState } from '@/app/store/use-store';
 
 interface Menu {
   id: number;
@@ -255,24 +252,27 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               label="메뉴명"
-              value={formData.menuName}
-              onChange={(e) => onFormDataChange({ ...formData, menuName: e.target.value })}
+              value={formData.menuName || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFormDataChange({ ...formData, menuName: e.target.value })}
               fullWidth
               required
+              mode="editable"
             />
             <TextField
               label="영문 메뉴명"
-              value={formData.menuNameEn}
-              onChange={(e) => onFormDataChange({ ...formData, menuNameEn: e.target.value })}
+              value={formData.menuNameEn || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFormDataChange({ ...formData, menuNameEn: e.target.value })}
               fullWidth
+              mode="editable"
             />
             <TextField
               label="설명"
-              value={formData.description}
-              onChange={(e) => onFormDataChange({ ...formData, description: e.target.value })}
+              value={formData.description || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => onFormDataChange({ ...formData, description: e.target.value })}
               fullWidth
               multiline
               rows={2}
+              mode="editable"
             />
           </Box>
         </Box>
@@ -290,7 +290,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
                    label="부모 메뉴"
                    value={selectedParentId?.toString() || ''}
                    options={parentOptions}
-                   onChange={handleParentSelectChange}
+                   onChange={(value) => handleParentSelectChange(value as string | number | string[] | number[])}
                    placeholder="부모 메뉴를 선택하세요"
                  />
                </Box>
@@ -308,10 +308,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
                        label: `${menu.menuName} 아래에 배치합니다` 
                      }))
                    ]}
-                   onChange={(value) => {
-                     const newOrder = Array.isArray(value) ? -1 : Number(value);
-                     handleOrderChange(newOrder);
-                   }}
+                   onChange={(value) => handleOrderChange(Array.isArray(value) ? -1 : Number(value))}
                    placeholder="순서를 선택하세요"
                  />
               </Box>
@@ -323,3 +320,4 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
 };
 
 export default MenuEditDialog;
+
