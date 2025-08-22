@@ -8,9 +8,6 @@ CREATE TABLE public.users (
 	id varchar(100) NOT NULL, -- 사용자ID
 	emp_no varchar(20) NULL, -- 사번
 	--username varchar(50) NOT NULL, -- 사용자명
-	email varchar(100) NOT NULL, -- 이메일
-	address varchar(255) NOT NULL, -- 주소
-	mobile varchar(20) NOT NULL, -- 전화번호
 	"password" varchar(255) NOT NULL, -- 비밀번호
 	--dept_cd varchar(100) NULL, -- 부서코드
 	--num varchar(100) NULL, -- 사번
