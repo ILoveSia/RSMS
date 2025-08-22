@@ -218,6 +218,7 @@ const SubmissionReportPage: React.FC = () => {
             error={error}
             onRowSelectionChange={(selectedRows, selectedData) => setSelectedIds(selectedRows as number[])}
             onRowClick={handleRowClick}
+            disableRowSelectionOnClick
           />
         </Box>
       </PageContent>

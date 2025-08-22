@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  Button,
-  TextField,
   Box,
   Alert,
   Typography,
 } from '@mui/material';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import DatePicker from '@/shared/components/ui/form/DatePicker';
+import TextField from '@/shared/components/ui/data-display/TextField';
+import Button from '@/shared/components/ui/button/Button';
 import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 import { submissionReportApi } from '../api/submissionReportApi';
 import { uploadAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
@@ -324,7 +324,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           value={targetInstitution}
           onChange={(e) => setTargetInstitution(e.target.value)}
           fullWidth
-          disabled={isReadOnly}
+          mode={isReadOnly ? 'readonly' : 'editable'}
         />
         
         {/* 파일 업로드 오류 표시 */}
