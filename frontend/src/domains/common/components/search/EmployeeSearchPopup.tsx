@@ -16,41 +16,25 @@ import BaseDialog from '@/shared/components/modal/BaseDialog';
 import type { GridRowParams } from '@mui/x-data-grid';
 import React, { useEffect, useState } from 'react';
 
-export interface EmployeeSearchPopupProps {
-  open: boolean;
-  onClose: () => void;
-  onSelect?: (employee: EmployeeSearchResult) => void;
-  title?: string;
-  selectedEmployee?: EmployeeSearchResult;
-}
-
 export interface EmployeeSearchResult {
   id: string;
-  num: string; // 사번
+  empNo: string; // 사번
   username: string; // 성명
-  jobRankCd: string; // 직급코드
-  jobTitleCd: string; // 직책코드
-  deptCd: string; // 부서코드
+  jobRankCode: string; // 직급코드
+  jobTitleCode: string; // 직책코드
+  deptCode: string; // 부서코드
   deptName?: string; // 부서명 (추가)
   email: string;
   mobile: string;
 }
 
-interface UserResponse {
-  id: string;
-  username: string;
-  email: string;
-  address: string;
-  mobile: string;
-  deptCd: string;
-  num: string;
-  jobRankCd: string;
-  jobTitleCd: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
+const EmployeeSearchPopup: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onSelect?: (employee: EmployeeSearchResult) => void;
+  title?: string;
+  selectedEmployee?: EmployeeSearchResult;
+}> = ({
   open,
   onClose,
   onSelect,
@@ -145,30 +129,30 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
 
     try {
       const params = new URLSearchParams({ limit: '100' });
-      const response = await apiClient.get<UserResponse[]>(`/users/employees?${params.toString()}`);
-
+      const response = await apiClient.get<EmployeeSearchResult[]>(`/users/employees?${params.toString()}`);
+      
       if (response && Array.isArray(response)) {
         const transformedEmployees: EmployeeSearchResult[] = await Promise.all(
-          response.map(async (user: UserResponse) => {
-            // 부서명 비동기 조회
-            const deptName = await getDepartmentName(user.deptCd);
+          response.map(async (user: any) => {
+            // 부서명 비동기 조회 (API 응답에 departmentName이 있으면 사용)
+            const deptName = user.departmentName || await getDepartmentName(user.deptCode) || '';
 
             return {
               id: user.id,
-              num: user.num || '',
-              username: user.username,
-              jobRankCd: user.jobRankCd || '',
-              jobTitleCd: user.jobTitleCd || '',
-              deptCd: user.deptCd || '',
+              empNo: user.empNo || '',
+              username: user.username || '',
+              jobRankCode: user.positionName || user.jobRankCode || '',
+              jobTitleCode: user.jobTitleCode || '',
+              deptCode: user.deptCode || '',
               deptName: deptName,
-              email: user.email,
-              mobile: user.mobile,
+              email: user.email || '',
+              mobile: user.mobile || '',
+              num: user.empNo || '', // num 필드 추가 (기존 코드 호환용)
             };
           })
         );
 
         setEmployees(transformedEmployees);
-
       } else {
         setEmployees([]);
       }
@@ -185,7 +169,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
   // 컬럼 정의 (부서검색과 동일한 스타일)
   const columns: DataGridColumn<EmployeeSearchResult>[] = [
     {
-      field: 'num',
+      field: 'empNo',
       align: 'center',
       headerName: '사번',
       width: 100,
@@ -214,18 +198,18 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
       align: 'center',
       renderCell: params => (
         <Typography variant='body2'>
-          {params.value || params.row.deptCd}
+          {params.value || params.row.deptCode}
         </Typography>
       ),
     },
     {
-      field: 'jobRankCd',
+      field: 'jobRankCode',
       headerName: '직급',
       width: 80,
       align: 'center',
       renderCell: params => (
         <Typography variant='body2'>
-          {getCodeNameSync(allCodes, 'JOB_RANK', String(params.value ?? '')) || String(params.value ?? '')}
+          {params.value}
         </Typography>
       ),
     },
@@ -321,7 +305,7 @@ const EmployeeSearchPopup: React.FC<EmployeeSearchPopupProps> = ({
                 if (!q) return true;
                 return (
                   (emp.username || '').toLowerCase().includes(q) ||
-                  (emp.num || '').toLowerCase().includes(q)
+                  (emp.empNo || '').toLowerCase().includes(q)
                 );
               })}
               selectable={true}
