@@ -12,7 +12,7 @@ import DepartmentSearchBox from '@/shared/components/ui/form/DepartmentSearchBox
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import DataGrid from '@/shared/components/ui/data-display/DataGrid';
+import DataGridV2 from '../components/DataGridV2';
 import type { SelectOption, DataGridColumn } from '@/shared/types/common';
 import { useReduxState } from '@/app/store/use-store';
 import { Groups as GroupsIcon, Description as DescriptionIcon } from '@mui/icons-material';
@@ -48,6 +48,8 @@ interface CombinedDeptStatusDto {
   approvalId?: number;
   approvalStatusCd?: string;
   approvalStatusName?: string;
+  // 가상 필드 (컬럼 정의를 위한)
+  approvalAction?: string;
 }
 import type { Department } from '@/domains/common/components/search/DepartmentSearchPopup';
 import AuditResultReportDialog from '../components/AuditResultReportDialog';
@@ -327,7 +329,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           }}
           onClick={(e) => {
             if (row.auditResultReportId) {
-              e.stopPropagation(); // 행 클릭 이벤트 방지
+              e.stopPropagation();
               handleDeptNameClick(row);
             }
           }}
@@ -336,7 +338,6 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
         </Typography>
       )
     },
-    // 점검결과 현황 컬럼들
     {
       field: 'totalCount',
       headerName: '전체',
@@ -345,7 +346,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value).toLocaleString()}
+          {Number(value || 0).toLocaleString()}
         </Typography>
       )
     },
@@ -357,7 +358,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value).toLocaleString()}
+          {Number(value || 0).toLocaleString()}
         </Typography>
       )
     },
@@ -369,80 +370,79 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value).toLocaleString()}
+          {Number(value || 0).toLocaleString()}
         </Typography>
       )
     },
     {
       field: 'excludedCount',
       headerName: '점검제외',
-      width: 80,
+      width: 100,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value).toLocaleString()}
+          {Number(value || 0).toLocaleString()}
         </Typography>
       )
     },
     {
       field: 'appropriateRate',
       headerName: '적정수행율(%)',
-      width: 100,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value)}%
+          {Number(value || 0)}%
         </Typography>
       )
     },
-    // 개선계획 이행 현황 컬럼들
     {
       field: 'planCreatedCount',
       headerName: '개선계획작성',
-      width: 100,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value).toLocaleString()}
+          {Number(value || 0).toLocaleString()}
         </Typography>
       )
     },
     {
       field: 'resultWrittenCount',
       headerName: '이행결과작성',
-      width: 100,
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value).toLocaleString()}
+          {Number(value || 0).toLocaleString()}
         </Typography>
       )
     },
     {
       field: 'resultApprovedCount',
       headerName: '이행결과결재완료',
-      width: 120,
+      width: 140,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value).toLocaleString()}
+          {Number(value || 0).toLocaleString()}
         </Typography>
       )
     },
     {
       field: 'completionRate',
-      headerName: '이행완료율(%)',
+      headerName: '이행완료율',
       width: 100,
       align: 'center',
       headerAlign: 'center',
       renderCell: ({ value }) => (
         <Typography variant="body2">
-          {Number(value)}%
+          {Number(value || 0)}%
         </Typography>
       )
     },
@@ -452,50 +452,68 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
       width: 100,
       align: 'center',
       headerAlign: 'center',
-      renderCell: ({ value, row }) => (
-        <Typography
-          variant="caption"
-          sx={{
-            color: row.approvalStatusCd === 'APPROVED' ? 'success.main' : 
-                  row.approvalStatusCd === 'IN_PROGRESS' ? 'primary.main' :
-                  row.approvalStatusCd === 'SUBMITTED' ? 'info.main' :
-                  row.approvalStatusCd === 'REJECTED' ? 'error.main' : 'warning.main',
-            fontWeight: 'bold'
-          }}
-        >
-          {value || '미결재'}
-        </Typography>
-      )
+      renderCell: ({ value, row }) => {
+        const getStatusColor = () => {
+          if (row.approvalStatusCd === 'APPROVED') return 'success.main';
+          if (row.approvalStatusCd === 'IN_PROGRESS') return 'primary.main';
+          if (row.approvalStatusCd === 'SUBMITTED') return 'info.main';
+          if (row.approvalStatusCd === 'REJECTED') return 'error.main';
+          return 'warning.main';
+        };
+
+        return (
+          <Typography
+            variant="caption"
+            sx={{
+              color: getStatusColor(),
+              fontWeight: 'bold'
+            }}
+          >
+            {value || '미결재'}
+          </Typography>
+        );
+      }
     },
     {
       field: 'approvalAction',
-      headerName: '결재상신',
-      width: 180,
+      headerName: '결재 상신',
+      width: 120,
       align: 'center',
       headerAlign: 'center',
       sortable: false,
       renderCell: ({ row }) => {
-        // 결과보고서가 있는 경우 결재 상태에 관계없이 ApprovalActionButton 표시
         if (row.auditResultReportId) {
           return (
-            <ApprovalActionButton
-              taskType="audit_result_report"
-              taskId={Number(row.auditResultReportId)}
-              taskTitle={`부서별 점검 결과보고서 - ${row.deptName}`}
-              currentUserId={loginData?.userid || 'unknown'}
-              onApprovalStateChange={() => {
-                // 결재 상태 변경 시 데이터 새로고침
-                handleSearch();
-              }}
-              size="small"
-              variant="contained"
-            />
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+              <ApprovalActionButton
+                taskType="audit_result_report"
+                taskId={Number(row.auditResultReportId)}
+                taskTitle={`부서별 점검 결과보고서 - ${row.deptName}`}
+                currentUserId={loginData?.userid || 'unknown'}
+                onApprovalStateChange={() => {
+                  handleSearch();
+                }}
+                size="small"
+                variant="contained"
+              />
+            </Box>
           );
         }
         return null;
       }
     }
   ], [loginData?.userid, handleSearch, handleDeptNameClick]);
+
+  /**
+   * DataGrid 행 선택 변경 처리 (단일 선택)
+   */
+  const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedRowData: CombinedDeptStatusDto[]) => {
+    const selectedId = selectedRowIds.length > 0 ? selectedRowIds[0] : null;
+    const selectedItem = selectedRowData.length > 0 ? selectedRowData[0] : null;
+    
+    setSelectedRow(selectedId);
+    setSelectedData(selectedItem);
+  };
 
   /**
    * 결과보고서 작성 버튼 활성화 여부 확인
@@ -516,16 +534,6 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
     setSelectedDeptForReport(null);
   };
 
-  /**
-   * DataGrid 행 선택 변경 처리 (단일 선택)
-   */
-  const handleRowSelectionChange = (selectedRowIds: (string | number)[], selectedRowData: CombinedDeptStatusDto[]) => {
-    const selectedId = selectedRowIds.length > 0 ? selectedRowIds[0] : null;
-    const selectedItem = selectedRowData.length > 0 ? selectedRowData[0] : null;
-    
-    setSelectedRow(selectedId);
-    setSelectedData(selectedItem);
-  };
 
   /**
    * 선택된 부서의 결과보고서 작성
@@ -621,8 +629,8 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           
           <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>원장차수</span>
           <LedgerOrdersHodSelect
-            value={selectedLedgerOrdersHod?.value || 'ALL'}
-            onChange={useCallback((value: string) => {
+            value={selectedLedgerOrdersHod?.value ? String(selectedLedgerOrdersHod.value) : 'ALL'}
+            onChange={useCallback((value: string | number) => {
               if (value && value !== 'ALL') {
                 setSelectedLedgerOrdersHod({ 
                   value: String(value), 
@@ -683,24 +691,22 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           )}
         </Box>
 
-        <Box sx={{ width: '100%', flex: 1 }}>
-          <DataGrid
+        <Box sx={{ width: '100%', flex: 1, minHeight: 0 }}>
+          {/* DataGridV2 - 복잡한 헤더 구조 포함 */}
+          <DataGridV2
             data={combinedRows}
             columns={columns}
             loading={isLoading}
-            height={600}
+            height={500}
             selectable={true}
             multiSelect={false}
             selectedRows={selectedRow ? [selectedRow] : []}
             onRowSelectionChange={handleRowSelectionChange}
             rowIdField="deptCd"
+            showComplexHeaders={true}
             sx={{
               width: '100%',
-              height: '500px',
-              '& .MuiDataGrid-columnHeaders': {
-                backgroundColor: 'var(--bank-bg-secondary) !important',
-                fontWeight: 'bold',
-              }
+              border: '1px solid var(--bank-border)',
             }}
           />
 
