@@ -14,7 +14,7 @@ interface FileUploadProps {
 
 // Ref를 통해 부모 컴포넌트에서 호출할 수 있는 메서드 정의
 export interface FileUploadHandle {
-  handleSubmit: (mode?: 'create' | 'edit') => Promise<void>;
+  handleSubmit: (id:number|null,mode?: 'create' | 'edit') => Promise<void>;
 }
 
 interface FileRejection {
@@ -45,7 +45,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
         }
     }, []);
     
-    const handleSubmit = useCallback(async (mode?: 'create' | 'edit') => {
+    const handleSubmit = useCallback(async (id:number|null,mode?: 'create' | 'edit') => {
         console.log("handleSubmit");
         if (files.length === 0) {
             if (onSubmit) {
@@ -65,7 +65,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
                 RID = submissionReportId ?? -1;
             }
             else if(mode === 'create'){
-                RID = 0;
+                RID = id ?? -1;
             }
             const result = await writeAttachment(file, {
                 entityType,
@@ -118,7 +118,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
 
     // ref를 통해 부모 컴포넌트에서 호출할 수 있도록 메서드 노출
     useImperativeHandle(ref, () => ({
-        handleSubmit:(mode?: 'create' | 'edit') => handleSubmit(mode)
+        handleSubmit: (id:number|null,mode?: 'create' | 'edit') => handleSubmit(id, mode)
     }));
 
     // 선택된 파일 제거 핸들러

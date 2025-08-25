@@ -109,37 +109,24 @@ public class AttachmentController {
             @RequestParam("uploadedBy") String uploadedBy) {
                 
         
-        try {
-            log.info("writeSingleFile 요청 시작 - entityType: {}, entityId: {}, uploadedBy: {}, filename: {}", 
-                    entityType, entityId, uploadedBy, file.getOriginalFilename());
-            
+        try {            
             AttachmentDto.UploadRequest uploadRequest = AttachmentDto.UploadRequest.builder()
                     .entityType(entityType)
                     .entityId(entityId)
                     .uploadedBy(uploadedBy)
                     .build();
 
-            // Check if an attachment already exists for this entity
             List<AttachmentDto.Response> existingAttachments = attachmentService
                     .getAttachmentsByEntity(entityType, entityId);
             
-            log.info("기존 첨부파일 조회 결과 - entityType: {}, entityId: {}, existingAttachments.size: {}", 
-                    entityType, entityId, existingAttachments.size());
-                    
             AttachmentDto.UploadResult result;
             if (!existingAttachments.isEmpty()) {
-                // If exists, update the existing attachment
-                // For simplicity, we'll update the first one found
                 AttachmentDto.Response existing = existingAttachments.get(0);
-                log.info("기존 첨부파일이 존재하여 업데이트 진행 - attachId: {}", existing.getAttachId());
                 result = attachmentService.updateFile(file, existing.getAttachId(), uploadRequest);
             } else {
-                // If not exists, create a new attachment
-                log.info("기존 첨부파일이 존재하지 않아 새로 생성 진행");
                 result = attachmentService.uploadFile(file, uploadRequest);
             }
 
-            log.info("writeSingleFile 요청 완료 - result: {}", result);
             return ResponseEntity.ok(
                 ApiResponse.success("파일 업로드가 완료되었습니다.", result)
             );
@@ -163,13 +150,9 @@ public class AttachmentController {
             @RequestParam Long entityId) {
         
         try {
-            log.info("첨부파일 목록 조회 요청 - entityType: {}, entityId: {}", entityType, entityId);
-            
             List<AttachmentDto.Response> attachments = attachmentService
                     .getAttachmentsByEntity(entityType, entityId);
             
-            log.info("첨부파일 목록 조회 완료 - 총 {}개", attachments.size());
-
             return ResponseEntity.ok(
                 ApiResponse.success("첨부파일 목록 조회가 완료되었습니다.", attachments)
             );

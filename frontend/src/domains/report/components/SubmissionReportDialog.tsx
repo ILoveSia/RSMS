@@ -93,10 +93,8 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       // FileUpload 컴포넌트의 handleSubmit 함수 호출
       if (fileUploadRef.current) {
         if(mode === 'create'){
-          await fileUploadRef.current.handleSubmit('create');
         }
         else if(mode === 'edit'){
-          await fileUploadRef.current.handleSubmit('edit');
         }
       }
       
@@ -112,6 +110,8 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 
         if (result && result.submissionReportId) {
           // 2. 업로드된 파일이 있다면, 엔티티와 연결
+          await fileUploadRef.current?.handleSubmit(result.submissionReportId, 'create');
+
           if (uploadedAttachId) {
             // TODO: 업로드된 파일을 엔티티와 연결하는 API 호출
             // 예: await linkAttachmentToEntity(uploadedAttachId, 'SUBMISSION_REPORT', result.submissionReportId);
@@ -138,6 +138,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 
         if (result) {
           // 업로드된 파일이 있다면, 엔티티와 연결
+          await fileUploadRef.current?.handleSubmit(result.submissionReportId, 'edit');
           if (uploadedAttachId) {
             // TODO: 업로드된 파일을 엔티티와 연결하는 API 호출
             // 예: await linkAttachmentToEntity(uploadedAttachId, 'SUBMISSION_REPORT', reportId);

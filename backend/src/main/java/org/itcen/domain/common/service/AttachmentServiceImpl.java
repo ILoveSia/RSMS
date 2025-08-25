@@ -122,17 +122,12 @@ public class AttachmentServiceImpl implements AttachmentService {
         // 기존 첨부파일 정보 조회
         Attachment existingAttachment = attachmentRepository.findById(attachId)
                 .orElseThrow(() -> new BusinessException("첨부파일을 찾을 수 없습니다."));
-
-        log.info("기존 첨부파일 정보 조회 완료 - attachId: {}, filePath: {}", attachId, existingAttachment.getFilePath());
-
         // 기존 파일 삭제
         deletePhysicalFile(existingAttachment.getFilePath());
 
         // 새 파일 저장
         String storedFilename = generateStoredFilename(file.getOriginalFilename());
         String filePath = saveFile(file, storedFilename);
-
-        log.info("새 파일 저장 완료 - storedFilename: {}, filePath: {}", storedFilename, filePath);
 
         // 기존 첨부파일 정보 업데이트
         existingAttachment.updateFileInfo(
@@ -146,9 +141,6 @@ public class AttachmentServiceImpl implements AttachmentService {
         existingAttachment.updateFilePath(filePath, uploadRequest.getUploadedBy());
 
         Attachment updatedAttachment = attachmentRepository.save(existingAttachment);
-        
-        log.info("첨부파일 업데이트 완료 - attachId: {}", updatedAttachment.getAttachId());
-        
         return AttachmentDto.UploadResult.success(updatedAttachment);
     }
 
