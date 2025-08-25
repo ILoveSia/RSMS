@@ -1,6 +1,6 @@
 import { FileUploader, FileCard } from 'evergreen-ui';
 import React, { useCallback, useState, forwardRef, useImperativeHandle } from 'react';
-import { uploadAttachment ,writeAttachment} from '@/domains/common/api/attachmentApi';
+import { uploadAttachment, writeAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
 import type { AttachmentType } from '@/domains/report/pages/types';
 
 interface FileUploadProps {
@@ -128,6 +128,24 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
         setUploadError(null);
     }, []);
 
+    // 파일 다운로드 핸들러
+    const handleDownload = useCallback(async (attachmentId: number, filename: string) => {
+        try {
+            const blob = await downloadAttachment(attachmentId);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('File download failed:', error);
+            setUploadError('파일 다운로드에 실패했습니다.');
+        }
+    }, []);
+
     // 기존 파일이 있고, 삭제 버튼을 누르지 않았다면 기존 파일 표시
     if (existingFiles && !showUploader) {
         return (
@@ -139,6 +157,8 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
                     type={existingFiles.contentType}
                     isInvalid={false}
                     onRemove={handleRemoveExisting}
+                    onClick={() => handleDownload(existingFiles.attachId, existingFiles.originalFilename)}
+                    style={{ cursor: 'pointer' }}
                 />
                 {/* 오류 메시지 표시 */}
                 {uploadError && (
@@ -170,6 +190,13 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
                             sizeInBytes={size}
                             type={type}
                             validationMessage={message}
+                            onClick={() => {
+                                // 새로 업로드된 파일은 아직 서버에 저장되지 않았으므로 다운로드할 수 없습니다.
+                                // 필요한 경우, 로컬 파일을 다운로드하는 로직을 추가할 수 있습니다.
+                                // 여기서는 경고 메시지만 표시합니다.
+                                setUploadError('업로드된 파일은 저장 후 다운로드할 수 있습니다.');
+                            }}
+                            style={{ cursor: 'pointer' }}
                         />
                     );
                 }}
