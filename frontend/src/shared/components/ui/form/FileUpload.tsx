@@ -9,11 +9,12 @@ interface FileUploadProps {
   onSubmit?: (attachId: number | null) => void; // onSubmit에 attachId를 전달
   entityType: string; // 업로드할 엔티티 타입
   uploadedBy: string; // 업로드한 사용자
+  submissionReportId?: number;
 }
 
 // Ref를 통해 부모 컴포넌트에서 호출할 수 있는 메서드 정의
 export interface FileUploadHandle {
-  handleSubmit: () => Promise<void>;
+  handleSubmit: (mode?: 'create' | 'edit') => Promise<void>;
 }
 
 interface FileRejection {
@@ -21,7 +22,7 @@ interface FileRejection {
   message?: string;
 }
 
-const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy }, ref) => {
+const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy,submissionReportId }, ref) => {
     const [files, setFiles] = useState<File[]>([]);
     const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);
     const [showUploader, setShowUploader] = useState(false);
@@ -44,7 +45,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
         }
     }, []);
     
-    const handleSubmit = useCallback(async () => {
+    const handleSubmit = useCallback(async (mode?: 'create' | 'edit') => {
         console.log("handleSubmit");
         if (files.length === 0) {
             if (onSubmit) {
@@ -59,13 +60,16 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
         
         try {
             // 파일 업로드
-            let submissionReportId = 0;
-            if(existingFiles){
-                submissionReportId = existingFiles.entityId;
+            let RID = 0;
+            if(mode === 'edit'){
+                RID = submissionReportId ?? -1;
+            }
+            else if(mode === 'create'){
+                RID = 0;
             }
             const result = await uploadAttachment(file, {
                 entityType,
-                entityId: submissionReportId, // 임시 업로드이므로 entityId는 0
+                entityId: RID, // 임시 업로드이므로 entityId는 0
                 uploadedBy
             });
             
@@ -114,7 +118,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
 
     // ref를 통해 부모 컴포넌트에서 호출할 수 있도록 메서드 노출
     useImperativeHandle(ref, () => ({
-        handleSubmit
+        handleSubmit:(mode?: 'create' | 'edit') => handleSubmit(mode)
     }));
 
     // 선택된 파일 제거 핸들러

@@ -93,10 +93,10 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       // FileUpload 컴포넌트의 handleSubmit 함수 호출
       if (fileUploadRef.current) {
         if(mode === 'create'){
-          await fileUploadRef.current.handleSubmit();
+          await fileUploadRef.current.handleSubmit('create');
         }
         else if(mode === 'edit'){
-          await fileUploadRef.current.handleSubmit();
+          await fileUploadRef.current.handleSubmit('edit');
         }
       }
       
@@ -261,6 +261,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           onSubmit={handleFileSubmit}
           entityType="SUBMISSION_REPORT"
           uploadedBy="system" // TODO: 실제 사용자 ID로 변경
+          submissionReportId={dialogData?.submissionReportId}
         />
         {/* 나머지 UI는 필요에 따라 수정 */}
       </Box>
