@@ -118,6 +118,11 @@ logging:
     org.itcen: DEBUG
     # Case Study 도메인 상세 로그
     org.itcen.domain.casestudy: DEBUG
+    # 첨부파일 관련 상세 로그
+    org.itcen.domain.common.service.AttachmentServiceImpl: DEBUG
+    org.itcen.domain.common.controller.AttachmentController: DEBUG
+    # 헬스체크 엔드포인트 로그 레벨 조정 (스팸 방지)
+    org.springframework.boot.actuator.health: WARN
   file:
     path: logs
   pattern:
@@ -201,6 +206,9 @@ spring:
       on-profile: docker
 
   datasource:
+    # url: jdbc:postgresql://ep-small-heart-adzc4et2-pooler.c-2.us-east-1.aws.neon.tech:5432/dev_db?sslmode=require #&channel_binding=require
+    # username: neondb_owner
+    # password: npg_SBu0jaqGxk4Z
     url: jdbc:postgresql://localhost:5432/test1
     username: postgres
     password: 1q2w3e4r!
@@ -281,3 +289,44 @@ logging:
     org.itcen.domain.casestudy: INFO
   file:
     path: logs
+---
+# neon 환경
+spring:
+  config:
+    activate:
+      on-profile: neon
+
+  datasource:
+    url: jdbc:postgresql://ep-small-heart-adzc4et2-pooler.c-2.us-east-1.aws.neon.tech:5432/dev_db?sslmode=require #&channel_binding=require
+    username: neondb_owner
+    password: npg_SBu0jaqGxk4Z
+    # url: jdbc:postgresql://localhost:5432/test1
+    # username: postgres
+    # password: 1q2w3e4r!
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      leak-detection-threshold: 60000
+      auto-commit: false
+  
+  sql:
+    init:
+      mode: never
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+---

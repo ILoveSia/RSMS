@@ -3,7 +3,7 @@
  */
 export { default as Select } from './Select';
 export type { SelectProps } from './Select';
-
+export { default as FileUpload } from './FileUpload';
 export { default as ComboBox } from './ComboBox';
 export type { ComboBoxProps } from './ComboBox';
 
@@ -12,8 +12,7 @@ export type { PositionSearchBoxProps } from './PositionSearchBox';
 
 export { default as DatePicker } from './DatePicker';
 export type { DatePickerProps } from './DatePicker';
-export { default as FileUpload } from './FileUpload';
-export type { FileUploadProps } from './FileUpload';
+
 export { default as ServerFileUpload } from './ServerFileUpload';
 export type { ServerFileUploadProps, UploadFile, UploadResponse, FileUploadStatus, ServerFileUploadApi } from './ServerFileUpload';
 

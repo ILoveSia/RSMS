@@ -4,7 +4,7 @@ import { ToastProvider } from '../../../src/shared/components/ui/feedback/ToastP
 import React from 'react';
 
 const meta: Meta<typeof ServerFileUpload> = {
-  title: 'Components/Form/ServerFileUpload',
+  title: 'Shared/components/ui/form/ServerFileUpload',
   component: ServerFileUpload,
   tags: ['autodocs'],
   argTypes: {

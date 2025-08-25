@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { lightTheme, darkTheme, updateCssVariables } from '../src/app/theme/themeConfig';
 import { configureAppStore, setGlobalStore } from '../src/app/store';
 import createRootReducer from '../src/shared/store';
+import ToastProvider from '../src/shared/components/ui/feedback/ToastProvider';
 
 // Initialize Redux store for Storybook
 setGlobalStore();

@@ -1,7 +1,8 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { ComboBox,DatePicker,FileUpload,ServerFileUpload ,CommonCodeSelect} from '../../src/shared/components/ui/form';
-
+import { ComboBox,DatePicker,ServerFileUpload ,CommonCodeSelect,FileUpload} from '../../src/shared/components/ui/form';
+import { adminApi } from '../../src/domains/admin/api/adminApi';
+// import {FileUploader} from 'evergreen-ui'
 const meta: Meta = {
   title: 'Shared/components/ui/form',
   parameters: { layout: 'padded' },
@@ -33,5 +34,17 @@ export const CommonCodeSelect11: Story = {
     onChange={() => {}}
     disabled={false}
   />
+  },
+};
+export const ServerFileUpload11: Story = {
+  name: 'ServerFileUpload',
+  render: () => {
+    return <ServerFileUpload api={adminApi} />;
+  },
+};
+export const fileupload11: Story = {
+  name: 'fileupload',
+  render: () => {
+      return <FileUpload />;
   },
 };
