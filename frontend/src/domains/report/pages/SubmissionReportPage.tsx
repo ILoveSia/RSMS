@@ -14,13 +14,14 @@ import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
 import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 import { useDialog } from '@/shared/hooks/useDialog';
 import SubmissionReportDialog from '../components/SubmissionReportDialog';
-
+import type { AttachmentType } from './types';
 // submission_reports 테이블과 연결될 데이터 타입 정의
 export interface SubmissionReportRow {
   submissionReportId: number;
   baseDate: string;
   targetInstitution: string;
-  attachments?: { originalFilename: string }[]; // AttachmentDto.Response와 일치
+  attachments?: AttachmentType[]; // AttachmentDto.Response와 일치
+  rowIndex?: number; // 행 인덱스 추가
 }
 
 const SubmissionReportPage: React.FC = () => {
@@ -89,7 +90,7 @@ const SubmissionReportPage: React.FC = () => {
     const data = await callApiWithNotification(() => submissionReportApi.getSubmissionReports());
     if (data) {
       setRows(data);
-      console.log(data);
+      console.log("rows",rows);
     }
     setIsLoading(false);
   }, [callApiWithNotification]);
@@ -119,8 +120,9 @@ const SubmissionReportPage: React.FC = () => {
 
   // 행 클릭 핸들러 (상세보기)
   const handleRowClick = useCallback((report: SubmissionReportRow) => {
-    openDialog('view', report);
-  }, [openDialog]);
+    const rowIndex = rows.findIndex(r => r.submissionReportId === report.submissionReportId);
+    openDialog('view', { ...report, rowIndex });
+  }, [openDialog, rows]);
 
   const { callApiWithNotification: callDeleteApi } = useApiWithNotification({
     successMessage: '보고서가 성공적으로 삭제되었습니다.',
@@ -224,6 +226,7 @@ const SubmissionReportPage: React.FC = () => {
       </PageContent>
 
       <SubmissionReportDialog
+        attachment={selectedReport?.attachments?.[selectedReport.rowIndex ?? 0]}
         open={isDialogOpen}
         mode={dialogMode}
         reportId={selectedReport?.submissionReportId}
