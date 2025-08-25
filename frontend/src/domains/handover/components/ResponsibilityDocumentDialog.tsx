@@ -1,13 +1,6 @@
 /**
  * 책무기술서 다이얼로그
  * 책무기술서 등록/수정/조회 기능을 제공합니다.
- * 
- * SOLID 원칙:
- * - Single Responsibility: 책무기술서 다이얼로그 처리만 담당
- * - Open/Closed: 새로운 필드나 검증 추가 시 확장 가능
- * - Liskov Substitution: React 컴포넌트 인터페이스 준수
- * - Interface Segregation: 다이얼로그 관련 기능만 제공
- * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
 import { useReduxState } from '@/app/store/use-store';

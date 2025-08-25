@@ -129,11 +129,6 @@ public class InternalControlManualServiceImpl implements InternalControlManualSe
     }
 
     @Override
-    public Page<InternalControlManual> getAllManuals(Pageable pageable) {
-        return internalControlManualRepository.findAll(pageable);
-    }
-
-    @Override
     @Transactional
     public void submitForReview(Long manualId, String actorEmpNo) {
         log.debug("내부통제 메뉴얼 검토 제출 시작 - manualId: {}", manualId);
