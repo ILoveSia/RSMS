@@ -222,7 +222,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
 
   // 메뉴얼 데이터 로드
   const loadManualData = useCallback(async () => {
-    console.log(123)
     if (!manualId) return;
 
     setLoading(true);
@@ -251,7 +250,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
           deptName: manualData.deptName || '',
         });
       }
-      console.log(manualData)
     } catch (err) {
       console.error('메뉴얼 데이터 로드 실패:', err);
       setError('메뉴얼 데이터를 불러오는 중 오류가 발생했습니다.');
@@ -263,10 +261,8 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   // 첨부파일 로드
   const loadAttachments = useCallback(async () => {
     if (!manualId) return;
-    console.log("loadAttachments",manualId)
     try {
       const attachmentList = await getAttachments('internal_control_manuals', manualId);
-      console.log("attachmentList",attachmentList)
       setAttachments(attachmentList || null);
     } catch (err) {
       console.error('첨부파일 로드 실패:', err);
@@ -282,7 +278,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   // 다이얼로그 열릴 때 데이터 로드
   useEffect(() => {
     if (open) {
-      console.log(123)
       // 다이얼로그가 열릴 때 mode를 initialMode로 리셋
       setMode(initialMode);
       
@@ -300,7 +295,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   useEffect(() => {
     if (open && manualId && (mode === 'edit' || mode === 'view')) {
       loadAttachments();
-      console.log(attachments)
     }
   }, [open, manualId, mode]);
 
@@ -355,7 +349,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
         showSuccess('메뉴얼이 성공적으로 생성되었습니다.');
       } else {
         await internalControlManualApi.updateManual(manualId!, saveData);        
-        console.log("manualId",manualId)
         await fileUploadRef.current?.handleSubmit(manualId!, 'edit');
         showSuccess('메뉴얼이 성공적으로 수정되었습니다.');
       }
