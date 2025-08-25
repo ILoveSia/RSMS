@@ -88,16 +88,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 
   const handleSave = useCallback(async () => {
     try {
-      setUploadError(null); // 저장 시작 시 오류 상태 초기화
-      
-      // FileUpload 컴포넌트의 handleSubmit 함수 호출
-      if (fileUploadRef.current) {
-        if(mode === 'create'){
-        }
-        else if(mode === 'edit'){
-        }
-      }
-      
+      setUploadError(null); // 저장 시작 시 오류 상태 초기화      
       if (mode === 'create') {
         // 1. 보고서 생성
         const newReport = {

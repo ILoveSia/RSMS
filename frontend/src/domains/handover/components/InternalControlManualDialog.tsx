@@ -38,6 +38,8 @@ import { internalControlManualApi, type InternalControlManualDto, type ApprovalS
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import { uploadAttachment, getAttachments, downloadAttachment, deleteAttachment, type AttachmentInfo as CommonAttachmentInfo } from '@/domains/common/api/attachmentApi';
+import FileUpload, { type FileUploadHandle } from '@/shared/components/ui/form/FileUpload';
+import type { AttachmentType } from '@/domains/report/pages/types';
 
 interface InternalControlManualDialogProps {
   open: boolean;
@@ -114,15 +116,19 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
   
   // 첨부파일 상태
-  const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentType | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // 알림 처리
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
+  const fileUploadRef = useRef<FileUploadHandle>(null);
+  const [uploadedAttachId, setUploadedAttachId] = useState<number | null>(null);
 
-
+  const handleFileSubmit = useCallback((attachId: number | null) => {
+    setUploadedAttachId(attachId);
+  }, []);
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -216,6 +222,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
 
   // 메뉴얼 데이터 로드
   const loadManualData = useCallback(async () => {
+    console.log(123)
     if (!manualId) return;
 
     setLoading(true);
@@ -244,7 +251,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
           deptName: manualData.deptName || '',
         });
       }
-
+      console.log(manualData)
     } catch (err) {
       console.error('메뉴얼 데이터 로드 실패:', err);
       setError('메뉴얼 데이터를 불러오는 중 오류가 발생했습니다.');
@@ -256,10 +263,11 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   // 첨부파일 로드
   const loadAttachments = useCallback(async () => {
     if (!manualId) return;
-
+    console.log("loadAttachments",manualId)
     try {
       const attachmentList = await getAttachments('internal_control_manuals', manualId);
-      setAttachments(attachmentList || []);
+      console.log("attachmentList",attachmentList)
+      setAttachments(attachmentList || null);
     } catch (err) {
       console.error('첨부파일 로드 실패:', err);
       // 첨부파일 로드 실패는 무시 (선택사항)
@@ -274,6 +282,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   // 다이얼로그 열릴 때 데이터 로드
   useEffect(() => {
     if (open) {
+      console.log(123)
       // 다이얼로그가 열릴 때 mode를 initialMode로 리셋
       setMode(initialMode);
       
@@ -282,7 +291,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
       } else if (initialMode === 'create') {
         setFormData(initialFormData);
         setError(null);
-        setAttachments([]);
+        setAttachments(null);
       }
     }
   }, [open, manualId, initialMode, loadManualData, apiResponseData]);
@@ -291,6 +300,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   useEffect(() => {
     if (open && manualId && (mode === 'edit' || mode === 'view')) {
       loadAttachments();
+      console.log(attachments)
     }
   }, [open, manualId, mode]);
 
@@ -300,7 +310,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
       setFormData(initialFormData);
       setMode(initialMode);
       setError(null);
-      setAttachments([]);
+      setAttachments(null);
       setSelectedFile(null);
     }
   }, [open, initialMode]);
@@ -340,10 +350,13 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
       };
 
       if (isCreateMode) {
-        await internalControlManualApi.createManual(saveData);
+        const result = await internalControlManualApi.createManual(saveData);
+        await fileUploadRef.current?.handleSubmit(result.manualId!, 'create');
         showSuccess('메뉴얼이 성공적으로 생성되었습니다.');
       } else {
-        await internalControlManualApi.updateManual(manualId!, saveData);
+        await internalControlManualApi.updateManual(manualId!, saveData);        
+        console.log("manualId",manualId)
+        await fileUploadRef.current?.handleSubmit(manualId!, 'edit');
         showSuccess('메뉴얼이 성공적으로 수정되었습니다.');
       }
 
@@ -420,7 +433,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
 
   // 사원 선택 핸들러
   const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
-    updateFormData('authorEmpNo', employee.num);
+    updateFormData('authorEmpNo', employee.empNo);
     updateFormData('authorName', employee.username);
     setAuthorSearchOpen(false);
   }, [updateFormData]);
@@ -435,78 +448,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     }
   }, [updateFormData]);
 
-  // 첨부파일 업로드 처리
-  const handleFileUpload = useCallback(async (file: File) => {
-    if (!manualId) {
-      showError('메뉴얼을 먼저 저장해주세요.');
-      return;
-    }
-
-    setUploadingFiles(true);
-    try {
-      await uploadAttachment(file, {
-        entityType: 'internal_control_manuals',
-        entityId: manualId,
-        uploadedBy: currentUserId || 'system'
-      });
-      showSuccess('파일이 성공적으로 업로드되었습니다.');
-      await loadAttachments(); // 첨부파일 목록 새로고침
-    } catch (error) {
-      console.error('파일 업로드 실패:', error);
-      showError('파일 업로드 중 오류가 발생했습니다.');
-    } finally {
-      setUploadingFiles(false);
-    }
-  }, [manualId, currentUserId, showSuccess, showError, loadAttachments]);
-
-  // 첨부파일 삭제 처리
-  const handleFileDelete = useCallback(async (attachId: number) => {
-    if (!confirm('첨부파일을 삭제하시겠습니까?')) {
-      return;
-    }
-
-    try {
-      await deleteAttachment(attachId, currentUserId || 'system');
-      showSuccess('첨부파일이 삭제되었습니다.');
-      await loadAttachments(); // 첨부파일 목록 새로고침
-    } catch (error) {
-      console.error('파일 삭제 실패:', error);
-      showError('파일 삭제 중 오류가 발생했습니다.');
-    }
-  }, [currentUserId, showSuccess, showError, loadAttachments]);
-
-  // 첨부파일 다운로드 처리
-  const handleFileDownload = useCallback(async (attachment: AttachmentInfo) => {
-    try {
-      const blob = await downloadAttachment(attachment.attachId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', attachment.originalFilename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('파일 다운로드 실패:', error);
-      showError('파일 다운로드 중 오류가 발생했습니다.');
-    }
-  }, [showError]);
-
-  // 파일 선택 핸들러
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      handleFileUpload(file);
-    }
-    // input value 초기화 (같은 파일 재선택 가능하도록)
-    if (event.target) {
-      event.target.value = '';
-    }
-  }, [handleFileUpload]);
-
-  // 커스텀 액션 버튼들 생성
   const renderCustomActions = () => {
     const actions = [];
 
@@ -554,6 +495,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
   if (loading) {
     return (
       <BaseDialog
+        mode={mode}
         open={open}
         onClose={onClose}
         title="내부통제 업무메뉴얼"
@@ -599,6 +541,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
             {/* 메뉴얼 제목 */}
             <Grid item xs={12}>
               <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
                 label="메뉴얼 제목"
                 value={formData.manualTitle}
                 onChange={(e) => updateFormData('manualTitle', e.target.value)}
@@ -613,6 +556,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
             {/* 메뉴얼 버전 */}
             <Grid item xs={12} sm={6}>
               <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
                 label="메뉴얼 버전"
                 value={formData.manualVersion}
                 onChange={(e) => updateFormData('manualVersion', e.target.value)}
@@ -624,6 +568,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
             {/* 부서 */}
             <Grid item xs={12} sm={6}>
               <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
                 fullWidth
                 label='부서'
                 value={formData.deptName}
@@ -673,6 +618,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
             {/* 작성자 */}
             <Grid item xs={12} sm={6}>
               <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
                 fullWidth
                 label='작성자'
                 value={formData.authorName}
@@ -698,6 +644,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
             {/* 메뉴얼 내용 */}
             <Grid item xs={12}>
               <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
                 label="메뉴얼 내용"
                 value={formData.manualContent}
                 onChange={(e) => updateFormData('manualContent', e.target.value)}
@@ -707,86 +654,17 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
                 disabled={isViewMode}
               />
             </Grid>
+            <Grid item xs={12}>
+              <FileUpload
+                ref={fileUploadRef}
+                existingFiles={attachments}
+                onSubmit={handleFileSubmit}
+                entityType="internal_control_manuals"
+                uploadedBy="system"
+                submissionReportId={manualId}
+            />
+            </Grid>
 
-            {/* 첨부파일 영역 */}
-            {manualId && (
-              <Grid item xs={12}>
-                <Box>
-                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                    <strong>첨부파일 ({attachments.length})</strong>
-                    {!isViewMode && (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingFiles}
-                      >
-                        {uploadingFiles ? '업로드 중...' : '파일 첨부'}
-                      </Button>
-                    )}
-                  </Box>
-                  
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    style={{ display: 'none' }}
-                    onChange={handleFileSelect}
-                  />
-
-                  {attachments.length > 0 ? (
-                    <Box sx={{ border: '1px solid #ddd', borderRadius: 1, p: 1, maxHeight: 200, overflow: 'auto' }}>
-                      {attachments.map((attachment) => (
-                        <Box
-                          key={attachment.attachId}
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          py={0.5}
-                          sx={{ borderBottom: '1px solid #eee', '&:last-child': { borderBottom: 'none' } }}
-                        >
-                          <Box>
-                            <strong>{attachment.originalFilename}</strong>
-                            <Box component="span" sx={{ fontSize: '0.875rem', color: 'text.secondary', ml: 1 }}>
-                              ({(attachment.fileSize / 1024).toFixed(1)} KB)
-                            </Box>
-                          </Box>
-                          <Box>
-                            <Button
-                              size="small"
-                              onClick={() => handleFileDownload(attachment)}
-                              sx={{ mr: 1 }}
-                            >
-                              다운로드
-                            </Button>
-                            {!isViewMode && (
-                              <Button
-                                size="small"
-                                color="error"
-                                onClick={() => handleFileDelete(attachment.attachId)}
-                              >
-                                삭제
-                              </Button>
-                            )}
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  ) : (
-                    <Box
-                      sx={{
-                        border: '1px dashed #ddd',
-                        borderRadius: 1,
-                        p: 2,
-                        textAlign: 'center',
-                        color: 'text.secondary',
-                      }}
-                    >
-                      첨부된 파일이 없습니다.
-                    </Box>
-                  )}
-                </Box>
-              </Grid>
-            )}
           </Grid>
         </DialogContent>
       </BaseDialog>

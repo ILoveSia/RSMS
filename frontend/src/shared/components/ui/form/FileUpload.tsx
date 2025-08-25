@@ -46,7 +46,6 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
     }, []);
     
     const handleSubmit = useCallback(async (id:number|null,mode?: 'create' | 'edit') => {
-        console.log("handleSubmit");
         if (files.length === 0) {
             if (onSubmit) {
                 onSubmit(null);
@@ -76,11 +75,8 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
             // 업로드 성공 시, onSubmit에 attachId를 전달
             if (onSubmit) {
                 onSubmit(result.attachId);
-                console.log("onSubmit",result.attachId);
             }
         } catch (error: any) {
-            console.error('File upload failed:', file.name, error);
-            
             // 오류 메시지 추출
             let errorMessage = '파일 업로드에 실패했습니다.';
             

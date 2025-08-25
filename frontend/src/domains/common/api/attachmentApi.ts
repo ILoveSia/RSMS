@@ -1,21 +1,5 @@
 import apiClient from '@/app/common/api/client';
-
-export interface AttachmentInfo {
-  attachId: number;              // attachId (백엔드 Response DTO와 일치)
-  originalFilename: string;      // originalFilename
-  storedFilename: string;        // storedFilename
-  fileSize: number;              // fileSize
-  filePath: string;              // filePath
-  contentType: string;           // contentType
-  entityType: string;            // entityType
-  entityId: number;              // entityId
-  uploadedBy: string;            // uploadedBy
-  createdAt: string;             // createdAt
-  updatedAt: string;             // updatedAt
-  createdId: string;             // createdId
-  updatedId: string;             // updatedId
-}
-
+import type { AttachmentType } from '@/domains/report/pages/types';
 export interface AttachmentUploadRequest {
   entityType: string;
   entityId: number;
@@ -28,7 +12,7 @@ export interface AttachmentUploadRequest {
 export async function uploadAttachment(
   file: File,
   request: AttachmentUploadRequest
-): Promise<AttachmentInfo> {
+): Promise<AttachmentType> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('entityType', request.entityType);
@@ -37,7 +21,7 @@ export async function uploadAttachment(
 
   const response = await apiClient.post('/common/attachments/upload/single', formData);
   if (response !== false) {
-    return response as AttachmentInfo;
+    return response as AttachmentType;
   } else {
     throw new Error(response || '파일 업로드에 실패했습니다.');
   }
@@ -45,7 +29,7 @@ export async function uploadAttachment(
 export async function writeAttachment(
   file: File,
   request: AttachmentUploadRequest
-): Promise<AttachmentInfo> {
+): Promise<AttachmentType> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('entityType', request.entityType);
@@ -54,7 +38,7 @@ export async function writeAttachment(
 
   const response = await apiClient.post('/common/attachments/write/single', formData);
   if (response !== false) {
-    return response as AttachmentInfo;
+    return response as AttachmentType;
   } else {
     throw new Error(response || '파일 업로드에 실패했습니다.');
   }
@@ -62,18 +46,18 @@ export async function writeAttachment(
 /**
  * 첨부파일 목록 조회
  */
-export async function getAttachments(entityType: string, entityId: number): Promise<AttachmentInfo[]> {
-  const response = await apiClient.get(`/common/attachments`, {
+export async function getAttachments(entityType: string, entityId: number): Promise<AttachmentType> {
+  const response:AttachmentType[] = await apiClient.get(`/common/attachments`, {
     params: {
       entityType,
       entityId
     }
   });
-  
-  if (response !== false) {
-    return response as AttachmentInfo[];
+  console.log("response",response)
+  if (response.length > 0) {
+    return response[0] as AttachmentType;
   } else {
-    throw new Error(response || '첨부파일 목록 조회에 실패했습니다.');
+    throw new Error('첨부파일 목록 조회에 실패했습니다.');
   }
 }
 
@@ -108,11 +92,11 @@ export async function deleteAttachment(attachmentId: number, deletedBy: string =
 /**
  * 첨부파일 정보 조회
  */
-export async function getAttachmentInfo(attachmentId: number): Promise<AttachmentInfo> {
+export async function getAttachmentInfo(attachmentId: number): Promise<AttachmentType> {
   const response = await apiClient.get(`/common/attachments/${attachmentId}`);
   
   if (response !== false) {
-    return response as AttachmentInfo;
+    return response as AttachmentType;
   } else {
     throw new Error(response || '첨부파일 정보 조회에 실패했습니다.');
   }
