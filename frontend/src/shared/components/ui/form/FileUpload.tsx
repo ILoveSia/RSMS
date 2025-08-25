@@ -1,5 +1,5 @@
 import { FileUploader, FileCard } from 'evergreen-ui';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, forwardRef, useImperativeHandle } from 'react';
 import { uploadAttachment } from '@/domains/common/api/attachmentApi';
 import type { AttachmentType } from '@/domains/report/pages/types';
 
@@ -11,12 +11,17 @@ interface FileUploadProps {
   uploadedBy: string; // 업로드한 사용자
 }
 
+// Ref를 통해 부모 컴포넌트에서 호출할 수 있는 메서드 정의
+export interface FileUploadHandle {
+  handleSubmit: () => Promise<void>;
+}
+
 interface FileRejection {
   file: File;
   message?: string;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy }) => {
+const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy }, ref) => {
     const [files, setFiles] = useState<File[]>([]);
     const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);
     const [showUploader, setShowUploader] = useState(false);
@@ -40,6 +45,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ existingFiles, onRemoveExisting
     }, []);
     
     const handleSubmit = useCallback(async () => {
+        console.log("handleSubmit");
         if (files.length === 0) {
             if (onSubmit) {
                 onSubmit(null);
@@ -53,15 +59,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ existingFiles, onRemoveExisting
         
         try {
             // 파일 업로드
+            let submissionReportId = 0;
+            if(existingFiles){
+                submissionReportId = existingFiles.entityId;
+            }
             const result = await uploadAttachment(file, {
                 entityType,
-                entityId: 0, // 임시 업로드이므로 entityId는 0
+                entityId: submissionReportId, // 임시 업로드이므로 entityId는 0
                 uploadedBy
             });
             
             // 업로드 성공 시, onSubmit에 attachId를 전달
             if (onSubmit) {
                 onSubmit(result.attachId);
+                console.log("onSubmit",result.attachId);
             }
         } catch (error: any) {
             console.error('File upload failed:', file.name, error);
@@ -100,6 +111,11 @@ const FileUpload: React.FC<FileUploadProps> = ({ existingFiles, onRemoveExisting
             setIsUploading(false);
         }
     }, [files, onSubmit, entityType, uploadedBy]);
+
+    // ref를 통해 부모 컴포넌트에서 호출할 수 있도록 메서드 노출
+    useImperativeHandle(ref, () => ({
+        handleSubmit
+    }));
 
     // 선택된 파일 제거 핸들러
     const handleRemove = useCallback(() => {
@@ -164,5 +180,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ existingFiles, onRemoveExisting
             )}
         </>
     );
-};
+});
+
 export default FileUpload;

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Alert,
@@ -14,7 +14,7 @@ import { downloadAttachment } from '@/domains/common/api/attachmentApi';
 import { AttachmentList } from '@/shared/components/ui/data-display';
 import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
 import type { SubmissionReportRow } from '../pages/SubmissionReportPage';
-import FileUpload from '@/shared/components/ui/form/FileUpload';
+import FileUpload, { type FileUploadHandle } from '@/shared/components/ui/form/FileUpload';
 import type { AttachmentType } from '../pages/types';
 
 interface SubmissionReportDialogProps {
@@ -47,6 +47,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<AttachmentType | null>(null);
   const [uploadedAttachId, setUploadedAttachId] = useState<number | null>(null); // FileUpload에서 전달받은 attachId
+  const fileUploadRef = useRef<FileUploadHandle>(null);
 
   // 초기 데이터 설정
   useEffect(() => {
@@ -88,6 +89,17 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   const handleSave = useCallback(async () => {
     try {
       setUploadError(null); // 저장 시작 시 오류 상태 초기화
+      
+      // FileUpload 컴포넌트의 handleSubmit 함수 호출
+      if (fileUploadRef.current) {
+        if(mode === 'create'){
+          await fileUploadRef.current.handleSubmit();
+        }
+        else if(mode === 'edit'){
+          await fileUploadRef.current.handleSubmit();
+        }
+      }
+      
       if (mode === 'create') {
         // 1. 보고서 생성
         const newReport = {
@@ -244,6 +256,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
         )}
         
         <FileUpload 
+          ref={fileUploadRef}
           existingFiles={attachment} 
           onSubmit={handleFileSubmit}
           entityType="SUBMISSION_REPORT"
