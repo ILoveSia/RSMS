@@ -123,7 +123,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           setBaseDate(new Date());
           setTargetInstitution('');
           setUploadedAttachId(null);
-          setUploadError(null);
+          console.log(attachment)
           setExistingAttachments([]);
           onClose();
         }
@@ -180,7 +180,10 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
     setUploadedAttachId(null);
     setExistingAttachments([]);
     setUploadError(null);
-    
+    setAttachment(null);
+    setUploadError(null);
+    console.log(attachment)
+
     if (mode === 'edit' && onModeChange) {
       onModeChange('view');
     }
@@ -255,7 +258,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
             {uploadError}
           </Alert>
         )}
-        
+        {mode!=='view' && (
         <FileUpload 
           ref={fileUploadRef}
           existingFiles={attachment} 
@@ -264,6 +267,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           uploadedBy="system" // TODO: 실제 사용자 ID로 변경
           submissionReportId={dialogData?.submissionReportId}
         />
+        )}
         {/* 나머지 UI는 필요에 따라 수정 */}
       </Box>
     </BaseDialog>

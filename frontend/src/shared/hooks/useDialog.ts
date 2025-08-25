@@ -20,6 +20,7 @@ export function useDialog<T>({ initialMode = 'create', initialData = null }: Use
 
   const closeDialog = useCallback(() => {
     setOpen(false);
+    setData(null);
     // 데이터를 즉시 초기화하지 않고, 다이얼로그가 닫히는 애니메이션 동안 유지되도록 할 수 있습니다.
     // 필요하다면 setTimeout을 사용하여 데이터를 초기화할 수 있습니다.
   }, []);
