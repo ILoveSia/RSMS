@@ -114,6 +114,7 @@ public class SecurityConfig {
                     "/common-codes/**",
                     // 첨부파일 API (로그인 시 필요한 기능)
                     "/attachments/**",
+                    "/common/attachments/**",
                     // Case Study API (공개 접근 허용)
                     "/case-studies/**",
                     // 원장차수+진행상태 셀렉트박스용 API (공개 접근 허용)

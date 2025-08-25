@@ -1,6 +1,6 @@
 import { FileUploader, FileCard } from 'evergreen-ui';
 import React, { useCallback, useState, forwardRef, useImperativeHandle } from 'react';
-import { uploadAttachment } from '@/domains/common/api/attachmentApi';
+import { uploadAttachment ,writeAttachment} from '@/domains/common/api/attachmentApi';
 import type { AttachmentType } from '@/domains/report/pages/types';
 
 interface FileUploadProps {
@@ -67,7 +67,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
             else if(mode === 'create'){
                 RID = 0;
             }
-            const result = await uploadAttachment(file, {
+            const result = await writeAttachment(file, {
                 entityType,
                 entityId: RID, // 임시 업로드이므로 entityId는 0
                 uploadedBy

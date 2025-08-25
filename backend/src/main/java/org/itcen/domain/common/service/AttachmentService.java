@@ -39,6 +39,17 @@ public interface AttachmentService {
     AttachmentDto.UploadResult uploadFile(MultipartFile file, AttachmentDto.UploadRequest uploadRequest) throws IOException;
 
     /**
+     * 단일 파일 업데이트
+     * 
+     * @param file 업로드할 파일
+     * @param attachId 업데이트할 첨부파일 ID
+     * @param uploadRequest 업로드 요청 정보
+     * @return 업로드 결과
+     * @throws IOException 파일 저장 중 오류 발생 시
+     */
+    AttachmentDto.UploadResult updateFile(MultipartFile file, Long attachId, AttachmentDto.UploadRequest uploadRequest) throws IOException;
+
+    /**
      * 엔티티의 첨부파일 목록 조회
      * 
      * @param entityType 엔티티 타입

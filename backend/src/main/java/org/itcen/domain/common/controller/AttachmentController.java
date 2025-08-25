@@ -100,6 +100,60 @@ public class AttachmentController {
         }
     }
 
+
+    @PostMapping("/write/single")
+    public ResponseEntity<ApiResponse<AttachmentDto.UploadResult>> writeSingleFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("entityType") String entityType,
+            @RequestParam("entityId") Long entityId,
+            @RequestParam("uploadedBy") String uploadedBy) {
+                
+        
+        try {
+            log.info("writeSingleFile 요청 시작 - entityType: {}, entityId: {}, uploadedBy: {}, filename: {}", 
+                    entityType, entityId, uploadedBy, file.getOriginalFilename());
+            
+            AttachmentDto.UploadRequest uploadRequest = AttachmentDto.UploadRequest.builder()
+                    .entityType(entityType)
+                    .entityId(entityId)
+                    .uploadedBy(uploadedBy)
+                    .build();
+
+            // Check if an attachment already exists for this entity
+            List<AttachmentDto.Response> existingAttachments = attachmentService
+                    .getAttachmentsByEntity(entityType, entityId);
+            
+            log.info("기존 첨부파일 조회 결과 - entityType: {}, entityId: {}, existingAttachments.size: {}", 
+                    entityType, entityId, existingAttachments.size());
+                    
+            AttachmentDto.UploadResult result;
+            if (!existingAttachments.isEmpty()) {
+                // If exists, update the existing attachment
+                // For simplicity, we'll update the first one found
+                AttachmentDto.Response existing = existingAttachments.get(0);
+                log.info("기존 첨부파일이 존재하여 업데이트 진행 - attachId: {}", existing.getAttachId());
+                result = attachmentService.updateFile(file, existing.getAttachId(), uploadRequest);
+            } else {
+                // If not exists, create a new attachment
+                log.info("기존 첨부파일이 존재하지 않아 새로 생성 진행");
+                result = attachmentService.uploadFile(file, uploadRequest);
+            }
+
+            log.info("writeSingleFile 요청 완료 - result: {}", result);
+            return ResponseEntity.ok(
+                ApiResponse.success("파일 업로드가 완료되었습니다.", result)
+            );
+
+        } catch (IOException e) {
+            log.error("단일 파일 업로드 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("파일 업로드에 실패했습니다."));
+        } catch (Exception e) {
+            log.error("writeSingleFile 처리 중 예외 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("파일 처리 중 오류가 발생했습니다."));
+        }
+    }
     /**
      * 엔티티의 첨부파일 목록 조회 (쿼리 파라미터 방식)
      */

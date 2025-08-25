@@ -108,6 +108,51 @@ public class AttachmentServiceImpl implements AttachmentService {
     }
 
     /**
+     * 단일 파일 업데이트
+     */
+    @Override
+    @Transactional
+    public AttachmentDto.UploadResult updateFile(MultipartFile file, Long attachId, AttachmentDto.UploadRequest uploadRequest) throws IOException {
+
+        log.info("파일 업데이트 시작 - attachId: {}, originalFilename: {}", attachId, file.getOriginalFilename());
+
+        // 파일 유효성 검사
+        validateFile(file);
+
+        // 기존 첨부파일 정보 조회
+        Attachment existingAttachment = attachmentRepository.findById(attachId)
+                .orElseThrow(() -> new BusinessException("첨부파일을 찾을 수 없습니다."));
+
+        log.info("기존 첨부파일 정보 조회 완료 - attachId: {}, filePath: {}", attachId, existingAttachment.getFilePath());
+
+        // 기존 파일 삭제
+        deletePhysicalFile(existingAttachment.getFilePath());
+
+        // 새 파일 저장
+        String storedFilename = generateStoredFilename(file.getOriginalFilename());
+        String filePath = saveFile(file, storedFilename);
+
+        log.info("새 파일 저장 완료 - storedFilename: {}, filePath: {}", storedFilename, filePath);
+
+        // 기존 첨부파일 정보 업데이트
+        existingAttachment.updateFileInfo(
+                file.getOriginalFilename(),
+                storedFilename,
+                file.getSize(),
+                file.getContentType(),
+                uploadRequest.getUploadedBy()
+        );
+        
+        existingAttachment.updateFilePath(filePath, uploadRequest.getUploadedBy());
+
+        Attachment updatedAttachment = attachmentRepository.save(existingAttachment);
+        
+        log.info("첨부파일 업데이트 완료 - attachId: {}", updatedAttachment.getAttachId());
+        
+        return AttachmentDto.UploadResult.success(updatedAttachment);
+    }
+
+    /**
      * 엔티티의 첨부파일 목록 조회
      */
     @Override

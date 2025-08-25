@@ -42,7 +42,23 @@ export async function uploadAttachment(
     throw new Error(response || '파일 업로드에 실패했습니다.');
   }
 }
+export async function writeAttachment(
+  file: File,
+  request: AttachmentUploadRequest
+): Promise<AttachmentInfo> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('entityType', request.entityType);
+  formData.append('entityId', request.entityId.toString());
+  formData.append('uploadedBy', request.uploadedBy);
 
+  const response = await apiClient.post('/common/attachments/write/single', formData);
+  if (response !== false) {
+    return response as AttachmentInfo;
+  } else {
+    throw new Error(response || '파일 업로드에 실패했습니다.');
+  }
+}
 /**
  * 첨부파일 목록 조회
  */
