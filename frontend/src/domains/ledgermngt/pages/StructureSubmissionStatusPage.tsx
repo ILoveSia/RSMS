@@ -189,16 +189,16 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
       );
       
       if (result) {
-        closeDialog();
+        // closeDialog(); // 다이얼로그를 닫는 로직을 제거합니다.
         await handleFetchSubmissionHistory();
-        return result;
+        return result; // result만 반환합니다.
       }
       
       throw new Error('제출 이력 처리에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
-  }, [dialogMode, selectedItem?.id, closeDialog, handleFetchSubmissionHistory, callApiWithNotification]);
+  }, [dialogMode, selectedItem?.id, handleFetchSubmissionHistory, callApiWithNotification]);
 
   // 제출 이력 삭제
   const handleDelete = useCallback(async () => {

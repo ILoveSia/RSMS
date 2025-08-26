@@ -1,19 +1,21 @@
 /**
  * 책무구조도 제출 등록/수정/조회 다이얼로그 컴포넌트
  */
+import { apiClient } from '@/app/common/api/client';
 import ErrorDialog from '@/app/components/ErrorDialog';
-import { deleteAttachment, downloadAttachment, getAttachments, uploadAttachment, type AttachmentInfo } from '@/domains/common/api/attachmentApi';
+import { getAttachments } from '@/domains/common/api/attachmentApi';
 import { EmployeeSearchPopup, PositionSearchPopup, type EmployeeSearchResult, type PositionSearchResult } from '@/domains/common/components/search';
+import type { AttachmentType } from '@/domains/report/pages/types';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
+
 import TextField from '@/shared/components/ui/data-display/TextField';
+import FileUpload, { type FileUploadHandle } from '@/shared/components/ui/form/FileUpload';
 import { DatePicker } from '@/shared/components/ui/form';
 import type { SelectOption } from '@/shared/types/common';
-import { AttachFile as AttachFileIcon, Delete as DeleteIcon, Download as DownloadIcon } from '@mui/icons-material';
-import { Box, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from '@mui/material';
-import React, { useEffect, useRef, useState } from 'react';
-import { apiClient } from '@/app/common/api/client';
-import { AttachmentList } from '@/shared/components/ui/data-display';
+
+import { Box, Typography } from '@mui/material';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 interface RegistrationData {
   submitHistCd: string;
   execofficerId?: string | null; // 직원 ID 추가
@@ -41,8 +43,7 @@ interface StructureSubmissionStatusDialogProps {
   onModeChange?: (mode: 'create' | 'edit' | 'view') => void;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx'];
+
 
 // 임원 정보 인터페이스
 interface ExecutiveInfo {
@@ -88,9 +89,9 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
   });
 
   // 첨부파일 관련 상태
-  const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
-  const [uploadingFile, setUploadingFile] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [attachments, setAttachments] = useState<AttachmentType | null>(null);
+  const fileUploadRef = useRef<FileUploadHandle>(null);
+  const [uploadedAttachId, setUploadedAttachId] = useState<number | null>(null);
 
   // 에러 다이얼로그 상태
   const [errorMessage, setErrorMessage] = useState('');
@@ -103,6 +104,14 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
   const [positionPopupOpen, setPositionPopupOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // FileUpload 컴포넌트용 핸들러
+  const handleFileSubmit = useCallback((attachId: number | null) => {
+    setUploadedAttachId(attachId);
+  }, []);
+
+  // readonly 상태 계산
+  const isFileUploadReadonly = mode === 'view';
 
   // 초기 데이터 설정 및 첨부파일 로드
   useEffect(() => {
@@ -133,99 +142,24 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
     if (!itemId) return;
 
     try {
-      const attachmentList = await getAttachments('rm_submit_mgmt', itemId);
-      setAttachments(attachmentList);
+      const attachmentList = await getAttachments('structure_submit', itemId);
+      setAttachments(attachmentList || null);
+      
+      // 첨부파일이 있으면 폼 데이터에도 반영
+      if (attachmentList) {
+        setRegistrationData(prev => ({
+          ...prev,
+          attachmentFile: attachmentList.originalFilename
+        }));
+      }
     } catch (error) {
       console.error('첨부파일 목록 로드 실패:', error);
+      setAttachments(null);
     }
   };
 
 
-  // 파일 선택 핸들러
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    // 파일 크기 검증
-    if (file.size > MAX_FILE_SIZE) {
-      setErrorMessage('파일 크기는 10MB를 초과할 수 없습니다.');
-      setErrorDialogOpen(true);
-      return;
-    }
-
-    // 파일 타입 검증
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
-      setErrorMessage('허용된 파일 형식은 PDF, DOC, DOCX입니다.');
-      setErrorDialogOpen(true);
-      return;
-    }
-
-    setSelectedFile(file);
-    setRegistrationData(prev => ({
-      ...prev,
-      attachmentFile: file.name
-    }));
-  };
-
-  // 파일 업로드 핸들러
-  const handleFileUpload = async () => {
-    if (!selectedFile || !itemId) return;
-
-    try {
-      setUploadingFile(true);
-      await uploadAttachment(selectedFile, {
-        entityType: 'audit_prog_mngt_detail',
-        entityId: itemId,
-        uploadedBy: 'system'
-      });
-
-      setSelectedFile(null);
-      setRegistrationData(prev => ({ ...prev, attachmentFile: '' }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-
-      // 첨부파일 목록 새로고침
-      await loadAttachments();
-    } catch (error) {
-      setErrorMessage('파일 업로드에 실패했습니다.');
-      setErrorDialogOpen(true);
-    } finally {
-      setUploadingFile(false);
-    }
-  };
-
-  // 파일 다운로드 핸들러
-  const handleFileDownload = async (attachment: AttachmentInfo) => {
-    try {
-      const blob = await downloadAttachment(attachment.attachId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = attachment.originalFilename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      setErrorMessage('파일 다운로드에 실패했습니다.');
-      setErrorDialogOpen(true);
-    }
-  };
-
-  // 파일 삭제 핸들러
-  const handleFileDelete = async (attachmentId: number) => {
-    if (!confirm('첨부파일을 삭제하시겠습니까?')) return;
-
-    try {
-      await deleteAttachment(attachmentId, 'system');
-      await loadAttachments();
-    } catch (error) {
-      setErrorMessage('파일 삭제에 실패했습니다.');
-      setErrorDialogOpen(true);
-    }
-  };
 
   // 직원 선택 핸들러
   const handleEmployeeSelect = (employee: EmployeeSearchResult | EmployeeSearchResult[]) => {
@@ -234,7 +168,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
         ...prev,
         execofficerId: employee.id, // 직원 ID 저장
         executiveName: { value: employee.username, label: employee.username },
-        position: { value: employee.jobTitleCd, label: employee.jobTitleCd }
+        position: { value: employee.jobTitleCode, label: employee.jobTitleCode }
       }));
       setEmployeePopupOpen(false);
     }
@@ -305,26 +239,16 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
       // 먼저 기본 데이터 저장하고 생성된 ID 받기
       const result = await onSubmit(registrationData);
 
-      // 새로 선택한 파일이 있으면 첨부파일 업로드
-      if (selectedFile && mode !== 'view') {
-        const targetEntityId = mode === 'edit' && itemId ? itemId : result?.id;
-
-        if (targetEntityId) {
-          try {
-            await uploadAttachment(selectedFile, {
-              entityType: 'rm_submit_mgmt',
-              entityId: targetEntityId,
-              uploadedBy: 'system'
-            });
-          } catch (uploadError) {
-            throw uploadError; // 에러를 다시 던져서 전체 처리 실패로 만듦
-          }
-        }
+      // FileUpload 컴포넌트를 통한 파일 업로드 처리
+      if (mode === 'create' && result?.id) {
+        await fileUploadRef.current?.handleSubmit(result.id, 'create');
+      } else if (mode === 'edit' && itemId) {
+        await fileUploadRef.current?.handleSubmit(itemId, 'edit');
       }
-
-      onClose(); // 성공 시 다이얼로그 닫기
+      // 모든 작업이 완료된 후 다이얼로그 닫기
+      onClose();
     } catch (error) {
-      console.error('제출 중 오류:', error); // 디버깅용 로그
+      console.error('제출 중 오류:', error);
       setErrorMessage('저장 중 오류가 발생했습니다.');
       setErrorDialogOpen(true);
     }
@@ -344,15 +268,35 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
 
   // 다이얼로그 닫기 핸들러 - 파일 상태 초기화 포함
   const handleClose = () => {
-    setSelectedFile(null);
-    setUploadingFile(false);
+    // 파일 업로드 관련 상태 초기화
+    setUploadedAttachId(null);
+    setAttachments(null);
+
+    // 에러 상태 초기화
+    setErrorMessage('');
+    setErrorDialogOpen(false);
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    setRegistrationData(prev => ({
-      ...prev,
-      attachmentFile: ''
-    }));
+
+    // 생성 모드일 때만 폼 데이터 초기화
+    if (mode === 'create') {
+      setRegistrationData({
+        submitHistCd: '',
+        execofficerId: null,
+        historyCode: null,
+        executiveName: null,
+        position: null,
+        submissionDate: new Date(),
+        attachmentFile: '',
+        remarks: null,
+        positionsId: null,
+        positionsNm: '',
+        ledgerOrders: 0
+      });
+    }
+
     // 수정 모드에서 취소 시 view 모드로 변경
     if (mode === 'edit' && onModeChange) {
       onModeChange('view');
@@ -460,57 +404,15 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           책무구조도 첨부
         </Typography>
         <Box>
-          {/* 새 파일 업로드 (create/edit 모드) */}
-          {mode !== 'view' && (
-            <Box sx={{ mb: 2 }}>
-              <Typography sx={{ mb: 1, fontSize: '0.8rem', color: '#666' }}>새 파일 업로드</Typography>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  hidden
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                />
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => fileInputRef.current?.click()}
-                  startIcon={<AttachFileIcon />}
-                >
-                  파일 선택
-                </Button>
-                {selectedFile && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography sx={{ fontSize: '0.8rem' }}>{selectedFile.name}</Typography>
-                    {itemId && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={handleFileUpload}
-                        disabled={uploadingFile}
-                      >
-                        {uploadingFile ? '업로드 중...' : '업로드'}
-                      </Button>
-                    )}
-                  </Box>
-                )}
-              </Box>
-            </Box>
-          )}
-
-          <AttachmentList
-            attachments={attachments}
-            mode={mode}
-            onDownload={handleFileDownload}
-            onDelete={handleFileDelete}
+          <FileUpload
+            ref={fileUploadRef}
+            existingFiles={attachments}
+            onSubmit={handleFileSubmit}
+            entityType="structure_submit"
+            uploadedBy="system"
+            entityId={itemId}
+            readonly={isFileUploadReadonly}
           />
-
-          {attachments.length === 0 && !selectedFile && (
-            <Typography sx={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>
-              첨부된 파일이 없습니다.
-            </Typography>
-          )}
         </Box>
 
         {/* 비고 */}
