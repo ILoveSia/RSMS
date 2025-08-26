@@ -151,13 +151,6 @@ const PendingApprovalsWidget: React.FC = () => {
           <Typography variant="h6" fontWeight="bold">
             처리 대기 결재
           </Typography>
-          {pendingList.length > 0 && (
-            <Badge 
-              badgeContent={pendingList.length} 
-              color={pendingList.some(item => isUrgent(item.requestDatetime)) ? 'error' : 'warning'} 
-              sx={{ ml: 1 }} 
-            />
-          )}
         </Box>
         <IconButton 
           size="small" 

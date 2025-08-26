@@ -201,7 +201,7 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
   '/community/notice': {
     component: () => import('@/domains/admin/pages/NoticePage'),
     title: '공지사항',
-    icon: 'campaign',
+    icon: 'list_alt',
   },
 
   // 커뮤니티 > Q&A
@@ -248,14 +248,14 @@ const PAGE_COMPONENT_MAPPING: PageComponentMapping = {
   // 대시보드
   '/dash/executive': {
 		component: () => import('@/domains/dashboard/pages/ExecutiveDashboardStatusPage'),
-		title: '임원별 대시보드드',
-		icon: 'description',
+		title: '임원별 대시보드',
+		icon: 'campaign',
 	},
-  // '/dash/dept': {
-	// 	component: () => import('@/domains/dashboard/pages/DeptDashboardStatusPage'),
-	// 	title: '부서별 대시보드드',
-	// 	icon: 'description',
-	// },
+  '/dash/dept': {
+		component: () => import('@/domains/dashboard/pages/DeptDashboardStatusPage'),
+		title: '부서별 대시보드',
+		icon: 'campaign',
+	},
 
 
 

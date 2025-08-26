@@ -394,12 +394,13 @@ public class ExecOfficerService {
             SELECT 
                 hici.dept_cd,
                 COALESCE(d.department_name, hici.dept_cd) as dept_name,
-                COUNT(hici.hod_ic_item_id) as plan_created_count,
-                SUM(CASE WHEN arr.audit_result_report_id IS NOT NULL THEN 1 ELSE 0 END) as result_written_count,
-                SUM(CASE WHEN a.appr_stat_cd = 'APPROVED' THEN 1 ELSE 0 END) as result_approved_count,
+                COUNT(CASE WHEN apmd.audit_result_status_cd = 'INS03' THEN 1 END) as inadequate_count,
+                COUNT(CASE WHEN apmd.audit_result_status_cd = 'INS03' AND apmd.imp_pl_status_cd = 'PLI01' THEN 1 END) as plan_created_count,
+                COUNT(CASE WHEN apmd.audit_result_status_cd = 'INS03' AND apmd.imp_pl_status_cd = 'PLI02' THEN 1 END) as result_written_count,
+                COUNT(CASE WHEN apmd.audit_result_status_cd = 'INS03' AND (apmd.imp_pl_status_cd = 'PLI03' OR apmd.audit_final_result_yn = 'Y') THEN 1 END) as result_approved_count,
                 ROUND(
-                    CASE WHEN COUNT(hici.hod_ic_item_id) > 0
-                    THEN (SUM(CASE WHEN a.appr_stat_cd = 'APPROVED' THEN 1 ELSE 0 END)::decimal / COUNT(hici.hod_ic_item_id)) * 100
+                    CASE WHEN COUNT(CASE WHEN apmd.audit_result_status_cd = 'INS03' THEN 1 END) > 0
+                    THEN (COUNT(CASE WHEN apmd.audit_result_status_cd = 'INS03' AND (apmd.imp_pl_status_cd = 'PLI03' OR apmd.audit_final_result_yn = 'Y') THEN 1 END)::decimal / COUNT(CASE WHEN apmd.audit_result_status_cd = 'INS03' THEN 1 END)) * 100
                     ELSE 0 END, 1
                 ) as completion_rate,
                 arr.audit_result_report_id,
@@ -408,7 +409,7 @@ public class ExecOfficerService {
             JOIN audit_prog_mngt apm ON apmd.audit_prog_mngt_id = apm.audit_prog_mngt_id
             LEFT JOIN hod_ic_item hici ON apmd.hod_ic_item_id = hici.hod_ic_item_id
             LEFT JOIN departments d ON hici.dept_cd = d.department_id
-            LEFT JOIN audit_result_report arr ON apmd.audit_prog_mngt_id = arr.audit_prog_mngt_id
+            LEFT JOIN audit_result_report arr ON apmd.audit_prog_mngt_id = arr.audit_prog_mngt_id AND hici.dept_cd = arr.dept_cd
             LEFT JOIN approval a ON arr.audit_result_report_id = a.task_id AND a.task_type_cd = 'audit_result_report'
             WHERE hici.dept_cd IN (
                 SELECT pod.owner_dept_cd 
@@ -442,12 +443,13 @@ public class ExecOfficerService {
                         DeptImprovementPlanStatusDto dto = new DeptImprovementPlanStatusDto();
                         dto.setDeptCd((String) row[0]);
                         dto.setDeptName((String) row[1]);
-                        dto.setPlanCreatedCount(row[2] != null ? ((Number) row[2]).longValue() : 0L);
-                        dto.setResultWrittenCount(row[3] != null ? ((Number) row[3]).longValue() : 0L);
-                        dto.setResultApprovedCount(row[4] != null ? ((Number) row[4]).longValue() : 0L);
-                        dto.setCompletionRate(row[5] != null ? ((Number) row[5]).doubleValue() : 0.0);
-                        dto.setAuditResultReportId(row[6] != null ? ((Number) row[6]).longValue() : null);
-                        dto.setAuditProgMngtId(row[7] != null ? ((Number) row[7]).longValue() : null);
+                        dto.setInadequateCount(row[2] != null ? ((Number) row[2]).longValue() : 0L); // inadequate_count 추가
+                        dto.setPlanCreatedCount(row[3] != null ? ((Number) row[3]).longValue() : 0L);
+                        dto.setResultWrittenCount(row[4] != null ? ((Number) row[4]).longValue() : 0L);
+                        dto.setResultApprovedCount(row[5] != null ? ((Number) row[5]).longValue() : 0L);
+                        dto.setCompletionRate(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0);
+                        dto.setAuditResultReportId(row[7] != null ? ((Number) row[7]).longValue() : null);
+                        dto.setAuditProgMngtId(row[8] != null ? ((Number) row[8]).longValue() : null);
                         return dto;
                     })
                     .collect(Collectors.toList());

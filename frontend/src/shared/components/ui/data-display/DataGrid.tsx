@@ -27,7 +27,8 @@ import {
   MenuItem,
   Pagination,
   Select,
-  Typography
+  Typography,
+  useTheme
 } from '@mui/material';
 import type {
   GridColDef,
@@ -199,6 +200,9 @@ const CustomPagination = ({
   hideFooter?: boolean;
   hideFooterPagination?: boolean;
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   if (hideFooter || hideFooterPagination) return null;
 
   const { totalItems = 0, totalPages = 0, pageSizeOptions = [5, 10, 20, 30] } = paginationConfig;
@@ -220,8 +224,12 @@ const CustomPagination = ({
         alignItems: 'center',
         px: 3,
         py: 1.5,
-        backgroundColor: 'rgba(248, 249, 250, 0.95)',
-        borderTop: '1px solid rgba(82, 122, 138, 0.2)',
+        backgroundColor: isDark 
+          ? 'rgba(30, 41, 59, 0.95)'    // 다크모드: 어두운 배경
+          : 'rgba(248, 249, 250, 0.95)', // 라이트모드: 밝은 배경
+        borderTop: isDark
+          ? '1px solid rgba(148, 163, 184, 0.2)'  // 다크모드: 밝은 테두리
+          : '1px solid rgba(82, 122, 138, 0.2)',  // 라이트모드: 어두운 테두리
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -231,24 +239,32 @@ const CustomPagination = ({
             minWidth: 120, 
             '& .MuiOutlinedInput-root': {
               borderRadius: '8px',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              backgroundColor: isDark 
+                ? 'rgba(51, 65, 85, 0.8)'     // 다크모드: 어두운 배경
+                : 'rgba(255, 255, 255, 0.8)', // 라이트모드: 밝은 배경
               '& fieldset': {
-                borderColor: 'rgba(82, 122, 138, 0.3)',
+                borderColor: isDark
+                  ? 'rgba(148, 163, 184, 0.3)'  // 다크모드: 밝은 테두리
+                  : 'rgba(82, 122, 138, 0.3)',  // 라이트모드: 어두운 테두리
                 borderWidth: '1px',
               },
               '&:hover fieldset': {
-                borderColor: 'rgba(82, 122, 138, 0.5)',
+                borderColor: isDark
+                  ? 'rgba(148, 163, 184, 0.5)'
+                  : 'rgba(82, 122, 138, 0.5)',
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#527a8a',
+                borderColor: isDark ? '#4A7BA7' : '#2C5282', // 금융권 색상
                 borderWidth: '2px',
               },
             },
             '& .MuiInputLabel-root': {
-              color: 'rgba(45, 67, 73, 0.7)',
+              color: isDark 
+                ? 'rgba(226, 232, 240, 0.7)'  // 다크모드: 밝은 텍스트
+                : 'rgba(45, 67, 73, 0.7)',    // 라이트모드: 어두운 텍스트
               fontSize: '0.875rem',
               '&.Mui-focused': {
-                color: '#527a8a',
+                color: isDark ? '#4A7BA7' : '#2C5282', // 금융권 색상
               },
             },
           }}
@@ -262,7 +278,7 @@ const CustomPagination = ({
               fontSize: '0.875rem',
               '& .MuiSelect-select': {
                 fontSize: '0.875rem',
-                color: '#2d4349',
+                color: isDark ? '#E2E8F0' : '#2d4349', // 다크모드 텍스트 색상
               },
             }}
           >
@@ -272,13 +288,21 @@ const CustomPagination = ({
                 value={size}
                 sx={{
                   fontSize: '0.875rem',
+                  color: isDark ? '#E2E8F0' : '#2d4349',
                   '&:hover': {
-                    backgroundColor: 'rgba(82, 122, 138, 0.08)',
+                    backgroundColor: isDark 
+                      ? 'rgba(148, 163, 184, 0.08)'  // 다크모드
+                      : 'rgba(82, 122, 138, 0.08)',  // 라이트모드
                   },
                   '&.Mui-selected': {
-                    backgroundColor: 'rgba(82, 122, 138, 0.15)',
+                    backgroundColor: isDark
+                      ? 'rgba(74, 123, 167, 0.15)'   // 다크모드 선택 배경
+                      : 'rgba(82, 122, 138, 0.15)',  // 라이트모드 선택 배경
+                    color: isDark ? '#E2E8F0' : '#2d4349',
                     '&:hover': {
-                      backgroundColor: 'rgba(82, 122, 138, 0.2)',
+                      backgroundColor: isDark
+                        ? 'rgba(74, 123, 167, 0.2)'
+                        : 'rgba(82, 122, 138, 0.2)',
                     },
                   },
                 }}
@@ -295,13 +319,24 @@ const CustomPagination = ({
             gap: 1,
             px: 1.5,
             py: 0.75,
-            backgroundColor: 'rgba(82, 122, 138, 0.08)',
+            backgroundColor: isDark 
+              ? 'rgba(74, 123, 167, 0.08)'   // 다크모드 배경
+              : 'rgba(82, 122, 138, 0.08)',  // 라이트모드 배경
             borderRadius: '6px',
-            border: '1px solid rgba(82, 122, 138, 0.15)',
+            border: isDark
+              ? '1px solid rgba(74, 123, 167, 0.15)'  // 다크모드 테두리
+              : '1px solid rgba(82, 122, 138, 0.15)', // 라이트모드 테두리
           }}
         >
-          <Typography variant='body2' sx={{ color: '#2d4349', fontWeight: 500, fontSize: '0.875rem' }}>
-            총 <span style={{ fontWeight: 700, color: '#527a8a' }}>{totalItems}</span>개 항목
+          <Typography variant='body2' sx={{ 
+            color: isDark ? '#E2E8F0' : '#2d4349', 
+            fontWeight: 500, 
+            fontSize: '0.875rem' 
+          }}>
+            총 <span style={{ 
+              fontWeight: 700, 
+              color: isDark ? '#4A7BA7' : '#2C5282' // 금융권 색상
+            }}>{totalItems}</span>개 항목
           </Typography>
         </Box>
       </Box>
@@ -314,30 +349,39 @@ const CustomPagination = ({
         sx={{
           '& .MuiPaginationItem-root': {
             borderRadius: '8px',
-            border: '1px solid rgba(82, 122, 138, 0.2)',
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            color: '#2d4349',
+            border: isDark 
+              ? '1px solid rgba(148, 163, 184, 0.2)'  // 다크모드 테두리
+              : '1px solid rgba(82, 122, 138, 0.2)',  // 라이트모드 테두리
+            backgroundColor: isDark 
+              ? 'rgba(51, 65, 85, 0.8)'     // 다크모드 배경
+              : 'rgba(255, 255, 255, 0.8)', // 라이트모드 배경
+            color: isDark ? '#E2E8F0' : '#2d4349', // 텍스트 색상
             fontWeight: 500,
             fontSize: '0.875rem',
             margin: '0 2px',
             transition: 'all 0.2s ease-in-out',
             '&:hover': {
-              backgroundColor: 'rgba(82, 122, 138, 0.08)',
-              borderColor: 'rgba(82, 122, 138, 0.4)',
+              backgroundColor: isDark
+                ? 'rgba(74, 123, 167, 0.08)'   // 다크모드 호버
+                : 'rgba(82, 122, 138, 0.08)',  // 라이트모드 호버
+              borderColor: isDark
+                ? 'rgba(148, 163, 184, 0.4)'
+                : 'rgba(82, 122, 138, 0.4)',
             },
             '&.Mui-selected': {
-              backgroundColor: '#527a8a',
+              backgroundColor: isDark ? '#4A7BA7' : '#2C5282', // 금융권 색상
               color: 'white',
-              borderColor: '#527a8a',
+              borderColor: isDark ? '#4A7BA7' : '#2C5282',
               fontWeight: 700,
               '&:hover': {
-                backgroundColor: '#3e5b66',
-                borderColor: '#3e5b66',
+                backgroundColor: isDark ? '#5A8BB7' : '#1A3A52',
+                borderColor: isDark ? '#5A8BB7' : '#1A3A52',
               },
             },
             '&.MuiPaginationItem-ellipsis': {
               border: 'none',
               backgroundColor: 'transparent',
+              color: isDark ? '#94A3B8' : '#64748B',
             },
           },
           '& .MuiPaginationItem-previousNext': {

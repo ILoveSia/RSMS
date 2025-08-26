@@ -13,6 +13,7 @@ export interface AuditItemStatusResponse {
   responsibilityDetailContent: string; // 책무상세 내용
   positionsNm: string;              // 직책명
   deptCd: string;                   // 부서 코드
+  deptName: string;                 // 부서명
   fieldTypeCd: string;              // 항목 구분 코드
   roleTypeCd: string;               // 직무 구분 코드
   icTask: string;                   // 내부통제업무

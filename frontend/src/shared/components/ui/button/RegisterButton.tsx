@@ -1,6 +1,7 @@
 import React from 'react';
 import Button from '@/shared/components/ui/button/Button';
 import { Add as AddIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material';
 
 export interface RegisterButtonProps {
   onClick: () => void | Promise<void>;
@@ -19,10 +20,13 @@ const RegisterButton: React.FC<RegisterButtonProps> = ({
   label = '등록',
   sx,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   return (
     <Button
       variant="contained"
-      color="success"
+      color="primary"
       size={size}
       startIcon={<AddIcon />}
       onClick={onClick}
@@ -34,6 +38,13 @@ const RegisterButton: React.FC<RegisterButtonProps> = ({
         fontSize: '0.875rem',
         fontWeight: 600,
         borderRadius: 1,
+        backgroundColor: isDark ? '#4A7BA7' : '#2C5282', // 다크모드 대응
+        '&:hover': {
+          backgroundColor: isDark ? '#5A8BB7' : '#1A3A52',
+        },
+        '&:active': {
+          backgroundColor: isDark ? '#6B9AC4' : '#152A3E',
+        },
         ...sx,
       }}
     >

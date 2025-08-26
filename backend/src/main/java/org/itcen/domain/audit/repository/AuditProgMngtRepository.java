@@ -56,6 +56,7 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
                 COALESCE(rd.responsibility_detail_content, '') as responsibilityDetailContent,
                 COALESCE(p.positions_nm, '미정') as positionsNm,
                 COALESCE(hi.dept_cd, '') as deptCd,
+                COALESCE(d.department_name, '') as deptName,
                 COALESCE(hi.field_type_cd, '') as fieldTypeCd,
                 COALESCE(hi.role_type_cd, '') as roleTypeCd,
                 COALESCE(hi.ic_task, '') as icTask,
@@ -78,6 +79,7 @@ public interface AuditProgMngtRepository extends JpaRepository<AuditProgMngt, Lo
             FROM audit_prog_mngt apm
             INNER JOIN audit_prog_mngt_detail apd ON apm.audit_prog_mngt_id = apd.audit_prog_mngt_id
             INNER JOIN hod_ic_item hi ON apd.hod_ic_item_id = hi.hod_ic_item_id
+            LEFT JOIN departments d ON hi.dept_cd = d.department_id
             LEFT JOIN responsibility r ON hi.responsibility_id = r.responsibility_id
             LEFT JOIN responsibility_detail rd ON hi.responsibility_detail_id = rd.responsibility_detail_id
             LEFT JOIN role_resp_status rrs ON hi.responsibility_id = rrs.responsibility_id
