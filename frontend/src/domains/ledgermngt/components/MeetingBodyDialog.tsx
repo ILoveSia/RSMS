@@ -284,14 +284,14 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
               <TextField
                 fullWidth
                 label="등록일시"
-                value={meetingBody.createdAt || ''}
+                value={meetingBody.createdAt ? new Date(meetingBody.createdAt).toISOString().split('T')[0] : ''}
                 mode="readonly"
                 readonlyPlaceholder="등록일시가 없습니다"
               />
               <TextField
                 fullWidth
                 label="수정일시"
-                value={meetingBody.updatedAt || ''}
+                value={meetingBody.updatedAt ? new Date(meetingBody.updatedAt).toISOString().split('T')[0] : ''}
                 mode="readonly"
                 readonlyPlaceholder="수정일시가 없습니다"
               />
