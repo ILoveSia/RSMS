@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "f":"concurrently \"npm run dev:frontend\" \"wait-on http://localhost:3000 && start chrome http://localhost:3000\"",
+    "f": "concurrently \"npm run dev:frontend\" \"wait-on http://localhost:3000 && start chrome http://localhost:3000\"",
     "dev:backend": "cd backend && gradlew bootRun --args='--spring.profiles.active=local'",
     "d": "concurrently \"npm run dev:be\" \"wait-on tcp:8080 && npm run f \" ",
     "dev:be": "cd backend && gradlew bootRun --args='--spring.profiles.active=docker'",
