@@ -613,14 +613,14 @@ const DataGrid = <T extends Record<string, any>>({
                 '& .MuiDataGrid-cell': {
                   borderBottom: 'none',
                   fontSize: '0.875rem',
-                  padding: '12px 16px',
+                  padding: '10px 16px',
                   display: 'flex',
                   alignItems: 'center',
                   ...(wrapText ? { // Add this block for text wrapping styles
                     whiteSpace: 'normal',
                     wordBreak: 'break-word',
                     overflow: 'hidden',
-                    lineHeight: '1.4',
+                    lineHeight: '1',
                   } : {}),
                   '&:focus': {
                     outline: 'none',
