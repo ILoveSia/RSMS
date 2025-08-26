@@ -80,7 +80,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
 
   // 데이터 그리드 컬럼 정의
   const columns: DataGridColumn<SubmissionHistoryRow>[] = [
-    { field: 'historyCode', headerName: '제출이력 코드', width: 150, align: 'center' },
     { field: 'position', headerName: '직책', width: 200, align: 'center', renderCell: renderPositionCell },
     {
       field: 'bankCd',
@@ -92,33 +91,12 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
     { field: 'executiveName', headerName: '제출 대상 임원', width: 150, align: 'center' },
     { field: 'submissionDate', headerName: '제출일', width: 150, align: 'center' },
     {
-      field: 'isModified',
-      headerName: '수정여부',
-      width: 100,
-      align: 'center',
-      renderCell: ({ value }) => (
-        <Chip
-          label={value ? '수정' : '원본'}
-          color={value ? 'primary' : 'default'}
-          size="small"
-        />
-      ),
-    },
-    {
-      field: 'modificationDate',
-      headerName: '수정일',
-      width: 150,
-      align: 'center',
-      renderCell: ({ row }) => row.submissionDate,
-    },
-    {
       field: 'attachmentFile',
       headerName: '첨부파일',
       width: 120,
       align: 'center',
       renderCell: ({ row }) => <AttachmentBadge count={row.attachmentCount} />,
     },
-    { field: 'remarks', headerName: '비고', width: 200, align: 'center' },
   ];
 
   // 제출 이력 조회
