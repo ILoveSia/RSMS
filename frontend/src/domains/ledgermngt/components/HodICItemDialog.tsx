@@ -750,6 +750,7 @@ interface ResponsibilityDetail {
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                       fullWidth
                       label='책무ID *'
                       value={formData.responsibilityContent || `${formData.responsibilityId}`}
@@ -776,6 +777,7 @@ interface ResponsibilityDetail {
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                       fullWidth
                       label='책무상세ID *'
                       value={formData.responsibilityDetailContent || `${formData.responsibilityDetailId}`}
@@ -802,6 +804,7 @@ interface ResponsibilityDetail {
                 <Grid item xs={12} sm={6}>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                       fullWidth
                       label='부서명 *'
                       value={formData.deptName}
@@ -873,6 +876,7 @@ interface ResponsibilityDetail {
                 {/* 조치활동ID */}
                 <Grid item xs={12} sm={6}>
                   <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                     fullWidth
                     label='조치활동ID'
                     value={formData.measureId}
@@ -886,6 +890,7 @@ interface ResponsibilityDetail {
                 {/* 조치활동 */}
                 <Grid item xs={12}>
                   <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                     fullWidth
                     label='조치활동'
                     value={formData.measureDesc}
@@ -899,6 +904,7 @@ interface ResponsibilityDetail {
                 {/* 내부통제업무 */}
                 <Grid item xs={12}>
                   <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                     fullWidth
                     label='내부통제업무 *'
                     value={formData.icTask}
@@ -913,6 +919,7 @@ interface ResponsibilityDetail {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
+                    mode={isViewMode ? 'readonly' : 'editable'}
                     label='조치유형'
                     value={formData.measureType}
                     onChange={e => handleInputChange('measureType', e.target.value)}
@@ -951,6 +958,7 @@ interface ResponsibilityDetail {
                 {/* 관련근거 */}
                 <Grid item xs={12} sm={6}>
                   <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                     fullWidth
                     label='관련근거'
                     value={formData.supportDoc}
@@ -962,6 +970,7 @@ interface ResponsibilityDetail {
                 {/* 점검방법 */}
                 <Grid item xs={12}>
                   <TextField
+                      mode={isViewMode ? 'readonly' : 'editable'}
                     fullWidth
                     label='점검방법'
                     value={formData.checkWay}
