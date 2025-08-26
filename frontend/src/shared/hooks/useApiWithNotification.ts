@@ -30,7 +30,7 @@ interface UseApiWithNotificationOptions {
  */
 export const useApiWithNotification = (options: UseApiWithNotificationOptions = {}) => {
   const { showSuccessLoad, showNotification } = useNotification();
-  const { showSuccessOnLoad = true, successMessage, errorMessage } = options;
+  const { showSuccessOnLoad = true, successMessage="페이지 로드 성공", errorMessage="페이지 로드 실패" } = options;
 
   const callApiWithNotification = useCallback(
     async <T>(

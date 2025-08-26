@@ -2,40 +2,38 @@
  * 내 결재 목록 페이지
  * 내가 처리해야 할 결재 및 처리한 결재 목록을 표시합니다.
  */
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Button,
-  Alert,
-  CircularProgress,
-  Snackbar,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from '@mui/material';
+import { useReduxState } from '@/app/store/use-store';
+import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
+import InlineApprovalDialog from '@/shared/components/approval/InlineApprovalDialog';
+import SearchButton from '@/shared/components/ui/button/SearchButton';
+import { DataGrid } from '@/shared/components/ui/data-display';
+import { SearchConditionPanel } from '@/shared/components/ui/form';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import type { DataGridColumn } from '@/shared/types/common';
+import { getCodeNameSync, useCommonCodes } from '@/shared/utils/codeUtils';
 import {
   Assignment as AssignmentIcon,
 } from '@mui/icons-material';
-import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
-import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { DataGrid } from '@/shared/components/ui/data-display';
-import { SearchConditionPanel } from '@/shared/components/ui/form';
-import { ExcelDownloadButton } from '@/shared/components/ui/button';
-import SearchButton from '@/shared/components/ui/button/SearchButton';
-import type { DataGridColumn } from '@/shared/types/common';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Snackbar,
+  Typography
+} from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
+import '../../../assets/scss/style.css';
 import approvalApi, {
   type ApprovalListResponse,
   type ApprovalStatusResponse,
 } from '../api/approvalApi';
-import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
-import InlineApprovalDialog from '@/shared/components/approval/InlineApprovalDialog';
-import { useReduxState } from '@/app/store/use-store';
-import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
-import '../../../assets/scss/style.css';
 
 // 결재 상태 옵션
 const STATUS_OPTIONS = [
@@ -67,12 +65,6 @@ const MyApprovalListPage: React.FC = () => {
 
   // 공통코드 가져오기
   const allCodes = useCommonCodes();
-
-  console.log('🔍 MyApprovalListPage - 로그인 사용자 정보:', {
-    loginData,
-    currentUserId,
-    hasLoginData: !!loginData,
-  });
   // 상태 관리
   const [approvals, setApprovals] = useState<ApprovalListResponse[]>([]);
   const [loading, setLoading] = useState(false);

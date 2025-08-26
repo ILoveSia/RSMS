@@ -13,6 +13,7 @@ import NoticeDetailDialog from '../components/NoticeDetailDialog';
 import NoticeCreateDialog from '../components/NoticeCreateDialog';
 import CommonCodeSelect from '@/shared/components/ui/form/CommonCodeSelect';
 import { useGetCodeName } from '@/shared/utils/codeUtils';
+import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 
 type NoticeRow = NoticeListResponseDto;
 
@@ -27,20 +28,25 @@ const NoticePage: React.FC = () => {
   const [selected, setSelected] = useState<NoticeRow | null>(null);
   const [category, setCategory] = useState<string>('ALL');
   const getCodeName = useGetCodeName();
+  const { callApiWithNotification } = useApiWithNotification();
 
   const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const page = await noticeApi.getNoticeList({ page: 0, size: 200, sort: 'createdAt', direction: 'DESC' });
+    setLoading(true);
+    setError(null);
+    
+    const page = await callApiWithNotification(
+      () => noticeApi.getNoticeList({ page: 0, size: 200, sort: 'createdAt', direction: 'DESC' }),
+      'custom'
+    );
+    
+    if (page) {
       setRowsRaw(page.content || []);
-    } catch (e: any) {
-      setError(e?.message || '공지사항 데이터를 불러오는데 실패했습니다.');
+    } else {
       setRowsRaw([]);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+    
+    setLoading(false);
+  }, [callApiWithNotification]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -97,7 +103,7 @@ const NoticePage: React.FC = () => {
           py: 1,
         }}
       >
-          <TitleSearch value={keyword} onChange={setKeyword} onEnter={() => { /* no-op, client filter */ }} 
+          <TitleSearch value={keyword} onChange={setKeyword} 
           right={
           <>
             <CommonCodeSelect
@@ -119,8 +125,6 @@ const NoticePage: React.FC = () => {
           </>
           }
         />
-            
-        
 
         <DataGrid<NoticeRow & { categoryName: string }>
           data={rowsWithCategoryNames}
@@ -136,14 +140,23 @@ const NoticePage: React.FC = () => {
               renderCell: ({ row }) => (
                 <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                   {row.pinned ? (
-                    <PushPinIcon fontSize='small' style={{ color: '#ff8f00', marginRight: 6 }} />
+                    <PushPinIcon fontSize='small' style={{ color: '#ff8f00', marginRight: 6 }}  />
                   ) : null}
                   {/* 공개여부 필드 제거로 자물쇠 아이콘 표시 제거 */}
                   <span style={{ color: '#1976d2', cursor: 'default' }}>{row.title}</span>
                 </span>
               ),
             },
-            { field: 'created_at', headerName: '작성일', width: 140, align: 'center' },
+            {
+              field: 'created_at',
+              headerName: '작성일',
+              width: 140,
+              align: 'center',
+              valueFormatter: (params) => {
+                const value = params.value;
+                return value?.toString().split('T')[0]||'';
+              }
+            },
             { field: 'view_count', headerName: '조회수', width: 100, align: 'center' },
           ]}
           pagination={{
@@ -156,7 +169,7 @@ const NoticePage: React.FC = () => {
           }}
           serverSide={false}
           sortable
-          height={560}
+          // height={560}
           getRowClassName={({ row }) => (row.pinned ? 'row-pinned' : '')}
           disableRowSelectionOnClick
           rowSelectionModel={[]}
@@ -166,22 +179,27 @@ const NoticePage: React.FC = () => {
             },
           }}
           onRowClick={async (row) => {
-            try {
-              const detail = await noticeApi.getNoticeDetail(Number(row.id));
+            const detail = await callApiWithNotification(
+              () => noticeApi.getNoticeDetail(Number(row.id)),
+              'custom'
+            );
+            
+            if (detail) {
               setSelected(detail as any);
-            } catch {
+            } else {
               setSelected(row as any);
-            } finally {
-              setDetailOpen(true);
             }
+            
+            setDetailOpen(true);
           }}
         />
 
-        <NoticeDetailDialog
-          open={detailOpen}
-          onClose={() => setDetailOpen(false)}
-          data={selected}
-        />
+        {detailOpen && (
+          <NoticeDetailDialog
+            onClose={() => setDetailOpen(false)}
+            data={selected}
+          />
+        )}
 
         {createOpen && (
           <NoticeCreateDialog
@@ -189,17 +207,22 @@ const NoticePage: React.FC = () => {
             onClose={() => setCreateOpen(false)}
             loading={creating}
             onSubmit={async (form) => {
-              try {
-                setCreating(true);
-                const userRaw = localStorage.getItem('user');
-                const userJson = userRaw ? JSON.parse(userRaw) : {};
-                const userId = userJson?.userid || 'system';
-                await noticeApi.createNotice(form, { userId });
+              setCreating(true);
+              const userRaw = localStorage.getItem('user');
+              const userJson = userRaw ? JSON.parse(userRaw) : {};
+              const userId = userJson?.userid || 'system';
+              
+              const result = await callApiWithNotification(
+                () => noticeApi.createNotice(form, { userId }),
+                'custom'
+              );
+              
+              if (result) {
                 setCreateOpen(false);
                 await loadData();
-              } finally {
-                setCreating(false);
               }
+              
+              setCreating(false);
             }}
           />
         )}

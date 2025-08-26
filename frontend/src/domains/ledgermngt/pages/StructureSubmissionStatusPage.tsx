@@ -1,20 +1,20 @@
 /**
  * 책무구조도 제출 관리 페이지
- * 책무구조 원장 관리 - 적부구조도 제출 관리
+ * 책무구조 원장 관리 - 책무구조도 제출 관리
  */
-import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
+import { AttachmentBadge } from '@/shared/components/ui/badge';
+import { ManagementButtonGroup, SearchButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { DatePicker, LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
-import { useGetCodeName } from '@/shared/utils/codeUtils';
-import { AttachmentBadge } from '@/shared/components/ui/badge';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { useApiWithNotification } from '@/shared/hooks';
 import type { DataGridColumn } from '@/shared/types/common';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { RegistrationData, SubmissionHistoryRow } from '../api/SubmissionStatusApi';
 import {
@@ -24,7 +24,6 @@ import {
   updateSubmissionHistory,
 } from '../api/SubmissionStatusApi';
 import { StructureSubmissionStatusDialog } from '../components';
-import { useApiWithNotification } from '@/shared/hooks';
 
 interface IStructureSubmissionStatusPageProps {
   className?: string;

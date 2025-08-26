@@ -8,12 +8,6 @@
  *   data={users}
  *   columns={userColumns}
  *   onRowClick={(row) => console.log('Row clicked:', row)}
- *   pagination={{
- *     page: 1,
- *     pageSize: 10,
- *     totalItems: 100,
- *     onPageChange: (page) => setPage(page)
- *   }}
  * />
  * ```
  */
@@ -112,6 +106,9 @@ const convertColumnsToMuiFormat = <T,>(columns: DataGridColumn<T>[]): GridColDef
     editable: col.editable,
     align: col.align,
     headerAlign: col.headerAlign || 'center', // 기본값을 중앙정렬로 설정
+    valueFormatter: col.valueFormatter
+      ? params => col.valueFormatter?.({ value: params.value })
+      : undefined,
     renderCell: col.renderCell
       ? params =>
           col.renderCell?.({

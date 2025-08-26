@@ -44,6 +44,7 @@ export interface DataGridColumn<T = any> {
   editable?: boolean;
   align?: 'left' | 'center' | 'right';
   headerAlign?: 'left' | 'center' | 'right';
+  valueFormatter?: (params: { value: T[keyof T] }) => string;
   renderCell?: (params: {
     value: T[keyof T];
     row: T;
