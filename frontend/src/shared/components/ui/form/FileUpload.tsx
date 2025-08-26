@@ -1,7 +1,8 @@
-import { FileUploader, FileCard } from 'evergreen-ui';
+import { FileUploader, IconButton, DownloadIcon, TrashIcon } from 'evergreen-ui';
 import React, { useCallback, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { uploadAttachment, writeAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
 import type { AttachmentType } from '@/domains/report/pages/types';
+import CustomFileCard from './CustomFileCard'; // Import the custom component
 
 interface FileUploadProps {
   existingFiles?: AttachmentType | null;
@@ -174,15 +175,13 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
     if (existingFiles && !showUploader) {
         return (
             <>
-                <FileCard
-                    key={existingFiles.attachId}
+                <CustomFileCard
                     name={existingFiles.originalFilename}
                     sizeInBytes={existingFiles.fileSize}
                     type={existingFiles.contentType}
                     isInvalid={false}
                     onRemove={readonly ? undefined : handleRemoveExisting}
-                    onClick={() => handleDownload(existingFiles.attachId, existingFiles.originalFilename)}
-                    style={{ cursor: 'pointer' }}
+                    onDownload={() => handleDownload(existingFiles.attachId, existingFiles.originalFilename)}
                 />
                 {/* 오류 메시지 표시 */}
                 {uploadError && (
@@ -215,21 +214,14 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
                     const fileRejection = fileRejections.find((fileRejection) => fileRejection.file === file);
                     const { message } = fileRejection || {};
                     return (
-                        <FileCard
-                            key={name}
-                            isInvalid={fileRejection != null}
+                        <CustomFileCard // Use CustomFileCard instead of FileCard
                             name={name}
-                            onRemove={handleRemove}
                             sizeInBytes={size}
                             type={type}
+                            isInvalid={fileRejection != null}
                             validationMessage={message}
-                            onClick={() => {
-                                // 새로 업로드된 파일은 아직 서버에 저장되지 않았으므로 다운로드할 수 없습니다.
-                                // 필요한 경우, 로컬 파일을 다운로드하는 로직을 추가할 수 있습니다.
-                                // 여기서는 경고 메시지만 표시합니다.
-                                setUploadError('업로드된 파일은 저장 후 다운로드할 수 있습니다.');
-                            }}
-                            style={{ cursor: 'pointer' }}
+                            onRemove={handleRemove}
+                            // onDownload is not provided for new files, so no download button will be shown
                         />
                     );
                 }}
