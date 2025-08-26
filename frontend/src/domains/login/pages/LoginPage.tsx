@@ -477,12 +477,16 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                   width: 64,
                   height: 64,
                   borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                  background: theme.palette.mode === 'dark' 
+                    ? `linear-gradient(135deg, #4A7BA7 0%, #64748B 100%)`  // 다크모드: 밝은 네이비
+                    : `linear-gradient(135deg, #2C5282 0%, #4A7BA7 100%)`, // 라이트모드: 진한 네이비
                   mb: 2,
-                  boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? `0 4px 20px ${alpha('#4A7BA7', 0.3)}`
+                    : `0 4px 20px ${alpha('#2C5282', 0.2)}`,
                 }}
               >
-                <Business sx={{ fontSize: 32, color: 'var(--bank-text-primary)' }} />
+                <Business sx={{ fontSize: 32, color: '#FFFFFF' }} />
               </Box>
 
               <Typography variant='h4' component='h1' fontWeight='bold' color='text.primary' mb={1}>
@@ -671,19 +675,34 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                     fontSize: '1rem',
                     fontWeight: 'bold',
                     textTransform: 'none',
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                    boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
+                    background: theme.palette.mode === 'dark'
+                      ? `linear-gradient(135deg, #4A7BA7 0%, #64748B 100%)`  // 다크모드: 밝은 톤
+                      : `linear-gradient(135deg, #2C5282 0%, #4A7BA7 100%)`, // 라이트모드: 네이비
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? `0 4px 14px ${alpha('#4A7BA7', 0.3)}`
+                      : `0 4px 14px ${alpha('#2C5282', 0.2)}`,
                     '&:hover': {
-                      boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.6)}`,
+                      background: theme.palette.mode === 'dark'
+                        ? `linear-gradient(135deg, #5A8BB7 0%, #74849B 100%)`
+                        : `linear-gradient(135deg, #1A3A52 0%, #2C5282 100%)`,
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? `0 6px 20px ${alpha('#4A7BA7', 0.4)}`
+                        : `0 6px 20px ${alpha('#2C5282', 0.3)}`,
                       transform: 'translateY(-1px)',
                     },
                     '&:active': {
-                      boxShadow: `0 3px 12px ${alpha(theme.palette.primary.main, 0.5)}`,
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? `0 3px 12px ${alpha('#4A7BA7', 0.3)}`
+                        : `0 3px 12px ${alpha('#2C5282', 0.25)}`,
                       transform: 'none',
                     },
                     '&:disabled': {
-                      background: 'var(--bank-primary-bg)',
-                      color: 'var(--bank-text-primary)',
+                      background: theme.palette.mode === 'dark' 
+                        ? '#2D3748'
+                        : '#E2E8F0',
+                      color: theme.palette.mode === 'dark'
+                        ? '#718096'
+                        : '#94A3B8',
                       boxShadow: 'none',
                       transform: 'none',
                     },

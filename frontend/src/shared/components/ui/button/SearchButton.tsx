@@ -3,7 +3,7 @@
  * 검색 조건과 함께 사용되는 파란색 계열의 조회 버튼입니다.
  */
 import React from 'react';
-import { Button } from '@mui/material';
+import { Button, useTheme } from '@mui/material';
 import type { ButtonProps } from '@mui/material/Button';
 import { Search as SearchIcon } from '@mui/icons-material';
 
@@ -26,6 +26,9 @@ const SearchButton: React.FC<SearchButtonProps> = ({
   sx,
   ...props
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   return (
     <Button
       variant="contained"
@@ -39,9 +42,12 @@ const SearchButton: React.FC<SearchButtonProps> = ({
         minWidth: '80px',
         fontSize: '0.875rem',
         fontWeight: 600,
-        backgroundColor: '#1976d2', // 파란색 계열
+        backgroundColor: isDark ? '#4A7BA7' : '#2C5282', // 다크모드 대응
         '&:hover': {
-          backgroundColor: '#1565c0',
+          backgroundColor: isDark ? '#5A8BB7' : '#1A3A52',
+        },
+        '&:active': {
+          backgroundColor: isDark ? '#6B9AC4' : '#152A3E',
         },
         ...sx,
       }}

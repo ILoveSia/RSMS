@@ -5,11 +5,12 @@
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import { SearchButton } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
 import LedgerOrdersHodSelect from '@/shared/components/ui/form/LedgerOrdersHodSelect';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { SelectOption } from '@/shared/types/common';
+import type { SelectOption, DataGridColumn } from '@/shared/types/common';
 import { useReduxState } from '@/app/store/use-store';
 import { 
   Business as BusinessIcon,
@@ -40,10 +41,11 @@ import {
   type DeptAuditResultStatusDto,
   type DeptImprovementPlanStatusDto 
 } from '@/domains/inquiry/api/auditProgMngtApi';
-import { executiveDashboardApi } from '@/domains/dashboard/api/executiveDashboardApi';
+import { executiveDashboardApi, type ExecutiveDepartmentInfo } from '@/domains/dashboard/api/executiveDashboardApi';
 import AuditResultReportDialog from '@/domains/inquiry/components/AuditResultReportDialog';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
+import { getAuditItemStatusList, type AuditItemStatusResponse } from '@/domains/inquiry/api/auditItemApi';
 
 // 임원 정보 타입
 interface ExecutiveInfo {
@@ -96,6 +98,24 @@ interface ExecutiveSearchFilter {
   ledgerOrdersHodId?: number;
 }
 
+// 임원 소관부서 점검항목 현황 타입 (AuditItemStatusResponse 기반)
+interface ExecutiveAuditItemRow {
+  id: string;
+  hodIcItemId: number;
+  responsibilityDetailContent: string;
+  positionsNm: string;
+  deptCd: string;
+  deptName: string;
+  fieldTypeCd: string;
+  roleTypeCd: string;
+  icTask: string;
+  auditMenId: string;
+  auditResultStatusCd: string;
+  auditDoneDt: string;
+  auditDetailContent: string;
+  auditFinalResultYn: string;
+}
+
 const ExecutiveDashboardStatusPage: React.FC = () => {
   // 로그인 사용자 정보 가져오기
   const { data: loginData } = useReduxState<LoginUser>('loginStore/login');
@@ -116,6 +136,12 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
   const [auditResultRows, setAuditResultRows] = useState<DeptAuditResultStatusDto[]>([]);
   const [improvementPlanRows, setImprovementPlanRows] = useState<DeptImprovementPlanStatusDto[]>([]);
   const [combinedRows, setCombinedRows] = useState<ExecutiveDepartmentStatusDto[]>([]);
+  
+  // 임원 소관부서 점검항목 현황 상태
+  const [auditItemRows, setAuditItemRows] = useState<ExecutiveAuditItemRow[]>([]);
+  
+  // 임원 소관부서 목록 상태
+  const [executiveDepartments, setExecutiveDepartments] = useState<ExecutiveDepartmentInfo[]>([]);
 
   // 검색 조건 상태
   const [selectedLedgerOrdersHod, setSelectedLedgerOrdersHod] = useState<SelectOption | null>(null);
@@ -141,71 +167,58 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
   }, []);
 
   /**
-   * 임원 권한 확인 API 호출
+   * 임원 권한 확인 - positionCode 기반 체크
    */
   const checkExecutiveAuth = useCallback(async () => {
     try {
       setAuthLoading(true);
       
-      // 개발용 우회 처리 - 임시로 모든 사용자를 임원으로 처리
-      console.log('개발용: 임원 권한 우회 처리 중...');
-      const executiveInfo: ExecutiveInfo = {
-        execofficerId: 1,
-        empId: loginData?.empNo || 'testuser',
-        positionsId: 1,
-        positionsName: '대표이사',
-        ledgerOrder: 1,
-        isExecutive: true,
-        departmentCount: 5 // 임시 소관부서 수
-      };
+      // 실제 임원 권한 체크: positionCode가 "PC05"인지 확인
+      const isExecutivePosition = loginData?.positionCode === "PC05";
       
-      setExecutiveInfo(executiveInfo);
-      setIsExecutive(true);
-      
-      // 실제 API 호출 (주석 처리 - 나중에 사용)
-      /*
-      const authResult = await executiveDashboardApi.checkExecutiveAuth(loginData?.empNo || '');
-      
-      if (authResult.isExecutive) {
+      if (isExecutivePosition) {
+        console.log('임원 권한 확인됨:', loginData?.positionCode);
+        
+        // 임원 소관부서 조회
+        try {
+          const departments = await executiveDashboardApi.getExecutiveDepartments(loginData?.empNo || '');
+          setExecutiveDepartments(departments);
+          console.log('임원 소관부서 조회 성공:', departments);
+        } catch (error) {
+          console.error('임원 소관부서 조회 실패:', error);
+          setExecutiveDepartments([]);
+        }
+        
         const executiveInfo: ExecutiveInfo = {
-          execofficerId: authResult.execofficerId || 0,
-          empId: authResult.empId,
-          positionsId: authResult.positionsId || 0,
-          positionsName: authResult.positionsName || '',
-          ledgerOrder: authResult.ledgerOrder || 0,
+          execofficerId: 1,
+          empId: loginData?.empNo || 'testuser',
+          positionsId: 1,
+          positionsName: '임원',
+          ledgerOrder: 1,
           isExecutive: true,
-          departmentCount: authResult.departmentCount
+          departmentCount: 5
         };
         
         setExecutiveInfo(executiveInfo);
         setIsExecutive(true);
       } else {
+        console.log('임원 권한 없음:', loginData?.positionCode);
         setIsExecutive(false);
         setExecutiveInfo(null);
         setErrorMessage('임원 권한이 없습니다. 임원만 접근 가능한 페이지입니다.');
         setErrorDialogOpen(true);
       }
-      */
       
     } catch (error) {
       console.error('임원 권한 확인 실패:', error);
-      // 개발용: 오류가 발생해도 임원으로 처리
-      const executiveInfo: ExecutiveInfo = {
-        execofficerId: 1,
-        empId: loginData?.empNo || 'testuser',
-        positionsId: 1,
-        positionsName: '대표이사',
-        ledgerOrder: 1,
-        isExecutive: true,
-        departmentCount: 5
-      };
-      
-      setExecutiveInfo(executiveInfo);
-      setIsExecutive(true);
+      setIsExecutive(false);
+      setExecutiveInfo(null);
+      setErrorMessage('임원 권한 확인 중 오류가 발생했습니다.');
+      setErrorDialogOpen(true);
     } finally {
       setAuthLoading(false);
     }
-  }, [loginData?.empNo]);
+  }, [loginData?.empNo, loginData?.positionCode]);
 
   /**
    * 소관부서별 점검결과 현황 조회
@@ -258,6 +271,145 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
       setIsLoading(false);
     }
   }, [filter.ledgerOrdersHodId, isExecutive, executiveInfo]);
+
+  /**
+   * 임원 소관부서 점검항목 현황 조회
+   */
+  const fetchExecutiveAuditItems = useCallback(async () => {
+    if (!isExecutive || !executiveInfo || executiveDepartments.length === 0) {
+      setAuditItemRows([]);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // 임원 소관부서 코드 목록 추출
+      const executiveDeptCodes = executiveDepartments.map(dept => dept.ownerDeptCd);
+      console.log('임원 소관부서 코드들:', executiveDeptCodes);
+      
+      // 전체 점검항목 조회
+      const apiResponse = await getAuditItemStatusList({
+        ledgerOrdersHod: filter.ledgerOrdersHodId,
+      });
+
+      if (apiResponse && Array.isArray(apiResponse)) {
+        // 임원 소관부서의 점검항목만 필터링
+        const filteredItems = apiResponse.filter(item => 
+          executiveDeptCodes.includes(item.deptCd)
+        );
+        
+        console.log('전체 점검항목 수:', apiResponse.length);
+        console.log('임원 소관부서 점검항목 수:', filteredItems.length);
+        
+        const executiveItems: ExecutiveAuditItemRow[] = filteredItems.map((item, index) => ({
+          id: `${item.hodIcItemId}_${index}`,
+          hodIcItemId: item.hodIcItemId,
+          responsibilityDetailContent: item.responsibilityDetailContent || '',
+          positionsNm: item.positionsNm || '',
+          deptCd: item.deptCd || '',
+          deptName: (item as any).deptName || '',
+          fieldTypeCd: item.fieldTypeCd || '',
+          roleTypeCd: item.roleTypeCd || '',
+          icTask: item.icTask || '',
+          auditMenId: item.auditMenId || '미지정',
+          auditResultStatusCd: item.auditResultStatusCd || '',
+          auditDoneDt: item.auditDoneDt || '',
+          auditDetailContent: item.auditDetailContent || '',
+          auditFinalResultYn: item.auditFinalResultYn || 'N'
+        }));
+        
+        setAuditItemRows(executiveItems);
+      } else {
+        setAuditItemRows([]);
+      }
+      
+    } catch (err) {
+      console.error('임원 소관부서 점검항목 조회 실패:', err);
+      setAuditItemRows([]);
+    }
+  }, [filter.ledgerOrdersHodId, isExecutive, executiveInfo, executiveDepartments]);
+
+  /**
+   * 임원 소관부서 점검항목 DataGrid 컬럼 정의
+   */
+  const auditItemColumns: DataGridColumn<ExecutiveAuditItemRow>[] = [
+    {
+      field: 'hodIcItemId',
+      headerName: '항목ID',
+      width: 100,
+    },
+    {
+      field: 'responsibilityDetailContent',
+      headerName: '책무상세내역',
+      width: 200,
+    },
+    {
+      field: 'positionsNm',
+      headerName: '책무별 직책',
+      width: 120,
+    },
+    {
+      field: 'deptName',
+      headerName: '부서',
+      width: 120,
+    },
+    {
+      field: 'fieldTypeCd',
+      headerName: '항목구분',
+      width: 100,
+    },
+    {
+      field: 'icTask',
+      headerName: '내부통제업무',
+      width: 180,
+    },
+    {
+      field: 'auditMenId',
+      headerName: '점검자',
+      width: 120,
+    },
+    {
+      field: 'auditResultStatusCd',
+      headerName: '점검결과',
+      width: 100,
+      renderCell: ({ value }) => {
+        if (!value) return null;
+        return (
+          <Chip
+            label={
+              value === 'INS02' ? '적정' :
+                value === 'INS03' ? '미흡' :
+                  value === 'INS04' ? '제외' :
+                    value === 'INS01' ? '진행중' : value
+            }
+            color={
+              value === 'INS02' ? 'success' :
+                value === 'INS03' ? 'error' :
+                  value === 'INS01' ? 'default' : 'primary'
+            }
+            size="small"
+          />
+        );
+      },
+    },
+    {
+      field: 'auditFinalResultYn',
+      headerName: '점검 및 이행완료',
+      width: 140,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }) => {
+        return (
+          <Chip
+            label={value === 'Y' ? '점검완료' : '진행중'}
+            color={value === 'Y' ? 'success' : 'warning'}
+            size="small"
+          />
+        );
+      },
+    }
+  ];
 
   /**
    * 두 데이터를 부서코드 기준으로 통합
@@ -340,9 +492,10 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
     
     await Promise.all([
       fetchExecutiveAuditResultStatus(),
-      fetchExecutiveImprovementPlanStatus()
+      fetchExecutiveImprovementPlanStatus(),
+      fetchExecutiveAuditItems()
     ]);
-  }, [fetchExecutiveAuditResultStatus, fetchExecutiveImprovementPlanStatus, isExecutive, showError]);
+  }, [fetchExecutiveAuditResultStatus, fetchExecutiveImprovementPlanStatus, fetchExecutiveAuditItems, isExecutive, showError]);
 
   // 검색 조건이 변경될 때 필터만 적용
   useEffect(() => {
@@ -360,10 +513,10 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
 
   // 임원 권한 확인 후 초기 데이터 로드
   useEffect(() => {
-    if (isExecutive && !authLoading) {
+    if (isExecutive && !authLoading && executiveDepartments.length > 0) {
       handleSearch();
     }
-  }, [isExecutive, authLoading, handleSearch]);
+  }, [isExecutive, authLoading, executiveDepartments.length, handleSearch]);
 
   const handleErrorDialogClose = () => {
     setErrorDialogOpen(false);
@@ -439,7 +592,7 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
     };
   };
 
-  const totalData = calculateTotal();
+  const totalData = useMemo(() => calculateTotal(), [combinedRows]);
 
   // 로딩 중
   if (authLoading) {
@@ -484,7 +637,7 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
       }}
     >
       <PageHeader
-        title="[650] 임원별 소관부서 이행점검 현황"
+        title="[650] 임원별 소관부서 이행점검 현황 [DashBord]"
         icon={<BusinessIcon />}
         description={`${executiveInfo?.positionsName || '임원'} 소관부서의 점검결과 및 개선계획 이행 현황을 조회합니다.`}
         elevation={false}
@@ -500,14 +653,14 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
+          overflow: 'auto',
           minHeight: 0,
           position: 'relative',
           py: 1,
         }}
       >
         {/* 임원 정보 패널 */}
-        {executiveInfo && (
+        {/* {executiveInfo && (
           <Box sx={{ 
             mb: 2, 
             p: 2, 
@@ -524,12 +677,12 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
                   {executiveInfo.positionsName} 소관부서 현황
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  관할 부서: {combinedRows.length}개 부서
+                  관할 부서: {executiveDepartments.length}개 부서 (점검현황: {combinedRows.length}개 부서)
                 </Typography>
               </Grid>
             </Grid>
           </Box>
-        )}
+        )} */}
 
         {/* 검색 조건 */}
         <Box
@@ -544,9 +697,7 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
             borderRadius: '4px',
           }}
         >
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>검색조건</span>
-          
-          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>원장차수</span>
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333', marginLeft: '16px' }}>점검회차</span>
           <LedgerOrdersHodSelect
             value={String(selectedLedgerOrdersHod?.value || 'ALL')}
             onChange={handleLedgerOrderChange}
@@ -559,11 +710,73 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
           <SearchButton onClick={handleSearch} loading={isLoading} disabled={isLoading} />
         </Box>
 
+        {/* 소관부서 점검항목 현황 DataGrid */}
+        <Box sx={{ mb: 2 }}>
+          <Paper sx={{ p: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', fontSize: '1rem' }}>
+                <AssignmentIcon color="primary" sx={{ mr: 1, fontSize: '1.2rem' }} />
+                소관부서 점검항목 현황
+                <Chip 
+                  label={`${auditItemRows.length}건`} 
+                  color="primary" 
+                  size="small" 
+                  sx={{ ml: 1, fontWeight: 'bold' }} 
+                />
+              </Typography>
+            </Box>
+            
+            {executiveDepartments.length === 0 && isExecutive && !authLoading ? (
+              <Box sx={{ 
+                height: '280px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '4px'
+              }}>
+                <Typography variant="body2" color="textSecondary">
+                  임원 소관부서 정보를 불러오는 중입니다...
+                </Typography>
+              </Box>
+            ) : (
+              <DataGrid
+                data={auditItemRows}
+                columns={auditItemColumns}
+                loading={isLoading}
+                error={null}
+                selectable={false}
+                rowIdField="id"
+                sx={{
+                  height: '280px',
+                  '& .MuiDataGrid-columnHeaders': {
+                    backgroundColor: 'var(--bank-bg-secondary) !important',
+                    fontWeight: 'bold',
+                    fontSize: '0.8rem',
+                  },
+                  '& .MuiDataGrid-row': {
+                    cursor: 'default',
+                  },
+                  '& .MuiDataGrid-cell': {
+                    fontSize: '0.8rem',
+                  },
+                }}
+              />
+            )}
+          </Paper>
+        </Box>
+
         {/* 대시보드 카드 레이아웃 */}
-        <Grid container spacing={2} sx={{ flex: 1, minHeight: 0 }}>
+        <Grid container spacing={1.5} sx={{ mb: 2 }}>
           {/* 소관부서 점검현황 카드 */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ height: '500px', display: 'flex', flexDirection: 'column' }}>
+            <Card sx={{ 
+              minHeight: '250px', 
+              maxHeight: '400px',
+              height: Math.max(250, Math.min(400, 120 + combinedRows.length * 80)),
+              display: 'flex', 
+              flexDirection: 'column' 
+            }}>
               <CardHeader
                 avatar={<AssessmentIcon color="primary" />}
                 title="소관부서 점검현황"
@@ -588,15 +801,15 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
                       <Paper 
                         key={row.deptCd} 
                         sx={{ 
-                          p: 2, 
+                          p: 1.5, 
                           border: '1px solid var(--bank-border)',
-                          borderRadius: '8px',
+                          borderRadius: '6px',
                           backgroundColor: index % 2 === 0 ? '#fff' : 'var(--bank-bg-secondary)',
                           cursor: row.auditResultReportId ? 'pointer' : 'default',
                           '&:hover': row.auditResultReportId ? {
                             backgroundColor: 'var(--bank-bg-hover)',
                             transform: 'translateY(-1px)',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                           } : {}
                         }}
                         onClick={() => row.auditResultReportId && handleDeptNameClick(row)}
@@ -674,7 +887,13 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
 
           {/* 소관부서 미흡사항현황 카드 */}
           <Grid item xs={12} lg={6}>
-            <Card sx={{ height: '500px', display: 'flex', flexDirection: 'column' }}>
+            <Card sx={{ 
+              minHeight: '250px', 
+              maxHeight: '400px',
+              height: Math.max(250, Math.min(400, 120 + combinedRows.filter(row => row.inadequateCount > 0).length * 80)),
+              display: 'flex', 
+              flexDirection: 'column' 
+            }}>
               <CardHeader
                 avatar={<WarningIcon color="error" />}
                 title="소관부서 미흡사항현황"
@@ -702,9 +921,9 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
                       <Paper 
                         key={row.deptCd} 
                         sx={{ 
-                          p: 2, 
+                          p: 1.5, 
                           border: '1px solid #ffcdd2',
-                          borderRadius: '8px',
+                          borderRadius: '6px',
                           backgroundColor: index % 2 === 0 ? '#fff' : '#ffeef0',
                           cursor: 'default'
                         }}
@@ -800,76 +1019,78 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
         </Grid>
 
         {/* 대시보드 요약 통계 카드 */}
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={3}>
+        {isExecutive && (
+        <Grid container spacing={1.5} sx={{ mt: 1, mb: 2 }}>
+          <Grid item xs={6} md={3}>
             <Card sx={{ 
-              backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
               textAlign: 'center'
             }}>
-              <CardContent>
-                <GroupsIcon sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold">
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <GroupsIcon sx={{ fontSize: 32, mb: 1 }} />
+                <Typography variant="h5" fontWeight="bold">
                   {combinedRows.length}
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="caption" display="block">
                   관할 부서
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={6} md={3}>
             <Card sx={{ 
-              backgroundColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
               color: 'white',
               textAlign: 'center'
             }}>
-              <CardContent>
-                <AssignmentIcon sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold">
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <AssignmentIcon sx={{ fontSize: 32, mb: 1 }} />
+                <Typography variant="h5" fontWeight="bold">
                   {totalData.totalCount.toLocaleString()}
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="caption" display="block">
                   전체 점검항목
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={6} md={3}>
             <Card sx={{ 
-              backgroundColor: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
               color: 'white',
               textAlign: 'center'
             }}>
-              <CardContent>
-                <CheckCircleIcon sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold">
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <CheckCircleIcon sx={{ fontSize: 32, mb: 1 }} />
+                <Typography variant="h5" fontWeight="bold">
                   {totalData.appropriateRate}%
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="caption" display="block">
                   전체 적정율
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={6} md={3}>
             <Card sx={{ 
-              backgroundColor: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
               color: 'white',
               textAlign: 'center'
             }}>
-              <CardContent>
-                <TrendingUpIcon sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold">
+              <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                <TrendingUpIcon sx={{ fontSize: 32, mb: 1 }} />
+                <Typography variant="h5" fontWeight="bold">
                   {totalData.completionRate}%
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="caption" display="block">
                   이행완료율
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
         </Grid>
+        )}
 
         {/* 결과보고서 다이얼로그 */}
         <AuditResultReportDialog

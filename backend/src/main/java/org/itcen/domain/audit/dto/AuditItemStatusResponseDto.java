@@ -47,6 +47,11 @@ public class AuditItemStatusResponseDto {
     private String deptCd;
 
     /**
+     * 부서명
+     */
+    private String deptName;
+
+    /**
      * 항목 구분 코드
      */
     private String fieldTypeCd;

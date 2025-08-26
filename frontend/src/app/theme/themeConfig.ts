@@ -57,21 +57,21 @@ const commonTheme: any = {
   },
 };
 
-// 라이트 테마
+// 라이트 테마 - 금융권 적합 색상
 export const lightTheme = createTheme({
   ...commonTheme,
   palette: {
     mode: 'light',
     primary: {
-      main: '#1976d2',
-      light: '#42a5f5',
-      dark: '#1565c0',
+      main: '#2C5282',      // 신뢰감 있는 네이비 블루
+      light: '#4A7BA7',     // 연한 네이비 블루
+      dark: '#1A3A52',      // 진한 네이비
       contrastText: '#fff',
     },
     secondary: {
-      main: '#9c27b0',
-      light: '#ba68c8',
-      dark: '#7b1fa2',
+      main: '#64748B',      // 차분한 그레이 블루
+      light: '#94A3B8',     // 연한 그레이 블루
+      dark: '#475569',      // 진한 그레이 블루
       contrastText: '#fff',
     },
     background: {
@@ -104,22 +104,22 @@ export const lightTheme = createTheme({
   },
 });
 
-// 다크 테마
+// 다크 테마 - 금융권 적합 색상 (다크모드)
 export const darkTheme = createTheme({
   ...commonTheme,
   palette: {
     mode: 'dark',
     primary: {
-      main: '#90caf9',
-      light: '#bbdefb',
-      dark: '#42a5f5',
-      contrastText: '#000',
+      main: '#4A7BA7',      // 밝은 네이비 블루 (다크모드용)
+      light: '#6B9AC4',     // 더 밝은 네이비
+      dark: '#2C5282',      // 진한 네이비
+      contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#ce93d8',
-      light: '#e1bee7',
-      dark: '#ab47bc',
-      contrastText: '#000',
+      main: '#94A3B8',      // 밝은 그레이 블루 (다크모드용)
+      light: '#B4C1D4',     // 더 밝은 그레이 블루
+      dark: '#64748B',      // 진한 그레이 블루
+      contrastText: '#FFFFFF',
     },
     background: {
       default: '#121212',
@@ -170,25 +170,46 @@ export const darkTheme = createTheme({
   },
 });
 
-// CSS 변수 업데이트 함수
+// CSS 변수 업데이트 함수 - 금융권 적합 색상
 export const updateCssVariables = (isDark: boolean) => {
   const root = document.documentElement;
   
   if (isDark) {
-    root.style.setProperty('--bank-primary', '#90caf9');
-    root.style.setProperty('--bank-primary-dark', '#42a5f5');
+    root.style.setProperty('--bank-primary', '#4A7BA7');
+    root.style.setProperty('--bank-primary-light', '#6B9AC4');
+    root.style.setProperty('--bank-primary-dark', '#2C5282');
+    root.style.setProperty('--bank-secondary', '#94A3B8');
+    root.style.setProperty('--bank-secondary-dark', '#64748B');
     root.style.setProperty('--bank-bg-secondary', '#1e1e1e');
     root.style.setProperty('--bank-bg-hover', '#333333');
     root.style.setProperty('--bank-border', '#333333');
     root.style.setProperty('--bank-text-primary', '#ffffff');
     root.style.setProperty('--bank-text-secondary', '#b3b3b3');
+    // 상태 색상
+    root.style.setProperty('--bank-success', '#10B981');
+    root.style.setProperty('--bank-warning', '#F59E0B');
+    root.style.setProperty('--bank-error', '#EF4444');
+    root.style.setProperty('--bank-info', '#06B6D4');
   } else {
-    root.style.setProperty('--bank-primary', '#1976d2');
-    root.style.setProperty('--bank-primary-dark', '#1565c0');
-    root.style.setProperty('--bank-bg-secondary', '#f5f5f5');
-    root.style.setProperty('--bank-bg-hover', '#e3f2fd');
-    root.style.setProperty('--bank-border', '#e0e0e0');
-    root.style.setProperty('--bank-text-primary', '#212121');
-    root.style.setProperty('--bank-text-secondary', '#666666');
+    root.style.setProperty('--bank-primary', '#2C5282');
+    root.style.setProperty('--bank-primary-light', '#4A7BA7');
+    root.style.setProperty('--bank-primary-dark', '#1A3A52');
+    root.style.setProperty('--bank-secondary', '#64748B');
+    root.style.setProperty('--bank-secondary-dark', '#475569');
+    root.style.setProperty('--bank-bg-secondary', '#F8FAFC');
+    root.style.setProperty('--bank-bg-hover', '#EFF6FF');
+    root.style.setProperty('--bank-border', '#E2E8F0');
+    root.style.setProperty('--bank-text-primary', '#1E293B');
+    root.style.setProperty('--bank-text-secondary', '#64748B');
+    // 상태 색상 - 부드럽고 전문적인 톤
+    root.style.setProperty('--bank-success', '#059669');
+    root.style.setProperty('--bank-warning', '#D97706');
+    root.style.setProperty('--bank-error', '#DC2626');
+    root.style.setProperty('--bank-info', '#0891B2');
+    // 버튼별 색상
+    root.style.setProperty('--bank-button-primary', '#2C5282');
+    root.style.setProperty('--bank-button-excel', '#059669');
+    root.style.setProperty('--bank-button-danger', '#B91C1C');
+    root.style.setProperty('--bank-button-secondary', '#64748B');
   }
 };
