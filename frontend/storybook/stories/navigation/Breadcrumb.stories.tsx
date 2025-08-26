@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Breadcrumb from '../../../src/shared/components/ui/navigation/Breadcrumb';
 
 const meta: Meta = {
-  title: 'Shared/UI/Navigation/Breadcrumb'
+  title: 'shared/components/ui/navigation/Breadcrumb'
 };
 export default meta;
 

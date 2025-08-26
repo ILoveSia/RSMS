@@ -60,14 +60,11 @@ export interface DataGridProps<T = any> extends BaseComponentProps {
 
   // 페이지네이션
   pagination?: Partial<PaginationProps>;
-  serverSide?: boolean;
 
   // 스타일 및 레이아웃
   height?: number | string;
   maxHeight?: number | string;
   autoHeight?: boolean;
-  density?: 'compact' | 'standard' | 'comfortable';
-  outline?: boolean;
   wrapText?: boolean; // Add this line for text wrapping
 
   // 기능 설정
@@ -77,9 +74,6 @@ export interface DataGridProps<T = any> extends BaseComponentProps {
   noDataMessage?: string;
   rowIdField?: keyof T;
   getRowClassName?: (params: GridRowClassNameParams<any>) => string;
-
-  // 가상화
-  virtualization?: boolean;
 
   // 추가 props
   disableColumnMenu?: boolean;
@@ -158,10 +152,9 @@ const calculatePaginatedData = (
   data: any[],
   page: number,
   pageSize: number,
-  serverSide: boolean,
   pagination?: Partial<PaginationProps>
 ) => {
-  if (serverSide || pagination) return data;
+  if (pagination) return data;
 
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
@@ -410,16 +403,13 @@ const DataGrid = <T extends Record<string, any>>({
   onSortChange,
   onFilterChange,
   pagination,
-  serverSide = false,
   height = 800,
   maxHeight,
   autoHeight = false,
-  density = 'standard',
   sortable = true,
   wrapText = true, // Add this line
   noDataMessage = '표시할 데이터가 없습니다.',
   rowIdField = 'id' as keyof T,
-  virtualization = true,
   disableColumnMenu = true,
   disableColumnFilter = true,
   disableColumnSort = false,
@@ -447,8 +437,8 @@ const DataGrid = <T extends Record<string, any>>({
 
   // 페이지네이션된 데이터 계산
   const paginatedData = useMemo(() => 
-    calculatePaginatedData(data, page, pageSize, serverSide, pagination), 
-    [data, page, pageSize, serverSide, pagination]
+    calculatePaginatedData(data, page, pageSize, pagination), 
+    [data, page, pageSize, pagination]
   );
 
   // 컬럼 변환
@@ -595,7 +585,6 @@ const DataGrid = <T extends Record<string, any>>({
               onSortModelChange={handleSortModelChange}
               filterModel={filterModel}
               onFilterModelChange={handleFilterModelChange}
-              density={density}
               disableColumnMenu={disableColumnMenu}
               disableColumnFilter={disableColumnFilter}
               

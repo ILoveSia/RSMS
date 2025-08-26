@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import SearchConditionPanel from '../../../src/shared/components/ui/form/SearchConditionPanel';
 
 const meta: Meta = {
-  title: 'Shared/UI/Form/SearchConditionPanel'
+  title: 'Shared/components/ui/form/SearchConditionPanel'
 };
 export default meta;
 

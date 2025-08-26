@@ -1,54 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import CustomSnackbar from '../../src/shared/components/notification/CustomSnackbar';
 import React from 'react';
+import Button from '../../src/shared/components/ui/button/Button';
 
 const meta: Meta<typeof CustomSnackbar> = {
-  title: 'Shared/Notification/CustomSnackbar',
+  title: 'shared/components/notification/CustomSnackbar',
   component: CustomSnackbar,
-  parameters: {
-    layout: 'centered',
-  },
+  // parameters: {
+  //   layout: 'centered',
+  // },
   tags: ['autodocs'],
 };
 
 export default meta;
-type Story = StoryObj<typeof CustomSnackbar>;
-
-export const Success: Story = {
-  args: {
-    open: true,
-    message: 'This is a success message!',
-    severity: 'success',
-    autoHideDuration: 3000,
-  },
-};
-
-export const Error: Story = {
-  args: {
-    open: true,
-    message: 'This is an error message!',
-    severity: 'error',
-    autoHideDuration: 3000,
-  },
-};
-
-export const Info: Story = {
-  args: {
-    open: true,
-    message: 'This is an info message!',
-    severity: 'info',
-    autoHideDuration: 3000,
-  },
-};
-
-export const Warning: Story = {
-  args: {
-    open: true,
-    message: 'This is a warning message!',
-    severity: 'warning',
-    autoHideDuration: 3000,
-  },
-};
+type Story = StoryObj;
 
 // You can also create a story that shows how to use it with a button
 export const WithButton: Story = {
@@ -69,7 +34,7 @@ export const WithButton: Story = {
 
     return (
       <div>
-        <button onClick={handleClick}>Show Snackbar</button>
+        <Button onClick={handleClick}>Show Snackbar</Button>
         <CustomSnackbar {...args} open={open} onClose={handleClose} />
       </div>
     );

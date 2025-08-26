@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Stepper from '../../../src/shared/components/ui/navigation/Stepper';
 
 const meta: Meta = {
-  title: 'Shared/UI/Navigation/Stepper'
+  title: 'shared/components/ui/navigation/Stepper'
 };
 export default meta;
 

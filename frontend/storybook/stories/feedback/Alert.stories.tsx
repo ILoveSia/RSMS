@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import Alert from '../../../src/shared/components/ui/feedback/Alert';
 
 const meta: Meta = {
-  title: 'Shared/UI/Feedback/Alert'
+  title: 'Shared/components/ui/feedback/Alert'
 };
 export default meta;
 

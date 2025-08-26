@@ -167,7 +167,6 @@ const NoticePage: React.FC = () => {
             onPageChange: () => {},
             onPageSizeChange: () => {},
           }}
-          serverSide={false}
           sortable
           // height={560}
           getRowClassName={({ row }) => (row.pinned ? 'row-pinned' : '')}

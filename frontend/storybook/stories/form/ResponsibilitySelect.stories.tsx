@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import ResponsibilitySelect from '../../../src/shared/components/ui/form/ResponsibilitySelect';
 
 const meta: Meta = {
-  title: 'Shared/UI/Form/ResponsibilitySelect'
+  title: 'Shared/components/ui/form/ResponsibilitySelect'
 };
 export default meta;
 

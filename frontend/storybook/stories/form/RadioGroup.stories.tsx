@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import RadioGroup from '../../../src/shared/components/ui/form/RadioGroup';
 
 const meta: Meta = {
-  title: 'Shared/UI/Form/RadioGroup'
+  title: 'Shared/components/ui/form/RadioGroup'
 };
 export default meta;
 
