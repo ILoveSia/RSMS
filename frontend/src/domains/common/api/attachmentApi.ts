@@ -53,7 +53,6 @@ export async function getAttachments(entityType: string, entityId: number): Prom
       entityId
     }
   });
-  console.log("response",response)
   if (response.length > 0) {
     return response[0] as AttachmentType;
   } else {

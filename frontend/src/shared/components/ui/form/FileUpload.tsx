@@ -1,7 +1,8 @@
-import { FileUploader, FileCard } from 'evergreen-ui';
-import React, { useCallback, useState, forwardRef, useImperativeHandle } from 'react';
+import { FileUploader, IconButton, DownloadIcon, TrashIcon } from 'evergreen-ui';
+import React, { useCallback, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { uploadAttachment, writeAttachment, downloadAttachment } from '@/domains/common/api/attachmentApi';
 import type { AttachmentType } from '@/domains/report/pages/types';
+import CustomFileCard from './CustomFileCard'; // Import the custom component
 
 interface FileUploadProps {
   existingFiles?: AttachmentType | null;
@@ -11,6 +12,7 @@ interface FileUploadProps {
   uploadedBy: string; // 업로드한 사용자
   entityId?: number; // 엔티티 ID (범용적 이름으로 변경)
   readonly?: boolean; // 읽기 전용 모드
+  onReady?: () => void; // 컴포넌트 준비 완료 콜백
 }
 
 // Ref를 통해 부모 컴포넌트에서 호출할 수 있는 메서드 정의
@@ -23,12 +25,20 @@ interface FileRejection {
   message?: string;
 }
 
-const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy, entityId, readonly = false }, ref) => {
+const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy, entityId, readonly = false, onReady }, ref) => {
     const [files, setFiles] = useState<File[]>([]);
     const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);
     const [showUploader, setShowUploader] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    useEffect(() => {
+        if (onReady) {
+            setTimeout(() => {
+                onReady();
+            }, 0);
+        }
+    }, [onReady]);
     
     // 기존 파일을 제거하고 업로더를 표시하는 함수
     const handleRemoveExisting = useCallback(() => {
@@ -47,6 +57,15 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
     }, []);
     
     const handleSubmit = useCallback(async (id:number|null,mode?: 'create' | 'edit') => {
+        
+        // readonly 모드일 경우 업로드를 막음
+        if (readonly) {
+            if (onSubmit) {
+                onSubmit(null);
+            }
+            return;
+        }
+        
         if (files.length === 0) {
             if (onSubmit) {
                 onSubmit(null);
@@ -67,11 +86,18 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
             else if(mode === 'create'){
                 RID = id ?? -1;
             }
-            const result = await writeAttachment(file, {
+            
+            if (RID === -1) {
+                throw new Error('유효하지 않은 엔티티 ID입니다.');
+            }
+            
+            const uploadRequest = {
                 entityType,
-                entityId: RID, // 임시 업로드이므로 entityId는 0
+                entityId: RID,
                 uploadedBy
-            });
+            };
+            
+            const result = await writeAttachment(file, uploadRequest);
             
             // 업로드 성공 시, onSubmit에 attachId를 전달
             if (onSubmit) {
@@ -111,12 +137,14 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
         } finally {
             setIsUploading(false);
         }
-    }, [files, onSubmit, entityType, uploadedBy, entityId]);
+    }, [files, onSubmit, entityType, uploadedBy, entityId, readonly]);
 
     // ref를 통해 부모 컴포넌트에서 호출할 수 있도록 메서드 노출
     useImperativeHandle(ref, () => ({
-        handleSubmit: (id:number|null,mode?: 'create' | 'edit') => handleSubmit(id, mode)
-    }));
+        handleSubmit: (id:number|null,mode?: 'create' | 'edit') => {
+            return handleSubmit(id, mode);
+        }
+    }), [handleSubmit]);
 
     // 선택된 파일 제거 핸들러
     const handleRemove = useCallback(() => {
@@ -147,15 +175,13 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
     if (existingFiles && !showUploader) {
         return (
             <>
-                <FileCard
-                    key={existingFiles.attachId}
+                <CustomFileCard
                     name={existingFiles.originalFilename}
                     sizeInBytes={existingFiles.fileSize}
                     type={existingFiles.contentType}
                     isInvalid={false}
                     onRemove={readonly ? undefined : handleRemoveExisting}
-                    onClick={() => handleDownload(existingFiles.attachId, existingFiles.originalFilename)}
-                    style={{ cursor: 'pointer' }}
+                    onDownload={() => handleDownload(existingFiles.attachId, existingFiles.originalFilename)}
                 />
                 {/* 오류 메시지 표시 */}
                 {uploadError && (
@@ -188,21 +214,14 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
                     const fileRejection = fileRejections.find((fileRejection) => fileRejection.file === file);
                     const { message } = fileRejection || {};
                     return (
-                        <FileCard
-                            key={name}
-                            isInvalid={fileRejection != null}
+                        <CustomFileCard // Use CustomFileCard instead of FileCard
                             name={name}
-                            onRemove={handleRemove}
                             sizeInBytes={size}
                             type={type}
+                            isInvalid={fileRejection != null}
                             validationMessage={message}
-                            onClick={() => {
-                                // 새로 업로드된 파일은 아직 서버에 저장되지 않았으므로 다운로드할 수 없습니다.
-                                // 필요한 경우, 로컬 파일을 다운로드하는 로직을 추가할 수 있습니다.
-                                // 여기서는 경고 메시지만 표시합니다.
-                                setUploadError('업로드된 파일은 저장 후 다운로드할 수 있습니다.');
-                            }}
-                            style={{ cursor: 'pointer' }}
+                            onRemove={handleRemove}
+                            // onDownload is not provided for new files, so no download button will be shown
                         />
                     );
                 }}

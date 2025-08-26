@@ -108,11 +108,12 @@ public interface ResponsibilityDocumentRepository extends JpaRepository<Responsi
            "LEFT JOIN approval ap ON rd.document_id = ap.task_id AND ap.task_type_cd = 'responsibility_documents' " +
            "LEFT JOIN (SELECT entity_id, COUNT(*) as attachment_count FROM attachments WHERE entity_type = 'responsibility_documents' GROUP BY entity_id) att_count " +
            "ON rd.document_id = att_count.entity_id " +
-           "WHERE (COALESCE(:authorEmpNo, '') = '' OR rd.author_emp_no LIKE CONCAT('%', :authorEmpNo, '%')) AND " +
+           "WHERE (COALESCE(:authorEmpNo, '') = '' OR rd.author_emp_no LIKE CONCAT('%', :authorEmpNo, '%') OR e.emp_name LIKE CONCAT('%', :authorEmpNo, '%')) AND " +
            "(COALESCE(:documentTitle, '') = '' OR rd.document_title LIKE CONCAT('%', :documentTitle, '%')) " +
            "ORDER BY rd.created_at DESC",
            countQuery = "SELECT COUNT(*) FROM responsibility_documents rd " +
-                       "WHERE (COALESCE(:authorEmpNo, '') = '' OR rd.author_emp_no LIKE CONCAT('%', :authorEmpNo, '%')) AND " +
+                       "LEFT JOIN employee e ON rd.author_emp_no = e.emp_no " +
+                       "WHERE (COALESCE(:authorEmpNo, '') = '' OR rd.author_emp_no LIKE CONCAT('%', :authorEmpNo, '%') OR e.emp_name LIKE CONCAT('%', :authorEmpNo, '%')) AND " +
                        "(COALESCE(:documentTitle, '') = '' OR rd.document_title LIKE CONCAT('%', :documentTitle, '%'))",
            nativeQuery = true)
     Page<Object[]> findBySearchCriteriaWithApproval(@Param("authorEmpNo") String authorEmpNo,

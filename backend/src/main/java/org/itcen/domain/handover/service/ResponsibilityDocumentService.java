@@ -213,6 +213,9 @@ public interface ResponsibilityDocumentService {
         LocalDate getApprovedAt();
         LocalDate getRejectedAt();
         String getRejectionReason();
+        
+        // 작성자명 추가
+        String getAuthorName();
     }
 
     /**
