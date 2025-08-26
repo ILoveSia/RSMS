@@ -80,18 +80,6 @@ public class InternalControlManualController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 모든 내부통제 메뉴얼 조회 (페이징)
-     */
-    @GetMapping
-    public ResponseEntity<Page<InternalControlManual>> getAllManuals(@PageableDefault Pageable pageable) {
-        log.debug("모든 내부통제 메뉴얼 조회 요청 - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
-        
-        Page<InternalControlManual> manuals = internalControlManualService.getAllManuals(pageable);
-        return ResponseEntity.ok(manuals);
-    }
-
-    
 
     
 

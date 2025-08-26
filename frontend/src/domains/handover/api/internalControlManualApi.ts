@@ -58,10 +58,6 @@ export interface InternalControlManualDto {
   deptName?: string;
   authorName?: string;
   
-  // 첨부파일 관련
-  attachmentCount?: number;
-  attachments?: AttachmentInfo[];
-  
   // 결재 관련 필드
   approvalStatus?: string;
   approvalId?: number;
@@ -74,14 +70,6 @@ export interface InternalControlManualDto {
   rejectionReason?: string;
 }
 
-// 첨부파일 정보 인터페이스
-export interface AttachmentInfo {
-  attachId: number;
-  originalName: string;
-  storedName: string;
-  fileSize: number;
-  mimeType: string;
-}
 
 // 결재 요청 DTO
 export interface ApprovalStartRequestDto {
@@ -106,19 +94,6 @@ export interface ManualSearchParams {
  */
 export class InternalControlManualApi {
   private static readonly BASE_URL = '/handover/manuals';
-
-  /**
-   * 내부통제 업무메뉴얼 목록 조회 (페이징)
-   */
-  static async getAllManuals(pageable: PaginationParams): Promise<Page<InternalControlManualDto>> {
-    const params = new URLSearchParams();
-    params.append('page', pageable.page.toString());
-    params.append('size', pageable.size.toString());
-    if (pageable.sort) params.append('sort', pageable.sort);
-    
-    return apiClient.get(`${this.BASE_URL}?${params.toString()}`);
-  }
-
   /**
    * 내부통제 업무메뉴얼 복합 조건 검색
    */

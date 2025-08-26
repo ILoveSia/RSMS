@@ -9,7 +9,8 @@ interface FileUploadProps {
   onSubmit?: (attachId: number | null) => void; // onSubmit에 attachId를 전달
   entityType: string; // 업로드할 엔티티 타입
   uploadedBy: string; // 업로드한 사용자
-  submissionReportId?: number;
+  entityId?: number; // 엔티티 ID (범용적 이름으로 변경)
+  readonly?: boolean; // 읽기 전용 모드
 }
 
 // Ref를 통해 부모 컴포넌트에서 호출할 수 있는 메서드 정의
@@ -22,7 +23,7 @@ interface FileRejection {
   message?: string;
 }
 
-const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy,submissionReportId }, ref) => {
+const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy, entityId, readonly = false }, ref) => {
     const [files, setFiles] = useState<File[]>([]);
     const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);
     const [showUploader, setShowUploader] = useState(false);
@@ -61,7 +62,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
             // 파일 업로드
             let RID = 0;
             if(mode === 'edit'){
-                RID = submissionReportId ?? -1;
+                RID = entityId ?? -1;
             }
             else if(mode === 'create'){
                 RID = id ?? -1;
@@ -110,7 +111,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
         } finally {
             setIsUploading(false);
         }
-    }, [files, onSubmit, entityType, uploadedBy]);
+    }, [files, onSubmit, entityType, uploadedBy, entityId]);
 
     // ref를 통해 부모 컴포넌트에서 호출할 수 있도록 메서드 노출
     useImperativeHandle(ref, () => ({
@@ -152,7 +153,7 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
                     sizeInBytes={existingFiles.fileSize}
                     type={existingFiles.contentType}
                     isInvalid={false}
-                    onRemove={handleRemoveExisting}
+                    onRemove={readonly ? undefined : handleRemoveExisting}
                     onClick={() => handleDownload(existingFiles.attachId, existingFiles.originalFilename)}
                     style={{ cursor: 'pointer' }}
                 />
@@ -166,6 +167,15 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFile
         );
     }
     
+    // readonly 모드이고 기존 파일이 없으면 아무것도 표시하지 않음
+    if (readonly && !existingFiles) {
+        return (
+            <div style={{ color: 'var(--bank-text-secondary)', fontSize: '14px', padding: '16px', textAlign: 'center' }}>
+                첨부된 파일이 없습니다.
+            </div>
+        );
+    }
+
     // 기존 파일이 없거나 삭제 버튼을 눌렀다면 파일 업로더 표시
     return (
         <>

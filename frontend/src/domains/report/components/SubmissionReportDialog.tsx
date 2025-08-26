@@ -12,7 +12,6 @@ import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
 import { submissionReportApi } from '../api/submissionReportApi';
 import { downloadAttachment } from '@/domains/common/api/attachmentApi';
 import { AttachmentList } from '@/shared/components/ui/data-display';
-import type { AttachmentInfo } from '@/domains/common/api/attachmentApi';
 import type { SubmissionReportRow } from '../pages/SubmissionReportPage';
 import FileUpload, { type FileUploadHandle } from '@/shared/components/ui/form/FileUpload';
 import type { AttachmentType } from '../pages/types';
@@ -24,7 +23,7 @@ interface SubmissionReportDialogProps {
   mode?: 'create' | 'edit' | 'view';
   reportId?: number;
   dialogData?: SubmissionReportRow | null;
-  initialData?: AttachmentInfo[];
+  initialData?: AttachmentType[];
   initialAttachment?: AttachmentType;
   onModeChange?: (mode: 'create' | 'edit' | 'view') => void;
   loading?: boolean;
@@ -43,7 +42,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 }) => {
   const [baseDate, setBaseDate] = useState<Date>(new Date());
   const [targetInstitution, setTargetInstitution] = useState('');
-  const [existingAttachments, setExistingAttachments] = useState<AttachmentInfo[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<AttachmentType[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<AttachmentType | null>(null);
   const [uploadedAttachId, setUploadedAttachId] = useState<number | null>(null); // FileUpload에서 전달받은 attachId
@@ -185,7 +184,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
   const isReadOnly = mode === 'view';
 
   // 기존 첨부파일 다운로드 핸들러
-  const handleDownloadExisting = async (file: AttachmentInfo) => {
+  const handleDownloadExisting = async (file: AttachmentType) => {
     try {
       const blob = await downloadAttachment(file.attachId);
       // 파일 다운로드
@@ -249,16 +248,15 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
             {uploadError}
           </Alert>
         )}
-        {mode!=='view' && (
         <FileUpload 
           ref={fileUploadRef}
           existingFiles={attachment} 
           onSubmit={handleFileSubmit}
           entityType="SUBMISSION_REPORT"
           uploadedBy="system" // TODO: 실제 사용자 ID로 변경
-          submissionReportId={dialogData?.submissionReportId}
+          entityId={dialogData?.submissionReportId}
+          readonly={isReadOnly}
         />
-        )}
         {/* 나머지 UI는 필요에 따라 수정 */}
       </Box>
     </BaseDialog>

@@ -13,9 +13,6 @@ export type { PositionSearchBoxProps } from './PositionSearchBox';
 export { default as DatePicker } from './DatePicker';
 export type { DatePickerProps } from './DatePicker';
 
-export { default as ServerFileUpload } from './ServerFileUpload';
-export type { ServerFileUploadProps, UploadFile, UploadResponse, FileUploadStatus, ServerFileUploadApi } from './ServerFileUpload';
-
 export { default as LedgerOrderSelect } from './LedgerOrderSelect';
 export type { LedgerOrderSelectProps, LedgerOrderOption } from './LedgerOrderSelect';
 

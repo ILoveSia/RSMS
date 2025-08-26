@@ -43,11 +43,6 @@ public interface InternalControlManualService {
      */
     void deleteManual(Long manualId);
 
-    /**
-     * 모든 내부통제 메뉴얼 조회 (페이징)
-     */
-    Page<InternalControlManual> getAllManuals(Pageable pageable);
-
     // 비즈니스 로직
 
     /**

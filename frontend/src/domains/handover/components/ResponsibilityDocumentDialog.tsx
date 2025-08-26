@@ -1,13 +1,6 @@
 /**
  * 책무기술서 다이얼로그
  * 책무기술서 등록/수정/조회 기능을 제공합니다.
- * 
- * SOLID 원칙:
- * - Single Responsibility: 책무기술서 다이얼로그 처리만 담당
- * - Open/Closed: 새로운 필드나 검증 추가 시 확장 가능
- * - Liskov Substitution: React 컴포넌트 인터페이스 준수
- * - Interface Segregation: 다이얼로그 관련 기능만 제공
- * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
 import { useReduxState } from '@/app/store/use-store';
@@ -35,7 +28,9 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { ResponsibilityDocumentApi, type ResponsibilityDocumentDto, type ResponsibilityDocument } from '../api/responsibilityDocumentApi';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
-import { uploadAttachment, getAttachments, downloadAttachment, deleteAttachment, type AttachmentInfo as CommonAttachmentInfo } from '@/domains/common/api/attachmentApi';
+import FileUpload ,{type FileUploadHandle} from '@/shared/components/ui/form/FileUpload';
+import { getAttachments } from '@/domains/common/api/attachmentApi';
+import type { AttachmentType } from '@/domains/report/pages/types';
 
 interface ResponsibilityDocumentDialogProps {
   open: boolean;
@@ -48,7 +43,7 @@ interface ResponsibilityDocumentDialogProps {
 }
 
 // CommonAttachmentInfo를 그대로 사용
-type AttachmentInfo = CommonAttachmentInfo;
+type AttachmentInfo = AttachmentType;
 
 interface FormData {
   documentTitle: string;
@@ -105,15 +100,17 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
   
   // 첨부파일 상태
-  const [attachments, setAttachments] = useState<AttachmentInfo[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+  const [attachments, setAttachments] = useState<AttachmentType | null>(null);
   // 알림 처리
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
-
-
+  const fileUploadRef = useRef<FileUploadHandle>(null);
+  const [uploadedAttachId, setUploadedAttachId] = useState<number | null>(null);
+  const handleFileSubmit = useCallback((attachId: number | null) => {
+    setUploadedAttachId(attachId);
+  }, []);
 
   // 공통코드 Store에서 데이터 가져오기
   const { data: allCodes } = useReduxState<{ data: CommonCode[] } | CommonCode[]>(
@@ -232,7 +229,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
       } else if (initialMode === 'create') {
         setFormData(initialFormData);
         setError(null);
-        setAttachments([]);
+        setAttachments(null);
       }
     }
   }, [
@@ -243,12 +240,35 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     apiResponseData,
   ]);
 
+  // 첨부파일 로드
+  const loadAttachments = useCallback(async () => {
+    if (!documentId) return;
+    try {
+      const attachmentList = await getAttachments('responsibility_documents', documentId);
+      setAttachments(attachmentList || null);
+    } catch (err) {
+      console.error('첨부파일 로드 실패:', err);
+      // 첨부파일 로드 실패는 무시 (선택사항)
+    }
+  }, [documentId]);
+
   // 첨부파일 로드 (documentId가 있을 때만)
   useEffect(() => {
     if (open && documentId && (mode === 'edit' || mode === 'view')) {
       loadAttachments();
     }
-  }, [open, documentId, mode]);
+  }, [open, documentId, mode, loadAttachments]);
+
+  // 생성 모드에서 현재 로그인 사용자로 작성자 설정
+  useEffect(() => {
+    if (isCreateMode && currentUserId) {
+      setFormData(prev => ({
+        ...prev,
+        authorEmpNo: currentUserId,
+        // 사용자명은 별도 API 호출이 필요하므로 여기서는 설정하지 않음
+      }));
+    }
+  }, [isCreateMode, currentUserId]);
 
   const handleInputChange = (field: keyof FormData, value: string | number | Date | null) => {
     setFormData(prev => ({
@@ -300,13 +320,20 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
         documentContent: formData.documentContent,
         effectiveDate: formatDate(formData.effectiveDate),
         expiryDate: formatDate(formData.expiryDate),
-        authorEmpNo: formData.authorEmpNo,
+        authorEmpNo: formData.authorEmpNo || currentUserId || '',
+        status: 'DRAFT', // 기본값으로 DRAFT 설정
       };
 
       if (isCreateMode) {
-        await ResponsibilityDocumentApi.createDocument(requestData);
+        const result = await ResponsibilityDocumentApi.createDocument(requestData);
+        // 파일 업로드 처리
+        await fileUploadRef.current?.handleSubmit(result.documentId!, 'create');
+        showSuccess('문서가 성공적으로 생성되었습니다.');
       } else if (isEditMode && documentId) {
         await ResponsibilityDocumentApi.updateDocument(documentId, requestData);
+        // 파일 업로드 처리
+        await fileUploadRef.current?.handleSubmit(documentId, 'edit');
+        showSuccess('문서가 성공적으로 수정되었습니다.');
       }
 
       onSuccess?.();
@@ -314,6 +341,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     } catch (err) {
       console.error('Failed to save document:', err);
       setError('저장 중 오류가 발생했습니다.');
+      showError('저장 중 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
@@ -346,118 +374,11 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   const handleAuthorSelect = (employee: EmployeeSearchResult) => {
     setFormData(prev => ({
       ...prev,
-      authorEmpNo: employee.num,
+      authorEmpNo: employee.empNo,
       authorName: employee.username,
     }));
     setAuthorSearchOpen(false);
   };
-
-  // 파일 크기 포맷팅 함수
-  const formatFileSize = useCallback((bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  }, []);
-
-  // 파일 선택 핸들러
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const file = files[0]; // 첫 번째 파일만 선택
-    
-    // 파일 크기 검증 (10MB)
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      showError('파일 크기는 10MB를 초과할 수 없습니다.');
-      return;
-    }
-
-    setSelectedFile(file);
-  }, [showError]);
-
-  // 첨부파일 목록 로드
-  const loadAttachments = useCallback(async () => {
-    if (!documentId) return;
-
-    try {
-      const result = await getAttachments('responsibility_documents', documentId);
-      setAttachments(Array.isArray(result) ? result : []);
-    } catch (error) {
-      console.error('첨부파일 로드 실패:', error);
-    }
-  }, [documentId]);
-
-  // 파일 업로드 핸들러
-  const handleFileUpload = useCallback(async () => {
-    if (!selectedFile || !documentId) {
-      showError('문서를 먼저 저장한 후 파일을 업로드해주세요.');
-      return;
-    }
-
-    try {
-      setUploadingFiles(true);
-      
-      await uploadAttachment(selectedFile, {
-        entityType: 'responsibility_documents',
-        entityId: documentId,
-        uploadedBy: currentUserId || 'system'
-      });
-      
-      showSuccess('파일이 업로드되었습니다.');
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-      // 첨부파일 목록 새로고침
-      await loadAttachments();
-      
-    } catch (error) {
-      console.error('파일 업로드 실패:', error);
-      showError(error instanceof Error ? error.message : '파일 업로드 중 오류가 발생했습니다.');
-    } finally {
-      setUploadingFiles(false);
-    }
-  }, [selectedFile, documentId, currentUserId, showSuccess, showError, loadAttachments]);
-
-  // 파일 다운로드 핸들러
-  const handleFileDownload = useCallback(async (attachment: AttachmentInfo) => {
-    try {
-      const blob = await downloadAttachment(attachment.attachId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', attachment.originalFilename);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-    } catch (error) {
-      console.error('파일 다운로드 실패:', error);
-      showError(error instanceof Error ? error.message : '파일 다운로드 중 오류가 발생했습니다.');
-    }
-  }, [showError]);
-
-  // 파일 삭제 핸들러
-  const handleFileDelete = useCallback(async (attachment: AttachmentInfo) => {
-    if (!confirm(`"${attachment.originalFilename}" 파일을 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      await deleteAttachment(attachment.attachId, currentUserId || 'system');
-      showSuccess('파일이 삭제되었습니다.');
-      await loadAttachments();
-      
-    } catch (error) {
-      console.error('파일 삭제 실패:', error);
-      showError(error instanceof Error ? error.message : '파일 삭제 중 오류가 발생했습니다.');
-    }
-  }, [showSuccess, showError, loadAttachments, currentUserId]);
 
   // 커스텀 액션 버튼들 생성
   const renderCustomActions = () => {
@@ -695,124 +616,15 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
 
                 {/* 첨부파일 섹션 */}
                 <Grid item xs={12}>
-                  <Box sx={{ 
-                    border: '1px solid var(--bank-border)',
-                    borderRadius: '4px',
-                    p: 2,
-                    backgroundColor: 'var(--bank-bg-secondary)',
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>📎 첨부파일</span>
-                        <span style={{ fontSize: '0.8rem', color: '#666' }}>
-                          ({attachments.length}개)
-                        </span>
-                      </Box>
-                    </Box>
-                    
-                    {/* 새 파일 업로드 (create/edit 모드) */}
-                    {!isViewMode && (
-                      <Box sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            hidden
-                            accept="*/*"
-                            onChange={handleFileSelect}
-                          />
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => fileInputRef.current?.click()}
-                            sx={{ 
-                              height: '32px', 
-                              fontSize: '0.75rem',
-                            }}
-                          >
-                            파일선택
-                          </Button>
-                          {selectedFile && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <span style={{ fontSize: '0.8rem' }}>{selectedFile.name}</span>
-                              {documentId && (
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  onClick={handleFileUpload}
-                                  disabled={uploadingFiles}
-                                  sx={{ height: '28px', fontSize: '0.75rem' }}
-                                >
-                                  {uploadingFiles ? '업로드 중...' : '업로드'}
-                                </Button>
-                              )}
-                            </Box>
-                          )}
-                        </Box>
-                      </Box>
-                    )}
-                    
-                    {/* 기존 첨부파일 목록 */}
-                    <Box sx={{ maxHeight: '150px', overflow: 'auto' }}>
-                      {attachments.length === 0 && !selectedFile ? (
-                        <Box sx={{ 
-                          textAlign: 'center', 
-                          py: 2, 
-                          color: '#999',
-                          fontSize: '0.875rem'
-                        }}>
-                          첨부파일이 없습니다.
-                        </Box>
-                      ) : (
-                        attachments.map((attachment) => (
-                          <Box
-                            key={attachment.attachId}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              py: 1,
-                              px: 1.5,
-                              borderRadius: '4px',
-                              backgroundColor: '#f8f9fa',
-                              mb: 1,
-                              border: '1px solid #e0e0e0',
-                              '&:last-child': { mb: 0 }
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-                              <span style={{ fontSize: '0.875rem' }}>📄</span>
-                              <span style={{ fontSize: '0.875rem', flex: 1 }}>
-                                {attachment.originalFilename}
-                              </span>
-                              <span style={{ fontSize: '0.75rem', color: '#666' }}>
-                                {formatFileSize(attachment.fileSize)}
-                              </span>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleFileDownload(attachment)}
-                                title="다운로드"
-                              >
-                                📥
-                              </IconButton>
-                              {!isViewMode && (
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleFileDelete(attachment)}
-                                  title="삭제"
-                                  sx={{ color: 'error.main' }}
-                                >
-                                  🗑️
-                                </IconButton>
-                              )}
-                            </Box>
-                          </Box>
-                        ))
-                      )}
-                    </Box>
-                  </Box>
+                <FileUpload
+                ref={fileUploadRef}
+                existingFiles={attachments}
+                onSubmit={handleFileSubmit}
+                entityType="responsibility_documents"
+                uploadedBy="system"
+                entityId={documentId}
+                readonly={isViewMode}
+            />
                 </Grid>
 
               </Grid>
