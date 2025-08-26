@@ -320,11 +320,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           flex: 1,
           align: 'left',
           cellClassName: 'wrap-text',
-          renderCell: params => (
-            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {params.value}
-            </div>
-          ),
+          // renderCell에서 별도의 스타일을 제거하여, sx에서 정의한 wrap-text 스타일이 적용되도록 함
         },
         {
           field: 'responsibilityMgtSts',
@@ -333,11 +329,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           flex: 2,
           align: 'left',
           cellClassName: 'wrap-text',
-          renderCell: params => (
-            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {params.value}
-            </div>
-          ),
+          // renderCell에서 별도의 스타일을 제거하여, sx에서 정의한 wrap-text 스타일이 적용되도록 함
         },
         {
           field: 'responsibilityRelEvid',
@@ -346,11 +338,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           flex: 1,
           align: 'left',
           cellClassName: 'wrap-text',
-          renderCell: params => (
-            <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {params.value}
-            </div>
-          ),
+          // renderCell에서 별도의 스타일을 제거하여, sx에서 정의한 wrap-text 스타일이 적용되도록 함
         },
         {
           field: 'createdAt',

@@ -73,6 +73,7 @@ export interface DataGridProps<T = any> extends BaseComponentProps {
   autoHeight?: boolean;
   density?: 'compact' | 'standard' | 'comfortable';
   outline?: boolean;
+  wrapText?: boolean; // Add this line for text wrapping
 
   // 기능 설정
   sortable?: boolean;
@@ -349,7 +350,7 @@ const CustomPagination = ({
   );
 };
 
-/**
+/** 
  * 공통 DataGrid 컴포넌트
  */
 const DataGrid = <T extends Record<string, any>>({
@@ -374,6 +375,7 @@ const DataGrid = <T extends Record<string, any>>({
   autoHeight = false,
   density = 'standard',
   sortable = true,
+  wrapText = true, // Add this line
   noDataMessage = '표시할 데이터가 없습니다.',
   rowIdField = 'id' as keyof T,
   virtualization = true,
@@ -558,6 +560,7 @@ const DataGrid = <T extends Record<string, any>>({
               
               hideFooter
               hideFooterPagination
+              getRowHeight={wrapText ? () => 'auto' : undefined} // Add this line
               sx={{
                 border: 'none',
                 backgroundColor: 'transparent',
@@ -613,6 +616,12 @@ const DataGrid = <T extends Record<string, any>>({
                   padding: '12px 16px',
                   display: 'flex',
                   alignItems: 'center',
+                  ...(wrapText ? { // Add this block for text wrapping styles
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                    overflow: 'hidden',
+                    lineHeight: '1.4',
+                  } : {}),
                   '&:focus': {
                     outline: 'none',
                   },
