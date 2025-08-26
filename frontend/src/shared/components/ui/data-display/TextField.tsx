@@ -1,4 +1,4 @@
-import type { TextFieldProps as MuiTextFieldProps, SxProps, Theme } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import { TextField as MuiTextField } from '@mui/material';
 import React from 'react';
 
@@ -9,7 +9,7 @@ import React from 'react';
  * - label이 있으면 shrink: true로 항상 위에 고정
  * - 나머지 props는 모두 그대로 전달
  */
-export interface TextFieldProps extends Omit<MuiTextFieldProps, 'variant' | 'size' | 'sx'> {
+export interface TextFieldProps {
   label: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -25,11 +25,13 @@ export interface TextFieldProps extends Omit<MuiTextFieldProps, 'variant' | 'siz
   mode: 'readonly' | 'editable';
   /** 읽기전용일 때 표시할 placeholder 텍스트 */
   readonlyPlaceholder?: string;
+  // MUI TextField에 전달할 추가 props
+  [key: string]: any;
 }
 
 const TextField: React.FC<TextFieldProps> = ({
-  label,
-  value,
+  label="",
+  value="",
   onChange,
   error,
   helperText,

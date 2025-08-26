@@ -10,10 +10,6 @@ const meta: Meta<typeof TextField> = {
     layout: 'padded',
   },
   argTypes: {
-    mode: {
-      control: 'radio',
-      options: ['readonly', 'editable'],
-    },
   },
 };
 export default meta;
