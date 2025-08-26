@@ -495,6 +495,12 @@ public class ResponsibilityDocumentServiceImpl implements ResponsibilityDocument
                 // 추후 comments 필드를 쿼리에 추가할 수 있음
                 return null; 
             }
+            
+            // authorName 추가
+            @Override
+            public String getAuthorName() {
+                return safeStringValue(row[7]); // e.emp_name (인덱스 7)
+            }
         };
     }
 
