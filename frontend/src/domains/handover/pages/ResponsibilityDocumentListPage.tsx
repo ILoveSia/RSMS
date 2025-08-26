@@ -310,7 +310,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
 
   // 사원 선택 핸들러
   const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
-    setAuthorEmpNo(employee.num);
+    setAuthorEmpNo(employee.empNo);
     setAuthorName(employee.username);
     setAuthorSearchOpen(false);
   }, []);

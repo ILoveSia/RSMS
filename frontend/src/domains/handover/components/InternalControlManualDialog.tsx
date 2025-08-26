@@ -37,7 +37,7 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { internalControlManualApi, type InternalControlManualDto, type ApprovalStartRequestDto } from '../api/internalControlManualApi';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
-import { uploadAttachment, getAttachments, downloadAttachment, deleteAttachment, type AttachmentInfo as CommonAttachmentInfo } from '@/domains/common/api/attachmentApi';
+import { uploadAttachment, getAttachments, downloadAttachment, deleteAttachment } from '@/domains/common/api/attachmentApi';
 import FileUpload, { type FileUploadHandle } from '@/shared/components/ui/form/FileUpload';
 import type { AttachmentType } from '@/domains/report/pages/types';
 
@@ -51,8 +51,6 @@ interface InternalControlManualDialogProps {
   apiResponseData?: any;
 }
 
-// CommonAttachmentInfo를 그대로 사용
-type AttachmentInfo = CommonAttachmentInfo;
 
 interface FormData {
   manualTitle: string;
@@ -654,7 +652,8 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
                 onSubmit={handleFileSubmit}
                 entityType="internal_control_manuals"
                 uploadedBy="system"
-                submissionReportId={manualId}
+                entityId={manualId}
+                readonly={isViewMode}
             />
             </Grid>
 
