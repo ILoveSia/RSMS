@@ -5,14 +5,31 @@ import type { AttachmentType } from '@/domains/report/pages/types';
 import CustomFileCard from './CustomFileCard'; // Import the custom component
 
 interface FileUploadProps {
+    /**
+     * 해당 데이터의 기존 첨부파일 정보, 없을 시 null
+     */
   existingFiles?: AttachmentType | null;
-  onRemoveExisting?: () => void;
   onSubmit?: (attachId: number | null) => void; // onSubmit에 attachId를 전달
-  entityType: string; // 업로드할 엔티티 타입
-  uploadedBy: string; // 업로드한 사용자
-  entityId?: number; // 엔티티 ID (범용적 이름으로 변경)
-  readonly?: boolean; // 읽기 전용 모드
-  onReady?: () => void; // 컴포넌트 준비 완료 콜백
+  /**
+   * 업로드할 엔티티 타입, 페이지별로 상이하게 지정
+   */
+  entityType: string;
+  /**
+   * 업로드한 사용자
+   */
+  uploadedBy: string;
+  /**
+   * 이 첨부파일이 연결되어있는 데이터의 id
+   */
+  entityId?: number;
+  /**
+   * 읽기 전용 모드
+   */
+  readonly?: boolean;
+  /**
+   * 컴포넌트 준비 완료 콜백
+   */
+  onReady?: () => void;
 }
 
 // Ref를 통해 부모 컴포넌트에서 호출할 수 있는 메서드 정의
@@ -25,7 +42,16 @@ interface FileRejection {
   message?: string;
 }
 
-const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>(({ existingFiles, onRemoveExisting, onSubmit, entityType, uploadedBy, entityId, readonly = false, onReady }, ref) => {
+const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>((
+    {
+     existingFiles=null,
+     onSubmit=null, 
+     entityType=null, 
+     uploadedBy=null, 
+     entityId=null, 
+     readonly = false, 
+     onReady 
+    }, ref) => {
     const [files, setFiles] = useState<File[]>([]);
     const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);
     const [showUploader, setShowUploader] = useState(false);
