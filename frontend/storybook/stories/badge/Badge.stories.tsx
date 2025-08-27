@@ -1,9 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import Badge from '../../../src/shared/components/ui/badge/Badge';
 import MailIcon from '@mui/icons-material/Mail';
+import React from 'react';
 
 const meta: Meta<typeof Badge> = {
-  title: 'Shared/components/ui/data-display/Badge',
+  title: 'Shared/components/ui/badge/Badge',
   component: Badge,
   args: {
     color: 'primary',

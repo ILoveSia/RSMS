@@ -18,28 +18,6 @@ import type { UserWithRoles, Role, UserFilter, UserRoleInfo, EmployeeBasic } fro
 import { useApiWithNotification } from '@/shared/hooks';
 
 /**
- * 사용자 권한 컬러 매핑 함수
- * - SRP: 역할 ID → 칩 컬러 결정만 담당
- * - OCP: 새로운 역할 추가 시 switch 확장으로 대응 (기존 분기 변경 최소화)
- */
-const getRoleColor = (
-  roleId: string
-): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-  switch (roleId) {
-    case 'ADMIN':
-      return 'error';
-    case 'MANAGER':
-      return 'primary';
-    case 'USER':
-      return 'secondary';
-    case 'AUDITOR':
-      return 'info';
-    default:
-      return 'default';
-  }
-};
-
-/**
  * 사용자 권한 레벨 산출 함수
  * - SRP: 활성 역할 리스트를 받아 가장 높은 권한 레벨 문자열만 반환
  * - LSP/ISP: 데이터 구조에 의존하지 않고 필요한 정보만 이용

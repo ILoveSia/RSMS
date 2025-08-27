@@ -21,19 +21,17 @@ const getRoleColor = (
 };
 
 interface UserRoleBadgesProps {
+  /**
+   * 사용자 권한 정보 배열. 'ADMIN'|'MANAGER'|'USER'|'AUDITOR' 안에서 필요한 것들을 Array 형식으로 나열
+   */
   roles: UserRoleInfo[];
-  sx?: SxProps<Theme>;
 }
 
-/**
- * 사용자에게 할당된 역할을 칩(Chip) 형태로 표시하는 컴포넌트입니다.
- * 활성 역할만 표시하며, 역할이 없을 경우 '역할 없음' 칩을 표시합니다.
- */
-export const UserRoleBadges: React.FC<UserRoleBadgesProps> = ({ roles, sx }) => {
+export const UserRoleBadges: React.FC<UserRoleBadgesProps> = ({ roles }) => {
   const activeRoles = roles.filter(r => r.isActive);
 
   return (
-    <Box display="flex" flexWrap="wrap" gap={0.5} sx={sx}>
+    <Box display="flex" flexWrap="wrap" gap={0.5}>
       {activeRoles.map(role => (
         <Chip
           key={role.roleId}

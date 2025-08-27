@@ -8,15 +8,15 @@ type MockUserRoleInfo = {
   isActive: boolean;
 };
 
-const meta: Meta<typeof UserRoleBadges> = {
-  title: 'shared/components/ui/data-display/badge/UserRoleBadges',
-  component: UserRoleBadges,
-  parameters: { layout: 'centered' },
-};
-
-export default meta;
 
 type Story = StoryObj<typeof meta>;
+
+const meta:Meta<typeof UserRoleBadges>={
+  title:'shared/components/ui/badge/UserRoleBadges',
+  component:UserRoleBadges,
+  tags:['autodocs'],
+}satisfies Meta<typeof UserRoleBadges>;
+export default meta;
 
 export const AdminUser: Story = {
   args: {

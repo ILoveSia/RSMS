@@ -6,7 +6,7 @@ import React from 'react';
 type Story = StoryObj<typeof meta>;
 
 const meta:Meta<typeof ApprovalStatusBadge>={
-  title:'shared/components/ui/data-display/badge/ApprovalStatusBadge',
+  title:'shared/components/ui/badge/ApprovalStatusBadge',
   component:ApprovalStatusBadge,
   tags:['autodocs'],
 }satisfies Meta<typeof ApprovalStatusBadge>;
