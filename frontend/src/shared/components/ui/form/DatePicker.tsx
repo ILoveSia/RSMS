@@ -1,4 +1,4 @@
-// import type { DatePickerProps } from '@/shared/components/ui/form/types';
+import TextField from '@/shared/components/ui/data-display/TextField';
 import {
   CalendarToday as CalendarIcon,
   ChevronLeft as ChevronLeftIcon,
@@ -13,82 +13,47 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import TextField from '@/shared/components/ui/data-display/TextField';
 import React, { forwardRef, useState } from 'react';
-import type { DatePickerProps as DatePickerPropsType } from './types';
-// import { originalDate } from '@/domains/ledgermngt/components/ExecutiveDetailDialog';
-// DatePicker 컴포넌트 자체 Props 타입 정의
-export interface DatePickerProps extends DatePickerPropsType {
-  onClose?: () => void;
-  /** 읽기전용/수정용 모드 설정 */
-  mode?: 'readonly' | 'editable';
-}
 
-/**
- * DatePicker 컴포넌트
- *
- * Material-UI TextField를 기반으로 한 날짜 선택 컴포넌트
- * 달력 팝오버를 통한 날짜 선택 기능 제공
- *
- * @example
- * ```tsx
- * // 기본 날짜 선택기
- * <DatePicker
- *   value={selectedDate}
- *   onChange={setSelectedDate}
- *   label="날짜 선택"
- * />
- *
- * // 제한된 날짜 범위
- * <DatePicker
- *   value={selectedDate}
- *   onChange={setSelectedDate}
- *   label="예약 날짜"
- *   minDate={new Date()}
- *   disablePast
- *   format="yyyy년 MM월 dd일"
- * />
- *
- * // 커스텀 포맷
- * <DatePicker
- *   value={selectedDate}
- *   onChange={setSelectedDate}
- *   label="생년월일"
- *   format="yyyy-MM-dd"
- *   views={['year', 'month', 'day']}
- * />
- * ```
- */
+
+export interface DatePickerProps {
+  value?: Date | null;
+  minDate?: Date;
+  maxDate?: Date;
+  disableFuture?: boolean;
+  disablePast?: boolean;
+  placeholder?: string;
+  readOnly?: boolean;
+  size?: 'small' | 'medium';
+  label?: string;
+  error?: boolean;
+  helperText?: string;
+  required?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  mode?: 'readonly' | 'editable';
+  onChange: (date: Date | null) => void;
+  onClose?: () => void;
+}
 const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
   (
     {
       value,
       onChange,
       onClose,
-      format = 'yyyy-MM-dd',
-      views = ['year', 'month', 'day'],
-      openTo = 'day',
       minDate,
       maxDate,
       disableFuture = false,
       disablePast = false,
-      shouldDisableDate,
-      showDaysOutsideCurrentMonth = true,
       placeholder = '날짜를 선택하세요',
       readOnly = false,
-      variant = 'outlined',
       size = 'medium',
-      inputFormat,
-      mask,
-      renderInput,
-      label,
+      label='',
       error = false,
       helperText,
       required = false,
       disabled = false,
       fullWidth = false,
-      className,
-      sx,
       mode = 'editable',
       ...props
     },
@@ -97,7 +62,6 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
     const [viewDate, setViewDate] = useState<Date>(value || new Date());
-    const [currentView, setCurrentView] = useState<'year' | 'month' | 'day'>(openTo);
 
     const open = Boolean(anchorEl);
 
@@ -107,6 +71,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
     // 날짜 포맷팅
     const formatDate = (date: Date | null) => {
       if (!date) return '';
+      const format = 'yyyy-MM-dd';
       try{
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -144,7 +109,6 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
       if (disablePast && date < new Date()) return true;
       if (minDate && date < minDate) return true;
       if (maxDate && date > maxDate) return true;
-      if (shouldDisableDate && shouldDisableDate(date)) return true;
       return false;
     };
 
@@ -232,7 +196,7 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
         required={required}
         mode={mode}
         fullWidth={fullWidth}
-        variant={variant}
+        variant='outlined'
         size={size}
         InputProps={{
           readOnly: true,
@@ -245,23 +209,10 @@ const DatePicker = forwardRef<HTMLDivElement, DatePickerProps>(
           ),
         }}
         onClick={handleInputClick}
-        className={className}
-        sx={{ ...sx, cursor: 'pointer', '& input': { cursor: 'pointer' } }}
+        sx={{ cursor: 'pointer', '& input': { cursor: 'pointer' } }}
         {...props}
       />
     );
-
-    if (renderInput) {
-      return renderInput({
-        value: formatDate(value ?? null),
-        onClick: handleInputClick,
-        disabled: isDisabled,
-        error,
-        helperText,
-        label,
-        placeholder,
-      });
-    }
 
     return (
       <>

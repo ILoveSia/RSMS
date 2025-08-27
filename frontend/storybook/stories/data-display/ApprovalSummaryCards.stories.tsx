@@ -3,15 +3,14 @@ import { ApprovalSummaryCards } from '../../../src/shared/components/ui/data-dis
 import { Box } from '@mui/material';
 import { ApprovalSummaryResponse } from '../../../src/domains/approval/api/approvalApi'; // Import the actual type
 
-const meta: Meta<typeof ApprovalSummaryCards> = {
-  title: 'shared/components/ui/data-display/ApprovalSummaryCards',
-  component: ApprovalSummaryCards,
-  parameters: { layout: 'centered' }
-};
-
-export default meta;
-
 type Story = StoryObj<typeof meta>;
+
+const meta:Meta<typeof ApprovalSummaryCards>={
+  title:'shared/components/ui/data-display/ApprovalSummaryCards',
+  component:ApprovalSummaryCards,
+  tags:['autodocs'],
+}satisfies Meta<typeof ApprovalSummaryCards>;
+export default meta;
 
 const mockSummaryData: ApprovalSummaryResponse = {
   myPendingCount: 5,
@@ -19,6 +18,8 @@ const mockSummaryData: ApprovalSummaryResponse = {
   approvedCount: 90,
   rejectedCount: 10,
   cancelledCount: 10,  
+  pendingCount: 10,
+  inProgressCount: 10,
 };
 
 export const Default: Story = {
