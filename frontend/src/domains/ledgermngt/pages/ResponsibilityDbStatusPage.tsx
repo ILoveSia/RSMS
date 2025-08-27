@@ -519,14 +519,9 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           }}>
             <ManagementButtonGroup
               onExcelDownload={handleExcelDownload}
-              showExcelDownload={true}
               filename="responsibility_db_status"
               onRegister={handleCreateClick}
               onDelete={handleDelete}
-              showRegister={true}
-              showDelete={true}
-              showEdit={false}
-              showRefresh={false}
               align="right"
               sx={{
                 mb: 0,

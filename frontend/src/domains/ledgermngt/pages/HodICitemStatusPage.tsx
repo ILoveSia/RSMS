@@ -506,14 +506,9 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
         }}>
           <ManagementButtonGroup
             onExcelDownload={handleExcelDownload}
-            showExcelDownload={true}
             filename="hod_ic_item_status"
             onRegister={handleCreateClick}
             onDelete={handleDelete}
-            showRegister={true}
-            showDelete={true}
-            showEdit={false}
-            showRefresh={false}
             registerDisabled={loading || selectedLedgerOrderStatusCd === 'P7' || !selectedLedgerOrder || selectedLedgerOrder === 'ALL'}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"

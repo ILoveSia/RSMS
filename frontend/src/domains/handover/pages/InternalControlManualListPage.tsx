@@ -380,11 +380,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
             onDelete={handleDelete}
             onExcelDownload={handleExcelDownload}
             filename="internal_control_manuals"
-            showRegister={true}
-            showDelete={true}
-            showEdit={false}
-            showRefresh={false}
-            showExcelDownload={true}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"

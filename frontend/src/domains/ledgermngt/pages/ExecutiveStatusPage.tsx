@@ -610,7 +610,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           </Button> */}
           <ManagementButtonGroup
             onExcelDownload={handleExcelDownload}
-            showExcelDownload={true}
             filename="executive_status"
           />
         </Box>

@@ -196,13 +196,6 @@ const SubmissionReportPage: React.FC = () => {
             <ManagementButtonGroup
               onRegister={handleRegister}
               onDelete={handleDelete}
-              showRegister
-              showDelete
-              showEdit={false}
-              showSave={false}
-              showCancel={false}
-              showRefresh={false}
-              showExcelDownload={false}
               deleteDisabled={selectedIds.length === 0}
               align="right"
             />

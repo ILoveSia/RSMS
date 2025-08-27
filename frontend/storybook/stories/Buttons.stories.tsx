@@ -9,7 +9,7 @@ import RegisterButton from '../../src/shared/components/ui/button/RegisterButton
 import SaveButton from '../../src/shared/components/ui/button/SaveButton';
 import SearchButton from '../../src/shared/components/ui/button/SearchButton';
 import ActionButtonGroup from '../../src/shared/components/ui/button/ActionButtonGroup';
-import ManagementButtonGroup from '../../src/shared/components/ui/button/ManagementButtonGroup';
+
 
 const meta: Meta = {
   title: 'Shared/components/ui/button',
@@ -69,18 +69,4 @@ export const ActionGroup: Story = {
   ),
 };
 
-export const ManagementGroup: Story = {
-  name: 'ManagementButtonGroup',
-  render: () => (
-    <div style={{ display: 'flex', gap: 24, flexDirection: 'column', alignItems: 'center' }}>
-      <ManagementButtonGroup
-        onRegister={() => {}}
-        onDelete={() => {}}
-        onRefresh={() => {}}
-        onExcelDownload={() => {}}
-        showExcelDownload
-        showRefresh
-      />
-    </div>
-  ),
-};
+

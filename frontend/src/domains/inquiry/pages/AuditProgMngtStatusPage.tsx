@@ -507,12 +507,6 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
             deleteDisabled={!selectedAuditIds.length || isLoading}
             registerLoading={isLoading}
             deleteLoading={isLoading}
-            showRegister={true}
-            showDelete={true}
-            showEdit={false}
-            showSave={false}
-            showCancel={false}
-            showRefresh={false}
             sx={{ mb: 0 }}
           />
         </Box>

@@ -39,15 +39,6 @@ export interface ManagementButtonGroupProps {
   refreshLoading?: boolean;
   excelLoading?: boolean;
   
-  // 버튼 표시/숨김
-  showRegister?: boolean;
-  showEdit?: boolean;
-  showDelete?: boolean;
-  showSave?: boolean;
-  showCancel?: boolean;
-  showRefresh?: boolean;
-  showExcelDownload?: boolean;
-  
   // 스타일
   spacing?: number;
   align?: 'left' | 'center' | 'right';
@@ -83,14 +74,6 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
   excelLoading = false,
   filename = 'excel_export',
   
-  showRegister = true,
-  showEdit = false,
-  showDelete = true,
-  showSave = false,
-  showCancel = false,
-  showRefresh = false,
-  showExcelDownload = false,
-  
   spacing = 1,
   align = 'right',
   sx,
@@ -121,7 +104,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
       }}
     >
       {/* 새로고침 버튼 */}
-      {showRefresh && onRefresh && (
+      {onRefresh && (
         <RefreshButton
           onClick={onRefresh}
           loading={refreshLoading}
@@ -130,7 +113,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
       )}
 
       {/* 엑셀 다운로드 버튼 (공통 컴포넌트) */}
-      {showExcelDownload && onExcelDownload && (
+      {onExcelDownload && (
         <ExcelDownloadButton
           filename={filename}
           onDownload={onExcelDownload}
@@ -140,7 +123,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
       )}
 
       {/* 등록 버튼 (공통 컴포넌트) */}
-      {showRegister && onRegister && (
+      {onRegister && (
         <RegisterButton
           onClick={onRegister}
           disabled={registerDisabled}
@@ -149,7 +132,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
       )}
 
       {/* 수정 버튼 */}
-      {showEdit && onEdit && (
+      {onEdit && (
         <EditButton
           onClick={onEdit}
           disabled={editDisabled}
@@ -158,7 +141,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
       )}
 
       {/* 저장 버튼 */}
-      {showSave && onSave && (
+      {onSave && (
         <SaveButton
           onClick={onSave}
           disabled={saveDisabled}
@@ -167,7 +150,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
       )}
 
       {/* 취소 버튼 */}
-      {showCancel && onCancel && (
+      {onCancel && (
         <CancelButton
           onClick={onCancel}
           disabled={cancelDisabled}
@@ -176,7 +159,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
       )}
 
       {/* 삭제 버튼 */}
-      {showDelete && onDelete && (
+      {onDelete && (
         <DeleteButton
           onClick={onDelete}
           disabled={deleteDisabled}

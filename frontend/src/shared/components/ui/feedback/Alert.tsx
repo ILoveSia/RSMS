@@ -1,6 +1,6 @@
 import { Close as CloseIcon } from '@mui/icons-material';
 import { AlertTitle, IconButton, Alert as MuiAlert } from '@mui/material';
-import { forwardRef, ReactNode } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import type { SxProps, Theme } from '@mui/material/styles';
 
 // AlertColor 타입을 직접 정의 (MUI import 이슈 방지)
@@ -9,18 +9,15 @@ type AlertColor = 'error' | 'warning' | 'info' | 'success';
 // Alert 컴포넌트 Props 타입 정의
 export interface AlertProps {
   severity?: AlertColor;
-  variant?: 'filled' | 'outlined' | 'standard';
   children: ReactNode;
   title?: string;
   onClose?: () => void;
   closable?: boolean;
-  icon?: ReactNode;
   action?: ReactNode;
   className?: string;
   sx?: SxProps<Theme>;
   id?: string;
   'data-testid'?: string;
-  style?: React.CSSProperties;
 }
 
 /**
@@ -44,12 +41,10 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
   (
     {
       severity = 'info',
-      variant = 'standard',
       children,
       title,
       onClose,
       closable = false,
-      icon,
       action,
       className,
       sx,
@@ -98,8 +93,7 @@ const Alert = forwardRef<HTMLDivElement, AlertProps>(
       <MuiAlert
         ref={ref}
         severity={severity}
-        variant={variant}
-        icon={icon}
+        variant={'standard'}
         action={renderAction()}
         className={className}
         sx={sx}

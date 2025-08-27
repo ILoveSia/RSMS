@@ -404,10 +404,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
           <ManagementButtonGroup
             onRegister={handleCreateClick}
             onDelete={handleDelete}
-            showRegister={true}
-            showDelete={true}
-            showEdit={false}
-            showRefresh={false}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
 

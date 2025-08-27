@@ -775,7 +775,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
         >
         <ManagementButtonGroup
             onExcelDownload={handleExcelDownload}
-            showExcelDownload={true}
             filename="position_responsibility_status"
           />
           {/* <Button

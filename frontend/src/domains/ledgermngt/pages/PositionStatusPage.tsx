@@ -491,9 +491,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             onExcelDownload={handleExcelDownload}
             onRegister={handleCreateClick}
             onDelete={handleDelete}
-            showExcelDownload={true}
-            showRegister={true}
-            showDelete={true}
             align="right"
             sx={{ mb: 0, alignSelf: 'center' }}
           />

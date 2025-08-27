@@ -288,10 +288,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
           <ManagementButtonGroup
             onRegister={handleCreateClick}
             onDelete={handleDelete}
-            showRegister={true}
-            showDelete={true}
-            showEdit={false}
-            showRefresh={false}
             registerDisabled={isLoading}
             deleteDisabled={!selectedHistoryIds.length || isLoading}
             align="right"

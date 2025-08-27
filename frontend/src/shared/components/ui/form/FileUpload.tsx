@@ -123,9 +123,9 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>((
             }
             
             const uploadRequest = {
-                entityType,
+                entityType:entityType as string,
                 entityId: RID,
-                uploadedBy
+                uploadedBy:uploadedBy as string
             };
             
             const result = await writeAttachment(file, uploadRequest);

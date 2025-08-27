@@ -409,13 +409,8 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
           <ManagementButtonGroup
             onRegister={handleCreateClick}
             onExcelDownload={handleExcelDownload}
-            showExcelDownload={true}
             filename="meeting_status"
             onDelete={handleDelete}
-            showRegister={true}
-            showDelete={true}
-            showEdit={false}
-            showRefresh={false}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"
             sx={{

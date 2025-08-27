@@ -115,9 +115,6 @@ const NoticePage: React.FC = () => {
               sx={{ mr: 1 }}
             />
             <ManagementButtonGroup
-              showRegister
-              showRefresh
-              showDelete={false}
               align='right'
               onRegister={() => setCreateOpen(true)}
               onRefresh={loadData}

@@ -17,7 +17,7 @@ export const Default: Story = {
     value: new Date(),
   },
   render: (args) => {
-    const [value, setValue] = React.useState<Date | null>(args.value);
+    const [value, setValue] = React.useState<Date | null|undefined>(args.value);
 
     const handleChange = (newValue: Date | null) => {
       setValue(newValue);

@@ -391,10 +391,6 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
           <ManagementButtonGroup
             onRegister={handleCreateClick}
             onDelete={handleDelete}
-            showRegister={true}
-            showDelete={true}
-            showEdit={false}
-            showRefresh={false}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"

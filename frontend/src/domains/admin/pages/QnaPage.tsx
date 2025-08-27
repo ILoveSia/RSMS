@@ -219,10 +219,7 @@ const QnaPage: React.FC<QnaPageProps> = () => {
               <ManagementButtonGroup
                 onRefresh={async () => { setPage(1); await loadAllData(); }}
                 onRegister={openCreateDialog}
-                showRegister={true}
-                showRefresh={true}
                 onExcelDownload={async () => { /* TODO: export hook up if needed */ }}
-                showExcelDownload={true}
                 filename="qna_list"
               />
             </>

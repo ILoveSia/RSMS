@@ -357,10 +357,6 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
           <ManagementButtonGroup
             onRegister={handleCreateClick}
             onDelete={handleDelete}
-            showRegister={true}
-            showEdit={false}
-            showDelete={true}
-            showRefresh={false}
             registerDisabled={loading}
             deleteDisabled={loading || selectedIds.length === 0}
             align="right"
