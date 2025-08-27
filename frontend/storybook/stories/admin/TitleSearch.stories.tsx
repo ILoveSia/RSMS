@@ -13,14 +13,21 @@ const meta:Meta<typeof TitleSearch>={
 
 export default meta;
 
-export const Basic: StoryObj<typeof meta> = {
-  args:{
-    value:'',
-    onChange:()=>{},
-    onEnter:()=>{},
-    after: <Button>after</Button>,
-    right: <Button>right</Button>,
-  },
+export const Basic: Story = {
+  render: () => {
+    const [value, setValue] = React.useState('');
+    return (
+      <div style={{ maxWidth: 600 }}>
+        <TitleSearch
+          value={value}
+          onChange={setValue}
+          onEnter={() => console.log('enter:', value)}
+          after={<Button>after</Button>}
+          right={<Button>right</Button>}
+        />
+      </div>
+    );
+  }
 };
 
 

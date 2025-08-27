@@ -14,12 +14,27 @@ export default meta;
 
 export const Basic: Story = {
   args: {
-    value: '1',
-    onChange: () => {},
     options: [
       { value: '1', label: 'Option 1' },
       { value: '2', label: 'Option 2' },
     ],
+    value: '1',
+  },
+  render: (args) => {
+    const [value, setValue] = React.useState(args.value);
+
+    const handleChange = (newValue: string) => {
+      setValue(newValue);
+      args.onChange?.(newValue);
+    };
+
+    return (
+      <RadioGroup
+        {...args}
+        value={value}
+        onChange={handleChange}
+      />
+    );
   },
 };
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { DatePicker } from '../../../src/shared/components/ui/form';
 import { Box } from '@mui/material';
@@ -14,6 +15,23 @@ export default meta;
 export const Default: Story = {
   args: {
     value: new Date(),
-    onChange: () => {},
+  },
+  render: (args) => {
+    const [value, setValue] = React.useState<Date | null>(args.value);
+
+    const handleChange = (newValue: Date | null) => {
+      setValue(newValue);
+      if (args.onChange) {
+        args.onChange(newValue);
+      }
+    };
+
+    return (
+      <DatePicker
+        {...args}
+        value={value}
+        onChange={handleChange}
+      />
+    );
   },
 };

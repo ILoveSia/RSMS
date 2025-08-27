@@ -30,6 +30,10 @@ interface FileUploadProps {
    * 컴포넌트 준비 완료 콜백
    */
   onReady?: () => void;
+  /**
+   * 기존 파일 제거 콜백
+   */
+  onRemoveExisting?: () => void;
 }
 
 // Ref를 통해 부모 컴포넌트에서 호출할 수 있는 메서드 정의
@@ -50,7 +54,8 @@ const FileUpload = forwardRef<FileUploadHandle, FileUploadProps>((
      uploadedBy=null, 
      entityId=null, 
      readonly = false, 
-     onReady 
+     onReady,
+     onRemoveExisting
     }, ref) => {
     const [files, setFiles] = useState<File[]>([]);
     const [fileRejections, setFileRejections] = useState<FileRejection[]>([]);

@@ -12,13 +12,16 @@ const meta:Meta<typeof FileUpload>={
 
 export default meta;
 
-export const Basic:StoryObj<typeof meta>={
-    args:{
-        entityType:'test',
-        uploadedBy:'test',
-        onSubmit:()=>{},
-        existingFiles:null,
-        readonly:false,
-        onReady:()=>{},
+export const Basic:story = {
+    render:() => {
+        return <FileUpload
+        entityType='test'
+        uploadedBy='test'
+        onSubmit={()=>{}}
+        onRemoveExisting={()=>{}}
+        existingFiles={null}
+        readonly={false}
+        onReady={()=>{}}
+        />
     }
 }
