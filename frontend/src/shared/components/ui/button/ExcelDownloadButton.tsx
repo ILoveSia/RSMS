@@ -101,12 +101,12 @@ const ExcelDownloadButton: React.FC<ExcelDownloadButtonProps> = ({
         px: 1.5,
         lineHeight: 1,
         borderRadius: 1,
-        backgroundColor: isDark ? '#10B981' : '#059669', // 다크모드 대응
+        backgroundColor: isDark ? '#34D399' : '#10B981', // 연한 초록색 (모던한 색상)
         '&:hover': {
-          backgroundColor: isDark ? '#0D9668' : '#047857',
+          backgroundColor: isDark ? '#6EE7B7' : '#059669',
         },
         '&:active': {
-          backgroundColor: isDark ? '#0A7E55' : '#065F46',
+          backgroundColor: isDark ? '#A7F3D0' : '#047857',
         },
         ...sx,
       }}

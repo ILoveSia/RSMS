@@ -20,6 +20,8 @@ public class ResponsibilityStatusDto {
     private String responsibilityDetailContent;
     private String responsibilityMgtSts;
     private String responsibilityRelEvid;
+    
+    private String ledgerOrdersStatusCd; // 원장 상태 코드 (P5: 최종확정)
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

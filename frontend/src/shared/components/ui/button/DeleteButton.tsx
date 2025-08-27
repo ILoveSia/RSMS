@@ -38,12 +38,12 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({
         fontSize: '0.875rem',
         fontWeight: 600,
         borderRadius: 1,
-        backgroundColor: isDark ? '#DC2626' : '#B91C1C', // 다크모드 대응
+        backgroundColor: isDark ? '#F87171' : '#EF4444', // 연한 빨간색 (모던한 색상)
         '&:hover': {
-          backgroundColor: isDark ? '#B91C1C' : '#991B1B',
+          backgroundColor: isDark ? '#FCA5A5' : '#DC2626',
         },
         '&:active': {
-          backgroundColor: isDark ? '#991B1B' : '#7F1D1D',
+          backgroundColor: isDark ? '#FEB2B2' : '#B91C1C',
         },
         ...sx,
       }}

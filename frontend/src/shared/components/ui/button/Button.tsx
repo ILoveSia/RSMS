@@ -41,21 +41,24 @@ export interface ButtonProps extends BaseComponentProps {
   target?: string;
 }
 
-// 그라데이션 스타일 생성을 위한 헬퍼 함수
-const createGradientStyle = (mainStart: string, mainEnd: string, hoverEnd: string) => ({
-  background: `linear-gradient(135deg, ${mainStart} 0%, ${mainEnd} 100%)`,
+// 모던한 단색 스타일 생성을 위한 헬퍼 함수
+const createModernStyle = (main: string, hover: string, active: string) => ({
+  backgroundColor: main,
   '&:hover': {
-    background: `linear-gradient(135deg, ${mainEnd} 0%, ${hoverEnd} 100%)`,
+    backgroundColor: hover,
+  },
+  '&:active': {
+    backgroundColor: active,
   },
 });
 
-// 색상별 그라데이션 스타일 정의
+// 연한 모던 색상별 스타일 정의
 const colorStyles = {
-  primary: createGradientStyle('#527a8a', '#3e5b66', '#2d4349'),
-  secondary: createGradientStyle('#6b7c8f', '#4f5d6f', '#3a4552'),
-  success: createGradientStyle('#5f8a68', '#4a6b51', '#3a543e'),
-  warning: createGradientStyle('#c4945a', '#a67c47', '#8a6638'),
-  error: createGradientStyle('#b85c5c', '#9a4a4a', '#7d3b3b'),
+  primary: createModernStyle('#3B82F6', '#2563EB', '#1D4ED8'), // 연한 파란색
+  secondary: createModernStyle('#8B5CF6', '#7C3AED', '#6D28D9'), // 연한 보라색  
+  success: createModernStyle('#10B981', '#059669', '#047857'), // 연한 초록색
+  warning: createModernStyle('#F59E0B', '#D97706', '#B45309'), // 연한 주황색
+  error: createModernStyle('#EF4444', '#DC2626', '#B91C1C'), // 연한 빨간색
 };
 
 /**

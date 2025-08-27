@@ -38,12 +38,12 @@ const RegisterButton: React.FC<RegisterButtonProps> = ({
         fontSize: '0.875rem',
         fontWeight: 600,
         borderRadius: 1,
-        backgroundColor: isDark ? '#4A7BA7' : '#2C5282', // 다크모드 대응
+        backgroundColor: isDark ? '#60A5FA' : '#3B82F6', // 연한 파란색 (모던한 색상)
         '&:hover': {
-          backgroundColor: isDark ? '#5A8BB7' : '#1A3A52',
+          backgroundColor: isDark ? '#7CC3FC' : '#2563EB',
         },
         '&:active': {
-          backgroundColor: isDark ? '#6B9AC4' : '#152A3E',
+          backgroundColor: isDark ? '#93C5FD' : '#1D4ED8',
         },
         ...sx,
       }}

@@ -58,6 +58,7 @@ export interface PositionDialogProps {
   mode: 'create' | 'edit' | 'view';
   positionId?: number | null;
   selectedLedgerOrder?: string; // 선택된 원장차수 전달
+  isReadOnly?: boolean; // 최종확정 상태일 때 수정 제한
   onClose: () => void;
   onSave?: (position: PositionData) => void;
   onChangeMode?: (newMode: 'create' | 'edit' | 'view') => void;
@@ -98,6 +99,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   mode,
   positionId,
   selectedLedgerOrder,
+  isReadOnly = false,
   onClose,
   onSave,
   onChangeMode,
@@ -202,16 +204,27 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
   // (removed unused convertApiDepartmentToComponent)
   // 다이얼로그 제목 설정
   const getDialogTitle = () => {
+    let title = '';
     switch (mode) {
       case 'create':
-        return '직책 등록';
+        title = '직책 등록';
+        break;
       case 'edit':
-        return '직책 수정';
+        title = '직책 수정';
+        break;
       case 'view':
-        return '직책 상세조회';
+        title = '직책 상세조회';
+        break;
       default:
-        return '직책';
+        title = '직책';
     }
+    
+    // 최종확정 상태일 때 제목에 표시
+    if (isReadOnly && mode === 'view') {
+      title += ' (최종확정 - 수정불가)';
+    }
+    
+    return title;
   };
 
   // 컴포넌트 마운트 시 부서 데이터 캐싱
@@ -720,16 +733,16 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
     if (mode === 'view') {
       return (
         <>
-          <Button
-            onClick={handleEditMode}
-            variant='contained'
-            sx={{
-              backgroundColor: 'var(--bank-warning)',
-              '&:hover': { backgroundColor: 'var(--bank-warning-dark)' },
-            }}
-          >
-            수정
-          </Button>
+          {/* 최종확정 상태가 아닐 때만 수정 버튼 표시 */}
+          {!isReadOnly && (
+            <Button
+              onClick={handleEditMode}
+              variant='contained'
+              color='warning'
+            >
+              수정
+            </Button>
+          )}
           <Button onClick={onClose} variant='outlined'>
             닫기
           </Button>
@@ -745,6 +758,7 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         <Button
           onClick={handleSave}
           variant='contained'
+          color={mode === 'create' ? 'primary' : 'success'}
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : null}
         >
@@ -767,6 +781,13 @@ const PositionDialog: React.FC<PositionDialogProps> = ({
         {error && (
           <Alert severity='error' sx={{ mb: 2 }}>
             {error}
+          </Alert>
+        )}
+
+        {/* 최종확정 상태 안내 */}
+        {isReadOnly && mode === 'view' && (
+          <Alert severity='warning' sx={{ mb: 2 }}>
+            이 데이터는 최종확정 상태이므로 수정할 수 없습니다.
           </Alert>
         )}
 

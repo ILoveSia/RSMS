@@ -15,7 +15,7 @@ import { Box, Snackbar, Divider } from '@mui/material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
-import ErrorDialog from '../../../app/components/ErrorDialog';
+import { ModernAlert } from '@/shared/components/modal';
 import '../../../assets/scss/style.css';
 import { Button, ExcelDownloadButton } from '../../../shared/components/ui/button';
 import Alert from '../../../shared/components/ui/feedback/Alert';
@@ -426,10 +426,13 @@ const ExecutiveStatusPageWithApproval: React.FC<IExecutiveStatusPageProps> = ():
         onSave={handleSaveExecutive}
       />
 
-      {/* 오류 다이얼로그 */}
-      <ErrorDialog
+      {/* 모던 에러 알림 다이얼로그 */}
+      <ModernAlert
         open={errorDialogOpen}
+        severity="error"
+        title="오류"
         message={errorMessage}
+        onConfirm={() => setErrorDialogOpen(false)}
         onClose={() => setErrorDialogOpen(false)}
       />
 

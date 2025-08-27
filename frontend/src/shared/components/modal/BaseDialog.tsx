@@ -213,6 +213,23 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
         {/* 기본 버튼들 (customActions와 함께 표시 가능) */}
         {!hideDefaultActions && (
           <>
+            {/* 취소/닫기 버튼을 먼저 배치 */}
+            <Button
+              variant="outlined"
+              onClick={handleCancel}
+              disabled={loading}
+              color="primary"
+              sx={{
+                height: '36px !important',
+                minWidth: '80px !important',
+                fontSize: '0.875rem !important',
+                fontWeight: '600 !important',
+                borderRadius: '4px !important',
+              }}
+            >
+              {isEditMode ? '취소' : isCreateMode ? '취소' : '닫기'}
+            </Button>
+            {/* 수정 버튼 (view 모드에서만) */}
             {isViewMode && showEditButton && (
               <Button
                 variant="contained"
@@ -230,12 +247,13 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                 수정
               </Button>
             )}
+            {/* 저장/등록 버튼 (edit/create 모드에서만) */}
             {(isEditMode || isCreateMode) && showSaveButton && (
               <Button
                 variant="contained"
                 onClick={onSave}
                 disabled={disableSave || loading}
-                color="success"
+                color={isCreateMode ? "primary" : "success"}
                 sx={{
                   height: '36px !important',
                   minWidth: '80px !important',
@@ -247,21 +265,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                 {isCreateMode ? '등록' : '저장'}
               </Button>
             )}
-            <Button
-              variant="outlined"
-              onClick={handleCancel}
-              disabled={loading}
-              color="primary"
-              sx={{
-                height: '36px !important',
-                minWidth: '80px !important',
-                fontSize: '0.875rem !important',
-                fontWeight: '600 !important',
-                borderRadius: '4px !important',
-              }}
-            >
-              {isEditMode ? '취소' : '닫기'}
-            </Button>
           </>
         )}
       </DialogActions>

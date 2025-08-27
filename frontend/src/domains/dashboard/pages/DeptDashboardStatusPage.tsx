@@ -2,7 +2,7 @@
  * 부서별 이행점검 현황 페이지
  * 선택된 부서의 점검결과 및 개선계획 이행 현황을 분리된 테이블로 표시
  */
-import ErrorDialog from '@/app/components/ErrorDialog';
+import { ModernAlert } from '@/shared/components/modal';
 import '@/assets/scss/style.css';
 import { SearchButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
@@ -993,10 +993,13 @@ const DeptDashboardStatusPage: React.FC = () => {
           onSave={handleReportSaved}
         />
 
-        {/* 에러 다이얼로그 */}
-        <ErrorDialog
+        {/* 모던 에러 알림 다이얼로그 */}
+        <ModernAlert
           open={errorDialogOpen}
-          errorMessage={errorMessage}
+          severity="error"
+          title="오류"
+          message={errorMessage}
+          onConfirm={handleErrorDialogClose}
           onClose={handleErrorDialogClose}
         />
 

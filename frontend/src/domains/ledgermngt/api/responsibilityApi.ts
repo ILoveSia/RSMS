@@ -9,6 +9,7 @@ export interface ResponsibilityRow {
   responsibilityDetailContent: string;
   responsibilityMgtSts: string;
   responsibilityRelEvid: string;
+  ledgerOrdersStatusCd?: string; // 원장 상태 코드 (P5: 최종확정)
   createdAt: string;
   updatedAt: string;
 }

@@ -5,9 +5,9 @@ import type { MeetingBody } from '@/app/types';
 import { useCommonCodes, type CommonCode } from '@/shared/utils/codeUtils';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import { Button, Select } from '@/shared/components/ui';
+import { Select } from '@/shared/components/ui';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import { Alert, Box, CircularProgress } from '@mui/material';
+import { Alert, Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { meetingStatusApi } from '../api/meetingStatusApi';
 
@@ -144,44 +144,6 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
     }
   };
 
-  // 수정 모드로 전환 핸들러
-  const handleEditMode = () => {
-    if (onModeChange) {
-      onModeChange('edit');
-    }
-  };
-
-  // 다이얼로그 액션 버튼
-  const renderActions = () => {
-    if (mode === 'view') {
-      return (
-        <>
-          <Button onClick={onClose} variant='outlined'>
-            닫기
-          </Button>
-          <Button onClick={handleEditMode} variant='contained' color='warning'>
-            수정
-          </Button>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <Button onClick={onClose} variant='outlined' disabled={loading}>
-          취소
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant='contained'
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : null}
-        >
-          {mode === 'create' ? '등록' : '저장'}
-        </Button>
-      </>
-    );
-  };
 
   return (
     <>
@@ -193,6 +155,9 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
         onSave={handleSave}
         onModeChange={onModeChange}
         loading={loading}
+        showEditButton={true}
+        showSaveButton={true}
+        disableSave={loading}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* 첫 번째 행: 구분, 개최주기 */}
