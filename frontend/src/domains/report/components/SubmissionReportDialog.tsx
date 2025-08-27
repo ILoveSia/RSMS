@@ -1,19 +1,16 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import {
-  Box,
-  Alert,
-  Typography,
-} from '@mui/material';
-import BaseDialog from '@/shared/components/modal/BaseDialog';
-import DatePicker from '@/shared/components/ui/form/DatePicker';
-import TextField from '@/shared/components/ui/data-display/TextField';
-import Button from '@/shared/components/ui/button/Button';
-import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
-import { submissionReportApi } from '../api/submissionReportApi';
 import { downloadAttachment } from '@/domains/common/api/attachmentApi';
-import { AttachmentList } from '@/shared/components/ui/data-display';
-import type { SubmissionReportRow } from '../pages/SubmissionReportPage';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
+import TextField from '@/shared/components/ui/data-display/TextField';
+import DatePicker from '@/shared/components/ui/form/DatePicker';
 import FileUpload, { type FileUploadHandle } from '@/shared/components/ui/form/FileUpload';
+import { useApiWithNotification } from '@/shared/hooks/useApiWithNotification';
+import {
+  Alert,
+  Box
+} from '@mui/material';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { submissionReportApi } from '../api/submissionReportApi';
+import type { SubmissionReportRow } from '../pages/SubmissionReportPage';
 import type { AttachmentType } from '../pages/types';
 
 interface SubmissionReportDialogProps {

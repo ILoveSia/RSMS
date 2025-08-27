@@ -4,17 +4,15 @@
  * Material-UI RadioGroup을 기반으로 한 라디오 버튼 그룹 컴포넌트
  * 여러 옵션 중 하나를 선택할 수 있는 기능 제공
  */
-import React from 'react';
-import {
-  RadioGroup as MuiRadioGroup,
-  FormControlLabel,
-  Radio,
-  FormControl,
-  FormLabel,
-  FormHelperText,
-  Box,
-} from '@mui/material';
 import type { BaseComponentProps } from '@/shared/types/common';
+import {
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  RadioGroup as MuiRadioGroup,
+  Radio
+} from '@mui/material';
+import React from 'react';
 
 export interface RadioOption {
   value: string;
@@ -30,16 +28,16 @@ export interface RadioGroupProps extends BaseComponentProps {
 
   // 선택적 props
   label?: string;
-  name?: string;
+  /**
+   * true : 가로 배치
+   * false : 세로 배치
+   */
   row?: boolean;
   disabled?: boolean;
   required?: boolean;
-  error?: boolean;
-  helperText?: string;
   
   // 스타일링
   size?: 'small' | 'medium';
-  color?: 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
 }
 
 const RadioGroup: React.FC<RadioGroupProps> = ({
@@ -47,14 +45,10 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
   onChange,
   options,
   label,
-  name,
   row = false,
   disabled = false,
   required = false,
-  error = false,
-  helperText,
   size = 'medium',
-  color = 'primary',
   className,
   sx,
   ...props
@@ -65,7 +59,6 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
 
   return (
     <FormControl
-      error={error}
       disabled={disabled}
       required={required}
       className={className}
@@ -80,7 +73,6 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
       )}
       
       <MuiRadioGroup
-        name={name}
         value={value}
         onChange={handleChange}
         row={row}
@@ -96,12 +88,7 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
             control={
               <Radio
                 size={size}
-                color={color}
-                sx={{
-                  '&.Mui-checked': {
-                    color: error ? 'error.main' : undefined,
-                  },
-                }}
+                color='primary'
               />
             }
             label={option.label}
@@ -114,12 +101,6 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
           />
         ))}
       </MuiRadioGroup>
-      
-      {helperText && (
-        <FormHelperText sx={{ mt: 0.5 }}>
-          {helperText}
-        </FormHelperText>
-      )}
     </FormControl>
   );
 };
