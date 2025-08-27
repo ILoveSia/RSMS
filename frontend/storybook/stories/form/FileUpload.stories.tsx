@@ -21,15 +21,4 @@ export const Basic:StoryObj<typeof meta>={
         readonly:false,
         onReady:()=>{},
     }
-    // render:()=>{
-    //     return <FileUpload
-    //     entityType='test'
-    //     uploadedBy='test'
-    //     onSubmit={()=>{}}
-    //     onRemoveExisting={()=>{}}
-    //     existingFiles={null}
-    //     readonly={false}
-    //     onReady={()=>{}}
-    //     />
-    // }
 }

@@ -3,11 +3,27 @@ import { Box, InputAdornment, TextField } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 
 export interface TitleSearchProps {
+  /**
+   * 검색어
+   */
   value: string;
+  /**
+   * 검색어 변경 핸들러
+   */
   onChange: (value: string) => void;
+  /**
+   * 비활성화 여부
+   */
   disabled?: boolean;
+  
   onEnter?: () => void;
+  /**
+   * 검색창 바로 우측 노드
+   */
   after?: React.ReactNode;
+  /**
+   * 검색창 오른쪽 끝 노드
+   */
   right?: React.ReactNode;
 }
 
