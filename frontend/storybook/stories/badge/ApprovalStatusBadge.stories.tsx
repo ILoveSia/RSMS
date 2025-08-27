@@ -1,24 +1,45 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ApprovalStatusBadge } from '../../../src/shared/components/ui/badge';
 import React from 'react';
-const meta: Meta<typeof ApprovalStatusBadge> = {
-  title: 'shared/components/ui/data-display/badge/ApprovalStatusBadge',
-  component: ApprovalStatusBadge,
-  parameters: { layout: 'centered' }
-};
 
-export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const meta:Meta<typeof ApprovalStatusBadge>={
+  title:'shared/components/ui/data-display/badge/ApprovalStatusBadge',
+  component:ApprovalStatusBadge,
+  tags:['autodocs'],
+}satisfies Meta<typeof ApprovalStatusBadge>;
+export default meta;
+
+
 export const Default: Story = { 
-  render: () => (
-    <div style={{ padding: 2, display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <ApprovalStatusBadge status={'NONE'} />
-      <ApprovalStatusBadge status={'SUBMITTED'} />
-      <ApprovalStatusBadge status={'IN_PROGRESS'} />
-      <ApprovalStatusBadge status={'APPROVED'} />
-      <ApprovalStatusBadge status={'REJECTED'} />
-    </div>
-  )
+  args:{
+    status:'',
+  },
+};
+export const None: Story = { 
+  args:{
+    status:'NONE',
+  },
+};
+export const Submitted: Story = { 
+  args:{
+    status:'SUBMITTED',
+  },
+};
+export const InProgress: Story = { 
+  args:{
+    status:'IN_PROGRESS',
+  },
+};
+export const Approved: Story = { 
+  args:{
+    status:'APPROVED',
+  },
+};
+export const Rejected: Story = { 
+  args:{
+    status:'REJECTED',
+  },
 };
