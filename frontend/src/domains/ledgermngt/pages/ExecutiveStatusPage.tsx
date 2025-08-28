@@ -32,6 +32,7 @@ type ExecutiveStatusRow = ExecOfficer;
 
 const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.Element => {
   const [rows, setRows] = useState<ExecutiveStatusRow[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const [selectedLedgerOrder, setSelectedLedgerOrder] = useState<string>('ALL');
   const [ledgerOrdersId, setLedgerOrdersId] = useState<number | undefined>(undefined);
   // LedgerOrder 옵션 목록을 저장할 state
@@ -62,12 +63,14 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
 
 
   const fetchExecutiveStatus = useCallback(async () => {
+    setLoading(true);
     const data = await callApiWithNotification(() => execOfficerApi.getAll(ledgerOrdersId), 'success_load');
     if (data) {
       setRows(data);
     } else {
       setRows([]);
     }
+    setLoading(false);
   }, [ledgerOrdersId, callApiWithNotification]);
 
   useEffect(() => {
@@ -515,8 +518,8 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           <CustomButton // Added Search Button
             preset="search"
             onClick={fetchExecutiveStatus}
-            loading={isLoading}
-            disabled={isLoading}
+            loading={loading}
+            disabled={loading}
           />
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <PermissionButton
@@ -624,7 +627,7 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
           <DataGrid
             data={rows}
             columns={executiveColumns}
-            loading={false}
+            loading={loading}
             height={600} 
             selectable
             multiSelect={false}
