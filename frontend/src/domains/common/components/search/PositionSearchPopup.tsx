@@ -11,6 +11,7 @@ import type { DataGridColumn } from '@/shared/types/common';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { SearchBox } from '@/shared/components/ui/form';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useGetDepartmentName } from '@/shared/utils/codeUtils';
 
 // 직책 타입 정의 (검색 결과용)
 export interface PositionSearchResult {
@@ -45,6 +46,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
   const [selectedPositions, setSelectedPositions] = useState<PositionSearchResult[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const getDepartmentName = useGetDepartmentName();
 
   // DataGrid 컬럼 정의
   const columns: DataGridColumn<PositionSearchResult>[] = [
@@ -82,6 +84,7 @@ const PositionSearchPopup: React.FC<PositionSearchPopupProps> = ({
       width: 100,
       align: 'center',
       sortable: true,
+      valueFormatter: ({ value }: { value: string }) => getDepartmentName(value),
     },
   ];
 
