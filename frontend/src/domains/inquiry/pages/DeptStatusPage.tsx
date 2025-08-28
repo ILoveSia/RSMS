@@ -6,7 +6,7 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { Button, SearchButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import LedgerOrdersHodSelect from '@/shared/components/ui/form/LedgerOrdersHodSelect';
 import DepartmentSearchBox from '@/shared/components/ui/form/DepartmentSearchBox';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -655,7 +655,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           
-          <SearchButton onClick={handleSearch} loading={isLoading} disabled={isLoading} />
+          <Button onClick={handleSearch} loading={isLoading} disabled={isLoading} />
         </Box>
 
         {/* 액션 버튼들 */}

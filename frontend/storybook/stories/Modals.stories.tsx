@@ -1,10 +1,9 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import React from 'react';
 import Confirm from '../../src/shared/components/modal/Confirm';
-import Alert from '../../src/shared/components/modal/Alert';
 import Dialog from '../../src/shared/components/modal/Dialog';
-import Drawer from '../../src/shared/components/ui/layout/Drawer';
 import { Button } from '../../src/shared/components/ui/button';
+import Drawer from '../../src/shared/components/ui/layout/Drawer';
 
 const meta: Meta = {
     title: 'Shared/components/modal',
@@ -34,25 +33,6 @@ export const ConfirmDialogStory: Story = {
     );
   },
 };
-
-export const AlertDialogStory: Story = {
-  name: 'Alert',
-  render: () => {
-    const [open, setOpen] = React.useState(true);
-    return (
-      <div style={{ padding: 16 }}>
-        <Button onClick={() => setOpen(true)}>Open Alert</Button>
-        <Alert
-          open={open}
-          title="알림"
-          message="처리가 완료되었습니다."
-          onClose={() => setOpen(false)}
-        />
-      </div>
-    );
-  },
-};
-
 export const SimpleDialogStory: Story = {
   name: 'Dialog',
   render: () => {

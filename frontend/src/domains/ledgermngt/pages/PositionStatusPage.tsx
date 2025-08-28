@@ -10,7 +10,7 @@ import {
 } from '@/domains/common/components/search';
 import { Confirm, ModernAlert } from '@/shared/components/modal';
 import { DataGrid } from '@/shared/components/ui';
-import { Button, SearchButton, ManagementButtonGroup, PermissionButton } from '@/shared/components/ui/button';
+import { Button, ManagementButtonGroup, PermissionButton } from '@/shared/components/ui/button';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
@@ -454,7 +454,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               setLedgerOrderOptions(options);
             }, [])}
           />
-          <SearchButton onClick={handleSearch} />
+          <Button preset="search" onClick={handleSearch} />
           <PermissionButton
             menuCode="LEDGER_MGMT_POSITION"
             permission="write"

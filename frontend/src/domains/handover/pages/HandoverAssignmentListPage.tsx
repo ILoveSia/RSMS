@@ -10,7 +10,7 @@
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
-import { Button, SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { ManagementButtonGroup, ExcelDownloadButton, Button as CustomButton } from '@/shared/components/ui/button'; // Modified import
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -18,7 +18,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Assignment as AssignmentIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { Box, Chip, Button } from '@mui/material'; // Keep Button from MUI
 import React, { useCallback, useEffect, useState } from 'react';
 import { handoverApi, type HandoverAssignmentDto } from '../api/handoverApi';
 import HandoverAssignmentDialog from '../components/HandoverAssignmentDialog';
@@ -367,7 +367,8 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
-          <SearchButton
+          <CustomButton // Changed to CustomButton
+            preset="search"
             onClick={handleSearch}
             loading={loading}
             disabled={loading}
@@ -421,6 +422,9 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
               '& .MuiDataGrid-columnHeaders': {
                 backgroundColor: 'var(--bank-bg-secondary) !important',
                 fontWeight: 'bold',
+              },
+              '& .MuiDataGrid-row': {
+                cursor: 'pointer',
               },
             }}
           />

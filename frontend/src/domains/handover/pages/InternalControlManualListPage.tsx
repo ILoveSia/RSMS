@@ -11,7 +11,7 @@
  */
 
 import { ApprovalStatusBadge, AttachmentBadge } from '@/shared/components/ui/badge';
-import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
+import { ManagementButtonGroup, Button as CustomButton } from '@/shared/components/ui/button'; // Modified import
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { TextField } from '@/shared/components/ui/data-display/';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -19,7 +19,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Box, Chip, IconButton, InputAdornment } from '@mui/material';
+import { Box, Chip, IconButton, InputAdornment, Button } from '@mui/material'; // Keep Button from MUI
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import TitleSearch from '@/domains/admin/components/TitleSearch';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -358,7 +358,8 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
                   ),
                 }}
               />
-              <SearchButton
+              <CustomButton // Changed to CustomButton
+                preset="search"
                 onClick={handleSearch}
                 loading={loading}
                 disabled={loading}

@@ -69,6 +69,7 @@ const ResponsibilitySelect: React.FC<ResponsibilitySelectProps> = ({
   return (
     <Box sx={{ ...sx }}>
       <TextField
+        mode="readonly"
         value={value?.responsibilityContent || ''}
         size={size}
         disabled={disabled}

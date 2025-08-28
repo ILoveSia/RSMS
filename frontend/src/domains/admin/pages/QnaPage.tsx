@@ -1,22 +1,21 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ListAlt as ListAltIcon } from '@mui/icons-material';
-import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
-import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
-import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import DataGrid from '@/shared/components/ui/data-display/DataGrid';
-import { Button } from '@/shared/components/ui/button';
-import TitleSearch from '../components/TitleSearch';
-import QnaDetailDialog from '../components/QnaDetailDialog';
-import QnaCreateDialog from '../components/QnaCreateDialog';
-import CommonCodeSelect from '@/shared/components/ui/form/CommonCodeSelect';
-import { useGetCodeName } from '@/shared/utils/codeUtils';
 import type { QnaListResponseDto } from '@/app/types/qna';
-import type { GridSortModel } from '@mui/x-data-grid';
-import qnaApi from '../api/qnaApi';
 import { QnaStatus } from '@/app/types/qna';
+import { Button } from '@/shared/components/ui/button';
+import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
+import DataGrid from '@/shared/components/ui/data-display/DataGrid';
 import { useToastHelpers } from '@/shared/components/ui/feedback/ToastProvider';
-import { useDialog } from '@/shared/hooks/useDialog';
+import CommonCodeSelect from '@/shared/components/ui/form/CommonCodeSelect';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { useGetCodeName } from '@/shared/utils/codeUtils';
+import { ListAlt as ListAltIcon } from '@mui/icons-material';
+import type { GridSortModel } from '@mui/x-data-grid';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import qnaApi from '../api/qnaApi';
+import QnaCreateDialog from '../components/QnaCreateDialog';
+import QnaDetailDialog from '../components/QnaDetailDialog';
+import TitleSearch from '../components/TitleSearch';
 
 interface QnaPageProps {
   className?: string;
@@ -258,7 +257,6 @@ const QnaPage: React.FC<QnaPageProps> = () => {
             { field: 'viewCount', headerName: '조회수', width: 100, align: 'center' },
           ]}
           pagination={pagination}
-          serverSide={false}
           sortable
           onSortChange={model => { setSortModel(model); setPage(1); }}
           onRowDoubleClick={undefined}

@@ -14,7 +14,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useState } from 'react';
 import '../../../assets/scss/style.css';
-import { SearchButton, ManagementButtonGroup, PermissionButton } from '../../../shared/components/ui/button';
+import { ManagementButtonGroup, PermissionButton, Button as CustomButton } from '../../../shared/components/ui/button'; // Modified import
 import ExecutiveDetailDialog from '../components/ExecutiveDetailDialog';
 import execOfficerApi, { type ExecOfficer } from '../api/executivestatusApi';
 import { Confirm } from '@/shared/components/modal';
@@ -512,13 +512,11 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
               
             }, [])}
           />
-          <SearchButton
-            onClick={useCallback(() => {
-              
-              fetchExecutiveStatus();
-            }, [fetchExecutiveStatus, ledgerOrdersId])}
-            loading={false}
-            disabled={false}
+          <CustomButton // Added Search Button
+            preset="search"
+            onClick={fetchExecutiveStatus}
+            loading={isLoading}
+            disabled={isLoading}
           />
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <PermissionButton

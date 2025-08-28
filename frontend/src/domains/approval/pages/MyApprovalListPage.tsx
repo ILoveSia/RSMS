@@ -5,7 +5,6 @@
 import { useReduxState } from '@/app/store/use-store';
 import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
 import InlineApprovalDialog from '@/shared/components/approval/InlineApprovalDialog';
-import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { SearchConditionPanel } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -34,6 +33,7 @@ import approvalApi, {
   type ApprovalListResponse,
   type ApprovalStatusResponse,
 } from '../api/approvalApi';
+import { Button as CustomButton } from '@/shared/components/ui/button'; // Import custom Button with alias
 
 // 결재 상태 옵션
 const STATUS_OPTIONS = [
@@ -387,7 +387,8 @@ const MyApprovalListPage: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <SearchButton
+            <CustomButton // Changed to CustomButton
+              preset="search"
               onClick={loadApprovalData}
               loading={loading}
               disabled={loading}

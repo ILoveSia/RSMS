@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useReduxState } from '@/app/store/use-store';
 import { Dialog } from '@/shared/components/modal';
-import { CancelButton, SaveButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button'; // Modified import
 import { Select } from '@/shared/components/ui/form';
 import TextField from '@/shared/components/ui/data-display/TextField';
 import type { SelectOption } from '@/shared/types/common';
@@ -51,7 +51,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<number>(1);
   const [siblingMenus, setSiblingMenus] = useState<Menu[]>([]);
-  
+
   // 리덕스 스토어에서 메뉴 데이터 가져오기
   const { setData: setMenuStoreData } = useReduxState<any[]>('menuStore/accessibleMenus');
 
@@ -63,7 +63,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
     if (editingMenu && open) {
       setSelectedParentId(editingMenu.parentId);
       setSelectedOrder(-1); // 기본값을 "변경 없음"으로 설정
-      
+
       // 같은 부모 아래의 메뉴들 가져오기 (자기 자신 제외)
       if (editingMenu.parentId === null) {
         // 루트 메뉴인 경우
@@ -80,7 +80,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
   // 부모 변경 처리
   const handleParentChange = (newParentId: number | null) => {
     setSelectedParentId(newParentId);
-    
+
     // 부모가 변경되면 해당 부모 아래의 메뉴들로 업데이트
     if (newParentId === null) {
       // 루트로 이동
@@ -91,7 +91,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
       const siblings = allMenus.filter(menu => menu.parentId === newParentId);
       setSiblingMenus(siblings.sort((a, b) => a.sortOrder - b.sortOrder));
     }
-    
+
     // 순서는 맨 마지막으로 설정
     setSelectedOrder(siblingMenus.length + 1);
   };
@@ -115,9 +115,9 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
             parentId: editingMenu.parentId, // 기존 부모 유지
             sortOrder: editingMenu.sortOrder // 기존 순서 유지
           };
-          
+
           const response: MenuUpdateResponse = await menuApi.updateMenu(updateData);
-          
+
           // 변경 사항이 있었는지 확인
           if (response.success) {
             if (response.orderChanged || response.infoChanged) {
@@ -125,7 +125,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
               if (onOrderChange) {
                 onOrderChange([]);
               }
-              
+
               // 리덕스 스토어 업데이트를 위해 메뉴 데이터 새로고침
               try {
                 // 사용자 권한에 따른 접근 가능한 메뉴를 다시 가져와서 리덕스 스토어 업데이트
@@ -145,7 +145,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
         } else {
           // 순서 변경이 있는 경우
           let targetSortOrder: number;
-          
+
           if (selectedOrder === 0) {
             // 최상단에 배치
             targetSortOrder = 0;
@@ -154,7 +154,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
             const selectedMenu = siblingMenus[selectedOrder - 1];
             targetSortOrder = selectedMenu ? selectedMenu.sortOrder : 1;
           }
-          
+
           // API 호출을 위한 데이터 준비
           const updateData: MenuUpdateRequest = {
             id: editingMenu.id,
@@ -164,9 +164,9 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
             parentId: selectedParentId,
             sortOrder: targetSortOrder
           };
-          
+
           const response: MenuUpdateResponse = await menuApi.updateMenu(updateData);
-          
+
           // 변경 사항이 있었는지 확인
           if (response.success) {
             if (response.orderChanged || response.infoChanged) {
@@ -174,7 +174,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
               if (onOrderChange) {
                 onOrderChange([]);
               }
-              
+
               // 리덕스 스토어 업데이트를 위해 메뉴 데이터 새로고침
               try {
                 // 사용자 권한에 따른 접근 가능한 메뉴를 다시 가져와서 리덕스 스토어 업데이트
@@ -192,7 +192,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
             return;
           }
         }
-        
+
         // 다이얼로그 닫기
         onClose();
       } catch (error) {
@@ -207,11 +207,11 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
 
   // 루트 메뉴 목록 (부모 선택용)
   const rootMenus = allMenus.filter(menu => menu.parentId === null || menu.parentId === undefined);
-  
+
   // 부모 선택 옵션 생성 (자식 메뉴는 루트로 이동할 수 없음)
-  const parentOptions: SelectOption[] = rootMenus.map(menu => ({ 
-    value: menu.id.toString(), 
-    label: menu.menuName 
+  const parentOptions: SelectOption[] = rootMenus.map(menu => ({
+    value: menu.id.toString(),
+    label: menu.menuName
   }));
 
   const handleParentSelectChange = (value: string | number | string[] | number[]) => {
@@ -230,16 +230,16 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={handleClose} 
-      maxWidth="lg" 
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="lg"
       fullWidth
       title={editingMenu ? '메뉴 수정' : '메뉴 추가'}
              actions={
          <Box sx={{ display: 'flex', gap: 1 }}>
-           <CancelButton onClick={handleClose} />
-           <SaveButton onClick={handleSave} label={editingMenu ? '수정' : '추가'} />
+           <Button preset="cancel" onClick={handleClose} /> {/* Modified */}
+           <Button preset="save" onClick={handleSave} />
          </Box>
        }
     >
@@ -283,7 +283,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
              <Typography variant="h6" sx={{ mb: 2 }}>
                메뉴 순서 관리
              </Typography>
-             
+
              {!isRootMenu && (
                <Box sx={{ mb: 2 }}>
                  <Select
@@ -295,7 +295,7 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
                  />
                </Box>
              )}
-             
+
                            <Box sx={{ mb: 2 }}>
                                  <Select
                    label="메뉴 순서"
@@ -303,9 +303,9 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
                    options={[
                      { value: '-1', label: '변경 없음' },
                      { value: '0', label: '최상단에 배치합니다' },
-                     ...siblingMenus.map((menu, idx) => ({ 
-                       value: (idx + 1).toString(), 
-                       label: `${menu.menuName} 아래에 배치합니다` 
+                     ...siblingMenus.map((menu, idx) => ({
+                       value: (idx + 1).toString(),
+                       label: `${menu.menuName} 아래에 배치합니다`
                      }))
                    ]}
                    onChange={(value) => handleOrderChange(Array.isArray(value) ? -1 : Number(value))}
@@ -320,4 +320,3 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
 };
 
 export default MenuEditDialog;
-

@@ -3,18 +3,18 @@
  * MainContent.tsx
  */
 import type { MeetingBody } from '@/app/types';
-import { useCommonCodes, useGetCodeName } from '@/shared/utils/codeUtils';
 import { Confirm } from '@/shared/components/modal';
-import { SearchButton, ManagementButtonGroup  } from '@/shared/components/ui/button';
+import { Button as CustomButton, ManagementButtonGroup } from '@/shared/components/ui/button'; // Modified import
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn } from '@/shared/types/common';
 import { useApiWithNotification } from '@/shared/hooks';
+import type { DataGridColumn } from '@/shared/types/common';
+import { useCommonCodes, useGetCodeName } from '@/shared/utils/codeUtils';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box } from '@mui/material';
+import { Box } from '@mui/material'; // Keep Button from MUI
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -383,7 +383,8 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             mode="editable"
             sx={{ width: 140 }}
           />
-          <SearchButton
+          <CustomButton // Changed to CustomButton
+            preset="search"
             onClick={handleSearch}
             loading={loading}
             disabled={loading}
@@ -440,7 +441,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             data={meetingBodies}
             columns={meetingColumns}
             loading={loading}
-            outline={false}
             selectable={true}
             height={600} 
             multiSelect
@@ -449,7 +449,6 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
               setSelectedIds(selectedRowIds.map(id => String(id)));
             }}
             rowIdField='meetingBodyId'
-            serverSide
           />
         </Box>
       </PageContent>

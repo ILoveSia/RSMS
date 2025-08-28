@@ -2,38 +2,33 @@
  * 결재 히스토리 페이지
  * 전체 결재 현황과 이력을 조회합니다.
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import TitleSearch from '@/domains/admin/components/TitleSearch';
+import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
+import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { DataGrid } from '@/shared/components/ui/data-display';
+import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
+import { PageContent } from '@/shared/components/ui/layout/PageContent';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
+import { useApiWithNotification } from '@/shared/hooks';
+import type { DataGridColumn } from '@/shared/types/common';
+import { getCodeNameSync, useCommonCodes } from '@/shared/utils/codeUtils';
 import {
-  Box,
-  Typography,
-  Chip,
-  Button,
+  History as HistoryIcon
+} from '@mui/icons-material';
+import {
   Alert,
+  Box,
+  Chip,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
+  Select,
   TextField,
-  Grid,
-  InputAdornment,
+  Typography
 } from '@mui/material';
-import {
-  History as HistoryIcon,
-  Search as SearchIcon,
-} from '@mui/icons-material';
-import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
-import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { DataGrid } from '@/shared/components/ui/data-display';
-import { ExcelDownloadButton, SearchButton } from '@/shared/components/ui/button';
-import { SearchConditionPanel } from '@/shared/components/ui/form';
-import type { DataGridColumn } from '@/shared/types/common';
-import approvalApi, { type ApprovalListResponse } from '../api/approvalApi';
-import ApprovalStatusDialog from '@/shared/components/approval/ApprovalStatusDialog';
-import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
-import { useApiWithNotification } from '@/shared/hooks';
-import TitleSearch from '@/domains/admin/components/TitleSearch';
+import React, { useCallback, useEffect, useState } from 'react';
 import '../../../assets/scss/style.css';
+import approvalApi, { type ApprovalListResponse } from '../api/approvalApi';
 
 // 검색 조건 인터페이스
 interface SearchCriteria {
@@ -411,7 +406,8 @@ const ApprovalHistoryPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-              <SearchButton
+              <Button
+                preset="search" // Modified
                 onClick={handleSearch}
                 loading={loading}
                 disabled={loading}

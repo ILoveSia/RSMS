@@ -2,11 +2,9 @@
  * 도메인 페이지들을 위한 공통 페이지 컨텐츠 컴포넌트
  * 페이지 본문 영역을 일관된 스타일로 제공
  */
-import { Box, Snackbar, Alert } from '@mui/material';
-import { useLocation } from 'react-router-dom';
+import { Box } from '@mui/material';
 import type { SxProps, Theme } from '@mui/system';
 import React, { useEffect, useState } from 'react';
-import CustomSnackbar from '@/shared/components/notification/CustomSnackbar';
 interface PageContentProps {
   /** 페이지 컨텐츠 */
   children: React.ReactNode;

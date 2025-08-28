@@ -1,6 +1,6 @@
 import type { Theme } from '@mui/material/styles';
 import type { SxProps } from '@mui/system';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 // 기본 컴포넌트 Props 인터페이스
 export interface BaseComponentProps {

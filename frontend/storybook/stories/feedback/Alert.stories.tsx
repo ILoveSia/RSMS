@@ -1,8 +1,7 @@
-import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import React from 'react';
 import Alert from '../../../src/shared/components/ui/feedback/Alert';
 
-import { Box } from '@mui/material';
 
 type Story = StoryObj<typeof meta>;
 

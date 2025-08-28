@@ -3,7 +3,7 @@
  */
 import '@/assets/scss/style.css';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
+import { Button, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
@@ -487,7 +487,8 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               size='small'
               sx={{ minWidth: 150, maxWidth: 200 }}
             />
-            <SearchButton
+            <Button
+              preset="search"
               onClick={handleSearch}
             />
           </Box>
@@ -526,7 +527,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             <DataGrid
               data={rows}
               columns={columns as any}
-              outline={false}
               selectable={true}
               height={600} 
               multiSelect

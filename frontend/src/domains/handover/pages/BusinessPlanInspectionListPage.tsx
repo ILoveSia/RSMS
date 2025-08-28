@@ -10,7 +10,7 @@
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton } from '@/shared/components/ui/button';
+import { ManagementButtonGroup, ExcelDownloadButton, Button as CustomButton } from '@/shared/components/ui/button'; // Modified import
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -18,7 +18,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Assessment as InspectionIcon } from '@mui/icons-material';
-import { Box, Chip } from '@mui/material';
+import { Box, Chip, Button } from '@mui/material'; // Keep Button from MUI
 import React, { useCallback, useEffect, useState } from 'react';
 import { businessPlanInspectionApi, type BusinessPlanInspectionDto } from '../api/businessPlanInspectionApi';
 import BusinessPlanInspectionDialog from '../components/BusinessPlanInspectionDialog';
@@ -333,7 +333,8 @@ const BusinessPlanInspectionListPage: React.FC<IBusinessPlanInspectionListPagePr
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
           />
-          <SearchButton
+          <CustomButton // Changed to CustomButton
+            preset="search"
             onClick={handleSearch}
             loading={loading}
             disabled={loading}

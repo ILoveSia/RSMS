@@ -4,13 +4,8 @@
  */
 import React from 'react';
 import { Box } from '@mui/material';
-import RegisterButton from '@/shared/components/ui/button/RegisterButton';
-import ExcelDownloadButton from '@/shared/components/ui/button/ExcelDownloadButton';
-import RefreshButton from '@/shared/components/ui/button/RefreshButton';
-import EditButton from '@/shared/components/ui/button/EditButton';
-import SaveButton from '@/shared/components/ui/button/SaveButton';
-import CancelButton from '@/shared/components/ui/button/CancelButton';
-import DeleteButton from '@/shared/components/ui/button/DeleteButton';
+import Button from '@/shared/components/ui/button/Button'; // Import base Button
+import ExcelDownloadButton from '@/shared/components/ui/button/ExcelDownloadButton'; // Keep this, it's specialized
 
 export interface ManagementButtonGroupProps {
   onRegister?: () => void;
@@ -29,7 +24,7 @@ export interface ManagementButtonGroupProps {
   cancelDisabled?: boolean;
   refreshDisabled?: boolean;
   excelDisabled?: boolean;
-  
+
   // 로딩 상태
   registerLoading?: boolean;
   editLoading?: boolean;
@@ -38,7 +33,7 @@ export interface ManagementButtonGroupProps {
   cancelLoading?: boolean;
   refreshLoading?: boolean;
   excelLoading?: boolean;
-  
+
   // 스타일
   spacing?: number;
   align?: 'left' | 'center' | 'right';
@@ -56,7 +51,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
   onCancel,
   onRefresh,
   onExcelDownload,
-  
+
   registerDisabled = false,
   editDisabled = false,
   deleteDisabled = false,
@@ -64,7 +59,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
   cancelDisabled = false,
   refreshDisabled = false,
   excelDisabled = false,
-  
+
   registerLoading = false,
   editLoading = false,
   deleteLoading = false,
@@ -73,7 +68,7 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
   refreshLoading = false,
   excelLoading = false,
   filename = 'excel_export',
-  
+
   spacing = 1,
   align = 'right',
   sx,
@@ -105,7 +100,8 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
     >
       {/* 새로고침 버튼 */}
       {onRefresh && (
-        <RefreshButton
+        <Button
+          preset="refresh"
           onClick={onRefresh}
           loading={refreshLoading}
           disabled={refreshDisabled}
@@ -124,7 +120,8 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
 
       {/* 등록 버튼 (공통 컴포넌트) */}
       {onRegister && (
-        <RegisterButton
+        <Button
+          preset="register"
           onClick={onRegister}
           disabled={registerDisabled}
           loading={registerLoading}
@@ -133,7 +130,8 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
 
       {/* 수정 버튼 */}
       {onEdit && (
-        <EditButton
+        <Button
+          preset="edit"
           onClick={onEdit}
           disabled={editDisabled}
           loading={editLoading}
@@ -142,7 +140,8 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
 
       {/* 저장 버튼 */}
       {onSave && (
-        <SaveButton
+        <Button
+          preset="save"
           onClick={onSave}
           disabled={saveDisabled}
           loading={saveLoading}
@@ -151,7 +150,8 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
 
       {/* 취소 버튼 */}
       {onCancel && (
-        <CancelButton
+        <Button
+          preset="cancel"
           onClick={onCancel}
           disabled={cancelDisabled}
           loading={cancelLoading}
@@ -160,7 +160,8 @@ const ManagementButtonGroup: React.FC<ManagementButtonGroupProps> = ({
 
       {/* 삭제 버튼 */}
       {onDelete && (
-        <DeleteButton
+        <Button
+          preset="delete"
           onClick={onDelete}
           disabled={deleteDisabled}
           loading={deleteLoading}

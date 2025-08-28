@@ -8,7 +8,7 @@
  * - 메모리 누수 방지
  */
 import type { Tab, TabContextType, TabManagerState } from '@/app/types/tab';
-import React, { ReactNode, createContext, useContext, useEffect, useReducer } from 'react';
+import React, { type ReactNode, createContext, useContext, useEffect, useReducer } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 // 초기 상태 정의

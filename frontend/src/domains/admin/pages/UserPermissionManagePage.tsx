@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, CircularProgress, Chip, IconButton, FormControl, Select, MenuItem, Avatar, Paper } from '@mui/material';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, Chip, IconButton, FormControl, Select, MenuItem, Avatar, Paper } from '@mui/material';
 import { Edit as EditIcon, Person as PersonIcon, Clear as ClearIcon } from '@mui/icons-material';
 import { PersonAddAlt1 as PersonAddAlt1Icon } from '@mui/icons-material';
 import { UserRoleBadges } from '@/shared/components/ui/badge';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, Button as SharedButton, RefreshButton } from '@/shared/components/ui/button';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
 import CreateUserDialog from '@/domains/admin/components/CreateUserDialog';
+import { Button } from '@/shared/components/ui/button';
 import { adminApi } from '../api/adminApi';
 // import UserEditDialog from '@/domains/admin/components/UserEditDialog';
 import EmployeeSelect from '@/domains/handover/components/EmployeeSelect';
@@ -259,7 +259,8 @@ const UserPermissionManagePage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <SearchButton
+          <Button
+            preset="search" // Modified
             onClick={loadData}
             loading={loading}
             disabled={loading}
@@ -280,7 +281,7 @@ const UserPermissionManagePage: React.FC = () => {
             초기화
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-            <RefreshButton size="small" disabled={loading} onClick={loadData} />
+            <Button preset="refresh" size="small" disabled={loading} onClick={loadData} /> {/* Modified */}
           </Box>
         </Box>
 
@@ -314,7 +315,7 @@ const UserPermissionManagePage: React.FC = () => {
             </Box>
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <SharedButton
+            <Button
               onClick={openCreateDialog}
               variant="contained"
               color="primary"
@@ -329,7 +330,7 @@ const UserPermissionManagePage: React.FC = () => {
               }}
             >
               사용자 등록
-            </SharedButton>
+            </Button>
             {/* <ExcelDownloadButton
               onDownload={() => {}}
               filename="user_permissions_list"

@@ -85,7 +85,6 @@ const Tabs = forwardRef<HTMLDivElement, TabsProps>(
     ref
   ) => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // 내부 상태 관리
     const [activeTab, setActiveTab] = useState<string>(() => {

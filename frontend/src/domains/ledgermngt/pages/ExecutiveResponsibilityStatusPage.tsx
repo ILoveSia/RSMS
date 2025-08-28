@@ -4,25 +4,26 @@
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
-import { SearchButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
-import type { DataGridColumn } from '@/shared/types/common';
 import { useApiWithNotification } from '@/shared/hooks';
+import type { DataGridColumn } from '@/shared/types/common';
 
+import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
+import { PositionSearchBox } from '@/shared/components/ui/form';
+import {
+  getCodeNameSync,
+  useCommonCodes,
+} from '@/shared/utils/codeUtils';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import executiveResponsibilityApi from '../api/executiveResponsibilityApi';
 import ExecutiveResponsibilityDialog from '../components/ExecutiveResponsibilityDialog';
-import { PositionSearchBox } from '@/shared/components/ui/form';
-import type { PositionSearchResult } from '@/domains/ledgermngt/api/positionApi';
-import {
-  useCommonCodes,
-  getCodeNameSync,
-} from '@/shared/utils/codeUtils';
+import { Button } from '@/shared/components/ui/button'; // Added Button import
+
 interface IExecutiveResponsibilityStatusPageProps {
   className?: string;
 }
@@ -333,7 +334,8 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             size="small"
             sx={{ minWidth: '200px' }}
           />
-          <SearchButton
+          <Button
+            preset="search" // Added Search Button
             onClick={applyFiltersAndUpdate}
             loading={isLoading}
             disabled={isLoading}

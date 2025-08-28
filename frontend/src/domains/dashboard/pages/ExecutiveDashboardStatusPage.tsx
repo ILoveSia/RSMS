@@ -4,7 +4,7 @@
  */
 import { ModernAlert } from '@/shared/components/modal';
 import '@/assets/scss/style.css';
-import { SearchButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import LedgerOrdersHodSelect from '@/shared/components/ui/form/LedgerOrdersHodSelect';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -707,7 +707,7 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           
-          <SearchButton onClick={handleSearch} loading={isLoading} disabled={isLoading} />
+          <Button onClick={handleSearch} loading={isLoading} disabled={isLoading} />
         </Box>
 
         {/* 소관부서 점검항목 현황 DataGrid */}

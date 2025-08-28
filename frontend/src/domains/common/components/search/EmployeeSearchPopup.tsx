@@ -3,16 +3,15 @@
  * UserController의 사용자 목록 조회 API를 사용
  * 부서검색 팝업과 통일된 디자인 적용
  */
-import { RefreshButton } from '@/shared/components/ui/button';
 import apiClient from '@/app/common/api/client';
 import DepartmentApi from '@/domains/common/api/departmentApi';
+import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
-import { useCommonCodes, getCodeNameSync } from '@/shared/utils/codeUtils';
-import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { SearchBox } from '@/shared/components/ui/form';
 import type { DataGridColumn } from '@/shared/types/common';
-import BaseDialog from '@/shared/components/modal/BaseDialog';
+import { useCommonCodes } from '@/shared/utils/codeUtils';
+import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import type { GridRowParams } from '@mui/x-data-grid';
 import React, { useEffect, useState } from 'react';
 
@@ -256,7 +255,6 @@ const EmployeeSearchPopup: React.FC<{
           <Button onClick={onClose}>취소</Button>
         </>
       }
-      contentSx={{ p: 0 }}
     >
       <Box sx={{ width: '100%', height: 500, p: 3 }}>
         {/* 검색 영역 */}
@@ -268,7 +266,7 @@ const EmployeeSearchPopup: React.FC<{
               onClear={() => setSearchQuery('')}
             />
           </Box>
-          <RefreshButton onClick={handleSearch} disabled={loading} />
+          <Button preset="refresh" onClick={handleSearch} disabled={loading} />
         </Box>
 
         {/* 안내 메시지 */}

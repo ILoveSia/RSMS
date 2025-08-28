@@ -10,7 +10,7 @@ import React from 'react';
  * - 나머지 props는 모두 그대로 전달
  */
 export interface TextFieldProps {
-  label: string;
+  label?: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: boolean;

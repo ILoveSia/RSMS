@@ -4,7 +4,7 @@
  */
 import '@/assets/scss/style.css';
 import { AttachmentBadge } from '@/shared/components/ui/badge';
-import { ManagementButtonGroup, SearchButton } from '@/shared/components/ui/button';
+import { ManagementButtonGroup } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { DatePicker, LedgerOrderSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -17,6 +17,7 @@ import { Groups as GroupsIcon } from '@mui/icons-material';
 import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import type { RegistrationData, SubmissionHistoryRow } from '../api/SubmissionStatusApi';
+import { Button } from '@/shared/components/ui/button';
 import {
   deleteSubmissionHistory,
   fetchSubmissionHistory,
@@ -256,7 +257,6 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               maxDate={endDate ?? undefined}
               size="small"
               mode="editable"
-              sx={{ width: '200px' }}
             />
             <span style={{ color: 'var(--bank-text-primary)' }}>~</span>
             <DatePicker
@@ -266,10 +266,10 @@ const StructureSubmissionStatusPage: React.FC<IStructureSubmissionStatusPageProp
               onChange={setEndDate}
               size="small"
               mode="editable"
-              sx={{ width: '200px' }}
             />
           </Box>
-          <SearchButton
+          <Button
+            preset="search"
             onClick={handleFetchSubmissionHistory}
             loading={isLoading}
             disabled={isLoading}

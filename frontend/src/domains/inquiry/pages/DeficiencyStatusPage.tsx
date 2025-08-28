@@ -4,7 +4,6 @@
  */
 import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
-import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ModernAlert } from '@/shared/components/modal';
 import { SearchConditionPanel, LedgerOrdersHodSelect } from '@/shared/components/ui/form';
@@ -474,7 +473,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
               sx={{ minWidth: '200px' }}
             />
           </Box>
-          <SearchButton
+          <Button
             onClick={handleSearch}
             loading={loading}
           />

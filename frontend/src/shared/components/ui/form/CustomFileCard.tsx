@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
-import { 
-  Box, 
-  IconButton, 
-  Typography, 
-  Paper 
-} from '@mui/material';
-import { 
-  Delete as DeleteIcon, 
-  Download as DownloadIcon,
+import {
+  Archive as ArchiveIcon,
+  AudioFile as AudioIcon,
+  Delete as DeleteIcon,
   InsertDriveFile as FileIcon,
   Image as ImageIcon,
-  VideoFile as VideoIcon,
-  AudioFile as AudioIcon,
   PictureAsPdf as PdfIcon,
-  Archive as ArchiveIcon
+  VideoFile as VideoIcon
 } from '@mui/icons-material';
+import {
+  Box,
+  IconButton,
+  Paper,
+  Typography
+} from '@mui/material';
+import React, { useState } from 'react';
 
 // Define the props for the CustomFileCard component
 interface CustomFileCardProps {

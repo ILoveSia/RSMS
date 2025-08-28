@@ -5,7 +5,7 @@ import LedgerOrderSelect from '@/shared/components/ui/form/LedgerOrderSelect';
 import ErrorDialog from '@/app/components/ErrorDialog';
 import '@/assets/scss/style.css';
 import type { DialogMode } from '@/shared/components/modal/BaseDialog';
-import { SearchButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import { PermissionButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { PositionSearchBox } from '@/shared/components/ui/form';
@@ -711,7 +711,8 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             size="small"
             sx={{ minWidth: '200px' }}
           />
-          <SearchButton
+          <Button
+            preset="search"
             onClick={useCallback(() => {
               fetchPositionResponsibilityData();
             }, [fetchPositionResponsibilityData, ledgerOrdersId, selectedPosition?.positionsId])}

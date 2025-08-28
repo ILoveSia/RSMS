@@ -1,20 +1,19 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Alert, CircularProgress, FormControl, Select, MenuItem, Tooltip, Paper } from '@mui/material';
-import { Save as SaveIcon, Security as SecurityIcon} from '@mui/icons-material';
-import { SaveButton } from '@/shared/components/ui/button';
+import TitleSearch from '@/domains/admin/components/TitleSearch';
+import { Button } from '@/shared/components/ui/button'; // Modified import
 import { MenuPermissionCell } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
-import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
-import { SearchButton, RefreshButton } from '@/shared/components/ui/button';
-import { adminApi } from '../api/adminApi';
+import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { useApiWithNotification } from '@/shared/hooks';
-import TitleSearch from '@/domains/admin/components/TitleSearch';
-import type { 
-  MenuPermissionMatrix, 
-  MenuPermissionUpdate, 
+import { Security as SecurityIcon } from '@mui/icons-material';
+import { Alert, Box, CircularProgress, FormControl, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { adminApi } from '../api/adminApi';
+import type {
   MenuPermissionFilter,
-  PermissionSet 
+  MenuPermissionMatrix,
+  MenuPermissionUpdate,
+  PermissionSet
 } from '../types';
 
 /**
@@ -276,19 +275,21 @@ const MenuPermissionManagePage: React.FC = () => {
                   <MenuItem value="FULL">전체 권한</MenuItem>
                 </Select>
               </FormControl>
-              <SearchButton
+              <Button
+                preset="search" // Modified
                 onClick={handleSearch}
                 loading={loading}
                 disabled={loading}
               />
               <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-                <SaveButton
+                <Button
+                  preset="save" // Modified
                   onClick={handleSave}
                   disabled={saving || changes.size === 0}
                   loading={saving}
-                  label={saving ? '저장 중...' : `변경사항 저장 (${changes.size})`}
+                  children={saving ? '저장 중...' : `변경사항 저장 (${changes.size})`} // Modified
                 />
-                <RefreshButton disabled={loading} onClick={loadMatrix} />
+                <Button preset="refresh" disabled={loading} onClick={loadMatrix} /> {/* Modified */}
               </Box>
             </>
           }

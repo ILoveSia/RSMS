@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import { RegisterButton, CancelButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button'; // Modified import
 
 export interface CommentInputProps {
   value: string;
@@ -46,15 +46,15 @@ const CommentInput: React.FC<CommentInputProps> = ({
         fullWidth
       />
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <RegisterButton
+        <Button
+          preset="register" // Modified
           size={size}
           onClick={onSubmit}
           disabled={disabled}
           loading={loading}
         />
         {onCancel && (
-          <CancelButton size={size} onClick={onCancel} disabled={loading}>
-          </CancelButton>
+          <Button preset="cancel" size={size} onClick={onCancel} disabled={loading} />
         )}
       </Box>
     </Box>
@@ -62,5 +62,3 @@ const CommentInput: React.FC<CommentInputProps> = ({
 };
 
 export default CommentInput;
-
-

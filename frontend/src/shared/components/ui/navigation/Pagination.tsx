@@ -76,7 +76,7 @@ const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
     const theme = useTheme();
 
     // 페이지 변경 핸들러
-    const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    const handleChange = (_event: React.ChangeEvent<unknown>, value: number) => {
       onChange(value);
     };
 
@@ -84,12 +84,7 @@ const Pagination = forwardRef<HTMLDivElement, PaginationProps>(
     const customRenderItem =
       renderItem ||
       (item => {
-        const iconMap = {
-          first: <FirstPageIcon />,
-          last: <LastPageIcon />,
-          previous: <NavigateBeforeIcon />,
-          next: <NavigateNextIcon />,
-        };
+
 
         return (
           <PaginationItem

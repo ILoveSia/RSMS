@@ -3,41 +3,41 @@
  * 적부구조도 이력 점검의 항목별 점검 현황 관리 페이지
  */
 import ErrorDialog from '@/app/components/ErrorDialog';
+import { useReduxState } from '@/app/store/use-store';
 import '@/assets/scss/style.css';
-import { Button, ExcelDownloadButton, SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
+import DepartmentApi from '@/domains/common/api/departmentApi';
+import { Button, ExcelDownloadButton } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import { LedgerOrdersHodSelect, CommonCodeSelect, SearchConditionPanel } from '@/shared/components/ui/form';
+import { CommonCodeSelect, LedgerOrdersHodSelect, SearchConditionPanel } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
-import { useReduxState } from '@/app/store/use-store';
 import {
-  Search as SearchIcon,
+  extractCommonCodes,
+  getDepartmentNameSync,
+  useGetCodeName,
+  useGetRoleTypeName,
+  type CommonCode,
+  type Department
+} from '@/shared/utils/codeUtils';
+import {
+  Create as CreateIcon,
   Person as PersonIcon,
-  Create as CreateIcon
+  Search as SearchIcon
 } from '@mui/icons-material';
 import { Box, Chip } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { getAuditItemStatusList, type AuditItemStatusResponse } from '../api/auditItemApi';
+import {
+  getAuditResultDetail
+} from '../api/auditResultApi';
 import { assignAuditor, type AuditorAssignmentRequest } from '../api/auditorApi';
-import AuditorAssignmentDialog from '../components/AuditorAssignmentDialog';
 import AuditResultDialog, {
   type AuditItemInfo,
   type DialogMode
 } from '../components/AuditResultDialog';
-import {
-  getAuditResultDetail
-} from '../api/auditResultApi';
-import DepartmentApi from '@/domains/common/api/departmentApi';
-import {
-  useGetCodeName,
-  useGetRoleTypeName,
-  getDepartmentNameSync,
-  extractCommonCodes,
-  type CommonCode,
-  type Department
-} from '@/shared/utils/codeUtils';
+import AuditorAssignmentDialog from '../components/AuditorAssignmentDialog';
 
 // 항목별 점가 현황 데이터 인터페이스 (그룹화된 버전)
 interface AuditItemRow {
@@ -627,7 +627,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
               sx={{ width: '200px' }}
             />
           </Box>
-          <SearchButton
+          <Button
             onClick={handleFetchAuditItems}
             loading={isLoading}
           />

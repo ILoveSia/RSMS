@@ -10,7 +10,7 @@
  * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
-import { SearchButton, ManagementButtonGroup, ExcelDownloadButton, Button } from '@/shared/components/ui/button';
+import { ManagementButtonGroup, ExcelDownloadButton, Button as CustomButton } from '@/shared/components/ui/button'; // Modified import
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { TextField } from '@/shared/components/ui/data-display/';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -18,7 +18,7 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Box, IconButton, InputAdornment } from '@mui/material';
+import { Box, IconButton, InputAdornment, Button } from '@mui/material'; // Keep Button from MUI
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import TitleSearch from '@/domains/admin/components/TitleSearch';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -290,9 +290,6 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
       alert('삭제가 완료되었습니다.');
       setSelectedIds([]);
       await handleSearch(); // 데이터 새로고침
-    } catch (err) {
-      console.error('Failed to delete items:', err);
-      alert('삭제 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -306,8 +303,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
 
   const handleDialogSuccess = useCallback(async () => {
     await handleSearch(); // 데이터 새로고침
-  }, [handleSearch]);
-
+  }, [handleSearch]);
   // 사원 선택 핸들러
   const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
     setAuthorEmpNo(employee.empNo);
@@ -378,7 +374,8 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
                   ),
                 }}
               />
-              <SearchButton
+              <CustomButton // Changed to CustomButton
+                preset="search"
                 onClick={handleSearch}
                 loading={loading}
                 disabled={loading}

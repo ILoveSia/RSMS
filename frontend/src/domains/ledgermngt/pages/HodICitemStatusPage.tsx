@@ -1,5 +1,5 @@
 import { ApprovalStatusBadge } from '@/shared/components/ui/badge';
-import { Button, SearchButton, ManagementButtonGroup } from '@/shared/components/ui/button';
+import { ManagementButtonGroup, Button } from '@/shared/components/ui/button'; // Modified import
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { LedgerOrdersHodSelect, CommonCodeSelect } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -8,11 +8,10 @@ import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { useApiWithNotification } from '@/shared/hooks';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box } from '@mui/material';
+import { Box } from '@mui/material'; // Keep Button from MUI
 import React, { useCallback, useEffect, useState } from 'react';
 import { hodICItemApi, type HodICItemRow } from '../api/hodIcItemApi';
 import HodICItemDialog from '../components/HodICItemDialog';
-
 interface IHodICitemStatusPageProps {
   className?: string;
 }
@@ -454,17 +453,19 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             size='small'
             sx={{ minWidth: 120, maxWidth: 180 }}
           />
-          <SearchButton
+          <Button // Changed to CustomButton
+            preset="search"
             onClick={handleSearch}
             loading={loading}
             disabled={loading}
           />
-          <Button 
+          <Button // This is MUI Button
+            preset="register"
             variant='contained' 
             size='small' 
             color='secondary' 
             disabled={hodGenerating}
-            sx={{ 
+            sx={{
               marginLeft: '8px',
               height: '32px',
               minWidth: '120px',
@@ -477,7 +478,7 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             {hodGenerating ? '생성 중...' : '부서장차수생성'}
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-            <Button
+            <Button // This is MUI Button
               variant='contained'
               size='small'
               color='success'

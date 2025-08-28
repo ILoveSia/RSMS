@@ -4,7 +4,7 @@
  */
 import { ModernAlert } from '@/shared/components/modal';
 import '@/assets/scss/style.css';
-import { SearchButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import LedgerOrdersHodSelect from '@/shared/components/ui/form/LedgerOrdersHodSelect';
 import DepartmentSearchBox, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSearchBox';
@@ -583,7 +583,7 @@ const DeptDashboardStatusPage: React.FC = () => {
             maxWidth={300}
           />
           
-          <SearchButton onClick={handleSearch} loading={isLoading} disabled={isLoading || !selectedDepartment} />
+          <Button onClick={handleSearch} loading={isLoading} disabled={isLoading || !selectedDepartment} />
         </Box>
 
         {!selectedDepartment ? (

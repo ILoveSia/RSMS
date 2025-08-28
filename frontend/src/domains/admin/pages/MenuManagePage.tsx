@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { Edit as EditIcon } from '@mui/icons-material';
-import { Button, RefreshButton } from '@/shared/components/ui/button';
+import { Button } from '@/shared/components/ui/button'; // Corrected import
 
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -194,7 +194,7 @@ const MenuManagePage: React.FC = () => {
         description="시스템의 모든 메뉴를 관리합니다."
         actions={
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <RefreshButton onClick={loadMenus} />
+            <Button preset="refresh" onClick={loadMenus} /> {/* Modified */}
           </Box>
         }
       />
