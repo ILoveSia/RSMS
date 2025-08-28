@@ -47,6 +47,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [rows, setRows] = useState<InternalControlManualDto[]>([]);
+  const [allManuals, setAllManuals] = useState<InternalControlManualDto[]>([]);
   const [apiResponseData, setApiResponseData] = useState<any>(null);
 
   // 사원 검색 팝업 상태
@@ -166,33 +167,48 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   ];
 
   // 초기 데이터 로드
-  useEffect(() => {
-    handleSearch();
-  }, []);
-
-  const handleSearch = useCallback(async () => {
+  const loadAllData = useCallback(async () => {
     setLoading(true);
-    
     const data = await callApiWithNotification(
       () => internalControlManualApi.searchManualsWithApproval(
-        {
-          manualTitle: manualTitle.trim() || undefined,
-          authorEmpNo: authorEmpNo.trim() || undefined,
-        },
-        { page: 0, size: 100 }
+        {},
+        { page: 0, size: 1000 } // Fetch all data
       ),
       'success_load'
     );
-    
     if (data) {
+      setAllManuals(data.content);
       setRows(data.content);
       setApiResponseData(data);
     } else {
+      setAllManuals([]);
       setRows([]);
     }
-    
     setLoading(false);
-  }, [manualTitle, authorEmpNo, callApiWithNotification]);
+  }, [callApiWithNotification]);
+
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
+
+  // Client-side filtering
+  useEffect(() => {
+    let filteredData = allManuals;
+
+    if (manualTitle.trim()) {
+      filteredData = filteredData.filter(manual =>
+        manual.manualTitle.toLowerCase().includes(manualTitle.trim().toLowerCase())
+      );
+    }
+
+    if (authorName.trim()) {
+      filteredData = filteredData.filter(manual =>
+        manual.authorName?.toLowerCase().includes(authorName.trim().toLowerCase())
+      );
+    }
+
+    setRows(filteredData);
+  }, [manualTitle, authorName, allManuals]);
 
   const handleExcelDownload = useCallback(() => {
     // 엑셀 다운로드 로직
@@ -243,11 +259,11 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       }
 
       setSelectedIds([]);
-      await handleSearch(); // 데이터 새로고침
+      await loadAllData(); // 데이터 새로고침
     } finally {
       setLoading(false);
     }
-  }, [selectedIds, handleSearch, callApiWithNotification]);
+  }, [selectedIds, loadAllData, callApiWithNotification]);
 
   const handleDialogClose = useCallback(() => {
     setDialogOpen(false);
@@ -256,8 +272,8 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
   }, []);
 
   const handleDialogSuccess = useCallback(async () => {
-    await handleSearch(); // 데이터 새로고침
-  }, [handleSearch]);
+    await loadAllData(); // 데이터 새로고침
+  }, [loadAllData]);
 
   // 결재 요청 처리
   const handleApprovalStart = useCallback(async (manual: InternalControlManualDto) => {
@@ -282,11 +298,11 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         'custom'
       );
       
-      await handleSearch(); // 데이터 새로고침
+      await loadAllData(); // 데이터 새로고침
     } finally {
       setLoading(false);
     }
-  }, [handleSearch, callApiWithNotification]);
+  }, [loadAllData, callApiWithNotification]);
 
   // 사원 선택 핸들러
   const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
@@ -329,7 +345,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
         <TitleSearch
           value={manualTitle}
           onChange={setManualTitle}
-          onEnter={handleSearch}
           disabled={loading}
           after={
             <>
@@ -357,12 +372,6 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
                     </InputAdornment>
                   ),
                 }}
-              />
-              <CustomButton // Changed to CustomButton
-                preset="search"
-                onClick={handleSearch}
-                loading={loading}
-                disabled={loading}
               />
             </>
           }
