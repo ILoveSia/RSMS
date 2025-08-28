@@ -583,7 +583,7 @@ const DeptDashboardStatusPage: React.FC = () => {
             maxWidth={300}
           />
           
-          <Button onClick={handleSearch} loading={isLoading} disabled={isLoading || !selectedDepartment} />
+          <Button preset="search" onClick={handleSearch} loading={isLoading} disabled={isLoading || !selectedDepartment} />
         </Box>
 
         {!selectedDepartment ? (

@@ -655,7 +655,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           
-          <Button onClick={handleSearch} loading={isLoading} disabled={isLoading} />
+          <Button preset="search" onClick={handleSearch} loading={isLoading} disabled={isLoading} />
         </Box>
 
         {/* 액션 버튼들 */}
@@ -668,10 +668,10 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
           height: '32px',
         }}>
           <Button
-            variant="contained"
-            size="small"
-            color="primary"
-            startIcon={<DescriptionIcon />}
+            preset="register"
+            variant='contained' 
+            size='small' 
+            color='secondary' 
             onClick={handleCreateReportForSelected}
             disabled={!isReportButtonEnabled() || !selectedData || !!selectedData.auditResultReportId}
             sx={{

@@ -474,6 +474,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             />
           </Box>
           <Button
+            preset="search"
             onClick={handleSearch}
             loading={loading}
           />
@@ -505,9 +506,9 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             개선계획 변경
           </Button>
           <Button
-            variant="contained"
-            color="primary"
-            size="small"
+            preset="register"
+            variant='contained' 
+            size='small' 
             onClick={handleImplementationWrite}
             disabled={loading}
             sx={{

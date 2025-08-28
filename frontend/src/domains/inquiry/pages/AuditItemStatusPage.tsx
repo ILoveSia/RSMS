@@ -628,6 +628,7 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             />
           </Box>
           <Button
+            preset="search"
             onClick={handleFetchAuditItems}
             loading={isLoading}
           />
