@@ -97,22 +97,6 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
         </Typography>
       ),
     },
-    {
-      field: 'useYn',
-      headerName: '상태',
-      width: 70,
-      renderCell: params => (
-        <Typography
-          variant='body2'
-          sx={{
-            color: params.value === 'Y' ? 'success.main' : 'error.main',
-            fontWeight: '500',
-          }}
-        >
-          {params.value === 'Y' ? '사용' : '미사용'}
-        </Typography>
-      ),
-    },
   ];
 
   // 부서 목록 조회
@@ -219,10 +203,9 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
           >
             선택
           </Button>
-          <Button onClick={onClose}>취소</Button>
+          <Button onClick={onClose} variant='outlined'>닫기</Button>
         </>
       }
-      contentSx={{ p: 0, px: 2 }}
     >
       <Box sx={{ width: '100%', height: 500, p: 2 }}>
         {/* 검색 영역 */}

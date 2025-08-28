@@ -252,7 +252,7 @@ const EmployeeSearchPopup: React.FC<{
           >
             선택
           </Button>
-          <Button onClick={onClose}>취소</Button>
+          <Button onClick={onClose} variant='outlined'>닫기</Button>
         </>
       }
     >
@@ -266,7 +266,6 @@ const EmployeeSearchPopup: React.FC<{
               onClear={() => setSearchQuery('')}
             />
           </Box>
-          <Button preset="refresh" onClick={handleSearch} disabled={loading} />
         </Box>
 
         {/* 안내 메시지 */}

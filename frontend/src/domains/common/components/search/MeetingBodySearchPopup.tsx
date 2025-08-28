@@ -179,7 +179,7 @@ const MeetingBodySearchPopup: React.FC<MeetingBodySearchPopupProps> = ({
           선택
         </Button>
         <Button onClick={onClose} variant='outlined'>
-          취소
+          닫기
         </Button>
       </>
     );
