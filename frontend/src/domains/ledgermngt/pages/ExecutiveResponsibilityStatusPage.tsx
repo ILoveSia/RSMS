@@ -245,17 +245,19 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     setRows(groupedData);
   }, []);
 
-  // 필터링 및 데이터 업데이트
-  const applyFiltersAndUpdate = useCallback(() => {
-    let filtered = allExecutiveData;
-
-    // 직책 필터링
-    if (selectedPosition?.positionsId) {
-      filtered = filtered.filter(item => item.position === selectedPosition.positionsNm);
+  // 모든 데이터 로드
+  const loadAllData = useCallback(async () => {
+    setIsLoading(true);
+    
+    const data = await callApiWithNotification(() => executiveResponsibilityApi.getAll());
+    
+    if (data) {
+      const transformedItems = transformApiData(data);
+      setAllExecutiveData(transformedItems);
     }
-
-    updateDisplayData(filtered);
-  }, [allExecutiveData, selectedPosition, updateDisplayData]);
+    
+    setIsLoading(false);
+  }, [transformApiData, callApiWithNotification]);
 
   // 다이얼로그 관련 함수들
   const handlePositionClick = useCallback((row: ExecutiveResponsibilityRow) => {
@@ -278,10 +280,15 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   }, [loadAllData]);
 
   useEffect(() => {
-    if (allExecutiveData.length > 0) {
-      applyFiltersAndUpdate();
+    let filtered = allExecutiveData;
+
+    // 직책 필터링
+    if (selectedPosition?.positionsId) {
+      filtered = filtered.filter(item => item.position === selectedPosition.positionsNm);
     }
-  }, [applyFiltersAndUpdate, allExecutiveData]);
+
+    updateDisplayData(filtered);
+  }, [allExecutiveData, selectedPosition, updateDisplayData]);
 
   return (
     <PageContainer
@@ -333,12 +340,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
             onChange={setSelectedPosition}
             size="small"
             sx={{ minWidth: '200px' }}
-          />
-          <Button
-            preset="search" // Added Search Button
-            onClick={applyFiltersAndUpdate}
-            loading={isLoading}
-            disabled={isLoading}
           />
         </Box>
 
