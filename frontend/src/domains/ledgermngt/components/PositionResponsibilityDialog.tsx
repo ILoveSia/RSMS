@@ -152,12 +152,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const shouldShowEditButton = () => {
     // appr_stat_cd가 "APPROVED" 또는 "승인"이면 수정 버튼 숨김
     const isApproved = apprStatCd === 'APPROVED' || apprStatCd === '승인';
-    console.log('🔧 수정버튼 표시 여부:', {
-      apprStatCd,
-      isApproved,
-      shouldShow: !isApproved,
-      mode
-    });
     return !isApproved;
   };
 
@@ -272,16 +266,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       // 조건에 따라 ledger_order 값 설정: role_resp_status_id가 없으면 props의 ledgerOrdersId 사용
       ledger_order: roleRespStatusId ? (rowData?.ledger_orders_id || null) : (ledgerOrdersId || null),
     };
-    
-    console.log('💾 저장 데이터:', {
-      responsibilityRequestData,
-      conditions: {
-        roleRespStatusId,
-        ledgerOrdersId,
-        apprStatCd,
-        usedLedgerOrder: roleRespStatusId ? (rowData?.ledger_orders_id || null) : (ledgerOrdersId || null)
-      }
-    });
 
     setLoading(true);
 

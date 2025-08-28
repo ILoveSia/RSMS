@@ -56,15 +56,13 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
     }
     
     // dialogData가 있을 경우 baseDate와 targetInstitution 설정
-    if (dialogData) {
-      setBaseDate(new Date(dialogData.baseDate));
-      setTargetInstitution(dialogData.targetInstitution);
-      
-      // rowIndex 값을 로그로 출력하거나 다른 용도로 사용
-      if (dialogData.rowIndex !== undefined) {
-        console.log('Row index:', dialogData.rowIndex);
-        console.log(dialogData);
-      }
+      if (dialogData) {
+        setBaseDate(new Date(dialogData.baseDate));
+        setTargetInstitution(dialogData.targetInstitution);
+        
+        // rowIndex 값을 로그로 출력하거나 다른 용도로 사용
+        if (dialogData.rowIndex !== undefined) {
+        }
       
       if(dialogData.attachments && dialogData.attachments.length > 0){
         setAttachment(dialogData.attachments[0]);
@@ -92,7 +90,6 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           targetInstitution,
         };
 
-        console.log("111")
         const result = await callRegisterApi(() => submissionReportApi.createSubmissionReport(newReport));
 
         if (result && result.submissionReportId) {
@@ -102,7 +99,6 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           if (uploadedAttachId) {
             // TODO: 업로드된 파일을 엔티티와 연결하는 API 호출
             // 예: await linkAttachmentToEntity(uploadedAttachId, 'SUBMISSION_REPORT', result.submissionReportId);
-            console.log('Linking attachment', uploadedAttachId, 'to report', result.submissionReportId);
           }
 
           onSuccess();
@@ -110,7 +106,6 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
           setBaseDate(new Date());
           setTargetInstitution('');
           setUploadedAttachId(null);
-          console.log(attachment)
           setExistingAttachments([]);
           onClose();
         }
@@ -157,7 +152,7 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
       case 'view': return '제출 보고서 상세보기';
       default: return '제출 보고서';
     }
-  };
+  }
 
   // 다이얼로그 닫기 핸들러
   const handleClose = () => {
@@ -169,14 +164,13 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
     setUploadError(null);
     setAttachment(null);
     setUploadError(null);
-    console.log(attachment)
 
     if (mode === 'edit' && onModeChange) {
       onModeChange('view');
     }
     
     onClose();
-  };
+  }
 
   const isReadOnly = mode === 'view';
 
@@ -201,7 +195,6 @@ const SubmissionReportDialog: React.FC<SubmissionReportDialogProps> = ({
 
   // 기존 첨부파일 삭제 핸들러 (임시)
   const handleDeleteExisting = (id: number) => {
-    console.log('Delete existing file with ID:', id);
     // TODO: 실제 삭제 로직 구현
     setExistingAttachments(prev => prev.filter(f => f.attachId !== id));
   };

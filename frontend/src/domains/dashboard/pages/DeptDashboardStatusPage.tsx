@@ -240,9 +240,6 @@ const DeptDashboardStatusPage: React.FC = () => {
           item.deptCd === selectedDepartment.deptCode
         );
         
-        console.log('전체 점검항목 수:', apiResponse.length);
-        console.log('선택 부서 점검항목 수:', filteredItems.length);
-        
         const deptItems: DeptAuditItemRow[] = filteredItems.map((item, index) => ({
           id: `${item.hodIcItemId}_${index}`,
           hodIcItemId: item.hodIcItemId,

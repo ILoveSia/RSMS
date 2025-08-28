@@ -177,13 +177,11 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
       const isExecutivePosition = loginData?.positionCode === "PC05";
       
       if (isExecutivePosition) {
-        console.log('임원 권한 확인됨:', loginData?.positionCode);
         
         // 임원 소관부서 조회
         try {
           const departments = await executiveDashboardApi.getExecutiveDepartments(loginData?.empNo || '');
           setExecutiveDepartments(departments);
-          console.log('임원 소관부서 조회 성공:', departments);
         } catch (error) {
           console.error('임원 소관부서 조회 실패:', error);
           setExecutiveDepartments([]);
@@ -202,7 +200,6 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
         setExecutiveInfo(executiveInfo);
         setIsExecutive(true);
       } else {
-        console.log('임원 권한 없음:', loginData?.positionCode);
         setIsExecutive(false);
         setExecutiveInfo(null);
         setErrorMessage('임원 권한이 없습니다. 임원만 접근 가능한 페이지입니다.');
@@ -286,7 +283,6 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
       
       // 임원 소관부서 코드 목록 추출
       const executiveDeptCodes = executiveDepartments.map(dept => dept.ownerDeptCd);
-      console.log('임원 소관부서 코드들:', executiveDeptCodes);
       
       // 전체 점검항목 조회
       const apiResponse = await getAuditItemStatusList({
@@ -298,9 +294,6 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
         const filteredItems = apiResponse.filter(item => 
           executiveDeptCodes.includes(item.deptCd)
         );
-        
-        console.log('전체 점검항목 수:', apiResponse.length);
-        console.log('임원 소관부서 점검항목 수:', filteredItems.length);
         
         const executiveItems: ExecutiveAuditItemRow[] = filteredItems.map((item, index) => ({
           id: `${item.hodIcItemId}_${index}`,

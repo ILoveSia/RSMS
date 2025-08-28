@@ -69,11 +69,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   onChangeMode,
 }) => {
   // Debug 로그 추가
-  console.log('📋 ResponsibilityDialog Props:', { 
-    mode, 
-    isReadOnly, 
-    rowData: rowData?.ledgerOrdersStatusCd 
-  });
   
   const [formData, setFormData] = useState<FormData>({
     responsibilityContent: '',
@@ -325,7 +320,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
 
       // 응답 데이터 확인
-      console.log('선택한 책무 데이터:', response);
 
       // 응답이 배열인지 확인
       if (!Array.isArray(response) || response.length === 0) {

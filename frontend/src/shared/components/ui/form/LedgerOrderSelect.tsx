@@ -86,20 +86,11 @@ const LedgerOrderSelect: React.FC<LedgerOrderSelectProps> = ({
 
       // 데이터가 있고 현재 값이 기본값인 경우 최대값으로 설정
       if (data.length > 0 && (value === allValue || !value)) {
-        console.log('🔧 LedgerOrderSelect 자동 선택 로직:', {
-          currentValue: value,
-          allValue: allValue,
-          dataLength: data.length,
-          allData: data
-        });
-        
         // ledgerOrdersId의 최대값을 찾기
         const maxOption = data.reduce((max, current) => {
-          console.log('📊 비교:', { max: max.ledgerOrdersId, current: current.ledgerOrdersId });
           return current.ledgerOrdersId > max.ledgerOrdersId ? current : max;
         });
         
-        console.log('✅ 선택된 최대값:', maxOption);
         onChange(maxOption.value, maxOption.ledgerOrdersId);
       }
 

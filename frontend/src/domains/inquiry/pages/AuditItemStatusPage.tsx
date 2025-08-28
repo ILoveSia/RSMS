@@ -465,13 +465,6 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
       const selectedRows = auditItemRows.filter(row => selectedItemIds.includes(row.id));
       const hodIcItemIds = selectedRows.map(row => row.hodIcItemId);
 
-      console.log('점검자 지정 요청 데이터:', {
-        hodIcItemIds,
-        auditorEmpNo,
-        auditorName,
-        selectedRows: selectedRows.map(r => ({ id: r.id, hodIcItemId: r.hodIcItemId, detailCount: r.detailCount }))
-      });
-
       // API 요청 데이터 구성 (hodIcItemId 사용)
       const assignmentRequest: AuditorAssignmentRequest = {
         hodIcItemIds: hodIcItemIds.map(id => id.toString()), // hod_ic_item_id를 문자열로 변환

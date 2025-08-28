@@ -81,11 +81,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   // 직책 현황 조회
   const fetchPositionStatus = useCallback(async (ledgerOrdersId?: number) => {
     const searchLedgerOrdersId = ledgerOrdersId || selectedLedgerOrderId;
-    console.log('🔍 PositionStatusPage API 호출:', { 
-      inputLedgerOrdersId: ledgerOrdersId, 
-      selectedLedgerOrderId, 
-      finalLedgerOrdersId: searchLedgerOrdersId 
-    });
     const data = await callApiWithNotification(
       () => positionApi.getStatusList(searchLedgerOrdersId),
       'success_load'
@@ -442,7 +437,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           <LedgerOrderSelect
             value={selectedLedgerOrder}
             onChange={useCallback((value: string, ledgerOrdersId?: number) => {
-              console.log('🔄 PositionStatusPage onChange:', { value, ledgerOrdersId });
               setSelectedLedgerOrder(value);
               setSelectedLedgerOrderId(ledgerOrdersId);
             }, [])}
@@ -451,8 +445,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             refreshTrigger={ledgerOrderRefreshTrigger}
             includeAll={false}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
-              setLedgerOrderOptions(options);
-            }, [])}
           />
           <PermissionButton
             menuCode="LEDGER_MGMT_POSITION"

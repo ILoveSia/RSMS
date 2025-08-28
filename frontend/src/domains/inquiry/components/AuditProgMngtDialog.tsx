@@ -146,7 +146,6 @@ const useFormValidation = (data: AuditProgramData): ValidationResult => {
     if (!data.targetItemIds || data.targetItemIds.length === 0) {
       errors.targetSelection = '점검 대상 항목을 선정해주세요.';
     }
-    console.log("errors", errors);
     return {
       isValid: Object.keys(errors).length === 0,
       errors,

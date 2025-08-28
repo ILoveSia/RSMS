@@ -132,7 +132,6 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
                 const menuResponse = await fetch('/api/menus/accessible?role=ADMIN');
                 const updatedMenus = await menuResponse.json();
                 setMenuStoreData(updatedMenus);
-                console.log('리덕스 스토어 메뉴 데이터 업데이트 완료');
               } catch (error) {
                 console.error('리덕스 스토어 메뉴 데이터 업데이트 실패:', error);
               }
@@ -181,7 +180,6 @@ const MenuEditDialog: React.FC<MenuEditDialogProps> = ({
                 const menuResponse = await fetch('/api/menus/accessible?role=ADMIN');
                 const updatedMenus = await menuResponse.json();
                 setMenuStoreData(updatedMenus);
-                console.log('리덕스 스토어 메뉴 데이터 업데이트 완료');
               } catch (error) {
                 console.error('리덕스 스토어 메뉴 데이터 업데이트 실패:', error);
               }

@@ -198,7 +198,6 @@ const ImplementationResultDialog: React.FC<ImplementationResultDialogProps> = ({
 
     try {
       // TODO: 파일 다운로드 API 구현 필요
-      console.log('파일 다운로드:', attachment.name);
     } catch (error) {
       console.error('파일 다운로드 오류:', error);
     }

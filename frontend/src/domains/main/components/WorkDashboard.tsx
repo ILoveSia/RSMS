@@ -90,7 +90,6 @@ const RecentTasksList: React.FC<RecentTasksListProps> = ({ userId }) => {
       try {
         const realRecentTasks = await mainDashboardApi.getRecentTasks(userId);
         setRecentTasks(realRecentTasks);
-        console.log('✅ 실시간 최근 완료 업무 데이터 로드 성공');
       } catch (error) {
         console.warn('⚠️ 최근 완료 업무 API 호출 실패, 목업 데이터 유지:', error);
       }
@@ -143,7 +142,6 @@ const WorkDashboard: React.FC = () => {
           // 메인 대시보드 통계 API 호출 시도
           const realStats = await mainDashboardApi.getWorkStats(currentUserId);
           setWorkStats(realStats);
-          console.log('✅ 실시간 대시보드 데이터 로드 성공');
           return;
         } catch (mainApiError) {
           console.warn('⚠️ 메인 대시보드 API 호출 실패, 개별 API 조합 시도:', mainApiError);
@@ -168,23 +166,11 @@ const WorkDashboard: React.FC = () => {
           };
 
           setWorkStats(combinedStats);
-          console.log('✅ 개별 API 조합 데이터 로드 성공', { approvalCount: pendingApprovals?.length });
         } catch (combinedApiError) {
           console.warn('⚠️ 개별 API 조합 실패, 목업 데이터 사용:', combinedApiError);
           
           // 완전한 API 실패 시 목업 데이터 폴백
           const fallbackStats: WorkStats = {
-            totalTasks: 45,
-            completedTasks: 32,
-            pendingTasks: 8,
-            overdueTasks: 5,
-            approvalPending: 3,
-            auditTasks: 12,
-          };
-          
-          setWorkStats(fallbackStats);
-          console.log('📊 목업 데이터로 폴백');
-        }
       } catch (err) {
         console.error('업무 통계 로드 실패:', err);
         setError('업무 현황을 불러오는데 실패했습니다.');
@@ -243,7 +229,6 @@ const WorkDashboard: React.FC = () => {
         total: trend.total,
       }));
       setTrendData(convertedTrend);
-      console.log('✅ 실시간 트렌드 데이터 로드 성공');
     } catch (error) {
       console.warn('⚠️ 트렌드 데이터 API 호출 실패, 목업 데이터 유지:', error);
     }

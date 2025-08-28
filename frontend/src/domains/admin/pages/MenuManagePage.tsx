@@ -134,13 +134,11 @@ const MenuManagePage: React.FC = () => {
       }
     } else {
       // TODO: 메뉴 추가 API 구현 필요
-      console.log('메뉴 추가 기능은 아직 구현되지 않았습니다.');
     }
   };
 
   const handleOrderChange = (updatedMenus: MenuDto[]) => {
     // 메뉴 변경이 있었을 때만 메뉴 목록을 다시 로드 (메뉴 탭 새로고침)
-    console.log('메뉴 변경 감지 - 메뉴 탭 새로고침 실행');
     loadMenus();
   };
 

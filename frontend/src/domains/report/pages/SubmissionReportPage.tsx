@@ -71,8 +71,6 @@ const SubmissionReportPage: React.FC = () => {
     if (selectedReport.submissionReportId && (dialogMode === 'view' || dialogMode === 'edit')) {
       attachments = await getReportAttachments(selectedReport.submissionReportId);
     }
-    console.log("attachments",attachments);
-    console.log("typeof attachments",typeof attachments);
     return attachments;
   }, [selectedReport, dialogMode, getReportAttachments]);
 
@@ -90,7 +88,6 @@ const SubmissionReportPage: React.FC = () => {
     const data = await callApiWithNotification(() => submissionReportApi.getSubmissionReports());
     if (data) {
       setRows(data);
-      console.log("rows",rows);
     }
     setIsLoading(false);
   }, [callApiWithNotification]);

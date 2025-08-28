@@ -81,7 +81,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       try {
         const deptList = await DepartmentApi.getAll();
         setDepartments(deptList);
-        console.log('loginData :', loginData);
       } catch (error) {
         console.error('부서 정보 로드 실패:', error);
       }
@@ -348,8 +347,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     // 선택된 첫 번째 항목의 데이터 가져오기
     const selectedRow = rows.find(row => row.id === selectedIds[0]);
     if (selectedRow) {
-      console.log('선택된 row 데이터:', selectedRow);
-      console.log('auditProgMngtDetailId:', selectedRow.auditProgMngtDetailId);
       
       const implementationData: ImplementationResultData = {
         id: selectedRow.auditProgMngtDetailId || 0,  // auditProgMngtDetailId를 id로 사용
@@ -375,8 +372,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
   // 이행결과 저장 핸들러
   const handleImplementationSave = async (data: ImplementationResultData) => {
     try {
-      console.log('저장할 데이터:', data);
-      console.log('data.id:', data.id, 'typeof:', typeof data.id);
       
       // auditProgMngtDetailId 검증
       const auditProgMngtDetailId = Number(data.id);
@@ -384,10 +379,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
         throw new Error('유효하지 않은 점검계획상세 ID입니다.');
       }
 
-      console.log('API 호출 파라미터:', {
-        auditProgMngtDetailId,
-        auditDoneContent: data.auditDoneContent
-      });
 
       // 새로운 API 호출: audit_done_content 업데이트, imp_pl_status_cd를 PLI02로 변경      
       const response = await updateImplementationResultDialog({
@@ -396,7 +387,6 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
       });
 
       if (response.success) {
-        console.log('이행결과 저장 성공:', response);
         
         // 성공 시 데이터 다시 로드
         await fetchDeficiencies();

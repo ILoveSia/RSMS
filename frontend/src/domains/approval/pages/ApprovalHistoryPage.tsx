@@ -151,7 +151,6 @@ const ApprovalHistoryPage: React.FC = () => {
   const handleExcelDownload = useCallback(async () => {
     try {
       // 엑셀 다운로드 로직 구현
-      console.log('엑셀 다운로드:', searchCriteria, approvals.length);
     } catch (error) {
       console.error('엑셀 다운로드 오류:', error);
       callApiWithNotification(
