@@ -670,6 +670,7 @@ const LoginPage: React.FC<ILoginPageProps> = (): React.JSX.Element => {
                   startIcon={loading ? <Loading size={20} /> : <LoginOutlined />}
                   disableRipple
                   sx={{
+                    height: '48px',
                     py: 1.5,
                     borderRadius: 2,
                     fontSize: '1rem',
