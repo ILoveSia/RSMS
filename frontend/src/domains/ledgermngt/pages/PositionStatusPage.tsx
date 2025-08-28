@@ -8,7 +8,7 @@ import {
   type Department,
   type EmployeeSearchResult,
 } from '@/domains/common/components/search';
-import { Confirm } from '@/shared/components/modal';
+import { Confirm, ModernAlert } from '@/shared/components/modal';
 import { DataGrid } from '@/shared/components/ui';
 import { Button, SearchButton, ManagementButtonGroup, PermissionButton } from '@/shared/components/ui/button';
 import { LedgerOrderSelect } from '@/shared/components/ui/form';
@@ -22,14 +22,7 @@ import Toast from '@/shared/components/ui/feedback/Toast';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Groups as GroupsIcon } from '@mui/icons-material';
 import { useGetCodeName } from '@/shared/utils/codeUtils';
-import { 
-  Box, 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogContentText, 
-  DialogActions 
-} from '@mui/material';
+import { Box } from '@mui/material';
 import { type GridRowSelectionModel } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
@@ -69,6 +62,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   const { dialogOpen: statusAlertOpen, dialogData: statusAlertMessage, openDialog: openStatusAlert, closeDialog: closeStatusAlert } = useDialog<string>();
   const { dialogOpen: confirmConfirmOpen, openDialog: openConfirmConfirm, closeDialog: closeConfirmConfirm } = useDialog();
   const { dialogOpen: cancelConfirmOpen, openDialog: openCancelConfirm, closeDialog: closeCancelConfirm } = useDialog();
+  const { dialogOpen: generateConfirmOpen, openDialog: openGenerateConfirm, closeDialog: closeGenerateConfirm } = useDialog();
 
   // 공통코드 훅 사용
   const getCodeNameFn = useGetCodeName();
@@ -87,6 +81,11 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
   // 직책 현황 조회
   const fetchPositionStatus = useCallback(async (ledgerOrdersId?: number) => {
     const searchLedgerOrdersId = ledgerOrdersId || selectedLedgerOrderId;
+    console.log('🔍 PositionStatusPage API 호출:', { 
+      inputLedgerOrdersId: ledgerOrdersId, 
+      selectedLedgerOrderId, 
+      finalLedgerOrdersId: searchLedgerOrdersId 
+    });
     const data = await callApiWithNotification(
       () => positionApi.getStatusList(searchLedgerOrdersId),
       'success_load'
@@ -98,10 +97,13 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
     }
   }, [selectedLedgerOrderId, callApiWithNotification]);
 
-  // 초기 데이터 로드
+  // 초기 데이터 로드 - LedgerOrderSelect 자동 선택 후에만 로드
   useEffect(() => {
-    fetchPositionStatus();
-  }, [fetchPositionStatus]);
+    // selectedLedgerOrderId가 있을 때만 데이터 로드 (자동 선택 후)
+    if (selectedLedgerOrderId) {
+      fetchPositionStatus();
+    }
+  }, [selectedLedgerOrderId, fetchPositionStatus]);
 
   // 권한 디버깅
   useEffect(() => {
@@ -129,6 +131,14 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       return;
     }
 
+    // 생성 조건에 적합하면 confirm 창 띄우기
+    openGenerateConfirm();
+  }, [callApiWithNotification, openStatusAlert, openGenerateConfirm]);
+
+  // 책무번호 생성 확인 후 실행
+  const handleConfirmGenerateLedgerOrder = useCallback(async () => {
+    closeGenerateConfirm();
+    
     const response: LedgerOrdersGenerateResponse | null = await callApiWithNotification(
       () => positionApi.generateLedgerOrder(),
       'custom'
@@ -139,7 +149,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       await fetchPositionStatus();
       setLedgerOrderRefreshTrigger(prev => prev + 1);
     }
-  }, [showSuccess, fetchPositionStatus, callApiWithNotification, openStatusAlert]);
+  }, [closeGenerateConfirm, showSuccess, fetchPositionStatus, callApiWithNotification]);
 
   // 확정 버튼 클릭 핸들러
   const handleConfirmClick = useCallback(() => {
@@ -432,12 +442,14 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           <LedgerOrderSelect
             value={selectedLedgerOrder}
             onChange={useCallback((value: string, ledgerOrdersId?: number) => {
+              console.log('🔄 PositionStatusPage onChange:', { value, ledgerOrdersId });
               setSelectedLedgerOrder(value);
               setSelectedLedgerOrderId(ledgerOrdersId);
             }, [])}
             size='small'
             sx={{ minWidth: 150, maxWidth: 200 }}
             refreshTrigger={ledgerOrderRefreshTrigger}
+            includeAll={false}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
               setLedgerOrderOptions(options);
             }, [])}
@@ -513,6 +525,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
         mode={dialogMode}
         positionId={selectedPositionId}
         selectedLedgerOrder={dialogMode === 'create' ? selectedLedgerOrder : undefined}
+        isReadOnly={selectedPositionId ? rows.find(row => row.positionsId === selectedPositionId)?.ledgerOrdersStatusCd === 'P5' : false}
         onClose={closePositionDialog}
         onSave={handlePositionSave}
         onChangeMode={setPositionDialogMode}
@@ -532,6 +545,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       />
       <Confirm
         open={deleteConfirmOpen}
+        type="error"
         title='삭제 확인'
         message='정말로 선택한 직책을 삭제하시겠습니까?'
         confirmText='삭제'
@@ -541,6 +555,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       />
       <Confirm
         open={confirmConfirmOpen}
+        type="success"
         title='확정 확인'
         message={`${selectedLedgerOrder} 차수의 직책을 확정하시겠습니까?`}
         confirmText='확정'
@@ -550,6 +565,7 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
       />
       <Confirm
         open={cancelConfirmOpen}
+        type="warning"
         title='확정취소 확인'
         message={`${selectedLedgerOrder} 차수의 직책을 확정취소하시겠습니까?`}
         confirmText='확정취소'
@@ -557,29 +573,25 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
         onConfirm={handleCancelConfirmLedgerOrder}
         onCancel={closeCancelConfirm}
       />
-      <Dialog
+      <Confirm
+        open={generateConfirmOpen}
+        type="info"
+        title='책무번호 생성 확인'
+        message='새로운 책무번호를 생성하시겠습니까?'
+        confirmText='생성'
+        cancelText='취소'
+        onConfirm={handleConfirmGenerateLedgerOrder}
+        onCancel={closeGenerateConfirm}
+      />
+      {/* 모던 알림 다이얼로그 */}
+      <ModernAlert
         open={statusAlertOpen}
+        severity="warning"
+        title="알림"
+        message={statusAlertMessage}
+        onConfirm={closeStatusAlert}
         onClose={closeStatusAlert}
-        aria-labelledby="status-alert-title"
-        aria-describedby="status-alert-description"
-      >
-        <DialogTitle id="status-alert-title">알림</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="status-alert-description">
-            {statusAlertMessage}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ padding: '8px 16px', justifyContent: 'center' }}>
-          <Button
-            onClick={closeStatusAlert}
-            variant="contained"
-            color="primary"
-            size="small"
-          >
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
+      />
       <Toast
         open={snackbar.open}
         message={snackbar.message}

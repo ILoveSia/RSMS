@@ -6,7 +6,7 @@ import '@/assets/scss/style.css';
 import { Button } from '@/shared/components/ui/button';
 import SearchButton from '@/shared/components/ui/button/SearchButton';
 import { DataGrid } from '@/shared/components/ui/data-display';
-import ErrorDialog from '@/app/components/ErrorDialog';
+import { ModernAlert } from '@/shared/components/modal';
 import { SearchConditionPanel, LedgerOrdersHodSelect } from '@/shared/components/ui/form';
 import DepartmentSearchBox, { type DepartmentSearchResult } from '@/shared/components/ui/form/DepartmentSearchBox';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -543,11 +543,14 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           />
         </Box>
 
-        {/* 오류 다이얼로그 */}
-        <ErrorDialog
+        {/* 모던 에러 알림 다이얼로그 */}
+        <ModernAlert
           open={errorDialogOpen}
+          severity="error"
+          title="오류"
+          message={errorMessage}
+          onConfirm={handleCloseErrorDialog}
           onClose={handleCloseErrorDialog}
-          errorMessage={errorMessage}
         />
 
         {/* 이행결과 작성 다이얼로그 */}

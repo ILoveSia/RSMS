@@ -30,6 +30,7 @@ interface GroupedResponsibility {
   responsibilityContent: string;
   createdAt: string;
   updatedAt: string;
+  ledgerOrdersStatusCd?: string; // 원장 상태 코드 (P5: 최종확정)
   details: Array<{
     responsibilityDetailId: number;
     responsibilityDetailContent: string;
@@ -45,6 +46,7 @@ interface GroupedResponsibilityRow {
   responsibilityDetailContent: string; // 콤마로 구분된 문자열
   responsibilityMgtSts: string; // 콤마로 구분된 문자열
   responsibilityRelEvid: string; // 콤마로 구분된 문자열
+  ledgerOrdersStatusCd?: string; // 원장 상태 코드 (P5: 최종확정)
   createdAt: string;
   updatedAt: string;
   detailCount: number; // 세부사항 개수
@@ -57,7 +59,7 @@ interface IResponsibilityDbStatusPageProps {
 const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = React.memo(
   (): React.JSX.Element => {
     // Toast 알림을 위한 snackbar hook
-    const { snackbar, showError, showSuccess, hideSnackbar } = useSnackbar();
+    const { snackbar, showError, hideSnackbar } = useSnackbar();
     const { callApiWithNotification } = useApiWithNotification({
       showSuccessOnLoad: true,
     });
@@ -66,7 +68,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     // 검색 조건 상태
     const [ledgerOrder, setLedgerOrder] = useState<string>('ALL');
     const [ledgerOrdersId, setLedgerOrdersId] = useState<number | undefined>(undefined);
-    const [searchText, setSearchText] = useState<string>('');
     const [selectedResponsibility, setSelectedResponsibility] = useState<any>(null);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [data, setData] = useState<ResponsibilityRow[]>([]);
@@ -76,7 +77,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     const [ledgerOrderOptions, setLedgerOrderOptions] = useState<Array<{value: string, label: string, ledgerOrdersId: number}>>([]);
 
     // 프론트엔드 필터링을 위한 상태
-    const [allResponsibilityData, setAllResponsibilityData] = useState<ResponsibilityRow[]>([]);
 
     // 다이얼로그 상태 관리 (useDialog 훅 사용)
     const {
@@ -96,7 +96,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       const groupMap = new Map<number, GroupedResponsibility>();
 
       data.forEach(item => {
-        const { responsibilityId, responsibilityContent, createdAt, updatedAt,
+        const { responsibilityId, responsibilityContent, createdAt, updatedAt, ledgerOrdersStatusCd,
           responsibilityDetailId, responsibilityDetailContent, responsibilityMgtSts, responsibilityRelEvid } = item;
 
         if (!groupMap.has(responsibilityId)) {
@@ -105,6 +105,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
             responsibilityContent,
             createdAt,
             updatedAt,
+            ledgerOrdersStatusCd,
             details: []
           });
         }
@@ -142,6 +143,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           responsibilityDetailContent: formatWithCount(group.details.map(d => d.responsibilityDetailContent)),
           responsibilityMgtSts: formatWithCount(group.details.map(d => d.responsibilityMgtSts)),
           responsibilityRelEvid: formatRelEvid(group.details.map(d => d.responsibilityRelEvid)),
+          ledgerOrdersStatusCd: group.ledgerOrdersStatusCd, // P5 상태 코드 전달
           createdAt: group.createdAt,
           updatedAt: group.updatedAt,
           detailCount: group.details.length
@@ -149,27 +151,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       });
     }, []);
 
-    // 모든 데이터 로드 (한 번만)
-    const loadAllData = useCallback(async () => {
-      const data = await callApiWithNotification(
-        () => responsibilityApi.getStatusList(),
-        'success_load'
-      );
-
-      if (data) {
-        setAllResponsibilityData(data);
-        setData(data);
-
-        // 데이터 그룹핑
-        const grouped = groupDataByResponsibilityId(data);
-        setGroupedData(grouped);
-
-        // 그룹핑된 데이터를 DataGrid용으로 변환
-        const gridRows = convertToGridRows(grouped);
-        setRows(gridRows);
-      } 
-      
-    }, [groupDataByResponsibilityId, convertToGridRows, callApiWithNotification]);
 
     // 책무 현황 조회 (ledgerOrdersId와 responsibilityId 모두 지원)
     const fetchResponsibilityData = useCallback(async () => {
@@ -185,7 +166,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
       );
 
       if (data) {
-        setAllResponsibilityData(data);
         setData(data);
 
         // 데이터 그룹핑
@@ -196,7 +176,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
         const gridRows = convertToGridRows(grouped);
         setRows(gridRows);
       } else {
-        setAllResponsibilityData([]);
         setData([]);
         setGroupedData([]);
         setRows([]);
@@ -204,9 +183,12 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
     }, [ledgerOrdersId, selectedResponsibility, groupDataByResponsibilityId, convertToGridRows, callApiWithNotification]);
 
 
+    // ledgerOrdersId가 설정된 후에만 API 호출 (중복 호출 방지)
     useEffect(() => {
-      loadAllData();
-    }, [loadAllData]);
+      if (ledgerOrdersId) {
+        fetchResponsibilityData();
+      }
+    }, [ledgerOrdersId, fetchResponsibilityData]);
 
     // 그룹핑된 데이터 활용 유틸리티 함수들
     const getResponsibilityById = useCallback((responsibilityId: number): GroupedResponsibility | undefined => {
@@ -300,6 +282,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
                   responsibilityContent: groupedResponsibility.responsibilityContent,
                   createdAt: groupedResponsibility.createdAt,
                   updatedAt: groupedResponsibility.updatedAt,
+                  ledgerOrdersStatusCd: groupedResponsibility.ledgerOrdersStatusCd, // P5 상태 확인을 위해 추가
                   // 모든 세부항목들을 포함
                   allDetails: groupedResponsibility.details
                 } : null;
@@ -488,6 +471,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               }, [])}
               size='small'
               sx={{ minWidth: 150, maxWidth: 200 }}
+              includeAll={false}
               onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
                 setLedgerOrderOptions(options);
               }, [])}
@@ -561,6 +545,7 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
           positionName={selectedRowData?.responsibilityContent || "책무 관리"}
           rowData={selectedRowData}
           selectedLedgerOrder={dialogMode === 'create' ? ledgerOrder : undefined}
+          isReadOnly={selectedRowData?.ledgerOrdersStatusCd === 'P5'}
           onClose={handleDialogClose}
           onSave={handleDialogSave}
           onChangeMode={handleModeChange as any}

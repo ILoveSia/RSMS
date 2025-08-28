@@ -16,9 +16,12 @@ public interface ResponsibilityDetailRepository extends JpaRepository<Responsibi
             "d.responsibilityDetailContent, " +
             "d.responsibilityMgtSts, " +
             "d.responsibilityRelEvid, " +
+            "COALESCE(lo.ledgerOrdersStatusCd, 'NONE'), " +
             "d.createdAt, " +
             "d.updatedAt) " +
-            "FROM ResponsibilityDetail d JOIN d.responsibility r " +
+            "FROM ResponsibilityDetail d " +
+            "JOIN d.responsibility r " +
+            "LEFT JOIN org.itcen.domain.positions.entity.LedgerOrders lo ON r.ledgerOrder = lo.ledgerOrdersId " +
             "ORDER BY r.id, d.id")
     List<ResponsibilityStatusDto> findResponsibilityStatusList();
 
@@ -29,9 +32,13 @@ public interface ResponsibilityDetailRepository extends JpaRepository<Responsibi
             "d.responsibilityDetailContent, " +
             "d.responsibilityMgtSts, " +
             "d.responsibilityRelEvid, " +
+            "COALESCE(lo.ledgerOrdersStatusCd, 'NONE'), " +
             "d.createdAt, " +
             "d.updatedAt) " +
-            "FROM ResponsibilityDetail d JOIN d.responsibility r WHERE r.id = :responsibilityId " +
+            "FROM ResponsibilityDetail d " +
+            "JOIN d.responsibility r " +
+            "LEFT JOIN org.itcen.domain.positions.entity.LedgerOrders lo ON r.ledgerOrder = lo.ledgerOrdersId " +
+            "WHERE r.id = :responsibilityId " +
             "ORDER BY r.id, d.id")
     List<ResponsibilityStatusDto> findResponsibilityStatusListById(Long responsibilityId);
 
@@ -42,9 +49,13 @@ public interface ResponsibilityDetailRepository extends JpaRepository<Responsibi
             "d.responsibilityDetailContent, " +
             "d.responsibilityMgtSts, " +
             "d.responsibilityRelEvid, " +
+            "COALESCE(lo.ledgerOrdersStatusCd, 'NONE'), " +
             "d.createdAt, " +
             "d.updatedAt) " +
-            "FROM ResponsibilityDetail d JOIN d.responsibility r WHERE r.ledgerOrder = :ledgerOrdersId " +
+            "FROM ResponsibilityDetail d " +
+            "JOIN d.responsibility r " +
+            "LEFT JOIN org.itcen.domain.positions.entity.LedgerOrders lo ON r.ledgerOrder = lo.ledgerOrdersId " +
+            "WHERE r.ledgerOrder = :ledgerOrdersId " +
             "ORDER BY r.id, d.id")
     List<ResponsibilityStatusDto> findResponsibilityStatusListByLedgerOrdersId(Long ledgerOrdersId);
 

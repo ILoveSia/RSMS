@@ -1,5 +1,20 @@
 import React, { useState } from 'react';
-import { IconButton, DownloadIcon, TrashIcon } from 'evergreen-ui';
+import { 
+  Box, 
+  IconButton, 
+  Typography, 
+  Paper 
+} from '@mui/material';
+import { 
+  Delete as DeleteIcon, 
+  Download as DownloadIcon,
+  InsertDriveFile as FileIcon,
+  Image as ImageIcon,
+  VideoFile as VideoIcon,
+  AudioFile as AudioIcon,
+  PictureAsPdf as PdfIcon,
+  Archive as ArchiveIcon
+} from '@mui/icons-material';
 
 // Define the props for the CustomFileCard component
 interface CustomFileCardProps {
@@ -23,15 +38,14 @@ const formatFileSize = (bytes: number = 0): string => {
 };
 
 // A helper function to get file icon based on type
-// This is a simplified version. You might want to use a more comprehensive solution.
 const getFileIcon = (type: string = '') => {
   // Basic logic to determine icon based on MIME type
-  if (type.startsWith('image/')) return '🖼️';
-  if (type.startsWith('video/')) return '🎬';
-  if (type.startsWith('audio/')) return '🎵';
-  if (type.includes('pdf')) return '📄';
-  if (type.includes('zip') || type.includes('compressed')) return '📦';
-  return '📄'; // Default file icon
+  if (type.startsWith('image/')) return <ImageIcon sx={{ color: '#1976d2' }} />;
+  if (type.startsWith('video/')) return <VideoIcon sx={{ color: '#d32f2f' }} />;
+  if (type.startsWith('audio/')) return <AudioIcon sx={{ color: '#9c27b0' }} />;
+  if (type.includes('pdf')) return <PdfIcon sx={{ color: '#f44336' }} />;
+  if (type.includes('zip') || type.includes('compressed')) return <ArchiveIcon sx={{ color: '#ff9800' }} />;
+  return <FileIcon sx={{ color: '#757575' }} />; // Default file icon
 };
 
 const CustomFileCard: React.FC<CustomFileCardProps> = ({
@@ -46,95 +60,87 @@ const CustomFileCard: React.FC<CustomFileCardProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Basic styling to mimic Evergreen UI FileCard
-  // In a real application, you would use the theme or more sophisticated styling
-  const cardStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '8px 12px',
-    border: `1px solid ${isInvalid ? '#ec4c47' : '#dfe3e8'}`, // Red border for invalid, grey otherwise
-    borderRadius: '6px',
-    backgroundColor: '#f9fafc',
-    fontSize: '14px',
-    color: '#425a70',
-    cursor: 'default',
-    position: 'relative',
-    minHeight: '40px',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s ease-in-out',
-  };
-
-  const fileIconStyle: React.CSSProperties = {
-    fontSize: '20px',
-    marginRight: '8px',
-    minWidth: '20px',
-    // Align icon vertically with text
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  };
-
-  const fileNameStyle: React.CSSProperties = {
-    flexGrow: 1,
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    cursor: onDownload ? 'pointer' : 'default',
-    color: onDownload ? '#1070ca' : 'inherit', // Blue color for clickable file name
-    textDecoration: onDownload ? 'underline' : 'none',
-    minWidth: 0, // Allow the div to shrink below its content's intrinsic size
-  };
-
-  const fileSizeStyle: React.CSSProperties = {
-    color: '#66788a', // Muted color for file size
-    fontSize: '12px',
-    marginLeft: '8px',
-    whiteSpace: 'nowrap',
-  };
-
-  const actionButtonStyle: React.CSSProperties = {
-    marginLeft: '8px',
-  };
-
-  const errorMessageStyle: React.CSSProperties = {
-    position: 'absolute',
-    bottom: '-20px',
-    left: 0,
-    color: '#ec4c47',
-    fontSize: '12px',
-    width: '100%',
-  };
-
   return (
-    <div
-      style={cardStyle}
+    <Paper
+      elevation={0}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '8px 12px',
+        border: `1px solid ${isInvalid ? '#f44336' : '#e0e0e0'}`,
+        borderRadius: '4px',
+        backgroundColor: '#f9fafc',
+        minHeight: '40px',
+        position: 'relative',
+        transition: 'border-color 0.2s ease-in-out',
+        '&:hover': {
+          borderColor: isInvalid ? '#f44336' : '#1976d2'
+        }
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div style={fileIconStyle}>{getFileIcon(type)}</div>
-      <div
-        style={fileNameStyle}
+      <Box sx={{ marginRight: 1, display: 'flex', alignItems: 'center' }}>
+        {getFileIcon(type)}
+      </Box>
+      
+      <Typography
+        variant="body2"
+        sx={{
+          flexGrow: 1,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          cursor: onDownload ? 'pointer' : 'default',
+          color: onDownload ? '#1976d2' : 'inherit',
+          textDecoration: onDownload ? 'underline' : 'none',
+          minWidth: 0,
+        }}
         onClick={onDownload}
-        title={name} // Show full name on hover
+        title={name}
       >
         {name}
-      </div>
+      </Typography>
+
       {sizeInBytes !== undefined && (
-        <div style={fileSizeStyle}>{formatFileSize(sizeInBytes)}</div>
+        <Typography
+          variant="caption"
+          sx={{
+            color: '#757575',
+            marginLeft: 1,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {formatFileSize(sizeInBytes)}
+        </Typography>
       )}
+
       {!readonly && onRemove && (
         <IconButton
-          icon={TrashIcon}
-          appearance="minimal"
+          size="small"
           onClick={onRemove}
-          style={actionButtonStyle}
           title="삭제"
-        />
+          sx={{ marginLeft: 1, color: '#757575' }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
       )}
+
       {isInvalid && validationMessage && (
-        <div style={errorMessageStyle}>{validationMessage}</div>
+        <Typography
+          variant="caption"
+          sx={{
+            position: 'absolute',
+            bottom: '-20px',
+            left: 0,
+            color: '#f44336',
+            width: '100%',
+          }}
+        >
+          {validationMessage}
+        </Typography>
       )}
-    </div>
+    </Paper>
   );
 };
 

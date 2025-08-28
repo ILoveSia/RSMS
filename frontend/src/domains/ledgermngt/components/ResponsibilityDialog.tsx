@@ -4,10 +4,10 @@
 import { apiClient } from '@/app/common/api/client';
 import ResponsibilitySearchPopup, { type ResponsibilitySearchResult } from '@/domains/common/components/search/ResponsibilitySearchPopup';
 import { Button } from '@/shared/components';
-import { Alert } from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import { Box, Grid, Typography } from '@mui/material';
+import Toast from '@/shared/components/ui/feedback/Toast';
+import { Alert, Box, Grid, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import responsibilityApi from '../api/responsibilityApi';
 import { positionApi } from '../api/positionApi';
@@ -50,6 +50,7 @@ interface IResponsibilityDialogProps {
   positionName: string;
   rowData?: any; // row 데이터를 받을 props 추가
   selectedLedgerOrder?: string; // 원장차수 값 (신규 등록시만 사용)
+  isReadOnly?: boolean; // 최종확정 상태일 때 수정 제한
   onClose: () => void;
   onSave: () => void;
   onChangeMode: (mode: DialogMode) => void;
@@ -62,10 +63,18 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   positionName,
   rowData,
   selectedLedgerOrder,
+  isReadOnly = false,
   onClose,
   onSave,
   onChangeMode,
 }) => {
+  // Debug 로그 추가
+  console.log('📋 ResponsibilityDialog Props:', { 
+    mode, 
+    isReadOnly, 
+    rowData: rowData?.ledgerOrdersStatusCd 
+  });
+  
   const [formData, setFormData] = useState<FormData>({
     responsibilityContent: '',
     details: [
@@ -82,8 +91,6 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [, setError] = useState<string | null>(null);
   const [searchPopupOpen, setSearchPopupOpen] = useState(false);
-  // 선택한 책무 데이터를 저장할 상태
-  const [selectedResponsibilityData, setSelectedResponsibilityData] = useState<any>(null);
 
 
   // 데이터 초기화 및 로드
@@ -317,8 +324,8 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       );
 
 
-      // 응답 데이터를 상태에 저장 (PUT 요청 시 활용)
-      setSelectedResponsibilityData(response);
+      // 응답 데이터 확인
+      console.log('선택한 책무 데이터:', response);
 
       // 응답이 배열인지 확인
       if (!Array.isArray(response) || response.length === 0) {
@@ -375,7 +382,8 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         title={`책무 ${mode === 'create' ? '등록' : mode === 'edit' ? '수정' : '상세 정보'}`}
         onClose={onClose}
         onSave={handleSave}
-        onModeChange={onChangeMode}
+        onModeChange={isReadOnly ? undefined : onChangeMode}
+        showEditButton={!isReadOnly}
         maxWidth="lg"
         fullWidth
         disableSave={loading}
@@ -384,6 +392,13 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
 
         <Box sx={{ p: 2 }}>
+          {/* 최종확정 상태 안내 */}
+          {isReadOnly && mode === 'view' && (
+            <Alert severity='warning' sx={{ mb: 2 }}>
+              이 데이터는 최종확정 상태이므로 수정할 수 없습니다.
+            </Alert>
+          )}
+          
           {/* 깔끔한 레이아웃 구조 */}
           <Box sx={{ mb: 3 }}>
             {/* 라벨 행 */}
@@ -424,6 +439,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
+                  label="책무"
                   value={formData.responsibilityContent}
                   onChange={(e) => setFormData(prev => ({ ...prev, responsibilityContent: e.target.value }))}
                   mode={mode === 'view' ? 'readonly' : 'editable'}
@@ -434,6 +450,14 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                     '& .MuiInputBase-root': {
                       height: '100%',
                       alignItems: 'flex-start'
+                    },
+                    '& .MuiInputBase-input': {
+                      color: '#333 !important',
+                      WebkitTextFillColor: '#333 !important',
+                    },
+                    '& .MuiInputBase-input.Mui-disabled': {
+                      color: '#333 !important',
+                      WebkitTextFillColor: '#333 !important',
                     }
                   }}
                 />
@@ -450,6 +474,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                           fullWidth
                           multiline
                           rows={4}
+                          label="책무 세부내용"
                           value={detail.responsibilityDetailContent || ''}
                           onChange={(e) =>
                             handleDetailChange(detail.id || '', 'responsibilityDetailContent', e.target.value)
@@ -458,6 +483,16 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                           error={!!validationErrors[`detail_${detail.id}_content`]}
                           helperText={validationErrors[`detail_${detail.id}_content`]}
                           placeholder="책무 세부내용을 입력하세요"
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              color: '#333 !important',
+                              WebkitTextFillColor: '#333 !important',
+                            },
+                            '& .MuiInputBase-input.Mui-disabled': {
+                              color: '#333 !important',
+                              WebkitTextFillColor: '#333 !important',
+                            }
+                          }}
                         />
                       </Grid>
                       {/* 주요 관리의무 */}
@@ -467,6 +502,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                             fullWidth
                             multiline
                             rows={4}
+                            label="주요 관리의무"
                             value={detail.keyManagementTasks || ''}
                             onChange={(e) =>
                               handleDetailChange(detail.id || '', 'keyManagementTasks', e.target.value)
@@ -475,8 +511,18 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                             error={!!validationErrors[`detail_${detail.id}_tasks`]}
                             helperText={validationErrors[`detail_${detail.id}_tasks`]}
                             placeholder="주요 관리의무를 입력하세요"
+                            sx={{
+                              '& .MuiInputBase-input': {
+                                color: '#333 !important',
+                                WebkitTextFillColor: '#333 !important',
+                              },
+                              '& .MuiInputBase-input.Mui-disabled': {
+                                color: '#333 !important',
+                                WebkitTextFillColor: '#333 !important',
+                              }
+                            }}
                           />
-                          {mode !== 'view' && (
+                          {mode !== 'view' && !isReadOnly && (
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
                               <Button
                                 size="small"
@@ -511,6 +557,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
+                  label="관련 근거"
                   value={formData.details[0]?.relatedBasis || ''}
                   onChange={(e) =>
                     handleDetailChange(formData.details[0]?.id || '', 'relatedBasis', e.target.value)
@@ -523,6 +570,14 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                     '& .MuiInputBase-root': {
                       height: '100%',
                       alignItems: 'flex-start'
+                    },
+                    '& .MuiInputBase-input': {
+                      color: '#333 !important',
+                      WebkitTextFillColor: '#333 !important',
+                    },
+                    '& .MuiInputBase-input.Mui-disabled': {
+                      color: '#333 !important',
+                      WebkitTextFillColor: '#333 !important',
                     }
                   }}
                 />
@@ -533,11 +588,10 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
 
         </Box>
       </BaseDialog>
-      <Alert
+      <Toast
         open={showSuccessAlert}
         message={`책무가 ${mode === 'create' ? '등록' : '수정'}되었습니다.`}
         severity="success"
-        autoHideDuration={2000}
         onClose={() => setShowSuccessAlert(false)}
       />
       <ResponsibilitySearchPopup
