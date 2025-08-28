@@ -5,7 +5,6 @@
 import React from 'react';
 import {
   Box,
-  Button,
 } from '@mui/material';
 import type { ButtonProps } from '@mui/material/Button';
 import {
@@ -17,6 +16,7 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
 } from '@mui/icons-material';
+import Button from './Button';
 
 // 버튼 타입 정의
 export type ActionButtonType = 
