@@ -266,58 +266,11 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     setLoading(false);
   }, [ledgerOrdersId, selectedPosition, groupDataByPositionId, convertToGridRows, callApiWithNotification]);
 
-  // 초기 데이터 로드 (한 번만)
-  const loadAllData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
-    const data = await callApiWithNotification(() => fetch('/api/position-responsibilities').then(res => res.json()));
-
-    if (data) {
-      const mappedRows: PositionResponsibility[] = data.map((item: any) => ({
-        id: item.id ?? 0,
-        responsibility_id: item.respontibility_id ?? item.id ?? 0,
-        classification: item.classification ?? '일반',
-        positionId: String(item.positions_id ?? ''),
-        positionName: item.positions_name ?? '',
-        responsibilityOverview: item.role_summ ?? '',
-        responsibilityStartDate: item.created_at ?? '',
-        responsibilityName: item.responsibility_name ?? '',
-        responsibility_detail_content: item.responsibility_detail_content ?? '',
-        lastModifiedDate: item.updated_at ?? '',
-        createdAt: item.created_at ?? '',
-        updatedAt: item.updated_at ?? '',
-        // 원본 API 데이터 보존 (다이얼로그에서 사용)
-        responsibility_conent: item.responsibility_conent ?? '', // 책무 내용
-        responsibility_mgt_sts: item.responsibility_mgt_sts ?? '', // 주요 관리업무
-        responsibility_rel_evid: item.responsibility_rel_evid ?? '', // 관련 근거
-        // ledger_orders 관련 필드 추가
-        ledger_orders_id: item.ledger_orders_id ?? null,
-        ledger_orders_title: item.ledger_orders_title ?? '',
-        ledger_orders_status_cd: item.ledger_orders_status_cd ?? '',
-        // approval 관련 필드 추가
-        appr_stat_cd: item.appr_stat_cd ?? '',
-        // role_resp_status 관련 필드 추가
-        role_resp_status_id: item.role_resp_status_id ?? null,
-      }));
-
-      setOriginalData(mappedRows);
-      
-      // 데이터 그룹핑
-      const grouped = groupDataByPositionId(mappedRows);
-      setGroupedData(grouped);
-      
-      // 그룹핑된 데이터를 DataGrid용으로 변환
-      const gridRows = convertToGridRows(grouped);
-      setRows(gridRows);
-    }
-    
-    setLoading(false);
-  }, [groupDataByPositionId, convertToGridRows, callApiWithNotification]);
-
   useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
+    if (ledgerOrdersId || selectedPosition) {
+      fetchPositionResponsibilityData();
+    }
+  }, [ledgerOrdersId, selectedPosition, fetchPositionResponsibilityData]);
 
   // 컬럼 정의
   const columns: DataGridColumn<GroupedPositionResponsibilityRow>[] = [
@@ -710,14 +663,6 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             onChange={setSelectedPosition}
             size="small"
             sx={{ minWidth: '200px' }}
-          />
-          <Button
-            preset="search"
-            onClick={useCallback(() => {
-              fetchPositionResponsibilityData();
-            }, [fetchPositionResponsibilityData, ledgerOrdersId, selectedPosition?.positionsId])}
-            loading={loading}
-            disabled={loading}
           />
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <PermissionButton
