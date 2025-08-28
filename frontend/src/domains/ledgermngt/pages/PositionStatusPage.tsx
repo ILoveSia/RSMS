@@ -454,7 +454,6 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
               setLedgerOrderOptions(options);
             }, [])}
           />
-          <Button preset="search" onClick={handleSearch} />
           <PermissionButton
             menuCode="LEDGER_MGMT_POSITION"
             permission="write"

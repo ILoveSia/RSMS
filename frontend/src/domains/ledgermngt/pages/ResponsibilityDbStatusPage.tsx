@@ -487,10 +487,6 @@ const ResponsibilityDbStatusPage: React.FC<IResponsibilityDbStatusPageProps> = R
               size='small'
               sx={{ minWidth: 150, maxWidth: 200 }}
             />
-            <Button
-              preset="search"
-              onClick={handleSearch}
-            />
           </Box>
 
           {/* 버튼 영역 */}
