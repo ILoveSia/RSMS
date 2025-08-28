@@ -143,7 +143,7 @@ const HodICItemDialog: React.FC<HodICItemDialogProps> = ({
   const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
 
   // 책무상세 목록 상태
-  const [responsibilityDetails, setResponsibilityDetails] = useState<ResponsibilityDetail[]>([]);
+  const [responsibilityDetails, setResponsibilityDetails] = useState<ResponsibilityDetail>([]);
   const [detailsLoading, setDetailsLoading] = useState(false);
 
 // 책무상세 타입 정의
@@ -177,13 +177,6 @@ interface ResponsibilityDetail {
     // view 모드이고 결재상태가 NONE이거나 없는 경우에만 수정 버튼 표시
     return isViewMode && (approvalStatus === 'NONE' || !approvalStatus);
   };
-
-  // 저장 버튼 표시 여부 판단
-  const shouldShowSaveButton = () => {
-    // create 모드이거나, edit 모드에서 결재상태가 NONE인 경우 저장 버튼 표시
-    return isCreateMode || (isEditMode && (approvalStatus === 'NONE' || !approvalStatus));
-  };
-
 
   // 공통코드 배열 추출 함수
   const getCodesArray = useCallback((): CommonCode[] => {
@@ -302,7 +295,7 @@ interface ResponsibilityDetail {
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map(code => ({
           value: code.code,
-          label: code.codeName,
+          label: code.detailCodeName,
         }));
 
       return options;
@@ -654,14 +647,13 @@ interface ResponsibilityDetail {
       <BaseDialog
         open={open}
         onClose={handleClose}
-        onSave={handleSave}
+        onSave={(isCreateMode || (isEditMode && (approvalStatus === 'NONE' || !approvalStatus))) ? handleSave : undefined}
         onModeChange={handleModeChange}
         maxWidth='md'
         mode={mode}
         title={mode === 'create' ? '내부통제항목 등록' : mode === 'edit' ? '내부통제항목 수정' : '내부통제항목 조회'}
         customActions={renderCustomActions()}
         showEditButton={shouldShowEditButton()}
-        showSaveButton={shouldShowSaveButton()}
       >
 
         <DialogContent sx={{ 

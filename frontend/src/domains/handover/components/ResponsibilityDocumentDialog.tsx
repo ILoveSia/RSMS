@@ -1,6 +1,13 @@
 /**
- * 책무기술서 다이얼로그
- * 책무기술서 등록/수정/조회 기능을 제공합니다.
+ * 책무DB 다이얼로그
+ * 책무DB 등록/수정/조회 기능을 제공합니다.
+ * 
+ * SOLID 원칙:
+ * - Single Responsibility: 책무DB 다이얼로그 처리만 담당
+ * - Open/Closed: 새로운 필드나 검증 추가 시 확장 가능
+ * - Liskov Substitution: React 컴포넌트 인터페이스 준수
+ * - Interface Segregation: 다이얼로그 관련 기능만 제공
+ * - Dependency Inversion: 훅과 컴포넌트에 의존
  */
 
 import { useReduxState } from '@/app/store/use-store';
@@ -18,18 +25,20 @@ import {
   IconButton,
   InputAdornment,
 } from '@mui/material';
+import { Select } from '@/shared/components/ui/form';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
 import { Button } from '@/shared/components/ui/button';
 import { TextField } from '@/shared/components/ui/data-display/';
 import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
 import { DatePicker } from '@/shared/components/ui/form';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
+import DepartmentSearchPopup, { type Department } from '@/domains/common/components/search/DepartmentSearchPopup';
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { ResponsibilityDocumentApi, type ResponsibilityDocumentDto, type ResponsibilityDocument } from '../api/responsibilityDocumentApi';
+import { responsibilityDocumentApi, type ResponsibilityDocumentDto, type ApprovalStartRequestDto } from '../api/responsibilityDocumentApi';
 import { useSnackbar } from '@/shared/hooks/useSnackbar';
 import Toast from '@/shared/components/ui/feedback/Toast';
-import FileUpload ,{type FileUploadHandle} from '@/shared/components/ui/form/FileUpload';
-import { getAttachments } from '@/domains/common/api/attachmentApi';
+import { uploadAttachment, getAttachments, downloadAttachment, deleteAttachment } from '@/domains/common/api/attachmentApi';
+import FileUpload, { type FileUploadHandle } from '@/shared/components/ui/form/FileUpload';
 import type { AttachmentType } from '@/domains/report/pages/types';
 
 interface ResponsibilityDocumentDialogProps {
@@ -42,8 +51,6 @@ interface ResponsibilityDocumentDialogProps {
   apiResponseData?: any;
 }
 
-// CommonAttachmentInfo를 그대로 사용
-type AttachmentInfo = AttachmentType;
 
 interface FormData {
   documentTitle: string;
@@ -53,6 +60,8 @@ interface FormData {
   expiryDate: Date | null;
   authorEmpNo: string;
   authorName: string;
+  deptCd: string;
+  deptName: string;
 }
 
 const initialFormData: FormData = {
@@ -63,6 +72,8 @@ const initialFormData: FormData = {
   expiryDate: null,
   authorEmpNo: '',
   authorName: '',
+  deptCd: '',
+  deptName: '',
 };
 
 // LoginUser 타입 (loginStore용)
@@ -99,15 +110,20 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
   // 사원 검색 팝업 상태
   const [authorSearchOpen, setAuthorSearchOpen] = useState(false);
   
+  // 부서 검색 팝업 상태
+  const [departmentSearchOpen, setDepartmentSearchOpen] = useState(false);
+  
   // 첨부파일 상태
+  const [attachments, setAttachments] = useState<AttachmentType | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [attachments, setAttachments] = useState<AttachmentType | null>(null);
+  
   // 알림 처리
   const { snackbar, showSuccess, showError, hideSnackbar } = useSnackbar();
   const fileUploadRef = useRef<FileUploadHandle>(null);
   const [uploadedAttachId, setUploadedAttachId] = useState<number | null>(null);
+
   const handleFileSubmit = useCallback((attachId: number | null) => {
     setUploadedAttachId(attachId);
   }, []);
@@ -136,11 +152,6 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     return approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined;
   };
 
-  // 저장 버튼 표시 여부 판단 - 결재상태가 NONE이고 편집모드 또는 생성모드일 때 저장 가능
-  const shouldShowSaveButton = () => {
-    return (approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && (isEditMode || isCreateMode);
-  };
-
   // 공통코드 배열 추출 함수
   const getCodesArray = useCallback((): CommonCode[] => {
     if (!allCodes) return [];
@@ -158,16 +169,26 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     (groupCode: string): SelectOption[] => {
       const codes = getCodesArray();
 
-      // 공통코드 처리
+      // 상태 코드 처리
+      if (groupCode === 'DOCUMENT_STATUS') {
+        return [
+          { value: 'DRAFT', label: '초안' },
+          { value: 'REVIEW', label: '검토중' },
+          { value: 'APPROVED', label: '승인됨' },
+          { value: 'PUBLISHED', label: '발행됨' },
+        ];
+      }
+
+      // 기타 공통코드 처리
       const filteredCodes = codes.filter(
         code => code.groupCode === groupCode && code.useYn === 'Y'
       );
 
       const options = filteredCodes
-        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
         .map(code => ({
-          value: code.code,
-          label: code.codeName,
+          value: code.detailCode,
+          label: code.detailCodeName,
         }));
 
       return options;
@@ -175,7 +196,24 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     [getCodesArray]
   );
 
-  // 데이터 로드 함수
+  // 폼 데이터 업데이트 함수
+  const updateFormData = useCallback((field: keyof FormData, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+  }, []);
+
+  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수 (로컬 시간대 유지)
+  const parseDate = (dateString: string | null | undefined): Date | null => {
+    if (!dateString) return null;
+    // YYYY-MM-DD 형식의 문자열을 로컬 시간대로 파싱
+    const [year, month, day] = dateString.split('-').map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(year, month - 1, day); // month는 0부터 시작하므로 -1
+  };
+
+  // 책무DB 데이터 로드
   const loadDocumentData = useCallback(async () => {
     if (!documentId) return;
 
@@ -184,14 +222,14 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     try {
       let documentData: ResponsibilityDocumentDto | null = null;
 
-      // API 응답 데이터에서 해당 문서 찾기
+      // API 응답 데이터에서 해당 책무DB 찾기
       if (apiResponseData?.content && Array.isArray(apiResponseData.content)) {
         documentData = apiResponseData.content.find(
-          (doc: ResponsibilityDocumentDto) => doc.documentId === documentId
+          (document: ResponsibilityDocumentDto) => document.documentId === documentId
         );
       }
 
-      // 문서 데이터를 폼에 매핑
+      // 책무DB 데이터를 폼에 매핑
       if (documentData) {
         setFormData({
           documentTitle: documentData.documentTitle || '',
@@ -201,44 +239,17 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
           expiryDate: parseDate(documentData.expiryDate),
           authorEmpNo: documentData.authorEmpNo || '',
           authorName: documentData.authorName || '',
+          deptCd: documentData.deptCd || '',
+          deptName: documentData.deptName || '',
         });
       }
-
     } catch (err) {
-      console.error('Failed to load document data:', err);
-      setError('데이터를 불러오는 중 오류가 발생했습니다.');
+      console.error('책무DB 데이터 로드 실패:', err);
+      setError('책무DB 데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   }, [documentId, apiResponseData]);
-
-  // initialMode이 변경될 때 내부 mode 상태 업데이트
-  useEffect(() => {
-    setMode(initialMode);
-  }, [initialMode]);
-
-  // 데이터 로드
-  useEffect(() => {
-    if (open) {
-      // 다이얼로그가 열릴 때 mode를 initialMode로 리셋
-      setMode(initialMode);
-      
-      if (documentId && (initialMode === 'edit' || initialMode === 'view')) {
-        loadDocumentData();
-        // loadAttachments는 loadDocumentData 완료 후 별도 useEffect에서 호출
-      } else if (initialMode === 'create') {
-        setFormData(initialFormData);
-        setError(null);
-        setAttachments(null);
-      }
-    }
-  }, [
-    open,
-    documentId,
-    initialMode,
-    loadDocumentData,
-    apiResponseData,
-  ]);
 
   // 첨부파일 로드
   const loadAttachments = useCallback(async () => {
@@ -252,12 +263,44 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     }
   }, [documentId]);
 
+  // initialMode이 변경될 때 내부 mode 상태 업데이트
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
+
+  // 다이얼로그 열릴 때 데이터 로드
+  useEffect(() => {
+    if (open) {
+      // 다이얼로그가 열릴 때 mode를 initialMode로 리셋
+      setMode(initialMode);
+      
+      if (documentId && (initialMode === 'edit' || initialMode === 'view')) {
+        loadDocumentData();
+      } else if (initialMode === 'create') {
+        setFormData(initialFormData);
+        setError(null);
+        setAttachments(null);
+      }
+    }
+  }, [open, documentId, initialMode, loadDocumentData, apiResponseData]);
+
   // 첨부파일 로드 (documentId가 있을 때만)
   useEffect(() => {
     if (open && documentId && (mode === 'edit' || mode === 'view')) {
       loadAttachments();
     }
-  }, [open, documentId, mode, loadAttachments]);
+  }, [open, documentId, mode]);
+
+  // 다이얼로그 닫힐 때 초기화
+  useEffect(() => {
+    if (!open) {
+      setFormData(initialFormData);
+      setMode(initialMode);
+      setError(null);
+      setAttachments(null);
+      setSelectedFile(null);
+    }
+  }, [open, initialMode]);
 
   // 생성 모드에서 현재 로그인 사용자로 작성자 설정
   useEffect(() => {
@@ -265,103 +308,76 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
       setFormData(prev => ({
         ...prev,
         authorEmpNo: currentUserId,
-        // 사용자명은 별도 API 호출이 필요하므로 여기서는 설정하지 않음
+        // 여기서 사용자명도 설정할 수 있지만, 별도 API 호출이 필요할 수 있음
       }));
     }
   }, [isCreateMode, currentUserId]);
 
-  const handleInputChange = (field: keyof FormData, value: string | number | Date | null) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // 날짜 문자열을 Date 객체로 변환하는 헬퍼 함수 (로컬 시간대 유지)
-  const parseDate = (dateString: string | null | undefined): Date | null => {
-    if (!dateString) return null;
-    // YYYY-MM-DD 형식의 문자열을 로컬 시간대로 파싱
-    const [year, month, day] = dateString.split('-').map(Number);
-    if (!year || !month || !day) return null;
-    return new Date(year, month - 1, day); // month는 0부터 시작하므로 -1
-  };
-
-  // Date 객체를 YYYY-MM-DD 문자열로 변환하는 헬퍼 함수 (로컬 시간대 유지)
-  const formatDate = (date: Date | null): string => {
-    if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const validateForm = (): boolean => {
+  // 저장 함수
+  const handleSave = useCallback(async () => {
     if (!formData.documentTitle.trim()) {
-      setError('문서 제목을 입력해주세요.');
-      return false;
+      setError('책무DB 제목을 입력해주세요.');
+      return;
     }
-    if (!formData.documentContent.trim()) {
-      setError('문서 내용을 입력해주세요.');
-      return false;
-    }
-    return true;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
 
     setSaving(true);
     setError(null);
 
     try {
-      const requestData: ResponsibilityDocument = {
-        documentTitle: formData.documentTitle,
-        documentVersion: formData.documentVersion,
-        documentContent: formData.documentContent,
-        effectiveDate: formatDate(formData.effectiveDate),
-        expiryDate: formatDate(formData.expiryDate),
-        authorEmpNo: formData.authorEmpNo || currentUserId || '',
-        status: 'DRAFT', // 기본값으로 DRAFT 설정
+      const saveData: any = {
+        documentTitle: formData.documentTitle.trim(),
+        documentContent: formData.documentContent || '',
+        documentVersion: formData.documentVersion || 'v1.0',
+        deptCd: formData.deptCd,
+        effectiveDate: formData.effectiveDate ? formData.effectiveDate.toISOString().split('T')[0] : null,
+        expiryDate: formData.expiryDate ? formData.expiryDate.toISOString().split('T')[0] : null,
+        authorEmpNo: formData.authorEmpNo || currentUserId,
+        createdId: currentUserId,
+        updatedId: currentUserId,
       };
 
       if (isCreateMode) {
-        const result = await ResponsibilityDocumentApi.createDocument(requestData);
-        // 파일 업로드 처리
+        const result = await responsibilityDocumentApi.createDocument(saveData);
         await fileUploadRef.current?.handleSubmit(result.documentId!, 'create');
-        showSuccess('문서가 성공적으로 생성되었습니다.');
-      } else if (isEditMode && documentId) {
-        await ResponsibilityDocumentApi.updateDocument(documentId, requestData);
-        // 파일 업로드 처리
-        await fileUploadRef.current?.handleSubmit(documentId, 'edit');
-        showSuccess('문서가 성공적으로 수정되었습니다.');
+        showSuccess('책무DB가 성공적으로 생성되었습니다.');
+      } else {
+        await responsibilityDocumentApi.updateDocument(documentId!, saveData);        
+        await fileUploadRef.current?.handleSubmit(documentId!, 'edit');
+        showSuccess('책무DB가 성공적으로 수정되었습니다.');
       }
 
       onSuccess?.();
       onClose();
     } catch (err) {
-      console.error('Failed to save document:', err);
+      console.error('저장 실패:', err);
       setError('저장 중 오류가 발생했습니다.');
       showError('저장 중 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
-  };
+  }, [formData, isCreateMode, documentId, currentUserId, onSuccess, onClose, showSuccess, showError]);
 
-
-
-  const handleClose = () => {
-    if (saving) return;
-    // 다이얼로그 닫힐 때 mode를 initialMode로 리셋
-    setMode(initialMode);
-    // 파일 상태 초기화
-    setSelectedFile(null);
-    setUploadingFiles(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  // 수정 모드로 전환
+  const handleEdit = useCallback(() => {
+    if (!shouldShowEditButton()) {
+      showError('결재 진행 중인 문서는 수정할 수 없습니다.');
+      return;
     }
-    onClose();
-  };
+    setMode('edit');
+    setError(null);
+  }, [shouldShowEditButton, showError]);
 
+  // 취소 함수
+  const handleCancel = useCallback(() => {
+    if (isEditMode && documentId) {
+      setMode('view');
+      loadDocumentData(); // 원래 데이터로 복원
+    } else {
+      onClose();
+    }
+  }, [isEditMode, documentId, loadDocumentData, onClose]);
+
+  // 모드 변경 핸들러
   const handleModeChange = (newMode: 'create' | 'edit' | 'view' | 'onlyRead') => {
     if (newMode === 'onlyRead') {
       setMode('view');
@@ -370,17 +386,54 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     }
   };
 
-  // 사원 선택 핸들러
-  const handleAuthorSelect = (employee: EmployeeSearchResult) => {
-    setFormData(prev => ({
-      ...prev,
-      authorEmpNo: employee.empNo,
-      authorName: employee.username,
-    }));
-    setAuthorSearchOpen(false);
-  };
+  // 결재 상신 처리
+  const handleApprovalStart = useCallback(async () => {
+    if (!documentId) {
+      showError('책무DB ID가 없습니다.');
+      return;
+    }
 
-  // 커스텀 액션 버튼들 생성
+    if (!shouldShowApprovalButton()) {
+      showError('결재를 시작할 수 없는 상태입니다.');
+      return;
+    }
+
+    try {
+      const approvalRequest: ApprovalStartRequestDto = {
+        taskTypeCode: 'responsibility_documents',
+        taskId: documentId,
+        title: `책무DB 결재 - ${formData.documentTitle}`,
+        description: `책무DB "${formData.documentTitle}" 결재를 요청합니다.`
+      };
+
+      await responsibilityDocumentApi.startApproval(documentId, approvalRequest);
+      showSuccess('결재 요청이 완료되었습니다.');
+      
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      console.error('결재 요청 실패:', error);
+      showError('결재 요청 중 오류가 발생했습니다.');
+    }
+  }, [documentId, formData.documentTitle, shouldShowApprovalButton, showSuccess, showError, onSuccess, onClose]);
+
+  // 사원 선택 핸들러
+  const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
+    updateFormData('authorEmpNo', employee.empNo);
+    updateFormData('authorName', employee.username);
+    setAuthorSearchOpen(false);
+  }, [updateFormData]);
+
+  // 부서 선택 핸들러
+  const handleDepartmentSelect = useCallback((departments: Department | Department[]) => {
+    const department = Array.isArray(departments) ? departments[0] : departments;
+    if (department) {
+      updateFormData('deptCd', department.deptCode);
+      updateFormData('deptName', department.deptName);
+      setDepartmentSearchOpen(false);
+    }
+  }, [updateFormData]);
+
   const renderCustomActions = () => {
     const actions = [];
 
@@ -391,7 +444,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
           key="approval-submit"
           taskType="responsibility_documents"
           taskId={documentId}
-          taskTitle={`책무기술서 - ${formData.documentTitle || '문서명'}`}
+          taskTitle={`책무DB - ${formData.documentTitle || '책무DB명'}`}
           currentUserId={currentUserId || ''}
           onApprovalStateChange={() => {
             onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
@@ -410,7 +463,7 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
           key="approval-status"
           taskType="responsibility_documents"
           taskId={documentId}
-          taskTitle={`책무기술서 - ${formData.documentTitle || '문서명'}`}
+          taskTitle={`책무DB - ${formData.documentTitle || '책무DB명'}`}
           currentUserId={currentUserId || ''}
           onApprovalStateChange={() => {
             onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
@@ -425,198 +478,168 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
     return actions.length > 0 ? actions : undefined;
   };
 
+  if (loading) {
+    return (
+      <BaseDialog
+        mode={mode}
+        open={open}
+        onClose={onClose}
+        title="책무DB"
+        maxWidth="md"
+        showEditButton={false}
+      >
+        <DialogContent>
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <CircularProgress />
+          </Box>
+        </DialogContent>
+      </BaseDialog>
+    );
+  }
+
   return (
     <>
       <BaseDialog
         open={open}
-        onClose={handleClose}
-        onSave={handleSave}
+        onClose={onClose}
+        onSave={(approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && (isEditMode || isCreateMode) ? handleSave : undefined}
         onModeChange={handleModeChange}
-        maxWidth='md'
+        maxWidth="md"
         mode={mode}
         title={(() => {
-          if (mode === 'create') return '책무기술서 등록';
-          if (mode === 'edit') return '책무기술서 수정';
-          return '책무기술서 조회';
+          if (mode === 'create') return '책무DB 등록';
+          if (mode === 'edit') return '책무DB 수정';
+          return '책무DB 조회';
         })()}
         customActions={renderCustomActions()}
         showEditButton={shouldShowEditButton()}
-        showSaveButton={shouldShowSaveButton()}
       >
-        <DialogContent sx={{
-          p: 3,
-          // view 모드에서 텍스트 스타일 진하게 통일
-          ...(isViewMode && {
-            '& .MuiInputBase-input[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputBase-input.Mui-disabled': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiTextField-root .MuiInputBase-input': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiSelect-select.Mui-disabled': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiSelect-select[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputBase-inputMultiline[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputBase-inputMultiline.Mui-disabled': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiInputLabel-root.Mui-disabled': {
-              color: 'var(--bank-text-secondary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiFormHelperText-root': {
-              color: 'var(--bank-text-secondary) !important',
-              opacity: '1 !important',
-            },
-            '& .MuiOutlinedInput-input[disabled]': {
-              fontWeight: '600 !important',
-              color: 'var(--bank-text-primary) !important',
-              WebkitTextFillColor: 'var(--bank-text-primary) !important',
-              opacity: '1 !important',
-            },
-            // placeholder 색 가시성 유지
-            '& .MuiInputBase-input::placeholder': {
-              color: 'var(--bank-text-secondary) !important',
-              opacity: '1 !important',
-            },
-          })
-        }}>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <>
-              {error && (
-                <Alert severity='error' sx={{ mb: 2 }}>
-                  {error}
-                </Alert>
-              )}
+        <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-              <Grid container spacing={2}>
+          <Grid container spacing={2}>
+            {/* 책무DB 제목 */}
+            <Grid item xs={12}>
+              <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
+                label="책무DB 제목"
+                value={formData.documentTitle}
+                onChange={(e) => updateFormData('documentTitle', e.target.value)}
+                fullWidth
+                required
+                disabled={isViewMode}
+                error={!formData.documentTitle.trim() && formData.documentTitle !== ''}
+                helperText={!formData.documentTitle.trim() && formData.documentTitle !== '' ? '책무DB 제목을 입력해주세요.' : ''}
+              />
+            </Grid>
 
-                {/* 문서 제목 */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='문서 제목 *'
-                    value={formData.documentTitle}
-                    onChange={e => handleInputChange('documentTitle', e.target.value)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
+            {/* 책무DB 버전 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
+                label="책무DB 버전"
+                value={formData.documentVersion}
+                onChange={(e) => updateFormData('documentVersion', e.target.value)}
+                fullWidth
+                disabled={isViewMode}
+              />
+            </Grid>
 
-                {/* 문서 버전 */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='문서 버전'
-                    value={formData.documentVersion}
-                    onChange={e => handleInputChange('documentVersion', e.target.value)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
+            {/* 부서 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
+                fullWidth
+                label='부서'
+                value={formData.deptName}
+                disabled={isViewMode}
+                helperText={formData.deptCd ? `부서코드: ${formData.deptCd}` : ''}
+                InputProps={{
+                  endAdornment: !isViewMode && (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setDepartmentSearchOpen(true)}
+                        size="small"
+                        edge="end"
+                        title="부서 검색"
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
 
-                {/* 작성자 */}
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='작성자'
-                    value={formData.authorName}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                    helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
-                    InputProps={{
-                      endAdornment: !isViewMode && (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setAuthorSearchOpen(true)}
-                            size="small"
-                            edge="end"
-                          >
-                            <SearchIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-               
-                {/* 시행일 */}
-                <Grid item xs={12} sm={6}>
-                  <DatePicker
-                    label='시행일'
-                    fullWidth
-                    value={formData.effectiveDate}
-                    onChange={(date) => handleInputChange('effectiveDate', date)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
+            
 
-                {/* 만료일 */}
-                <Grid item xs={12} sm={6}>
-                  <DatePicker
-                    label='만료일'
-                    fullWidth
-                    value={formData.expiryDate}
-                    onChange={(date) => handleInputChange('expiryDate', date)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                  />
-                </Grid>
+            {/* 시행일 */}
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="시행일"
+                fullWidth
+                value={formData.effectiveDate}
+                onChange={(date) => updateFormData('effectiveDate', date)}
+                disabled={isViewMode}
+              />
+            </Grid>
 
-                {/* 문서 내용 */}
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='문서 내용 *'
-                    value={formData.documentContent}
-                    onChange={e => handleInputChange('documentContent', e.target.value)}
-                    disabled={isViewMode}
-                    mode={isViewMode ? "readonly" : "editable"}
-                    multiline
-                    rows={12}
-                    placeholder='문서의 상세 내용을 마크다운 형식으로 작성하세요.'
-                  />
-                </Grid>
+            {/* 만료일 */}
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="만료일"
+                fullWidth
+                value={formData.expiryDate}
+                onChange={(date) => updateFormData('expiryDate', date)}
+                disabled={isViewMode}
+              />
+            </Grid>
 
-                
+            {/* 작성자 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
+                fullWidth
+                label='작성자'
+                value={formData.authorName}
+                disabled={isViewMode}
+                helperText={formData.authorEmpNo ? `사번: ${formData.authorEmpNo}` : ''}
+                InputProps={{
+                  endAdornment: !isViewMode && (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setAuthorSearchOpen(true)}
+                        size="small"
+                        edge="end"
+                        title="사원 검색"
+                      >
+                        <SearchIcon />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
 
-                {/* 첨부파일 섹션 */}
-                <Grid item xs={12}>
-                <FileUpload
+            {/* 책무DB 내용 */}
+            <Grid item xs={12}>
+              <TextField
+                mode={mode==='view' ? 'readonly' : 'editable'}
+                label="책무DB 내용"
+                value={formData.documentContent}
+                onChange={(e) => updateFormData('documentContent', e.target.value)}
+                fullWidth
+                multiline
+                rows={6}
+                disabled={isViewMode}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FileUpload
                 ref={fileUploadRef}
                 existingFiles={attachments}
                 onSubmit={handleFileSubmit}
@@ -625,29 +648,29 @@ const ResponsibilityDocumentDialog: React.FC<ResponsibilityDocumentDialogProps> 
                 entityId={documentId}
                 readonly={isViewMode}
             />
-                </Grid>
+            </Grid>
 
-              </Grid>
-            </>
-          )}
+          </Grid>
         </DialogContent>
-
-        <DialogActions>
-          <Box sx={{ display: 'flex', gap: 1, width: '100%', justifyContent: 'flex-end' }}>
-            {/* 추가 액션 버튼이 필요한 경우 여기에 추가 */}
-          </Box>
-        </DialogActions>
       </BaseDialog>
 
-      {/* 사원 검색 팝업들 */}
+      {/* 사원 검색 팝업 */}
       <EmployeeSearchPopup
         open={authorSearchOpen}
         onClose={() => setAuthorSearchOpen(false)}
         onSelect={handleAuthorSelect}
         title="작성자 검색"
       />
+      
+      {/* 부서 검색 팝업 */}
+      <DepartmentSearchPopup
+        open={departmentSearchOpen}
+        onClose={() => setDepartmentSearchOpen(false)}
+        onSelect={handleDepartmentSelect}
+        title="부서 검색"
+      />
 
-      {/* Toast 알림 */}
+      {/* 알림 토스트 */}
       <Toast
         open={snackbar.open}
         message={snackbar.message}

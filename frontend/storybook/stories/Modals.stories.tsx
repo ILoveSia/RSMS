@@ -1,6 +1,5 @@
 import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import BaseDialog from '../../src/shared/components/modal/BaseDialog';
 import Confirm from '../../src/shared/components/modal/Confirm';
 import Alert from '../../src/shared/components/modal/Alert';
 import Dialog from '../../src/shared/components/modal/Dialog';
@@ -14,30 +13,6 @@ const meta: Meta = {
 export default meta;
 
 type Story = StoryObj;
-export const BaseDialogStory: Story = {
-  name: 'BaseDialog',
-  render: () => {
-    const [open, setOpen] = React.useState(true);
-    const [mode, setMode] = React.useState<'create' | 'edit' | 'view' | 'onlyRead'>('view');
-    return (
-      <div style={{ padding: 16 }}>
-        <Button onClick={() => setOpen(true)} style={{ marginBottom: 12 }}>Open BaseDialog</Button>
-        <BaseDialog
-          open={open}
-          onClose={() => setOpen(false)}
-          title="BaseDialog"
-          mode={mode}
-          onModeChange={m => setMode(m)}
-          onSave={() => {}}
-          showEditButton
-          showSaveButton
-        >
-          <div style={{ height: 120 }}>Content</div>
-        </BaseDialog>
-      </div>
-    );
-  },
-};
 
 export const ConfirmDialogStory: Story = {
   name: 'Confirm',
@@ -45,7 +20,7 @@ export const ConfirmDialogStory: Story = {
     const [open, setOpen] = React.useState(true);
     return (
       <div style={{ padding: 16 }}>
-        <Button onClick={() => setOpen(true)} style={{ marginBottom: 12 }}>Open Confirm</Button>
+        <Button onClick={() => setOpen(true)}>Open Confirm</Button>
         <Confirm
           open={open}
           title="확인"
@@ -66,7 +41,7 @@ export const AlertDialogStory: Story = {
     const [open, setOpen] = React.useState(true);
     return (
       <div style={{ padding: 16 }}>
-        <Button onClick={() => setOpen(true)} style={{ marginBottom: 12 }}>Open Alert</Button>
+        <Button onClick={() => setOpen(true)}>Open Alert</Button>
         <Alert
           open={open}
           title="알림"
@@ -84,7 +59,7 @@ export const SimpleDialogStory: Story = {
     const [open, setOpen] = React.useState(true);
     return (
       <div style={{ padding: 16 }}>
-        <Button onClick={() => setOpen(true)} style={{ marginBottom: 12 }}>Open Dialog</Button>
+        <Button onClick={() => setOpen(true)}>Open Dialog</Button>
         <Dialog
           open={open}
           title="심플 다이얼로그"
@@ -105,7 +80,7 @@ export const DrawerStory: Story = {
     const [open, setOpen] = React.useState(true);
     return (
       <div style={{ padding: 16 }}>
-        <Button onClick={() => setOpen(true)} style={{ marginBottom: 12 }}>Open Drawer</Button>
+        <Button onClick={() => setOpen(true)}>Open Drawer</Button>
         <Drawer
           open={open}
           onClose={() => setOpen(false)}

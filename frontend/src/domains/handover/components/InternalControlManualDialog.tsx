@@ -152,11 +152,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
     return approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined;
   };
 
-  // 저장 버튼 표시 여부 판단 - 결재상태가 NONE이고 편집모드 또는 생성모드일 때 저장 가능
-  const shouldShowSaveButton = () => {
-    return (approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && (isEditMode || isCreateMode);
-  };
-
   // 공통코드 배열 추출 함수
   const getCodesArray = useCallback((): CommonCode[] => {
     if (!allCodes) return [];
@@ -492,7 +487,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
         title="내부통제 업무메뉴얼"
         maxWidth="md"
         showEditButton={false}
-        showSaveButton={false}
       >
         <DialogContent>
           <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -508,7 +502,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
       <BaseDialog
         open={open}
         onClose={onClose}
-        onSave={handleSave}
+        onSave={(approvalStatus === 'NONE' || approvalStatus === null || approvalStatus === undefined) && (isEditMode || isCreateMode) ? handleSave : undefined}
         onModeChange={handleModeChange}
         maxWidth="md"
         mode={mode}
@@ -519,7 +513,6 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
         })()}
         customActions={renderCustomActions()}
         showEditButton={shouldShowEditButton()}
-        showSaveButton={shouldShowSaveButton()}
       >
         <DialogContent>
           {error && (

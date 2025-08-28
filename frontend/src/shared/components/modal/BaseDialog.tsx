@@ -7,9 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  Typography,
-  type SxProps,
-  type Theme,
+  Typography
 } from '@mui/material';
 import type { ReactNode } from 'react';
 import React from 'react';
@@ -22,29 +20,15 @@ export interface BaseDialogProps {
   title: ReactNode;
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   fullWidth?: boolean;
-  fullScreen?: boolean;
   keepMounted?: boolean;
   children: ReactNode;
   onClose: () => void;
-  onBeforeClose?: () => boolean | Promise<boolean>;
   onSave?: () => void;
   onModeChange?: (mode: DialogMode) => void;
   disableSave?: boolean;
   customActions?: ReactNode;
   loading?: boolean;
-  showEditButton?: boolean;    // 수정 버튼 표시 여부
-  showSaveButton?: boolean;    // 저장 버튼 표시 여부
-  /* Behavior */
-  disableBackdropClick?: boolean;
-  disableEscapeKeyDown?: boolean;
-  /* Styling */
-  paperSx?: SxProps<Theme>;
-  contentSx?: SxProps<Theme>;
-  actionsSx?: SxProps<Theme>;
-  dialogSx?: SxProps<Theme>;
-  dividers?: boolean;
-  hideCloseButton?: boolean;
-  titleActions?: ReactNode;
+  showEditButton?: boolean; // 수정 버튼 표시 여부
   hideDefaultActions?: boolean;
 }
 
@@ -54,28 +38,16 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
   title,
   maxWidth = 'md',
   fullWidth = true,
-  fullScreen = false,
   keepMounted,
   children,
   onClose,
-  onBeforeClose,
   onSave,
   onModeChange,
   disableSave = false,
   customActions,
   loading = false,
   showEditButton = true,
-  showSaveButton = true,
-  hideDefaultActions = false, 
-  disableBackdropClick,
-  disableEscapeKeyDown,
-  paperSx,
-  contentSx,
-  actionsSx,
-  dialogSx,
-  dividers = true,
-  hideCloseButton,
-  titleActions,
+  hideDefaultActions = false,
 }) => {
   const isViewMode = mode === 'view';
   const isEditMode = mode === 'edit';
@@ -85,12 +57,8 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
     onModeChange?.('edit');
   };
 
-  const requestClose = async () => {
+  const requestClose = () => {
     if (loading) return;
-    if (onBeforeClose) {
-      const allow = await onBeforeClose();
-      if (!allow) return;
-    }
     onClose();
   };
 
@@ -111,21 +79,14 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
       open={open}
       maxWidth={maxWidth}
       fullWidth={fullWidth}
-      fullScreen={fullScreen}
       keepMounted={keepMounted}
-      onClose={(_, reason) => {
-        if (reason === 'backdropClick' && disableBackdropClick) return;
-        if (reason === 'escapeKeyDown' && disableEscapeKeyDown) return;
-        requestClose();
-      }}
+      onClose={requestClose}
       PaperProps={{
         sx: {
           height: 'auto',
           maxHeight: '90vh',
-          ...paperSx,
         },
       }}
-      sx={dialogSx}
     >
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -140,27 +101,24 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
             {title}
           </Typography>
           <Box display="flex" alignItems="center" gap={1}>
-            {titleActions}
-            {!hideCloseButton && (
-              <IconButton
-                onClick={requestClose}
-                size="small"
-                disabled={loading}
-                sx={{
-                  color: 'var(--bank-text-secondary)',
-                  '&:hover': {
-                    color: 'var(--bank-text-primary)',
-                  },
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            )}
+            <IconButton
+              onClick={requestClose}
+              size="small"
+              disabled={loading}
+              sx={{
+                color: 'var(--bank-text-secondary)',
+                '&:hover': {
+                  color: 'var(--bank-text-primary)',
+                },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
           </Box>
         </Box>
       </DialogTitle>
       <DialogContent
-        dividers={dividers}
+        dividers={true}
         sx={{
           p: 3,
           paddingX: 5,
@@ -187,7 +145,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
             color: 'var(--bank-text-primary)',
             fontWeight: 700,
           },
-          ...contentSx,
         }}
       >
         {children}
@@ -200,7 +157,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
           display: 'flex',
           gap: 1,
           justifyContent: 'flex-end',
-          ...actionsSx,
         }}
       >
         {/* CustomActions가 있으면 먼저 표시 */}
@@ -209,7 +165,7 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
             {customActions}
           </Box>
         )}
-        
+
         {/* 기본 버튼들 (customActions와 함께 표시 가능) */}
         {!hideDefaultActions && (
           <>
@@ -248,18 +204,18 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
               </Button>
             )}
             {/* 저장/등록 버튼 (edit/create 모드에서만) */}
-            {(isEditMode || isCreateMode) && showSaveButton && (
+            {(isEditMode || isCreateMode) && onSave && (
               <Button
                 variant="contained"
                 onClick={onSave}
                 disabled={disableSave || loading}
-                color={isCreateMode ? "primary" : "success"}
+                color={isCreateMode ? 'primary' : 'success'}
                 sx={{
                   height: '36px !important',
                   minWidth: '80px !important',
                   fontSize: '0.875rem !important',
                   fontWeight: '600 !important',
-                  borderRadius: '4px !important',
+                  borderRadius: '4px !이제 `showSaveButton`을 사용하던 부모 컴포넌트를 찾아서 수정하겠습니다. 잠시만 기다려주세요.important',
                 }}
               >
                 {isCreateMode ? '등록' : '저장'}

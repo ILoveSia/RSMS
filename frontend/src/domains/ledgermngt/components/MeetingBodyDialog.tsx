@@ -156,7 +156,6 @@ const MeetingBodyDialog: React.FC<IMeetingBodyDialogProps> = ({
         onModeChange={onModeChange}
         loading={loading}
         showEditButton={true}
-        showSaveButton={true}
         disableSave={loading}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
