@@ -28,7 +28,6 @@ export interface MeetingBodySearchResult {
   name: string;
   period?: string;
   content?: string;
-  gubun?: string;
 }
 
 const MeetingBodySearchPopup: React.FC<MeetingBodySearchPopupProps> = ({
@@ -82,8 +81,7 @@ const MeetingBodySearchPopup: React.FC<MeetingBodySearchPopupProps> = ({
             code: meeting.gubun || 'UNKNOWN',
             name: meeting.meetingName,
             period: meeting.meetingPeriod,
-            content: meeting.content || '상세내용 없음',
-            gubun: meeting.gubun,
+            content: meeting.content,
           };
         });
 
@@ -133,8 +131,9 @@ const MeetingBodySearchPopup: React.FC<MeetingBodySearchPopupProps> = ({
     {
       field: 'code' as keyof MeetingBodySearchResult,
       align: 'center',
-      headerName: '회의체 코드',
+      headerName: '구분',
       width: 120,
+      valueFormatter: ({ value }: { value?: string }) => value ? getCodeName('MEETING_BODY', value) : '',
     },
     {
       field: 'name' as keyof MeetingBodySearchResult,
@@ -151,11 +150,11 @@ const MeetingBodySearchPopup: React.FC<MeetingBodySearchPopupProps> = ({
       valueFormatter: ({ value }: { value?: string }) => value ? getCodeName('PERIOD', value) : '미정',
     },
     {
-      field: 'gubun' as keyof MeetingBodySearchResult,
-      headerName: '구분',
+      field: 'content' as keyof MeetingBodySearchResult,
+      headerName: '주요 의결내용',
       align: 'center',
-      width: 120,
-      valueFormatter: ({ value }: { value?: string }) => value ? getCodeName('MEETING_BODY', value) : '',
+      width: 250,
+      valueFormatter: ({ value }: { value?: string }) => value || '-',
     },
   ];
 
