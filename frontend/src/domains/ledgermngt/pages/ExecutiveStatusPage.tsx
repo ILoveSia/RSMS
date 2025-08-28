@@ -74,8 +74,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
   }, [ledgerOrdersId, callApiWithNotification]);
 
   useEffect(() => {
-    fetchExecutiveStatus();
-  }, [fetchExecutiveStatus]);
+    if (ledgerOrdersId) {
+      fetchExecutiveStatus();
+    }
+  }, [ledgerOrdersId, fetchExecutiveStatus]);
 
   const executiveColumns: DataGridColumn<ExecutiveStatusRow>[] = [
     {
@@ -514,12 +516,6 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
               setLedgerOrderOptions(options);
               
             }, [])}
-          />
-          <CustomButton // Added Search Button
-            preset="search"
-            onClick={fetchExecutiveStatus}
-            loading={loading}
-            disabled={loading}
           />
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
             <PermissionButton

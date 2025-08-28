@@ -58,6 +58,8 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
     },
     ref
   ) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { displayEmpty, ...restProps } = props as any;
 
     // 값 변경 핸들러
     const handleChange = (event: SelectChangeEvent<string | number | string[] | number[]>) => {
@@ -78,7 +80,7 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         className={className}
         style={style}
         sx={sx}
-        {...props}
+        {...restProps}
       >
         {label && (
           <InputLabel id={`${id}-label`}>
