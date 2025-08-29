@@ -646,6 +646,7 @@ const DataGrid = <T extends Record<string, any>>({
                   padding: '10px 16px',
                   display: 'flex',
                   alignItems: 'center',
+                  minHeight: 60,
                   ...(wrapText ? { // Add this block for text wrapping styles
                     whiteSpace: 'normal',
                     wordBreak: 'break-word',
