@@ -1,8 +1,7 @@
 package org.itcen.domain.approval.controller;
 
 import java.util.List;
-import java.util.Map;
-import org.itcen.common.dto.ApiResponse;
+
 import org.itcen.domain.approval.dto.ApprovalDto;
 import org.itcen.domain.approval.service.ApprovalService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,80 +40,6 @@ public class ApprovalController {
     
     @Autowired
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
-
-    /**
-     * 컨트롤러 테스트용 엔드포인트
-     * GET /api/approval/health-check
-     */
-    @GetMapping("/health-check")
-    public ResponseEntity<String> testEndpoint() {
-        return ResponseEntity.ok("ApprovalController is working!");
-    }
-    
-    /**
-     * 사용자별 결재 데이터 확인용 디버깅 엔드포인트
-     * GET /api/approval/debug-user/{userId}
-     */
-    @GetMapping("/debug-user/{userId}")
-    public ResponseEntity<String> debugUserApprovals(@PathVariable String userId) {
-        try {
-            // 내가 요청한 결재 수
-            List<ApprovalDto.ListResponse> myRequests = approvalService.getMyRequestedApprovals(userId);
-            
-            // 내가 처리해야 할 결재 수  
-            List<ApprovalDto.ListResponse> myPending = approvalService.getMyPendingApprovals(userId);
-            
-            StringBuilder result = new StringBuilder();
-            result.append("User: ").append(userId).append("\n");
-            result.append("My Requests: ").append(myRequests.size()).append("\n");
-            result.append("My Pending: ").append(myPending.size()).append("\n");
-            
-            if (!myRequests.isEmpty()) {
-                result.append("\nMy Requests Details:\n");
-                for (ApprovalDto.ListResponse req : myRequests) {
-                    result.append("- ID: ").append(req.getApprovalId())
-                          .append(", Type: ").append(req.getTaskTypeName())
-                          .append(", Status: ").append(req.getStatusName()).append("\n");
-                }
-            }
-            
-            if (!myPending.isEmpty()) {
-                result.append("\nMy Pending Details:\n");
-                for (ApprovalDto.ListResponse pending : myPending) {
-                    result.append("- ID: ").append(pending.getApprovalId())
-                          .append(", Type: ").append(pending.getTaskTypeName())
-                          .append(", Requester: ").append(pending.getRequesterName()).append("\n");
-                }
-            }
-            
-            return ResponseEntity.ok(result.toString());
-        } catch (Exception e) {
-            log.error("사용자 결재 데이터 디버깅 오류: {}", e.getMessage(), e);
-            return ResponseEntity.ok("Error: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * URL 매핑 정보 디버깅용 엔드포인트
-     * GET /api/approval/debug-mappings
-     */
-    @GetMapping("/debug-mappings")
-    public ResponseEntity<String> debugMappings() {
-        var mappings = requestMappingHandlerMapping.getHandlerMethods();
-        StringBuilder result = new StringBuilder();
-        
-        // approval 관련 매핑만 필터링하여 로그 출력
-        mappings.entrySet().stream()
-            .filter(entry -> entry.getKey().toString().contains("approval"))
-            .forEach(entry -> {
-                String mapping = "Mapping: " + entry.getKey() + " -> " + entry.getValue();
-                log.info(mapping);
-                result.append(mapping).append("\n");
-            });
-            
-        return ResponseEntity.ok(result.toString());
-    }
-
     /**
      * 결재 상신
      * 

@@ -245,20 +245,6 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     setRows(groupedData);
   }, []);
 
-  // 모든 데이터 로드
-  const loadAllData = useCallback(async () => {
-    setIsLoading(true);
-    
-    const data = await callApiWithNotification(() => executiveResponsibilityApi.getAll());
-    
-    if (data) {
-      const transformedItems = transformApiData(data);
-      setAllExecutiveData(transformedItems);
-    }
-    
-    setIsLoading(false);
-  }, [transformApiData, callApiWithNotification]);
-
   // 다이얼로그 관련 함수들
   const handlePositionClick = useCallback((row: ExecutiveResponsibilityRow) => {
     setDialogData(row);

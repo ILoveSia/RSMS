@@ -13,7 +13,6 @@ import org.itcen.domain.user.entity.User;
 import org.itcen.domain.user.repository.UserRepository;
 import org.itcen.domain.employee.entity.Employee;
 import org.itcen.domain.audit.repository.AuditProgMngtDetailRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
