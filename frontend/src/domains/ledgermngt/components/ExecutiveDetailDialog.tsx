@@ -112,7 +112,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       // dualDetails 필드를 concurrentPosition으로 매핑하여 겸직사항 필드에 표시되도록 함
       setFormData({
         ...executive,
-        executiveName: executive.empId || '', // empId는 사번이므로 성명으로 표시하기 위해 임시로 설정
+        executiveName: executive.empName || executive.empId || '', // empName이 있으면 사용, 없으면 empId 사용
         hasConcurrentPosition: executive.dualYn === 'Y',
         concurrentPosition: executive.dualDetails || ''
       });
@@ -122,8 +122,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         fetchPositionDetails(executive.positionsId);
       }
 
-      // empId(사번)가 있으면 employee 테이블에서 사용자 정보 조회하여 성명과 직급 가져오기
-      if (executive.empId) {
+      // empName이 없고 empId(사번)가 있으면 employee 테이블에서 사용자 정보 조회하여 성명과 직급 가져오기
+      if (executive.empId && !executive.empName) {
         const fetchUser = async () => {
           try {
             // employee 테이블에서 사번으로 조회
@@ -216,6 +216,11 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     );
   };
 
+  // P5 상태일 때 수정 불가 판단 함수
+  const isReadOnlyMode = () => {
+    return executive?.ledgerOrdersStatusCd === 'P5';
+  };
+
   const handleSearchEmployee = () => {
     setEmployeeSearchPopupOpen(true);
   };
@@ -224,13 +229,14 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     <>
       <BaseDialog
         open={open}
-        mode={mode}
+        mode={isReadOnlyMode() ? 'view' : mode}
         title={mode === 'create' ? '임원 등록' : mode === 'edit' ? '임원 수정' : '임원 상세'}
         onClose={onClose}
         onSave={handleSave}
         onModeChange={onChangeMode}
         disableSave={!isFormValid() || loading}
         loading={loading}
+        showEditButton={!isReadOnlyMode()}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* 첫 번째 행: 직책, 성명 */}
@@ -249,7 +255,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
               mode={'readonly'}
               sx={{ flex: 1 }}
             />
-            {mode !== 'view' && (
+            {mode !== 'view' && !isReadOnlyMode() && (
               <IconButton onClick={handleSearchEmployee} sx={{ flexShrink: 0 }}>
                 <SearchIcon />
               </IconButton>
@@ -271,7 +277,7 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
             <DatePicker
               label="현 직책 부여일"
               value={originalDate}
-              mode={mode === 'view' ? 'readonly' : 'editable'}
+              mode={mode === 'view' || isReadOnlyMode() ? 'readonly' : 'editable'}
               onChange={(date) => {
                 setOriginalDate(date)
                 setFormData((prev: any) => ({ ...prev, execofficer_dt: date || '9999-12-31' }));
@@ -293,15 +299,15 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                 onChange={e => handleInputChange('hasConcurrentPosition', (e as React.ChangeEvent<HTMLInputElement>).target.value === 'Y')}
                 name="hasConcurrentPosition"
               >
-                <FormControlLabel value="N" control={<Radio />} label="없음" disabled={mode === 'view'} />
-                <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={mode === 'view'} />
+                <FormControlLabel value="N" control={<Radio />} label="없음" disabled={mode === 'view' || isReadOnlyMode()} />
+                <FormControlLabel value="Y" control={<Radio />} label="있음" disabled={mode === 'view' || isReadOnlyMode()} />
               </RadioGroup>
             </Box>
             <TextField
               label="겸직사항"
               value={formData.concurrentPosition || ''}
               onChange={e => handleInputChange('concurrentPosition', e.target.value)}
-              mode={mode === 'view' || !formData.hasConcurrentPosition ? 'readonly' : 'editable'}
+              mode={mode === 'view' || isReadOnlyMode() || !formData.hasConcurrentPosition ? 'readonly' : 'editable'}
               sx={{ flex: 1 }}
             />
           </Box>
