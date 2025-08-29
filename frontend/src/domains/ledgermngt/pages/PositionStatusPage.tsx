@@ -445,6 +445,8 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             refreshTrigger={ledgerOrderRefreshTrigger}
             includeAll={false}
             onLoadComplete={useCallback((options: Array<{value: string, label: string, ledgerOrdersId: number}>) => {
+              setLedgerOrderOptions(options);
+            }, [])}
           />
           <PermissionButton
             menuCode="LEDGER_MGMT_POSITION"

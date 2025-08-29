@@ -171,6 +171,15 @@ const WorkDashboard: React.FC = () => {
           
           // 완전한 API 실패 시 목업 데이터 폴백
           const fallbackStats: WorkStats = {
+            totalTasks: 0,
+            completedTasks: 0,
+            pendingTasks: 0,
+            overdueTasks: 0,
+            approvalPending: 0,
+            auditTasks: 0,
+          };
+          setWorkStats(fallbackStats);
+        }
       } catch (err) {
         console.error('업무 통계 로드 실패:', err);
         setError('업무 현황을 불러오는데 실패했습니다.');
