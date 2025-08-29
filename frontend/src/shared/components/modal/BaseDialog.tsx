@@ -169,22 +169,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
         {/* 기본 버튼들 (customActions와 함께 표시 가능) */}
         {!hideDefaultActions && (
           <>
-            {/* 취소/닫기 버튼을 먼저 배치 */}
-            <Button
-              variant="outlined"
-              onClick={handleCancel}
-              disabled={loading}
-              color="primary"
-              sx={{
-                height: '36px !important',
-                minWidth: '80px !important',
-                fontSize: '0.875rem !important',
-                fontWeight: '600 !important',
-                borderRadius: '4px !important',
-              }}
-            >
-              {isEditMode ? '취소' : isCreateMode ? '취소' : '닫기'}
-            </Button>
             {/* 수정 버튼 (view 모드에서만) */}
             {isViewMode && showEditButton && (
               <Button
@@ -215,12 +199,28 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
                   minWidth: '80px !important',
                   fontSize: '0.875rem !important',
                   fontWeight: '600 !important',
-                  borderRadius: '4px !이제 `showSaveButton`을 사용하던 부모 컴포넌트를 찾아서 수정하겠습니다. 잠시만 기다려주세요.important',
+                  borderRadius: '4px !important',
                 }}
               >
                 {isCreateMode ? '등록' : '저장'}
               </Button>
             )}
+            {/* 취소/닫기 버튼을 마지막에 배치 */}
+            <Button
+              variant="outlined"
+              onClick={handleCancel}
+              disabled={loading}
+              color="primary"
+              sx={{
+                height: '36px !important',
+                minWidth: '80px !important',
+                fontSize: '0.875rem !important',
+                fontWeight: '600 !important',
+                borderRadius: '4px !important',
+              }}
+            >
+              {isEditMode ? '취소' : isCreateMode ? '취소' : '닫기'}
+            </Button>
           </>
         )}
       </DialogActions>
