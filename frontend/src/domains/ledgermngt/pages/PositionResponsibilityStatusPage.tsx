@@ -266,11 +266,13 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
     setLoading(false);
   }, [ledgerOrdersId, selectedPosition, groupDataByPositionId, convertToGridRows, callApiWithNotification]);
 
+  // 초기 데이터 로드 - LedgerOrderSelect 자동 선택 후에만 로드
   useEffect(() => {
-    if (ledgerOrdersId || selectedPosition) {
+    // ledgerOrdersId가 있을 때만 데이터 로드 (자동 선택 후)
+    if (ledgerOrdersId) {
       fetchPositionResponsibilityData();
     }
-  }, [ledgerOrdersId, selectedPosition, fetchPositionResponsibilityData]);
+  }, [ledgerOrdersId, fetchPositionResponsibilityData]);
 
   // 컬럼 정의
   const columns: DataGridColumn<GroupedPositionResponsibilityRow>[] = [
@@ -296,8 +298,36 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             color={color as any}
             sx={{
               fontWeight: 600,
-              color: 'var(--bank-text-primary)',
-              '& .MuiChip-label': { color: 'var(--bank-text-primary)' }
+              // 배경색을 더 연하게 설정하여 텍스트 가독성 향상
+              backgroundColor: 
+                code === 'APPROVED' ? 'rgba(46, 125, 50, 0.15)' :    // 성공 - 연한 녹색
+                code === 'REJECTED' ? 'rgba(211, 47, 47, 0.15)' :     // 에러 - 연한 빨간색
+                code === 'IN_PROGRESS' ? 'rgba(237, 108, 2, 0.15)' :  // 경고 - 연한 주황색
+                code === 'REQUESTED' ? 'rgba(2, 136, 209, 0.15)' :    // 정보 - 연한 파란색
+                'rgba(0, 0, 0, 0.08)',                                // 기본 - 연한 회색
+              // 텍스트 색상을 더 진하게 설정
+              color: 
+                code === 'APPROVED' ? 'rgba(46, 125, 50, 0.9)' :      // 진한 녹색
+                code === 'REJECTED' ? 'rgba(211, 47, 47, 0.9)' :      // 진한 빨간색
+                code === 'IN_PROGRESS' ? 'rgba(237, 108, 2, 0.9)' :   // 진한 주황색
+                code === 'REQUESTED' ? 'rgba(2, 136, 209, 0.9)' :     // 진한 파란색
+                'rgba(0, 0, 0, 0.87)',                                // 진한 검정색
+              border: 
+                code === 'APPROVED' ? '1px solid rgba(46, 125, 50, 0.3)' :
+                code === 'REJECTED' ? '1px solid rgba(211, 47, 47, 0.3)' :
+                code === 'IN_PROGRESS' ? '1px solid rgba(237, 108, 2, 0.3)' :
+                code === 'REQUESTED' ? '1px solid rgba(2, 136, 209, 0.3)' :
+                '1px solid rgba(0, 0, 0, 0.2)',
+              '& .MuiChip-label': { 
+                fontWeight: 600,
+                // 텍스트 색상을 동일하게 설정
+                color: 
+                  code === 'APPROVED' ? 'rgba(46, 125, 50, 0.9)' :
+                  code === 'REJECTED' ? 'rgba(211, 47, 47, 0.9)' :
+                  code === 'IN_PROGRESS' ? 'rgba(237, 108, 2, 0.9)' :
+                  code === 'REQUESTED' ? 'rgba(2, 136, 209, 0.9)' :
+                  'rgba(0, 0, 0, 0.87)'
+              }
             }}
           />
         );

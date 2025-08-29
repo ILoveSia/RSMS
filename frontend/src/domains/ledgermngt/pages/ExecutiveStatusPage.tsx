@@ -73,8 +73,10 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
     setLoading(false);
   }, [ledgerOrdersId, callApiWithNotification]);
 
+  // 초기 데이터 로드 - LedgerOrderSelect 자동 선택 후에만 로드
   useEffect(() => {
-    if (ledgerOrdersId) {
+    // ledgerOrdersId가 있을 때만 데이터 로드 (자동 선택 후)
+    if (ledgerOrdersId !== undefined) {
       fetchExecutiveStatus();
     }
   }, [ledgerOrdersId, fetchExecutiveStatus]);

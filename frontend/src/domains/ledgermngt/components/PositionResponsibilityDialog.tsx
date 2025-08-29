@@ -494,6 +494,10 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                     '& .MuiInputBase-root': {
                       height: '100%',
                       alignItems: 'flex-start'
+                    },
+                    '& .MuiInputBase-input': {
+                      color: 'rgba(0, 0, 0, 0.87) !important', // 텍스트 색상 강제 지정
+                      '-webkit-text-fill-color': 'rgba(0, 0, 0, 0.87) !important' // Safari 지원
                     }
                   }}
                 />
@@ -603,6 +607,10 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
                     '& .MuiInputBase-root': {
                       height: '100%',
                       alignItems: 'flex-start'
+                    },
+                    '& .MuiInputBase-input': {
+                      color: 'rgba(0, 0, 0, 0.87) !important', // 텍스트 색상 강제 지정
+                      '-webkit-text-fill-color': 'rgba(0, 0, 0, 0.87) !important' // Safari 지원
                     }
                   }}
                 />

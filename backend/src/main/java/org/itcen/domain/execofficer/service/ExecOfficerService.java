@@ -37,7 +37,8 @@ public class ExecOfficerService {
                 .append("p.positions_id, p.positions_nm,  ")
                 .append("eo.execofficer_id, eo.emp_id,  eo.execofficer_dt, eo.dual_yn, eo.dual_details,  ")
                 .append("eo.approval_id, p.ledger_order, eo.order_status, em.emp_name, ")
-                .append("eo.created_id, eo.updated_id, eo.created_at, eo.updated_at  ")
+                .append("eo.created_id, eo.updated_id, eo.created_at, eo.updated_at, ")
+                .append("lo.ledger_orders_status_cd  ") // ledger_orders_status_cd 추가
                 .append("FROM positions p  ")
                 .append("LEFT JOIN ledger_orders lo ON p.ledger_order = lo.ledger_orders_id ")
                 .append("LEFT JOIN execofficer eo ON p.positions_id = eo.positions_id ")
@@ -71,6 +72,7 @@ public class ExecOfficerService {
                 dto.setUpdatedId((String) row[12]);
                 dto.setCreatedAt(row[13] != null ? toLocalDateTime(row[13]) : null);
                 dto.setUpdatedAt(row[14] != null ? toLocalDateTime(row[14]) : null);
+                dto.setLedgerOrdersStatusCd((String) row[15]); // ledger_orders_status_cd 매핑
                 return dto;
             } catch (Exception e) {
                 log.error("Error processing row: {}", row, e);

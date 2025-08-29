@@ -13,6 +13,8 @@ export interface ExecOfficer {
   orderStatus: string;
   positionsId?: number;
   empName: string;
+  // ledger_orders 테이블 조인 필드 추가
+  ledgerOrdersStatusCd?: string;
 }
 
 export interface PositionDetailResponse {
