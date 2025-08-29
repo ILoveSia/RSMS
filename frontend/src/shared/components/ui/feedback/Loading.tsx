@@ -4,14 +4,11 @@ import { forwardRef } from 'react';
 
 // Loading 컴포넌트 Props 타입
 interface LoadingProps {
-  loading?: boolean;
-  size?: number | string;
-  color?: 'inherit' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
-  variant?: 'circular' | 'linear';
   overlay?: boolean;
   backdrop?: boolean;
   message?: string;
   progress?: number;
+  variant?: 'circular' | 'linear';
   className?: string;
   sx?: SxProps<Theme>;
 }
@@ -40,9 +37,7 @@ interface LoadingProps {
 const Loading = forwardRef<HTMLDivElement, LoadingProps>(
   (
     {
-      size = 'medium',
       variant = 'circular',
-      color = 'primary',
       overlay = false,
       backdrop = false,
       message,
@@ -55,17 +50,7 @@ const Loading = forwardRef<HTMLDivElement, LoadingProps>(
   ) => {
     // 크기 값 계산
     const getSize = () => {
-      if (typeof size === 'number') return size;
-
-      switch (size) {
-        case 'small':
-          return 24;
-        case 'large':
-          return 64;
-        case 'medium':
-        default:
-          return 40;
-      }
+      return 40; // Hardcoded to 'medium' size
     };
 
     // 로딩 요소 렌더링
@@ -75,7 +60,7 @@ const Loading = forwardRef<HTMLDivElement, LoadingProps>(
           <LinearProgress
             variant={typeof progress === 'number' ? 'determinate' : 'indeterminate'}
             value={progress}
-            color={color}
+            color='primary'
             sx={{ width: '100%', mb: message ? 2 : 0 }}
           />
         );
@@ -86,7 +71,7 @@ const Loading = forwardRef<HTMLDivElement, LoadingProps>(
           size={getSize()}
           variant={typeof progress === 'number' ? 'determinate' : 'indeterminate'}
           value={progress}
-          color={color}
+          color='primary'
           sx={{ mb: message ? 2 : 0 }}
         />
       );

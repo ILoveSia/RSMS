@@ -1,6 +1,5 @@
 import { Backdrop, Box, CircularProgress, Portal, Typography } from '@mui/material';
 import React, { createContext, useCallback, useContext, useState } from 'react';
-import Loading from './Loading';
 
 // Loading Context 타입 정의
 interface LoadingState {
@@ -59,7 +58,6 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({
   children,
   backdrop = true,
   disablePortal = false,
-  customLoader,
 }) => {
   const [loadingStates, setLoadingStates] = useState<LoadingState[]>([]);
 
@@ -119,24 +117,6 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = ({
     clearAllLoading,
   };
 
-  // 커스텀 로더 컴포넌트 렌더링
-  const renderLoader = () => {
-    if (customLoader) {
-      const CustomLoader = customLoader;
-      return <CustomLoader loading={isLoading} message={currentLoadingState?.message} />;
-    }
-
-    return (
-      <Loading
-        loading={isLoading}
-        overlay={backdrop}
-        backdrop={backdrop}
-        message={currentLoadingState?.message}
-        progress={currentLoadingState?.progress}
-        variant={currentLoadingState?.progress !== undefined ? 'linear' : 'circular'}
-      />
-    );
-  };
 
   // 글로벌 로딩 오버레이 렌더링
   const renderGlobalLoader = () => {
@@ -234,7 +214,6 @@ export const useApiLoading = () => {
     async function <T>(
       apiCall: () => Promise<T>,
       message?: string,
-      onProgress?: (progress: number) => void
     ): Promise<T> {
       const loadingId = showLoading(message);
 

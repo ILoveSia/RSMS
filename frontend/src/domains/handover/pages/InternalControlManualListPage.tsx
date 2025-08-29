@@ -176,6 +176,7 @@ const InternalControlManualListPage: React.FC<IInternalControlManualListPageProp
       ),
       'success_load'
     );
+    console.log('내부통제 업무메뉴얼 목록 API 응답:', data);
     if (data) {
       setAllManuals(data.content);
       setRows(data.content);
