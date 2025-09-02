@@ -182,10 +182,16 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
 
       for (let i = 1; i < items.length; i++) {
         const getValue = (item: any, col: string) => {
-          if (col === 'jobRank') {
-            return getCodeNameFn('JOB_RANK', item[col]) || item[col] || '해당없음';
+          switch (col) {
+            case 'executiveName':
+              return item.executiveName || item.empName || item.name || '해당없음';
+            case 'jobRank':
+              return getCodeNameFn('JOB_RANK', item.jobRank) || getCodeNameFn('JOB_RANK', item.jobTitle) || item.jobRank || item.jobTitle || '해당없음';
+            case 'empNo':
+              return item.empNo || item.empNumber || item.employeeNo || '해당없음';
+            default:
+              return item[col] || '해당없음';
           }
-          return item[col] || '해당없음';
         };
 
         const currentValue = getValue(items[i], column);
@@ -213,9 +219,19 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
     if (rowSpan === 0) return null;
 
     const getValue = () => {
+      // 디버깅: 첫 번째 아이템의 데이터 구조를 콘솔에 출력
+      if (index === 0) {
+        console.log('Item data structure:', item);
+        console.log('Available keys:', Object.keys(item));
+      }
+      
       switch (column) {
+        case 'executiveName':
+          return item.executiveName || item.empName || item.name || '해당없음';
         case 'jobRank':
-          return getCodeNameFn('JOB_RANK', item.jobRank) || item.jobRank || '해당없음';
+          return getCodeNameFn('JOB_RANK', item.jobRank) || getCodeNameFn('JOB_RANK', item.jobTitle) || item.jobRank || item.jobTitle || '해당없음';
+        case 'empNo':
+          return item.empNo || item.empNumber || item.employeeNo || '해당없음';
         default:
           return item[column] || '해당없음';
       }
@@ -247,7 +263,21 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           {/* 탭 헤더 */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={currentTab} onChange={handleTabChange} aria-label="임원 책무 상세 탭">
+            <Tabs 
+              value={currentTab} 
+              onChange={handleTabChange} 
+              aria-label="임원 책무 상세 탭"
+              variant="fullWidth"
+              sx={{
+                minHeight: 48,
+                '& .MuiTab-root': {
+                  minHeight: 48,
+                  textTransform: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }
+              }}
+            >
               <Tab label="기본 정보 / 소관부서 / 회의체" />
               {formData.isGrouped && <Tab label="상세 목록" />}
             </Tabs>
@@ -280,23 +310,11 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                       <TableBody>
                         {(formData.ownerDepts || []).map((dept: any, index: number) => (
                           <TableRow key={index}>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size='small'
-                                value={dept.deptCode || ''}
-                                disabled
-                                placeholder='부서코드'
-                              />
+                            <TableCell sx={{ color: '#333', fontWeight: 'normal' }}>
+                              {dept.deptCode || '-'}
                             </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size='small'
-                                value={dept.deptName || ''}
-                                disabled
-                                placeholder='부서명'
-                              />
+                            <TableCell sx={{ color: '#333', fontWeight: 'normal' }}>
+                              {dept.deptName || '-'}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -333,41 +351,17 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                       <TableBody>
                         {(formData.meetings || []).map((meeting: any, index: number) => (
                           <TableRow key={index}>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size='small'
-                                value={meeting.meetingBodyName || ''}
-                                disabled
-                                placeholder='회의체명'
-                              />
+                            <TableCell sx={{ color: '#333', fontWeight: 'normal' }}>
+                              {meeting.meetingBodyName || '-'}
                             </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size='small'
-                                value={getCodeNameFn('MEB_GUBUN', meeting.memberGubun || '')}
-                                disabled
-                                placeholder='위원장/위원'
-                              />
+                            <TableCell sx={{ color: '#333', fontWeight: 'normal' }}>
+                              {getCodeNameFn('MEB_GUBUN', meeting.memberGubun || '') || '-'}
                             </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size='small'
-                                value={getCodeNameFn('PERIOD', meeting.meetingPeriod || '')}
-                                disabled
-                                placeholder='개최주기'
-                              />
+                            <TableCell sx={{ color: '#333', fontWeight: 'normal' }}>
+                              {getCodeNameFn('PERIOD', meeting.meetingPeriod || '') || '-'}
                             </TableCell>
-                            <TableCell>
-                              <TextField
-                                fullWidth
-                                size='small'
-                                value={meeting.deliberationContent || ''}
-                                disabled
-                                placeholder='주요 심의·의결사항'
-                              />
+                            <TableCell sx={{ color: '#333', fontWeight: 'normal' }}>
+                              {meeting.deliberationContent || '-'}
                             </TableCell>
                           </TableRow>
                         ))}

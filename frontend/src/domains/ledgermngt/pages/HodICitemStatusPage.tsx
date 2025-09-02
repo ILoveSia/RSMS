@@ -8,7 +8,7 @@ import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { useApiWithNotification } from '@/shared/hooks';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box } from '@mui/material'; // Keep Button from MUI
+import { Box } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import { hodICItemApi, type HodICItemRow } from '../api/hodIcItemApi';
 import HodICItemDialog from '../components/HodICItemDialog';
@@ -459,38 +459,22 @@ const HodICitemStatusPage: React.FC<IHodICitemStatusPageProps> = (): React.JSX.E
             loading={loading}
             disabled={loading}
           />
-          <Button // This is MUI Button
-            preset="register"
-            variant='contained' 
-            size='small' 
+          <Button
+            variant='outlined' 
             color='secondary' 
             disabled={hodGenerating}
-            sx={{
-              marginLeft: '8px',
-              height: '32px',
-              minWidth: '120px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              borderRadius: 1,
-            }}
+            loading={hodGenerating}
             onClick={handleCreateHodOrder}
+            sx={{ marginLeft: '8px', minWidth: '120px !important' }}
           >
-            {hodGenerating ? '생성 중...' : '부서장차수생성'}
+            부서장차수생성
           </Button>
           <Box sx={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
-            <Button // This is MUI Button
-              variant='contained'
-              size='small'
+            <Button
+              variant='outlined'
               color='success'
               onClick={handleConfirm}
               disabled={!canConfirm() || loading}
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
             >
               확정
             </Button>

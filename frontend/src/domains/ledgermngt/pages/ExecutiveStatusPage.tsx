@@ -523,60 +523,36 @@ const ExecutiveStatusPage: React.FC<IExecutiveStatusPageProps> = (): React.JSX.E
             <PermissionButton
               menuCode="LEDGER_MGMT_EXECUTIVE"
               permission="write"
-              variant="contained"
+              variant="outlined"
               color="success"
-              size="small"
               onClick={handleConfirmClick}
               disabled={false}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정 권한이 없습니다"
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
             >
               확정
             </PermissionButton>
             <PermissionButton
               menuCode="LEDGER_MGMT_EXECUTIVE"
               permission="write"
-              variant="contained"
+              variant="outlined"
               color="error"
-              size="small"
               onClick={handleCancelConfirmClick}
               disabled={false}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정취소 권한이 없습니다"
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
             >
               확정취소
             </PermissionButton>
             <PermissionButton
               menuCode="LEDGER_MGMT_EXECUTIVE"
               permission="write"
-              variant="contained"
+              variant="outlined"
               color="primary"
-              size="small"
               onClick={handleFinalConfirmClick}
               disabled={false}
               hideWhenNoPermission={true}
               noPermissionTooltip="최종확정 권한이 없습니다"
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
             >
               최종확정
             </PermissionButton>

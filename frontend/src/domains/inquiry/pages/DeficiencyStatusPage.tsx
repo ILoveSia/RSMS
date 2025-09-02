@@ -187,8 +187,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
             // 결재 상태 변경 시 데이터 새로고침
             fetchDeficiencies();
           }}
-          size="small"
-          variant="contained"
+          variant="outlined"
         />
       );
     }
@@ -243,7 +242,7 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     {
       field: 'approvalSubmit' as keyof DeficiencyRow,
       headerName: '결재상신',
-      width: 180,
+      width: 200,
       align: 'center',
       headerAlign: 'center',
       renderCell: renderApprovalCell,
@@ -252,28 +251,28 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
     {
       field: 'auditResult',
       headerName: '미흡사항',
-      width: 200,
+      width: 190,
       flex: 1,
       renderCell: ({ value }) => value || '-'
     },
     {
       field: 'auditDetailContent' as keyof DeficiencyRow,
       headerName: '개선계획',
-      width: 200,
+      width: 190,
       flex: 1,
       renderCell: ({ value }) => value || '-'
     },
     {
       field: 'auditDoneContent',
       headerName: '이행결과',
-      width: 200,
+      width: 190,
       flex: 1,
       renderCell: renderImplementationResultCell,
     },
     {
       field: 'auditDoneDt' as keyof DeficiencyRow,
       headerName: '작성일자',
-      width: 100,
+      width: 110,
       align: 'center',
       headerAlign: 'center',
       renderCell: renderWriteDateCell,
@@ -478,38 +477,16 @@ const DeficiencyStatusPage: React.FC<IDeficiencyStatusPageProps> = (): React.JSX
           justifyContent: 'flex-end'
         }}>
           <Button
-            variant="contained"
-            color="primary"
-            size="small"
+            variant="outlined"
             onClick={handleImprovementPlanChange}
             disabled={loading}
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              px: 1.5,
-              lineHeight: 1,
-              borderRadius: 1,
-            }}
           >
             개선계획 변경
           </Button>
           <Button
-            preset="register"
-            variant='contained' 
-            size='small' 
+            variant="outlined"
             onClick={handleImplementationWrite}
             disabled={loading}
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              px: 1.5,
-              lineHeight: 1,
-              borderRadius: 1,
-            }}
           >
             이행결과 작성
           </Button>

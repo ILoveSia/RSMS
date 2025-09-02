@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import BaseDialog from '@/shared/components/modal/BaseDialog';
-import { Box, Chip, InputAdornment, Tooltip, Typography, IconButton, Alert, Button } from '@mui/material';
+import { Box, Chip, InputAdornment, Tooltip, Typography, IconButton, Alert } from '@mui/material';
+import { Button } from '@/shared/components/ui/button';
 import {
   AccountCircle as AccountCircleIcon,
   Badge as BadgeIcon,

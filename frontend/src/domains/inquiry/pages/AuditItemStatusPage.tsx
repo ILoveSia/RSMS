@@ -636,54 +636,18 @@ const AuditItemStatusPage: React.FC<IAuditItemStatusPageProps> = (): React.JSX.E
             loading={isLoading}
           />
           <Button
-            variant="contained"
-            size="small"
+            variant="outlined"
             onClick={handleAssignAuditor}
             disabled={!selectedItemIds.length || isLoading}
-            color="secondary"
             startIcon={<PersonIcon />}
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              px: 1.5,
-              lineHeight: 1,
-              borderRadius: 1,
-              ...((!selectedItemIds.length || isLoading) ? {
-                color: 'var(--bank-text-primary) !important',
-                '& .MuiSvgIcon-root': { color: 'var(--bank-text-primary)' }
-              } : {
-                color: 'white !important',
-                '& .MuiSvgIcon-root': { color: 'white' }
-              })
-            }}
           >
             점검자지정
           </Button>
           <Button
-            variant="contained"
-            size="small"
+            variant="outlined"
             onClick={handleAuditResult}
             disabled={!selectedItemIds.length || isLoading}
-            color="success"
             startIcon={<CreateIcon />}
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              px: 1.5,
-              lineHeight: 1,
-              borderRadius: 1,
-              ...((!selectedItemIds.length || isLoading) ? {
-                color: 'var(--bank-text-primary) !important',
-                '& .MuiSvgIcon-root': { color: 'var(--bank-text-primary)' }
-              } : {
-                color: 'white !important',
-                '& .MuiSvgIcon-root': { color: 'white' }
-              })
-            }}
           >
             점검결과작성
           </Button>

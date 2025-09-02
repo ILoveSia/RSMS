@@ -6,7 +6,7 @@ import { Tooltip } from '@mui/material';
 /**
  * 권한 기반 버튼 컴포넌트 Props
  */
-export interface PermissionButtonProps extends ButtonProps {
+export interface PermissionButtonProps extends Omit<ButtonProps, 'variant'> {
   /**
    * 메뉴 코드 기반 권한 체크
    */
@@ -39,6 +39,11 @@ export interface PermissionButtonProps extends ButtonProps {
    * 개발/테스트 목적으로 사용
    */
   skipPermissionCheck?: boolean;
+  
+  /**
+   * 버튼 변형 (기본값: outlined)
+   */
+  variant?: 'text' | 'outlined' | 'contained';
 }
 
 /**
@@ -83,13 +88,14 @@ export const PermissionButton: React.FC<PermissionButtonProps> = ({
   noPermissionTooltip = '권한이 없습니다',
   skipPermissionCheck = false,
   disabled,
+  variant = 'outlined',
   ...buttonProps
 }) => {
   
   // 권한 체크가 필요하지 않은 경우 기본 Button 렌더링
   if (skipPermissionCheck || (!menuCode && !url)) {
     return (
-      <Button disabled={disabled} {...buttonProps}>
+      <Button disabled={disabled} variant={variant} {...buttonProps}>
         {children}
       </Button>
     );
@@ -104,7 +110,7 @@ export const PermissionButton: React.FC<PermissionButtonProps> = ({
         permission={permission}
         skipPermissionCheck={skipPermissionCheck}
       >
-        <Button disabled={disabled} {...buttonProps}>
+        <Button disabled={disabled} variant={variant} {...buttonProps}>
           {children}
         </Button>
       </PermissionGuard>
@@ -123,6 +129,7 @@ export const PermissionButton: React.FC<PermissionButtonProps> = ({
           <span>
             <Button 
               disabled={true} 
+              variant={variant}
               {...buttonProps}
             >
               {children}
@@ -131,7 +138,7 @@ export const PermissionButton: React.FC<PermissionButtonProps> = ({
         </Tooltip>
       }
     >
-      <Button disabled={disabled} {...buttonProps}>
+      <Button disabled={disabled} variant={variant} {...buttonProps}>
         {children}
       </Button>
     </PermissionGuard>

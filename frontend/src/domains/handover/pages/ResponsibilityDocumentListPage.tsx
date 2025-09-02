@@ -18,7 +18,8 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Box, IconButton, InputAdornment, Button } from '@mui/material'; // Keep Button from MUI
+import { Box, IconButton, InputAdornment } from '@mui/material';
+import { Button } from '@/shared/components/ui/button';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import TitleSearch from '@/domains/admin/components/TitleSearch';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -303,7 +304,7 @@ const ResponsibilityDocumentListPage: React.FC<IResponsibilityDocumentListPagePr
 
   const handleDialogSuccess = useCallback(async () => {
     await handleSearch(); // 데이터 새로고침
-  }, [handleSearch]);
+  }, [handleSearch]);
   // 사원 선택 핸들러
   const handleAuthorSelect = useCallback((employee: EmployeeSearchResult) => {
     setAuthorEmpNo(employee.empNo);

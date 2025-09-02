@@ -451,13 +451,11 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
           <PermissionButton
             menuCode="LEDGER_MGMT_POSITION"
             permission="write"
-            variant='contained'
-            size='small'
+            variant='outlined'
             color='success'
             onClick={handleGenerateLedgerOrder}
             hideWhenNoPermission={true}
             noPermissionTooltip="책무번호 생성 권한이 없습니다"
-            sx={{ height: '32px', minWidth: '80px', fontSize: '0.875rem', fontWeight: 600, borderRadius: 1 }}
           >
             책무번호생성
           </PermissionButton>
@@ -465,26 +463,22 @@ const PositionStatusPage: React.FC<IPositionStatusPageProps> = React.memo((): Re
             <PermissionButton
               menuCode="LEDGER_MGMT_POSITION"
               permission="write"
-              variant='contained'
-              size='small'
+              variant='outlined'
               color='success'
               onClick={handleConfirmClick}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정 권한이 없습니다"
-              sx={{ height: '32px', minWidth: '80px', fontSize: '0.875rem', fontWeight: 600, borderRadius: 1 }}
             >
               확정
             </PermissionButton>
             <PermissionButton
               menuCode="LEDGER_MGMT_POSITION"
               permission="write"
-              variant='contained'
-              size='small'
+              variant='outlined'
               color='error'
               onClick={handleCancelConfirmClick}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정취소 권한이 없습니다"
-              sx={{ height: '32px', minWidth: '80px', fontSize: '0.875rem', fontWeight: 600, borderRadius: 1 }}
             >
               확정취소
             </PermissionButton>

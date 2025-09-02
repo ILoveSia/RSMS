@@ -68,25 +68,15 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     showSuccessOnLoad: true,
   });
 
-  // 그룹화 함수
-  const groupDataByPosition = (data: ExecutiveResponsibilityItem[]): ExecutiveResponsibilityRow[] => {
-    const groupMap = new Map<string, ExecutiveResponsibilityItem[]>();
-
-    data.forEach(item => {
-      const position = item.position || '해당없음';
-      if (!groupMap.has(position)) {
-        groupMap.set(position, []);
-      }
-      groupMap.get(position)!.push(item);
-    });
-
-    return Array.from(groupMap.entries()).map(([position, items]) => ({
-      id: position,
-      position,
-      items,
-      count: items.length,
-      empName: items[0].empName || '해당없음',
-      execofficer_dt: items[0].execofficer_dt || '해당없음'
+  // 개별 데이터를 행으로 변환하는 함수 (그룹핑 없이)
+  const convertDataToRows = (data: ExecutiveResponsibilityItem[]): ExecutiveResponsibilityRow[] => {
+    return data.map((item, index) => ({
+      id: `${item.id}_${index}`, // 고유 ID 생성
+      position: item.position,
+      items: [item], // 단일 아이템을 배열로 감싸기
+      count: 1, // 개별 항목이므로 항상 1
+      empName: item.empName || '해당없음',
+      execofficer_dt: item.execofficer_dt || '해당없음'
     }));
   };
 
@@ -206,13 +196,10 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
   // API 데이터를 변환하는 함수
   const transformApiData = useCallback((data: any[]): ExecutiveResponsibilityItem[] => {
     return data.map((item: any) => {
-      const jobTitleCode = item.jobTitleCd || item.positionCode;
-      const jobTitleName = getCodeNameSync(allCodes, 'JOB_RANK', jobTitleCode);
-
       return {
         id: item.positionsId || 0,
         position: item.positionsNm || '해당없음',
-        jobTitle: jobTitleName || jobTitleCode || '해당없음',
+        jobTitle: item.positionName || '해당없음',  // position_name 직접 사용
         empNo: item.empNo || '해당없음',
         empName: item.empName || '해당없음',
         responsibility: item.responsibilityContent || '해당없음',
@@ -239,10 +226,10 @@ const ExecutiveResponsibilityStatusPage: React.FC<IExecutiveResponsibilityStatus
     setIsLoading(false);
   }, [transformApiData, callApiWithNotification]);
 
-  // 데이터 그룹핑 및 표시 함수
+  // 데이터 변환 및 표시 함수
   const updateDisplayData = useCallback((data: ExecutiveResponsibilityItem[]) => {
-    const groupedData = groupDataByPosition(data);
-    setRows(groupedData);
+    const convertedData = convertDataToRows(data);
+    setRows(convertedData);
   }, []);
 
   // 다이얼로그 관련 함수들

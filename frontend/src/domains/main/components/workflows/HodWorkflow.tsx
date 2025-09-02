@@ -30,16 +30,26 @@ const HOD_WORKFLOW_STEPS = [
   { code: 'P6', label: '부서장확정', description: '부서장 내부통제 항목 확정 완료', icon: CheckIcon }
 ];
 
-const HodWorkflow: React.FC = () => {
+interface HodWorkflowProps {
+  ledgerOrdersId?: number | null;
+}
+
+const HodWorkflow: React.FC<HodWorkflowProps> = ({ ledgerOrdersId }) => {
   const [workflowData, setWorkflowData] = useState<LedgerOrdersHodStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWorkflowStatus = async () => {
+      if (!ledgerOrdersId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const data = await newMainDashboardApi.getLedgerOrdersHodStatus();
+        // ledgerOrdersId를 사용하여 해당하는 최대 hod_id 조회
+        const data = await newMainDashboardApi.getLedgerOrdersHodStatusByLedgerOrdersId(ledgerOrdersId);
         setWorkflowData(data);
         setError(null);
       } catch (err) {
@@ -51,12 +61,14 @@ const HodWorkflow: React.FC = () => {
     };
 
     fetchWorkflowStatus();
-  }, []);
+  }, [ledgerOrdersId]);
 
   const getCurrentStepIndex = () => {
-    if (!workflowData?.ledgerOrdersHodStatusCd) return 0;
+    if (!workflowData?.ledgerOrdersHodStatusCd || workflowData.ledgerOrdersHodStatusCd === 'NONE') {
+      return -1; // 데이터 없음 상태는 -1로 반환
+    }
     const currentStep = HOD_WORKFLOW_STEPS.findIndex(step => step.code === workflowData.ledgerOrdersHodStatusCd);
-    return currentStep >= 0 ? currentStep : 0;
+    return currentStep >= 0 ? currentStep : -1;
   };
 
   const getStepStatus = (stepIndex: number, currentIndex: number) => {
@@ -115,8 +127,8 @@ const HodWorkflow: React.FC = () => {
           부서장 내부통제 항목 현황
         </Typography>
         <Chip 
-          label={workflowData?.ledgerOrdersHodStatusName || '상태 불명'}
-          color={getStatusColor(getStepStatus(currentStepIndex, currentStepIndex))}
+          label={currentStepIndex === -1 ? '데이터 없음' : (workflowData?.ledgerOrdersHodStatusName || '상태 불명')}
+          color={currentStepIndex === -1 ? 'default' : getStatusColor(getStepStatus(currentStepIndex, currentStepIndex))}
           size="small"
           sx={{ ml: 1, fontSize: '0.7rem', height: 20 }}
         />
@@ -128,19 +140,19 @@ const HodWorkflow: React.FC = () => {
           <Typography variant="caption" color="textSecondary">
             진행률
           </Typography>
-          <Typography variant="caption" fontWeight="bold" color="warning.main">
-            {Math.round((currentStepIndex + 1) / HOD_WORKFLOW_STEPS.length * 100)}%
+          <Typography variant="caption" fontWeight="bold" color={currentStepIndex === -1 ? "text.secondary" : "warning.main"}>
+            {currentStepIndex === -1 ? 0 : Math.round((currentStepIndex + 1) / HOD_WORKFLOW_STEPS.length * 100)}%
           </Typography>
         </Box>
         <LinearProgress 
           variant="determinate" 
-          value={(currentStepIndex + 1) / HOD_WORKFLOW_STEPS.length * 100}
+          value={currentStepIndex === -1 ? 0 : (currentStepIndex + 1) / HOD_WORKFLOW_STEPS.length * 100}
           sx={{ 
             height: 6, 
             borderRadius: 3,
             backgroundColor: '#fff3e0',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: '#ff9800'
+              backgroundColor: currentStepIndex === -1 ? '#9e9e9e' : '#ff9800'
             }
           }}
         />
@@ -180,7 +192,7 @@ const HodWorkflow: React.FC = () => {
       {/* 상태 요약 */}
       <Box sx={{ mt: 1, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
         <Typography variant="caption" color="textSecondary" display="block">
-          현재: {HOD_WORKFLOW_STEPS[currentStepIndex]?.label || '알 수 없음'}
+          현재: {currentStepIndex === -1 ? '데이터 없음' : (HOD_WORKFLOW_STEPS[currentStepIndex]?.label || '알 수 없음')}
         </Typography>
       </Box>
     </Paper>

@@ -700,7 +700,12 @@ const ExecutiveDashboardStatusPage: React.FC = () => {
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           
-          <Button onClick={handleSearch} loading={isLoading} disabled={isLoading} />
+          <Button
+            preset="search"
+            onClick={handleSearch}
+            loading={isLoading}
+            disabled={isLoading}
+          />
         </Box>
 
         {/* 소관부서 점검항목 현황 DataGrid */}

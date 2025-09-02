@@ -434,8 +434,7 @@ const WorkflowVisualization: React.FC = () => {
                               </IconButton>
                             </Tooltip>
                             <Button 
-                              variant="contained" 
-                              size="small"
+                              variant="outlined"
                               startIcon={<AssignmentIcon />}
                               sx={{ ml: 1 }}
                             >

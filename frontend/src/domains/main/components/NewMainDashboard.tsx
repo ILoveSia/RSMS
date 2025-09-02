@@ -3,7 +3,7 @@
  * Tab 없는 단일 페이지 스크롤 형태로 구성
  * 워크플로우, 통계, QnA/공지사항, 결재 위젯을 포함합니다.
  */
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -35,6 +35,12 @@ import MyApprovalRequestsWidget from './widgets/MyApprovalRequestsWidget';
 import PendingApprovalsWidget from './widgets/PendingApprovalsWidget';
 
 const NewMainDashboard: React.FC = () => {
+  const [ledgerOrdersId, setLedgerOrdersId] = useState<number | null>(null);
+
+  // LedgerOrdersWorkflow에서 ledger_orders_id를 받는 콜백
+  const handleLedgerOrdersIdReceived = useCallback((id: number) => {
+    setLedgerOrdersId(id);
+  }, []);
   return (
     <PageContainer
       sx={{
@@ -92,14 +98,14 @@ const NewMainDashboard: React.FC = () => {
               {/* 책무구조도 원장 관리 워크플로우 */}
               <Grid item xs={12} md={6}>
                 <Box sx={{ height: '100%' }}>
-                  <LedgerOrdersWorkflow />
+                  <LedgerOrdersWorkflow onLedgerOrdersIdReceived={handleLedgerOrdersIdReceived} />
                 </Box>
               </Grid>
               
               {/* 부서장 내부통제 항목 현황 워크플로우 */}
               <Grid item xs={12} md={6}>
                 <Box sx={{ height: '100%' }}>
-                  <HodWorkflow />
+                  <HodWorkflow ledgerOrdersId={ledgerOrdersId} />
                 </Box>
               </Grid>
             </Grid>
@@ -117,7 +123,7 @@ const NewMainDashboard: React.FC = () => {
             <Grid container spacing={2} sx={{ height: '150px' }}>
               <Grid item xs={12}>
                 <Box sx={{ height: '100%' }}>
-                  <AuditStatisticsChart />
+                  <AuditStatisticsChart ledgerOrdersId={ledgerOrdersId} />
                 </Box>
               </Grid>
             </Grid>

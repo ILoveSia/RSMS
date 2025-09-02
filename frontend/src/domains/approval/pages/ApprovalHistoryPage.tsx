@@ -310,7 +310,7 @@ const ApprovalHistoryPage: React.FC = () => {
       headerAlign: 'center',
     },
     {
-      field: 'approvalId',
+      field: 'actions',
       headerName: '상세보기',
       width: 100,
       renderCell: ({ row }) => (
@@ -325,6 +325,7 @@ const ApprovalHistoryPage: React.FC = () => {
       flex: 1,
       align: 'center',
       headerAlign: 'center',
+      sortable: false,
     },
   ];
 

@@ -6,7 +6,8 @@ import ResponsibilitySearchPopup, { type ResponsibilitySearchResult } from '@/do
 import { Alert } from '@/shared/components/modal/Alert';
 import BaseDialog, { type DialogMode } from '@/shared/components/modal/BaseDialog';
 import TextField from '@/shared/components/ui/data-display/TextField';
-import { Box, Button, Grid, Typography } from '@mui/material';
+import { Box, Grid, Typography } from '@mui/material';
+import { Button } from '@/shared/components/ui/button';
 import React, { useEffect, useState } from 'react';
 import ApprovalActionButton from '@/shared/components/approval/ApprovalActionButton';
 import { useReduxState } from '@/app/store/use-store';
@@ -363,8 +364,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           onApprovalStateChange={() => {
             onSave?.(); // 부모 컴포넌트에 상태 변경 알림
           }}
-          size="small"
-          variant="contained"
+          variant="outlined"
           disabled={loading || !currentUserId}
         />
       );
@@ -622,13 +622,11 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
           {mode !== 'view' && (
             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
               <Button
-                variant="contained"
-                size="medium"
+                variant="outlined"
                 onClick={() => {
                   setSearchPopupOpen(true);
                 }}
                 color="primary"
-                sx={{ minWidth: 120 }}
               >
                 책무 검색
               </Button>

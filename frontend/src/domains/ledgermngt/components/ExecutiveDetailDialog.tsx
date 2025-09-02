@@ -135,7 +135,8 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
                 setFormData((prev: Record<string, any>) => ({
                   ...prev,
                   executiveName: userData.username || '', // 성명 설정
-                  jobRankCd: userData.jobRankCd || '' // 직급 코드 설정
+                  jobRankCd: userData.jobRankCd || '', // 직급 코드 설정
+                  positionName: userData.positionName || '' // 직위명 설정
                 }));
               }
             }
@@ -167,8 +168,9 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
       setFormData((prev: any) => ({
         ...prev,
         employee,
-        empId: employee.num, // 사번으로 설정
+        empId: employee.empNo, // 사번으로 설정
         executiveName: employee.username, // 성명 자동 입력
+        jobRankCd: employee.jobRankCode || '', // 직급코드 설정
         // ownerDepts와 meetings는 기존 값 보존 (제거하지 않음)
       }));
     } catch (error) {
@@ -265,12 +267,11 @@ const ExecutiveDetailDialog: React.FC<ExecutiveDetailDialogProps> = ({
           {/* 두 번째 행: 직위, 현 직책 부여일 */}
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <TextField
-              label="직위"
-              value={formData.employee?.jobRankCd
-                ? getCodeNameFn('JOB_RANK', formData.employee.jobRankCd)
-                : formData.jobRankCd
-                  ? getCodeNameFn('JOB_RANK', formData.jobRankCd)
-                  : ''}
+              label="직급"
+              value={formData.jobRankCd ? getCodeNameFn('JOB_RANK', formData.jobRankCd) : 
+                (formData.positionName || '') || 
+                (formData.employee?.jobRankCode ? getCodeNameFn('JOB_RANK', formData.employee.jobRankCode) : '') || 
+                ''}
               mode="readonly"
               sx={{ flex: 1 }}
             />

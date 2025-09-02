@@ -4,7 +4,7 @@
  */
 import type { MeetingBody } from '@/app/types';
 import { Confirm } from '@/shared/components/modal';
-import { Button as CustomButton, ManagementButtonGroup } from '@/shared/components/ui/button'; // Modified import
+import { Button, ManagementButtonGroup } from '@/shared/components/ui/button';
 import { DataGrid } from '@/shared/components/ui/data-display';
 import { ComboBox } from '@/shared/components/ui/form';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
@@ -14,7 +14,7 @@ import { useApiWithNotification } from '@/shared/hooks';
 import type { DataGridColumn } from '@/shared/types/common';
 import { useCommonCodes, useGetCodeName } from '@/shared/utils/codeUtils';
 import { Groups as GroupsIcon } from '@mui/icons-material';
-import { Box } from '@mui/material'; // Keep Button from MUI
+import { Box } from '@mui/material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -383,17 +383,11 @@ const MeetingStatusPage: React.FC<IMeetingStatusPageProps> = React.memo((): Reac
             mode="editable"
             sx={{ width: 140 }}
           />
-          <CustomButton // Changed to CustomButton
+          <Button
             preset="search"
             onClick={handleSearch}
             loading={loading}
             disabled={loading}
-            sx={{
-              height: '32px',
-              minWidth: '80px',
-              fontSize: '0.875rem',
-              fontWeight: 600,
-            }}
           />
         </Box>
 

@@ -698,40 +698,24 @@ const PositionResponsibilityStatusPage: React.FC<IPositionResponsibilityStatusPa
             <PermissionButton
               menuCode="LEDGER_MGMT_POSITION_RESPONSIBILITY"
               permission="write"
-              variant="contained"
+              variant="outlined"
               color="success"
-              size="small"
               onClick={handleConfirmClick}
               disabled={loading}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정 권한이 없습니다"
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
             >
               확정
             </PermissionButton>
             <PermissionButton
               menuCode="LEDGER_MGMT_POSITION_RESPONSIBILITY"
               permission="write"
-              variant="contained"
+              variant="outlined"
               color="error"
-              size="small"
               onClick={handleCancelConfirmClick}
               disabled={loading}
               hideWhenNoPermission={true}
               noPermissionTooltip="확정취소 권한이 없습니다"
-              sx={{
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                fontWeight: 600,
-                borderRadius: 1,
-              }}
             >
               확정취소
             </PermissionButton>

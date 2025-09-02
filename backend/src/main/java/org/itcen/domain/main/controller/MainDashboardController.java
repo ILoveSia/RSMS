@@ -194,4 +194,46 @@ public class MainDashboardController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    /**
+     * 특정 ledger_orders_id에 해당하는 부서장 내부통제 상태 조회
+     * 
+     * @param ledgerOrdersId 원장오더 ID
+     * @return 부서장 내부통제 상태 정보
+     */
+    @GetMapping("/ledger-orders-hod-status/{ledgerOrdersId}")
+    public ResponseEntity<LedgerOrdersHodStatusDto> getLedgerOrdersHodStatus(@PathVariable Long ledgerOrdersId) {
+        log.info("부서장 내부통제 상태 조회 요청: ledgerOrdersId={}", ledgerOrdersId);
+        
+        try {
+            LedgerOrdersHodStatusDto hodStatus = mainDashboardService.getLedgerOrdersHodStatus(ledgerOrdersId);
+            log.info("부서장 내부통제 상태 조회 성공: ledgerOrdersId={}, status={}", ledgerOrdersId, hodStatus.getLedgerOrdersHodStatusName());
+            return ResponseEntity.ok(hodStatus);
+            
+        } catch (Exception e) {
+            log.error("부서장 내부통제 상태 조회 실패: ledgerOrdersId={}", ledgerOrdersId, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 특정 ledger_orders_id에 해당하는 점검 통계 조회
+     * 
+     * @param ledgerOrdersId 원장오더 ID
+     * @return 점검 통계 정보
+     */
+    @GetMapping("/audit-statistics/{ledgerOrdersId}")
+    public ResponseEntity<AuditStatisticsDto> getAuditStatistics(@PathVariable Long ledgerOrdersId) {
+        log.info("점검 통계 조회 요청: ledgerOrdersId={}", ledgerOrdersId);
+        
+        try {
+            AuditStatisticsDto auditStats = mainDashboardService.getAuditStatistics(ledgerOrdersId);
+            log.info("점검 통계 조회 성공: ledgerOrdersId={}, totalCount={}", ledgerOrdersId, auditStats.getTotalCount());
+            return ResponseEntity.ok(auditStats);
+            
+        } catch (Exception e) {
+            log.error("점검 통계 조회 실패: ledgerOrdersId={}", ledgerOrdersId, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }

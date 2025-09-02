@@ -449,8 +449,7 @@ const InternalControlManualDialog: React.FC<InternalControlManualDialogProps> = 
           onApprovalStateChange={() => {
             onSuccess?.(); // 부모 컴포넌트에 상태 변경 알림
           }}
-          size="medium"
-          variant="contained"
+          variant="outlined"
           disabled={loading || !currentUserId}
         />
       );

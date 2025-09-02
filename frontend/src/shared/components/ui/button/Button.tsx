@@ -56,6 +56,32 @@ interface PresetProps {
 }
 
 const getPresetProps = (preset: ButtonProps['preset'], isDark: boolean): PresetProps => {
+  // 무채색 스타일 정의
+  const monochromeStyle = {
+    backgroundColor: isDark ? '#4B5563' : '#6B7280',
+    color: '#FFFFFF',
+    '&:hover': {
+      backgroundColor: isDark ? '#374151' : '#4B5563',
+    },
+    '&:active': {
+      backgroundColor: isDark ? '#1F2937' : '#374151',
+    },
+  };
+
+  const monochromeOutlinedStyle = {
+    borderColor: isDark ? '#6B7280' : '#6B7280',
+    color: isDark ? '#9CA3AF' : '#6B7280',
+    '&:hover': {
+      borderColor: isDark ? '#4B5563' : '#4B5563',
+      color: isDark ? '#D1D5DB' : '#4B5563',
+      backgroundColor: isDark ? 'rgba(107, 114, 128, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+    },
+    '&:active': {
+      borderColor: isDark ? '#374151' : '#374151',
+      color: isDark ? '#F3F4F6' : '#374151',
+    },
+  };
+
   switch (preset) {
     case 'cancel':
       return {
@@ -63,51 +89,23 @@ const getPresetProps = (preset: ButtonProps['preset'], isDark: boolean): PresetP
         color: 'secondary',
         startIcon: <CancelIcon />,
         label: '취소',
-        sx: {
-          borderColor: isDark ? '#9CA3AF' : '#6B7280',
-          color: isDark ? '#9CA3AF' : '#6B7280',
-          '&:hover': {
-            borderColor: isDark ? '#D1D5DB' : '#4B5563',
-            color: isDark ? '#D1D5DB' : '#4B5563',
-            backgroundColor: isDark ? 'rgba(156, 163, 175, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-          },
-          '&:active': {
-            borderColor: isDark ? '#F3F4F6' : '#374151',
-            color: isDark ? '#F3F4F6' : '#374151',
-          },
-        },
+        sx: monochromeOutlinedStyle,
       };
     case 'delete':
       return {
-        variant: 'contained',
+        variant: 'outlined',
         color: 'error',
         startIcon: <DeleteIcon />,
         label: '삭제',
-        sx: {
-          backgroundColor: isDark ? '#F87171' : '#EF4444',
-          '&:hover': {
-            backgroundColor: isDark ? '#FCA5A5' : '#DC2626',
-          },
-          '&:active': {
-            backgroundColor: isDark ? '#FEB2B2' : '#B91C1C',
-          },
-        },
+        sx: monochromeOutlinedStyle,
       };
     case 'edit':
       return {
-        variant: 'contained',
+        variant: 'outlined',
         color: 'warning',
         startIcon: <EditIcon />,
         label: '수정',
-        sx: {
-          backgroundColor: isDark ? '#FBBF24' : '#F59E0B',
-          '&:hover': {
-            backgroundColor: isDark ? '#FCD34D' : '#D97706',
-          },
-          '&:active': {
-            backgroundColor: isDark ? '#FDE68A' : '#B45309',
-          },
-        },
+        sx: monochromeOutlinedStyle,
       };
     case 'refresh':
       return {
@@ -115,67 +113,31 @@ const getPresetProps = (preset: ButtonProps['preset'], isDark: boolean): PresetP
         color: 'secondary',
         startIcon: <RefreshIcon />,
         label: '새로고침',
-        sx: {
-          borderColor: isDark ? '#A78BFA' : '#8B5CF6',
-          color: isDark ? '#A78BFA' : '#8B5CF6',
-          '&:hover': {
-            borderColor: isDark ? '#C4B5FD' : '#7C3AED',
-            color: isDark ? '#C4B5FD' : '#7C3AED',
-            backgroundColor: isDark ? 'rgba(167, 139, 250, 0.1)' : 'rgba(139, 92, 246, 0.1)',
-          },
-          '&:active': {
-            borderColor: isDark ? '#DDD6FE' : '#6D28D9',
-            color: isDark ? '#DDD6FE' : '#6D28D9',
-          },
-        },
+        sx: monochromeOutlinedStyle,
       };
     case 'register':
       return {
-        variant: 'contained',
+        variant: 'outlined',
         color: 'primary',
         startIcon: <AddIcon />,
         label: '등록',
-        sx: {
-          backgroundColor: isDark ? '#60A5FA' : '#3B82F6',
-          '&:hover': {
-            backgroundColor: isDark ? '#7CC3FC' : '#2563EB',
-          },
-          '&:active': {
-            backgroundColor: isDark ? '#93C5FD' : '#1D4ED8',
-          },
-        },
+        sx: monochromeOutlinedStyle,
       };
     case 'save':
       return {
-        variant: 'contained',
+        variant: 'outlined',
         color: 'success',
         startIcon: <SaveIcon />,
         label: '저장',
-        sx: {
-          backgroundColor: isDark ? '#34D399' : '#10B981',
-          '&:hover': {
-            backgroundColor: isDark ? '#6EE7B7' : '#059669',
-          },
-          '&:active': {
-            backgroundColor: isDark ? '#A7F3D0' : '#047857',
-          },
-        },
+        sx: monochromeOutlinedStyle,
       };
     case 'search':
       return {
-        variant: 'contained',
+        variant: 'outlined',
         color: 'primary',
         startIcon: <SearchIcon />,
         label: '조회',
-        sx: {
-          backgroundColor: isDark ? '#60A5FA' : '#3B82F6',
-          '&:hover': {
-            backgroundColor: isDark ? '#7CC3FC' : '#2563EB',
-          },
-          '&:active': {
-            backgroundColor: isDark ? '#93C5FD' : '#1D4ED8',
-          },
-        },
+        sx: monochromeOutlinedStyle,
       };
     default:
       return {};
@@ -223,15 +185,26 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const finalChildren = children ?? label;
 
     const finalSx = {
-      // Common base styles for all buttons
-      height: '32px',
-      minWidth: '80px',
-      fontSize: '0.875rem',
-      fontWeight: 600,
-      borderRadius: 1,
+      // Modern button styles inspired by ApprovalDashboard
+      height: '32px !important',
+      minWidth: '60px !important',
+      fontSize: '0.75rem !important',
+      fontWeight: '600 !important',
+      borderRadius: '4px !important',
+      padding: '4px 8px !important',
       lineHeight: 1,
       textTransform: 'none',
       letterSpacing: '0.02em',
+      // Enhanced hover and focus states
+      transition: 'all 0.2s ease-in-out',
+      '&:hover': {
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      },
+      '&:active': {
+        transform: 'translateY(0px)',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+      },
 
       // Loading state style
       ...(loading && {

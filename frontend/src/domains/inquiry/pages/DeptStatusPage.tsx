@@ -493,8 +493,7 @@ const DeptStatusPage: React.FC<IDeptStatusPageProps> = () => {
                 onApprovalStateChange={() => {
                   handleSearch();
                 }}
-                size="small"
-                variant="contained"
+                variant="outlined"
               />
             </Box>
           );

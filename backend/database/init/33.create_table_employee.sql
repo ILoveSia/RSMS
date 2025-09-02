@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS employee (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_id VARCHAR(50) DEFAULT 'SYSTEM',
-    updated_id VARCHAR(50) DEFAULT 'SYSTEM'
+    updated_id VARCHAR(50) DEFAULT 'SYSTEM',
+    job_rank_cd VARCHAR(100) --common_code.group_code = JOB_RANK 직급코드
 );

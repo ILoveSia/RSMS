@@ -113,6 +113,19 @@ export const getLedgerOrdersHodStatus = async (): Promise<LedgerOrdersHodStatusR
 };
 
 /**
+ * 특정 ledger_orders_id에 해당하는 최대 hod_id 조회
+ */
+export const getLedgerOrdersHodStatusByLedgerOrdersId = async (ledgerOrdersId: number): Promise<LedgerOrdersHodStatusResponse> => {
+  try {
+    const response = await apiClient.get<LedgerOrdersHodStatusResponse>(`/main/ledger-orders-hod-status/${ledgerOrdersId}`);
+    return response;
+  } catch (error) {
+    console.error('부서장 내부통제 상태 조회 오류 (ledger_orders_id 기준):', error);
+    throw error;
+  }
+};
+
+/**
  * 전체 점검 통계 조회 (부서별 집계)
  */
 export const getAuditStatistics = async (): Promise<AuditStatisticsResponse> => {
@@ -121,6 +134,19 @@ export const getAuditStatistics = async (): Promise<AuditStatisticsResponse> => 
     return response;
   } catch (error) {
     console.error('점검 통계 조회 오류:', error);
+    throw error;
+  }
+};
+
+/**
+ * 특정 ledger_orders_id에 해당하는 점검 통계 조회
+ */
+export const getAuditStatisticsByLedgerOrdersId = async (ledgerOrdersId: number): Promise<AuditStatisticsResponse> => {
+  try {
+    const response = await apiClient.get<AuditStatisticsResponse>(`/main/audit-statistics/${ledgerOrdersId}`);
+    return response;
+  } catch (error) {
+    console.error('점검 통계 조회 오류 (ledger_orders_id 기준):', error);
     throw error;
   }
 };
@@ -183,7 +209,9 @@ export const getPendingApprovals = async (userid: string): Promise<PendingApprov
 export const newMainDashboardApi = {
   getLedgerOrdersStatus,
   getLedgerOrdersHodStatus,
+  getLedgerOrdersHodStatusByLedgerOrdersId,
   getAuditStatistics,
+  getAuditStatisticsByLedgerOrdersId,
   getRecentQna,
   getRecentNotice,
   getMyApprovalRequests,

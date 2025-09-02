@@ -493,11 +493,10 @@ const AuditProgMngtDialog: React.FC<AuditProgMngtDialogProps> = ({
               sx={{ flex: 1 }}
             />
             <Button
-              variant="contained"
+              variant="outlined"
               onClick={handleTargetSelection}
               disabled={mode === 'view' || loading}
               color="primary"
-              sx={{ minWidth: '120px' }}
             >
               선정
             </Button>

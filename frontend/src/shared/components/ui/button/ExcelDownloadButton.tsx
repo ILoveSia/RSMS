@@ -86,7 +86,7 @@ const ExcelDownloadButton: React.FC<ExcelDownloadButtonProps> = ({
 
   return (
     <Button
-      variant="contained"
+      variant="outlined"
       size={size}
       onClick={handleDownload}
       disabled={isButtonDisabled}
@@ -94,19 +94,21 @@ const ExcelDownloadButton: React.FC<ExcelDownloadButtonProps> = ({
       startIcon={<ExcelIcon />}
       className={className}
       sx={{
-        height: '32px',
-        minWidth: '80px',
-        fontSize: '0.875rem',
-        fontWeight: 600,
-        px: 1.5,
-        lineHeight: 1,
-        borderRadius: 1,
-        backgroundColor: isDark ? '#34D399' : '#10B981', // 연한 초록색 (모던한 색상)
+        // ApprovalDashboard 스타일 기반 - outlined 스타일로 변경
+        backgroundColor: 'transparent',
+        border: '1px solid',
+        borderColor: '#10B981',
+        color: '#10B981',
         '&:hover': {
-          backgroundColor: isDark ? '#6EE7B7' : '#059669',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderColor: '#059669',
+          color: '#059669',
+          transform: 'translateY(-1px)',
+          boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)',
         },
         '&:active': {
-          backgroundColor: isDark ? '#A7F3D0' : '#047857',
+          transform: 'translateY(0px)',
+          boxShadow: '0 1px 2px rgba(16, 185, 129, 0.2)',
         },
         ...sx,
       }}

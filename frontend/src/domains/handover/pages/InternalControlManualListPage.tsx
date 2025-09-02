@@ -19,7 +19,8 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Description as DocumentIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Box, Chip, IconButton, InputAdornment, Button } from '@mui/material'; // Keep Button from MUI
+import { Box, Chip, IconButton, InputAdornment } from '@mui/material';
+import { Button } from '@/shared/components/ui/button';
 import EmployeeSearchPopup, { type EmployeeSearchResult } from '@/domains/common/components/search/EmployeeSearchPopup';
 import TitleSearch from '@/domains/admin/components/TitleSearch';
 import React, { useCallback, useEffect, useState } from 'react';

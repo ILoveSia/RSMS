@@ -18,7 +18,8 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Assessment as InspectionIcon } from '@mui/icons-material';
-import { Box, Chip, Button } from '@mui/material'; // Keep Button from MUI
+import { Box, Chip } from '@mui/material';
+import { Button } from '@/shared/components/ui/button';
 import React, { useCallback, useEffect, useState } from 'react';
 import { businessPlanInspectionApi, type BusinessPlanInspectionDto } from '../api/businessPlanInspectionApi';
 import BusinessPlanInspectionDialog from '../components/BusinessPlanInspectionDialog';

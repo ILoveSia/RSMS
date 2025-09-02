@@ -354,8 +354,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           />
           {mode !== 'view' && (
             <Button
-              variant="contained"
-              size="small"
+              variant="outlined"
               onClick={() => setPositionPopupOpen(true)}
             >
               검색
@@ -378,8 +377,7 @@ const StructureSubmissionStatusDialog: React.FC<StructureSubmissionStatusDialogP
           />
           {/* {mode !== 'view' && (
             <Button
-              variant="contained"
-              size="small"
+              variant="outlined"
               onClick={() => setEmployeePopupOpen(true)}
             >
               검색

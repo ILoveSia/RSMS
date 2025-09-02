@@ -25,6 +25,7 @@ public class ExecutiveResponsibilityDto {
     private Long execofficerId;
     private String empName;
     private String positionCode;
+    private String positionName;  // employee.position_name 추가
     private String responsibilityContent;
     private String responsibilityDetailContent;
     private String responsibilityMgtSts;

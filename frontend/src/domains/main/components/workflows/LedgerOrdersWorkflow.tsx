@@ -29,7 +29,11 @@ const WORKFLOW_STEPS = [
   { code: 'P5', label: '최종확정', description: '전체 프로세스 완료' }
 ];
 
-const LedgerOrdersWorkflow: React.FC = () => {
+interface LedgerOrdersWorkflowProps {
+  onLedgerOrdersIdReceived?: (id: number) => void;
+}
+
+const LedgerOrdersWorkflow: React.FC<LedgerOrdersWorkflowProps> = ({ onLedgerOrdersIdReceived }) => {
   const [workflowData, setWorkflowData] = useState<LedgerOrdersStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +45,11 @@ const LedgerOrdersWorkflow: React.FC = () => {
         const data = await newMainDashboardApi.getLedgerOrdersStatus();
         setWorkflowData(data);
         setError(null);
+        
+        // 부모 컴포넌트로 ledger_orders_id 전달
+        if (data?.ledgerOrdersId && onLedgerOrdersIdReceived) {
+          onLedgerOrdersIdReceived(data.ledgerOrdersId);
+        }
       } catch (err) {
         console.error('워크플로우 상태 조회 실패:', err);
         setError('워크플로우 상태를 조회할 수 없습니다.');
@@ -50,7 +59,7 @@ const LedgerOrdersWorkflow: React.FC = () => {
     };
 
     fetchWorkflowStatus();
-  }, []);
+  }, [onLedgerOrdersIdReceived]);
 
   const getCurrentStepIndex = () => {
     if (!workflowData?.ledgerOrdersStatusCd) return 0;
@@ -112,7 +121,7 @@ const LedgerOrdersWorkflow: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <WorkflowIcon color="primary" sx={{ mr: 1, fontSize: 18 }} />
         <Typography variant="body1" fontWeight="bold">
-          책무구조도 원장 관리
+          책무구조도 {workflowData?.ledgerOrdersTitle || ''} 원장 관리
         </Typography>
         <Chip 
           label={workflowData?.ledgerOrdersStatusName || '상태 불명'}

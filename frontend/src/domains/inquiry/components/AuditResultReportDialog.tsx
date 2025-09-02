@@ -395,16 +395,10 @@ const AuditResultReportDialog: React.FC<AuditResultReportDialogProps> = ({
           <Box sx={{ display: 'flex', gap: 1 }}>
             {!isReadOnly && (
               <Button
-                variant="contained"
+                variant="outlined"
                 startIcon={mode === 'create' ? <SaveIcon /> : <EditIcon />}
                 onClick={handleSave}
                 disabled={loading}
-                sx={{
-                  height: '36px',
-                  minWidth: '100px',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
-                }}
               >
                 {mode === 'create' ? '등록' : '저장'}
               </Button>

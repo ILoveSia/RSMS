@@ -172,17 +172,10 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
             {/* 수정 버튼 (view 모드에서만) */}
             {isViewMode && showEditButton && (
               <Button
-                variant="contained"
+                variant="outlined"
                 onClick={handleEdit}
                 disabled={loading}
                 color="warning"
-                sx={{
-                  height: '36px !important',
-                  minWidth: '80px !important',
-                  fontSize: '0.875rem !important',
-                  fontWeight: '600 !important',
-                  borderRadius: '4px !important',
-                }}
               >
                 수정
               </Button>
@@ -190,17 +183,10 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
             {/* 저장/등록 버튼 (edit/create 모드에서만) */}
             {(isEditMode || isCreateMode) && onSave && (
               <Button
-                variant="contained"
+                variant="outlined"
                 onClick={onSave}
                 disabled={disableSave || loading}
                 color={isCreateMode ? 'primary' : 'success'}
-                sx={{
-                  height: '36px !important',
-                  minWidth: '80px !important',
-                  fontSize: '0.875rem !important',
-                  fontWeight: '600 !important',
-                  borderRadius: '4px !important',
-                }}
               >
                 {isCreateMode ? '등록' : '저장'}
               </Button>
@@ -211,13 +197,6 @@ const BaseDialog: React.FC<BaseDialogProps> = ({
               onClick={handleCancel}
               disabled={loading}
               color="primary"
-              sx={{
-                height: '36px !important',
-                minWidth: '80px !important',
-                fontSize: '0.875rem !important',
-                fontWeight: '600 !important',
-                borderRadius: '4px !important',
-              }}
             >
               {isEditMode ? '취소' : isCreateMode ? '취소' : '닫기'}
             </Button>

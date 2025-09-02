@@ -24,16 +24,26 @@ import {
 } from '@mui/icons-material';
 import { newMainDashboardApi, type AuditStatisticsResponse } from '../../api/newMainDashboardApi';
 
-const AuditStatisticsChart: React.FC = () => {
+interface AuditStatisticsChartProps {
+  ledgerOrdersId?: number | null;
+}
+
+const AuditStatisticsChart: React.FC<AuditStatisticsChartProps> = ({ ledgerOrdersId }) => {
   const [statistics, setStatistics] = useState<AuditStatisticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStatistics = async () => {
+      if (!ledgerOrdersId) {
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
-        const data = await newMainDashboardApi.getAuditStatistics();
+        // ledgerOrdersId를 사용하여 해당하는 점검 통계 조회
+        const data = await newMainDashboardApi.getAuditStatisticsByLedgerOrdersId(ledgerOrdersId);
         setStatistics(data);
         setError(null);
       } catch (err) {
@@ -45,7 +55,7 @@ const AuditStatisticsChart: React.FC = () => {
     };
 
     fetchStatistics();
-  }, []);
+  }, [ledgerOrdersId]);
 
   if (loading) {
     return (
@@ -106,7 +116,7 @@ const AuditStatisticsChart: React.FC = () => {
                 {statistics.appropriateCount.toLocaleString()}
               </Typography>
               <Typography variant="body2" color="textSecondary" fontWeight="medium">
-                적정 ({Math.round(statistics.appropriateRate)}%)
+                적정 ({isNaN(statistics.appropriateRate) ? 0 : Math.round(statistics.appropriateRate)}%)
               </Typography>
             </CardContent>
           </Card>
@@ -121,7 +131,7 @@ const AuditStatisticsChart: React.FC = () => {
                 {statistics.inadequateCount.toLocaleString()}
               </Typography>
               <Typography variant="body2" color="textSecondary" fontWeight="medium">
-                미흡 ({Math.round((statistics.inadequateCount / statistics.totalCount) * 100)}%)
+                미흡 ({statistics.totalCount > 0 ? Math.round((statistics.inadequateCount / statistics.totalCount) * 100) : 0}%)
               </Typography>
             </CardContent>
           </Card>
@@ -136,7 +146,7 @@ const AuditStatisticsChart: React.FC = () => {
                 {statistics.excludedCount.toLocaleString()}
               </Typography>
               <Typography variant="body2" color="textSecondary" fontWeight="medium">
-                제외 ({Math.round((statistics.excludedCount / statistics.totalCount) * 100)}%)
+                제외 ({statistics.totalCount > 0 ? Math.round((statistics.excludedCount / statistics.totalCount) * 100) : 0}%)
               </Typography>
             </CardContent>
           </Card>
@@ -148,7 +158,7 @@ const AuditStatisticsChart: React.FC = () => {
             <CardContent sx={{ py: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
               <TrendingUpIcon sx={{ fontSize: 24, color: '#ff9800', mb: 1 }} />
               <Typography variant="h5" fontWeight="bold" color="warning.main">
-                {Math.round(statistics.completionRate)}%
+                {isNaN(statistics.completionRate) ? 0 : Math.round(statistics.completionRate)}%
               </Typography>
               <Typography variant="body2" color="textSecondary" fontWeight="medium">
                 이행 완료율

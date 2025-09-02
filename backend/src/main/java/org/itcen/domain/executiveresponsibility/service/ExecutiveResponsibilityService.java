@@ -22,7 +22,7 @@ public class ExecutiveResponsibilityService {
 
     public List<ExecutiveResponsibilityDto> getByPositionId(Long positionId) {
         String sql = "SELECT   p.positions_id,   p.positions_nm,   e.execofficer_id, " +
-                "emp.emp_name,   emp.job_rank_cd,   emp.job_title_cd,   emp.num ,r.responsibility_content,rd.responsibility_detail_content, "
+                "emp.emp_name,   emp.position_name,   emp.job_title_cd,   emp.num ,r.responsibility_content,rd.responsibility_detail_content, "
                 +
                 "rd.responsibility_mgt_sts ,rd.responsibility_rel_evid, rrs.role_summ, e.dual_yn, e.dual_details FROM positions p "
                 +
@@ -41,7 +41,7 @@ public class ExecutiveResponsibilityService {
                 dto.setPositionsNm((String) row[1]);
                 dto.setExecofficerId(row[2] != null ? ((Number) row[2]).longValue() : null);
                 dto.setEmpName((String) row[3]);
-                dto.setPositionCode((String) row[4]);
+                dto.setPositionName((String) row[4]);  // position_name 설정
                 dto.setResponsibilityContent((String) row[7]);
                 dto.setResponsibilityDetailContent((String) row[8]);
                 dto.setResponsibilityMgtSts((String) row[9]);
@@ -61,18 +61,34 @@ public class ExecutiveResponsibilityService {
     }
 
     public List<ExecutiveResponsibilityDto> getAll() {
-        String sql = "SELECT   p.positions_id,   p.positions_nm,   e.execofficer_id, " +
-                "emp.emp_name,   emp.position_code , r.responsibility_content,rd.responsibility_detail_content, " +
-                "rd.responsibility_mgt_sts ,rd.responsibility_rel_evid, rrs.role_summ, e.dual_yn, e.dual_details,emp.emp_no,e.execofficer_dt  FROM positions p "
-                +
+        String sql = "SELECT " +
+                "p.positions_id, " +
+                "p.positions_nm, " +
+                "e.execofficer_id, " +
+                "emp.emp_name, " +
+                "emp.position_name, " +
+                "r.responsibility_content, " +
+                "rd.responsibility_detail_content, " +
+                "rd.responsibility_mgt_sts, " +
+                "rd.responsibility_rel_evid, " +
+                "rrs.role_summ, " +
+                "e.dual_yn, " +
+                "e.dual_details, " +
+                "emp.emp_no, " +
+                "e.execofficer_dt " +
+                "FROM positions p " +
                 "LEFT JOIN execofficer e ON p.positions_id = e.positions_id " +
-                "left join role_resp_status rrs on rrs.positions_id =p.positions_id " +
-                "left join responsibility r on r.responsibility_id =rrs.responsibility_id " +
-                "left join responsibility_detail rd on rd.responsibility_id =r.responsibility_id " +
+                "LEFT JOIN role_resp_status rrs ON rrs.positions_id = p.positions_id " +
+                "LEFT JOIN responsibility r ON r.responsibility_id = rrs.responsibility_id " +
+                "LEFT JOIN responsibility_detail rd ON rd.responsibility_id = r.responsibility_id " +
                 "LEFT JOIN employee emp ON e.emp_id = emp.emp_no " +
-                // "WHERE p.positions_id = 2"+
+                "WHERE e.execofficer_id IS NOT NULL " +
                 "ORDER BY p.positions_id;";
+        
+        log.info("Executing SQL query: {}", sql);
         List<Object[]> results = em.createNativeQuery(sql).getResultList();
+        log.info("Raw query results count: {}", results.size());
+        
         List<ExecutiveResponsibilityDto> finalResult = results.stream().map(row -> {
             try {
                 ExecutiveResponsibilityDto dto = new ExecutiveResponsibilityDto();
@@ -80,7 +96,7 @@ public class ExecutiveResponsibilityService {
                 dto.setPositionsNm((String) row[1]);
                 dto.setExecofficerId(row[2] != null ? ((Number) row[2]).longValue() : null);
                 dto.setEmpName((String) row[3]);
-                dto.setPositionCode((String) row[4]);
+                dto.setPositionName((String) row[4]);  // position_name 설정
                 dto.setResponsibilityContent((String) row[5]);
                 dto.setResponsibilityDetailContent((String) row[6]);
                 dto.setResponsibilityMgtSts((String) row[7]);
@@ -98,6 +114,7 @@ public class ExecutiveResponsibilityService {
         }).filter(java.util.Objects::nonNull) // Filter out nulls
                 .collect(Collectors.toList());
 
+        log.info("Final result count after processing: {}", finalResult.size());
         return finalResult;
     }
 }

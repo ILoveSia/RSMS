@@ -53,24 +53,24 @@ export interface ActionButtonGroupProps {
   sx?: any;
 }
 
-// 기본 버튼 설정
+// 기본 버튼 설정 - ApprovalDashboard 스타일 기반 (outlined 우선)
 const DEFAULT_BUTTON_CONFIG: Record<ActionButtonType, Partial<ActionButtonConfig>> = {
   search: {
     label: '조회',
     color: 'primary',
-    variant: 'contained',
+    variant: 'outlined',
     icon: <SearchIcon />,
   },
   register: {
     label: '등록',
     color: 'success',
-    variant: 'contained',
+    variant: 'outlined',
     icon: <AddIcon />,
   },
   delete: {
     label: '삭제',
     color: 'error',
-    variant: 'contained',
+    variant: 'outlined',
     icon: <DeleteIcon />,
   },
   refresh: {
@@ -82,13 +82,13 @@ const DEFAULT_BUTTON_CONFIG: Record<ActionButtonType, Partial<ActionButtonConfig
   edit: {
     label: '수정',
     color: 'warning',
-    variant: 'contained',
+    variant: 'outlined',
     icon: <EditIcon />,
   },
   save: {
     label: '저장',
     color: 'success',
-    variant: 'contained',
+    variant: 'outlined',
     icon: <SaveIcon />,
   },
   cancel: {
@@ -100,7 +100,7 @@ const DEFAULT_BUTTON_CONFIG: Record<ActionButtonType, Partial<ActionButtonConfig
   custom: {
     label: '버튼',
     color: 'primary',
-    variant: 'contained',
+    variant: 'outlined',
   },
 };
 
@@ -160,9 +160,9 @@ const ActionButtonGroup: React.FC<ActionButtonGroupProps> = ({
             startIcon={mergedConfig.startIcon || mergedConfig.icon}
             endIcon={mergedConfig.endIcon}
             sx={{
-              minWidth: '80px',
-              fontWeight: 600,
               whiteSpace: 'nowrap',
+              // 공통 Button 컴포넌트의 새로운 스타일 사용 (ApprovalDashboard 기반)
+              // 스타일 오버라이드 제거 - 공통 Button의 modernized 스타일 적용
             }}
           >
             {mergedConfig.loading ? '처리중...' : mergedConfig.label}

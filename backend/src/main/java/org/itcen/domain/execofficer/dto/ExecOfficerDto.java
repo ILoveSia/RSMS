@@ -27,6 +27,9 @@ public class ExecOfficerDto {
     private String positionsNm;
     private String userName;
     private String empName;
+    // employee 테이블 조인 필드 추가
+    private String positionName;
+    private String jobRankCd;
     // ledger_orders 테이블 조인 필드 추가
     private String ledgerOrdersStatusCd;
 }

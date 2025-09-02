@@ -20,6 +20,8 @@ import {
   Dashboard as DashboardIcon,
   HourglassEmpty as HourglassEmptyIcon,
   Warning as WarningIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
@@ -209,7 +211,7 @@ const ApprovalDashboardPage: React.FC = () => {
       field: 'taskTitle',
       headerName: '업무명',
       width: 250,
-      renderCell: ({ value, row }) => {
+      renderCell: ({ row }) => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
         const taskTypeCd = row.taskTypeCd || '';
         const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', String(taskTypeCd));
@@ -267,17 +269,35 @@ const ApprovalDashboardPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           <Button
             size="small"
-            variant="contained"
+            variant="outlined"
             color="success"
+            startIcon={<CheckIcon />}
             onClick={() => handleInlineProcess(row.approvalId, 'approve')}
+            sx={{
+              height: '32px !important',
+              minWidth: '60px !important',
+              fontSize: '0.75rem !important',
+              fontWeight: '600 !important',
+              borderRadius: '4px !important',
+              padding: '4px 8px !important',
+            }}
           >
             승인
           </Button>
           <Button
             size="small"
-            variant="contained"
+            variant="outlined"
             color="error"
+            startIcon={<CloseIcon />}
             onClick={() => handleInlineProcess(row.approvalId, 'reject')}
+            sx={{
+              height: '32px !important',
+              minWidth: '60px !important',
+              fontSize: '0.75rem !important',
+              fontWeight: '600 !important',
+              borderRadius: '4px !important',
+              padding: '4px 8px !important',
+            }}
           >
             반려
           </Button>
@@ -295,7 +315,7 @@ const ApprovalDashboardPage: React.FC = () => {
       field: 'taskTitle',
       headerName: '업무명',
       width: 200,
-      renderCell: ({ value, row }) => {
+      renderCell: ({ row }) => {
         // taskTitle을 TASK_TYPE 공통코드로 변환
         const taskTypeCd = row.taskTypeCd || '';
         const taskTypeName = getCodeNameSync(allCodes, 'TASK_TYPE', String(taskTypeCd));

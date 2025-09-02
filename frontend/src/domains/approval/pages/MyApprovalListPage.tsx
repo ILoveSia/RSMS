@@ -313,16 +313,14 @@ const MyApprovalListPage: React.FC = () => {
         selectedStatus === 'PENDING' ? (
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Button
-              size="small"
-              variant="contained"
+              variant="outlined"
               color="success"
               onClick={() => handleInlineProcess(row.approvalId, 'approve')}
             >
               승인
             </Button>
             <Button
-              size="small"
-              variant="contained"
+              variant="outlined"
               color="error"
               onClick={() => handleInlineProcess(row.approvalId, 'reject')}
             >
@@ -331,7 +329,6 @@ const MyApprovalListPage: React.FC = () => {
           </Box>
         ) : (
           <Button
-            size="small"
             variant="outlined"
             onClick={() => handleViewDetail(row.approvalId)}
           >

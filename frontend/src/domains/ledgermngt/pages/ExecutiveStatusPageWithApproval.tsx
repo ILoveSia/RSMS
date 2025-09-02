@@ -313,9 +313,8 @@ const ExecutiveStatusPageWithApproval: React.FC<IExecutiveStatusPageProps> = ():
             sx={{ minWidth: 150, maxWidth: 200 }}
           />
           <Button
-            variant="contained"
+            variant="outlined"
             color="primary"
-            size="small"
             onClick={fetchExecutiveStatus}
           >
             조회
@@ -338,8 +337,7 @@ const ExecutiveStatusPageWithApproval: React.FC<IExecutiveStatusPageProps> = ():
               taskTitle="임원 현황 관리"
               currentUserId={CURRENT_USER_ID}
               onApprovalStateChange={handleApprovalStateChange}
-              size="small"
-              variant="contained"
+              variant="outlined"
             />
             <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
           </Box>
@@ -347,17 +345,15 @@ const ExecutiveStatusPageWithApproval: React.FC<IExecutiveStatusPageProps> = ():
           {/* 우측: 기존 관리 버튼들 */}
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              variant="contained" 
+              variant="outlined" 
               color="secondary"
-              size="small"
               onClick={handleCreateExecutive}
             >
               임원 등록
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
               color="success"
-              size="small"
               onClick={handleExcelUpload}
             >
               엑셀 업로드

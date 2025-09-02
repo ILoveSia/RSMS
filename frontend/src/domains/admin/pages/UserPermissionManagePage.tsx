@@ -317,17 +317,9 @@ const UserPermissionManagePage: React.FC = () => {
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               onClick={openCreateDialog}
-              variant="contained"
+              variant="outlined"
               color="primary"
-              size="small"
               startIcon={<PersonAddAlt1Icon />}
-              sx={{ 
-                fontWeight: 700,
-                height: '32px',
-                minWidth: '80px',
-                fontSize: '0.875rem',
-                borderRadius: 1,
-              }}
             >
               사용자 등록
             </Button>

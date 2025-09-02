@@ -70,4 +70,20 @@ public interface MainDashboardService {
      * @return 원장관리 프로세스 현황
      */
     UserWorkflowProcessStatusDto getManagementProcessStatus(String userId);
+
+    /**
+     * 특정 ledger_orders_id에 해당하는 부서장 내부통제 상태 조회
+     * 
+     * @param ledgerOrdersId 원장오더 ID
+     * @return 부서장 내부통제 상태 정보
+     */
+    LedgerOrdersHodStatusDto getLedgerOrdersHodStatus(Long ledgerOrdersId);
+
+    /**
+     * 특정 ledger_orders_id에 해당하는 점검 통계 조회
+     * 
+     * @param ledgerOrdersId 원장오더 ID
+     * @return 점검 통계 정보
+     */
+    AuditStatisticsDto getAuditStatistics(Long ledgerOrdersId);
 }
