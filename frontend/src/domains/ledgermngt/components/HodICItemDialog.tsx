@@ -40,6 +40,7 @@ interface HodICItemDialogProps {
   mode: 'create' | 'edit' | 'view';
   itemId?: number;
   approvalStatus?: string;
+  isReadOnly?: boolean; // 최종확정 상태일 때 수정 제한
   onSuccess?: () => void;
 }
 

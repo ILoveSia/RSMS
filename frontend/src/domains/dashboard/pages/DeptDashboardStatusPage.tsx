@@ -280,7 +280,7 @@ const DeptDashboardStatusPage: React.FC = () => {
     {
       field: 'responsibilityDetailContent',
       headerName: '책무상세내역',
-      width: 200,
+      width: 400,
     },
     {
       field: 'positionsNm',
@@ -905,68 +905,52 @@ const DeptDashboardStatusPage: React.FC = () => {
             {selectedDepartment && combinedRows.length > 0 && (
             <Grid container spacing={1.5} sx={{ mt: 1, mb: 2 }}>
               <Grid item xs={6} md={3}>
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  textAlign: 'center'
-                }}>
-                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                    <BusinessIcon sx={{ fontSize: 32, mb: 1 }} />
-                    <Typography variant="h5" fontWeight="bold">
+                <Card sx={{ textAlign: 'center', backgroundColor: '#f3f4f6', height: '100%' }}>
+                  <CardContent sx={{ py: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                    <GroupsIcon sx={{ fontSize: 24, color: '#1976d2', mb: 1 }} />
+                    <Typography variant="h5" fontWeight="bold" color="primary">
                       {selectedDepartment.deptName}
                     </Typography>
-                    <Typography variant="caption" display="block">
+                    <Typography variant="body2" color="textSecondary" fontWeight="medium">
                       선택 부서
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={6} md={3}>
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                  color: 'white',
-                  textAlign: 'center'
-                }}>
-                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                    <AssignmentIcon sx={{ fontSize: 32, mb: 1 }} />
-                    <Typography variant="h5" fontWeight="bold">
+                <Card sx={{ textAlign: 'center', backgroundColor: '#f0f9f0', height: '100%' }}>
+                  <CardContent sx={{ py: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                    <AssignmentIcon sx={{ fontSize: 24, color: '#4caf50', mb: 1 }} />
+                    <Typography variant="h5" fontWeight="bold" color="success.main">
                       {totalData.totalCount.toLocaleString()}
                     </Typography>
-                    <Typography variant="caption" display="block">
+                    <Typography variant="body2" color="textSecondary" fontWeight="medium">
                       전체 점검항목
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={6} md={3}>
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                  color: 'white',
-                  textAlign: 'center'
-                }}>
-                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                    <CheckCircleIcon sx={{ fontSize: 32, mb: 1 }} />
-                    <Typography variant="h5" fontWeight="bold">
+                <Card sx={{ textAlign: 'center', backgroundColor: '#e3f2fd', height: '100%' }}>
+                  <CardContent sx={{ py: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                    <CheckCircleIcon sx={{ fontSize: 24, color: '#2196f3', mb: 1 }} />
+                    <Typography variant="h5" fontWeight="bold" color="info.main">
                       {totalData.appropriateRate}%
                     </Typography>
-                    <Typography variant="caption" display="block">
+                    <Typography variant="body2" color="textSecondary" fontWeight="medium">
                       전체 적정율
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
               <Grid item xs={6} md={3}>
-                <Card sx={{ 
-                  background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-                  color: 'white',
-                  textAlign: 'center'
-                }}>
-                  <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                    <TrendingUpIcon sx={{ fontSize: 32, mb: 1 }} />
-                    <Typography variant="h5" fontWeight="bold">
+                <Card sx={{ textAlign: 'center', backgroundColor: '#f1f8e9', height: '100%' }}>
+                  <CardContent sx={{ py: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                    <TrendingUpIcon sx={{ fontSize: 24, color: '#8bc34a', mb: 1 }} />
+                    <Typography variant="h5" fontWeight="bold" color="success.light">
                       {totalData.completionRate}%
                     </Typography>
-                    <Typography variant="caption" display="block">
+                    <Typography variant="body2" color="textSecondary" fontWeight="medium">
                       이행완료율
                     </Typography>
                   </CardContent>

@@ -19,12 +19,10 @@ import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import type { DataGridColumn } from '@/shared/types/common';
 import { Assignment as AssignmentIcon } from '@mui/icons-material';
 import { Box, Chip } from '@mui/material';
-import { Button } from '@/shared/components/ui/button';
 import React, { useCallback, useEffect, useState } from 'react';
 import { handoverApi, type HandoverAssignmentDto } from '../api/handoverApi';
 import HandoverAssignmentDialog from '../components/HandoverAssignmentDialog';
 import type { EmployeeSearchResult } from '@/domains/common/components/search';
-import { getDepartmentNameSync, useDepartments } from '@/shared/utils/codeUtils';
 import apiClient from '@/app/common/api/client';
 
 interface IHandoverAssignmentListPageProps {
@@ -62,7 +60,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
     {
       field: 'assignorName',
       headerName: '인계자→인수자',
-      width: 150,
+      width: 300,
       align: 'center',
       headerAlign: 'center',
       renderCell: params => {
@@ -113,7 +111,7 @@ const HandoverAssignmentListPage: React.FC<IHandoverAssignmentListPageProps> = (
     {
       field: 'notes',
       headerName: '비고',
-      width: 200,
+      width: 300,
       align: 'left',
       headerAlign: 'center',
       renderCell: params => {

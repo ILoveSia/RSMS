@@ -149,7 +149,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditProgMngtCd',
       headerName: '점검계획코드',
-      width: 140,
+      width: 200,
     },
     {
       field: 'auditProgName',
@@ -169,7 +169,7 @@ const AuditProgMngtStatusPage: React.FC<IAuditProgMngtStatusPageProps> = (): Rea
     {
       field: 'auditTarget',
       headerName: '점검대상',
-      width: 150,
+      width: 200,
     },
     {
       field: 'auditPeriod',

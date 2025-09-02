@@ -64,6 +64,7 @@ interface IResponsibilityDialogProps {
   ledgerOrdersId?: number | null;
   apprStatCd?: string;
   roleRespStatusId?: number | null;
+  isReadOnly?: boolean; // 최종확정 상태일 때 수정 제한
   onClose: () => void;
   onSave: () => void;
   onChangeMode: (mode: DialogMode) => void;
@@ -78,6 +79,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   ledgerOrdersId,
   apprStatCd,
   roleRespStatusId,
+  isReadOnly = false,
   onClose,
   onSave,
   onChangeMode,
@@ -129,16 +131,27 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
   const [selectedResponsibilityData, setSelectedResponsibilityData] = useState<any>(null);
   const [responsibilityOverview, setResponsibilityOverview] = useState<string>('');
   const getDialogTitle = () => {
+    let title = '';
     switch (mode) {
       case 'create':
-        return '책무 등록';
+        title = '책무 등록';
+        break;
       case 'edit':
-        return '책무 수정';
+        title = '책무 수정';
+        break;
       case 'view':
-        return '책무 상세조회';
+        title = '책무 상세조회';
+        break;
       default:
-        return '책무';
+        title = '책무';
     }
+    
+    // 최종확정 상태일 때 제목에 표시
+    if (isReadOnly && mode === 'view') {
+      title += ' (최종확정 - 수정불가)';
+    }
+    
+    return title;
   };
 
   // 결재 상신 버튼 표시 여부 판단
@@ -398,7 +411,7 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
       <BaseDialog
         open={open}
         mode={shouldShowEditButton() ? mode : 'view'} // 결재상태가 "승인"이면 view 모드로 강제 변경
-        title={`책무 ${mode === 'create' ? '등록' : mode === 'edit' ? '수정' : '상세 정보'}`}
+        title={getDialogTitle()}
         onClose={handleClose}
         onSave={handleSave}
         onModeChange={onChangeMode}
@@ -406,10 +419,16 @@ const ResponsibilityDialog: React.FC<IResponsibilityDialogProps> = ({
         fullWidth
         disableSave={loading}
         loading={loading}
-        showEditButton={shouldShowEditButton()} // 결재상태가 승인이면 수정 버튼 숨김
+        showEditButton={shouldShowEditButton() && !isReadOnly} // 결재상태가 승인이거나 최종확정 상태가 아닐 때만 수정 버튼 표시
         customActions={renderCustomActions()}
       >
 
+        {/* 최종확정 상태 안내 */}
+        {isReadOnly && mode === 'view' && (
+          <Alert severity='warning' sx={{ mb: 2 }}>
+            이 데이터는 최종확정 상태이므로 수정할 수 없습니다.
+          </Alert>
+        )}
 
         <Box sx={{ p: 2 }}>
           {/* 직책 정보 */}
