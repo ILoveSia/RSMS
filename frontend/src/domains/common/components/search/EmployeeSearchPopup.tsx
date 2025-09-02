@@ -306,7 +306,11 @@ const EmployeeSearchPopup: React.FC<{
               checkboxSelection={false}
               disableRowSelectionOnClick={false}
               selectedRows={selectedRows}
-              onRowSelectionChange={(ids) => setSelectedRows(ids.map(String))}
+              onRowSelectionChange={(ids) => {
+                // 단일 선택만 허용
+                const stringIds = ids.map(String);
+                setSelectedRows(stringIds.length > 0 ? [stringIds[stringIds.length - 1]] : []);
+              }}
               onRowDoubleClick={(row) => handleRowDoubleClick({ id: row.id } as GridRowParams)}
               pagination={{ page: 1, pageSize: 10, totalItems: employees.length, onPageChange: () => {}, onPageSizeChange: () => {} }}
             />

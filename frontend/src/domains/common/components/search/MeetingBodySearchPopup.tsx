@@ -187,7 +187,7 @@ const MeetingBodySearchPopup: React.FC<MeetingBodySearchPopupProps> = ({
 
   return (
     <Dialog open={open} title={title} maxWidth='md' onClose={onClose} actions={renderActions()}>
-      <Box sx={{ mt: 2, minHeight: 400 }}>
+      <Box sx={{ mt: 2, height: 500 }}>
         {error && (
           <Alert severity='error' sx={{ mb: 2 }} title='오류'>
             {error}

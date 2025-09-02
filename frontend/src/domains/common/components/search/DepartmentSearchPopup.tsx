@@ -189,7 +189,7 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
       open={open}
       mode='view'
       title={title}
-      maxWidth='sm'
+      maxWidth='md'
       fullWidth
       hideDefaultActions
       onClose={onClose}
@@ -253,7 +253,14 @@ const DepartmentSearchPopup: React.FC<DepartmentSearchPopupProps> = ({
               disableRowSelectionOnClick={multiSelect}
               rowSelectionModel={selectedRows}
               onRowSelectionChange={(ids) => {
-                setSelectedRows(ids as string[]);
+                // 단일 선택만 허용
+                const stringIds = ids as string[];
+                if (multiSelect) {
+                  setSelectedRows(stringIds);
+                } else {
+                  // 단일 선택: 가장 마지막에 선택된 항목만 유지
+                  setSelectedRows(stringIds.length > 0 ? [stringIds[stringIds.length - 1]] : []);
+                }
               }}
               onRowDoubleClick={handleRowDoubleClick}
             />
