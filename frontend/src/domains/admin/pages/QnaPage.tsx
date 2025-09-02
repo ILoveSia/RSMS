@@ -10,12 +10,12 @@ import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { useGetCodeName } from '@/shared/utils/codeUtils';
 import { ListAlt as ListAltIcon } from '@mui/icons-material';
+import { Box, TextField } from '@mui/material';
 import type { GridSortModel } from '@mui/x-data-grid';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import qnaApi from '../api/qnaApi';
 import QnaCreateDialog from '../components/QnaCreateDialog';
 import QnaDetailDialog from '../components/QnaDetailDialog';
-import TitleSearch from '../components/TitleSearch';
 
 interface QnaPageProps {
   className?: string;
@@ -172,60 +172,97 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           py: 1,
         }}
       >
-        <TitleSearch
-          value={keyword}
-          onChange={(v) => setKeyword(v)}
-          onEnter={() => setPage(1)}
-          right={
-            <>
-              <CommonCodeSelect
-                groupCode="CATEGORY"
-                value={category}
-                onChange={(v) => setCategory(v)}
-                includeAll={true}
-                allLabel="전체 카테고리"
-                sx={{ mr: 1 }}
-              />
-              {selectedIds.length > 0 && (
-                <Button
-                  size="small"
-                  color="error"
-                  onClick={async () => {
-                    const ok = window.confirm(`${selectedIds.length}건 삭제하시겠습니까?`);
-                    if (!ok) return;
-                    try {
-                      setLoading(true);
-                      const userRaw = localStorage.getItem('user');
-                      const userJson = userRaw ? JSON.parse(userRaw) : {};
-                      const userId = userJson?.userid || 'anonymous';
-                      const userName = userJson?.username || '익명';
-                      const blocked = allRows.filter(r => selectedIds.includes(Number(r.id)) && (r.status === QnaStatus.ANSWERED || r.status === QnaStatus.CLOSED));
-                      if (blocked.length > 0) {
-                        showError('답변완료 또는 종료된 항목은 삭제할 수 없습니다. 선택에서 제외해 주세요.');
-                        return;
-                      }
-                      await qnaApi.deleteQnaBulk(selectedIds, { userId, userName });
-                      setSelectedIds([]);
-                      await loadAllData();
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  선택삭제
-                </Button>
-              )}
-              <ManagementButtonGroup
-                onRefresh={async () => { setPage(1); await loadAllData(); }}
-                onRegister={openCreateDialog}
-                onExcelDownload={async () => { /* TODO: export hook up if needed */ }}
-                filename="qna_list"
-              />
-            </>
-          }
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px',
+            alignItems: 'center',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
+            padding: '8px 16px',
+            borderRadius: '4px',
+          }}
+        >
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>제목</span>
+          <TextField
+            size="small"
+            placeholder="제목 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                setPage(1);
+              }
+            }}
+            sx={{ minWidth: 200, maxWidth: 300 }}
+          />
+          <CommonCodeSelect
+            groupCode="CATEGORY"
+            value={category}
+            onChange={(v) => setCategory(v)}
+            includeAll={true}
+            allLabel="전체 카테고리"
+            size="small"
+            sx={{ minWidth: 150, maxWidth: 200 }}
+          />
+          <Button
+            preset="search"
+            onClick={() => setPage(1)}
+            loading={loading}
+            disabled={loading}
+          />
+        </Box>
 
-        <DataGrid<QnaListResponseDto & { categoryName: string }>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 0.5, 
+          gap: 1,
+          alignItems: 'center',
+          height: '32px',
+        }}>
+          {selectedIds.length > 0 && (
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={async () => {
+                const ok = window.confirm(`${selectedIds.length}건 삭제하시겠습니까?`);
+                if (!ok) return;
+                try {
+                  setLoading(true);
+                  const userRaw = localStorage.getItem('user');
+                  const userJson = userRaw ? JSON.parse(userRaw) : {};
+                  const userId = userJson?.userid || 'anonymous';
+                  const userName = userJson?.username || '익명';
+                  const blocked = allRows.filter(r => selectedIds.includes(Number(r.id)) && (r.status === QnaStatus.ANSWERED || r.status === QnaStatus.CLOSED));
+                  if (blocked.length > 0) {
+                    showError('답변완료 또는 종료된 항목은 삭제할 수 없습니다. 선택에서 제외해 주세요.');
+                    return;
+                  }
+                  await qnaApi.deleteQnaBulk(selectedIds, { userId, userName });
+                  setSelectedIds([]);
+                  await loadAllData();
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              sx={{ mr: 1 }}
+            >
+              선택삭제
+            </Button>
+          )}
+          <ManagementButtonGroup
+            onRefresh={async () => { setPage(1); await loadAllData(); }}
+            onRegister={openCreateDialog}
+            onExcelDownload={async () => { /* TODO: export hook up if needed */ }}
+            filename="qna_list"
+            align="right"
+          />
+        </Box>
+
+        <Box sx={{ width: '100%', flex: 1 }}>
+          <DataGrid<QnaListResponseDto & { categoryName: string }>
           data={pagedRows}
           loading={loading}
           error={error}
@@ -262,12 +299,13 @@ const QnaPage: React.FC<QnaPageProps> = () => {
           onRowDoubleClick={undefined}
           height={600}
           checkboxSelection
-          onRowSelectionChange={(_, selected) => {
-            // keys는 DataGrid 내부 _gridId, selected는 row 데이터 배열
-            const ids = selected.map(r => Number(r.id)).filter(n => !Number.isNaN(n));
-            setSelectedIds(ids);
-          }}
-        />
+            onRowSelectionChange={(_, selected) => {
+              // keys는 DataGrid 내부 _gridId, selected는 row 데이터 배열
+              const ids = selected.map(r => Number(r.id)).filter(n => !Number.isNaN(n));
+              setSelectedIds(ids);
+            }}
+          />
+        </Box>
         <QnaDetailDialog
           open={detailOpen}
           qnaId={selectedId ?? undefined}

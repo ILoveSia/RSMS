@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Campaign as CampaignIcon } from '@mui/icons-material';
 import { PushPin as PushPinIcon } from '@mui/icons-material';
+import { Box, TextField } from '@mui/material';
  
 import { PageContainer } from '@/shared/components/ui/layout/PageContainer';
 import { PageHeader } from '@/shared/components/ui/layout/PageHeader';
 import { PageContent } from '@/shared/components/ui/layout/PageContent';
 import DataGrid from '@/shared/components/ui/data-display/DataGrid';
-import TitleSearch from '../components/TitleSearch';
+import { Button } from '@/shared/components/ui/button';
 import noticeApi, { type NoticeListResponseDto } from '../api/noticeApi';
 import ManagementButtonGroup from '@/shared/components/ui/button/ManagementButtonGroup';
 import NoticeDetailDialog from '../components/NoticeDetailDialog';
@@ -103,27 +104,60 @@ const NoticePage: React.FC = () => {
           py: 1,
         }}
       >
-          <TitleSearch value={keyword} onChange={setKeyword} 
-          right={
-          <>
-            <CommonCodeSelect
-              groupCode="CATEGORY"
-              value={category}
-              onChange={setCategory}
-              includeAll={true}
-              allLabel="전체 카테고리"
-              sx={{ mr: 1 }}
-            />
-            <ManagementButtonGroup
-              align='right'
-              onRegister={() => setCreateOpen(true)}
-              onRefresh={loadData}
-            />
-          </>
-          }
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px',
+            alignItems: 'center',
+            backgroundColor: 'var(--bank-bg-secondary)',
+            border: '1px solid var(--bank-border)',
+            padding: '8px 16px',
+            borderRadius: '4px',
+          }}
+        >
+          <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#333' }}>제목</span>
+          <TextField
+            size="small"
+            placeholder="제목 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            sx={{ minWidth: 200, maxWidth: 300 }}
+          />
+          <CommonCodeSelect
+            groupCode="CATEGORY"
+            value={category}
+            onChange={setCategory}
+            includeAll={true}
+            allLabel="전체 카테고리"
+            size="small"
+            sx={{ minWidth: 150, maxWidth: 200 }}
+          />
+          <Button
+            preset="search"
+            onClick={loadData}
+            loading={loading}
+            disabled={loading}
+          />
+        </Box>
 
-        <DataGrid<NoticeRow & { categoryName: string }>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: 0.5, 
+          gap: 1,
+          alignItems: 'center',
+          height: '32px',
+        }}>
+          <ManagementButtonGroup
+            onRegister={() => setCreateOpen(true)}
+            onRefresh={loadData}
+            align="right"
+          />
+        </Box>
+
+        <Box sx={{ width: '100%', flex: 1 }}>
+          <DataGrid<NoticeRow & { categoryName: string }>
           data={rowsWithCategoryNames}
           loading={loading}
           error={error}
@@ -165,7 +199,7 @@ const NoticePage: React.FC = () => {
             onPageSizeChange: () => {},
           }}
           sortable
-          // height={560}
+          height={600}
           getRowClassName={({ row }) => (row.pinned ? 'row-pinned' : '')}
           disableRowSelectionOnClick
           rowSelectionModel={[]}
@@ -174,21 +208,22 @@ const NoticePage: React.FC = () => {
               backgroundColor: 'rgba(255, 193, 7, 0.14)',
             },
           }}
-          onRowClick={async (row) => {
-            const detail = await callApiWithNotification(
-              () => noticeApi.getNoticeDetail(Number(row.id)),
-              'custom'
-            );
-            
-            if (detail) {
-              setSelected(detail as any);
-            } else {
-              setSelected(row as any);
-            }
-            
-            setDetailOpen(true);
-          }}
-        />
+            onRowClick={async (row) => {
+              const detail = await callApiWithNotification(
+                () => noticeApi.getNoticeDetail(Number(row.id)),
+                'custom'
+              );
+              
+              if (detail) {
+                setSelected(detail as any);
+              } else {
+                setSelected(row as any);
+              }
+              
+              setDetailOpen(true);
+            }}
+          />
+        </Box>
 
         {detailOpen && (
           <NoticeDetailDialog
